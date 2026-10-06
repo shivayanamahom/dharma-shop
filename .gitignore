@@ -1,0 +1,5 @@
+.DS_Store
+dist/
+dev/.env
+dev-test-site.txt
+*.zip
