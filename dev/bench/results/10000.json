@@ -1,0 +1,513 @@
+{
+    "n": 10000,
+    "date": "2026-10-06T11:30:12+00:00",
+    "mysql": "8.4.3",
+    "results": [
+        {
+            "ms": 0.66,
+            "max": 0.69,
+            "name": "листинг root(1) \/ order",
+            "plan": []
+        },
+        {
+            "ms": 0.61,
+            "max": 0.66,
+            "name": "листинг root(1) \/ price_asc",
+            "plan": []
+        },
+        {
+            "ms": 0.72,
+            "max": 0.8,
+            "name": "листинг root(1) \/ price_desc",
+            "plan": []
+        },
+        {
+            "ms": 0.73,
+            "max": 0.74,
+            "name": "листинг root(1) \/ new",
+            "plan": []
+        },
+        {
+            "ms": 0.48,
+            "max": 0.51,
+            "name": "листинг root(1) \/ title",
+            "plan": []
+        },
+        {
+            "ms": 0.46,
+            "max": 0.49,
+            "name": "листинг L1(2) \/ order",
+            "plan": []
+        },
+        {
+            "ms": 0.45,
+            "max": 0.47,
+            "name": "листинг L1(2) \/ price_asc",
+            "plan": []
+        },
+        {
+            "ms": 0.3,
+            "max": 0.34,
+            "name": "листинг L1(2) \/ price_desc",
+            "plan": []
+        },
+        {
+            "ms": 0.26,
+            "max": 0.3,
+            "name": "листинг L1(2) \/ new",
+            "plan": []
+        },
+        {
+            "ms": 0.26,
+            "max": 0.27,
+            "name": "листинг L1(2) \/ title",
+            "plan": []
+        },
+        {
+            "ms": 0.24,
+            "max": 0.25,
+            "name": "листинг L2(12) \/ order",
+            "plan": []
+        },
+        {
+            "ms": 0.24,
+            "max": 0.24,
+            "name": "листинг L2(12) \/ price_asc",
+            "plan": []
+        },
+        {
+            "ms": 0.24,
+            "max": 0.24,
+            "name": "листинг L2(12) \/ price_desc",
+            "plan": []
+        },
+        {
+            "ms": 0.23,
+            "max": 0.24,
+            "name": "листинг L2(12) \/ new",
+            "plan": []
+        },
+        {
+            "ms": 0.23,
+            "max": 0.24,
+            "name": "листинг L2(12) \/ title",
+            "plan": []
+        },
+        {
+            "ms": 0.23,
+            "max": 0.23,
+            "name": "листинг leaf-hot(112) \/ order",
+            "plan": []
+        },
+        {
+            "ms": 0.23,
+            "max": 0.23,
+            "name": "листинг leaf-hot(112) \/ price_asc",
+            "plan": []
+        },
+        {
+            "ms": 0.24,
+            "max": 0.24,
+            "name": "листинг leaf-hot(112) \/ price_desc",
+            "plan": []
+        },
+        {
+            "ms": 0.27,
+            "max": 0.28,
+            "name": "листинг leaf-hot(112) \/ new",
+            "plan": []
+        },
+        {
+            "ms": 0.26,
+            "max": 0.28,
+            "name": "листинг leaf-hot(112) \/ title",
+            "plan": []
+        },
+        {
+            "ms": 0.24,
+            "max": 0.25,
+            "name": "листинг leaf-mid(412) \/ order",
+            "plan": []
+        },
+        {
+            "ms": 0.23,
+            "max": 0.24,
+            "name": "листинг leaf-mid(412) \/ price_asc",
+            "plan": []
+        },
+        {
+            "ms": 0.24,
+            "max": 0.32,
+            "name": "листинг leaf-mid(412) \/ price_desc",
+            "plan": []
+        },
+        {
+            "ms": 0.25,
+            "max": 0.3,
+            "name": "листинг leaf-mid(412) \/ new",
+            "plan": []
+        },
+        {
+            "ms": 0.24,
+            "max": 0.26,
+            "name": "листинг leaf-mid(412) \/ title",
+            "plan": []
+        },
+        {
+            "ms": 0.52,
+            "max": 0.53,
+            "name": "листинг root(1) \/ order \/ смещение 2400",
+            "plan": []
+        },
+        {
+            "ms": 0.54,
+            "max": 0.56,
+            "name": "листинг root(1) \/ price_asc \/ смещение 2400",
+            "plan": []
+        },
+        {
+            "ms": 0.69,
+            "max": 0.7,
+            "name": "листинг root(1) \/ new \/ смещение 2400",
+            "plan": []
+        },
+        {
+            "ms": 1.73,
+            "max": 1.78,
+            "name": "листинг+фильтр root(1) \/ order",
+            "plan": {
+                "filesort": true,
+                "temporary": true
+            }
+        },
+        {
+            "ms": 1.75,
+            "max": 1.8,
+            "name": "листинг+фильтр root(1) \/ price_asc",
+            "plan": {
+                "filesort": true,
+                "temporary": true
+            }
+        },
+        {
+            "ms": 1.68,
+            "max": 1.71,
+            "name": "листинг+фильтр root(1) \/ new",
+            "plan": {
+                "filesort": true,
+                "temporary": true
+            }
+        },
+        {
+            "ms": 3.41,
+            "max": 3.52,
+            "name": "листинг+фильтр L1(2) \/ order",
+            "plan": {
+                "temporary": true
+            }
+        },
+        {
+            "ms": 1.18,
+            "max": 1.2,
+            "name": "листинг+фильтр L1(2) \/ price_asc",
+            "plan": {
+                "filesort": true,
+                "temporary": true
+            }
+        },
+        {
+            "ms": 3.66,
+            "max": 3.87,
+            "name": "листинг+фильтр L1(2) \/ new",
+            "plan": {
+                "temporary": true
+            }
+        },
+        {
+            "ms": 1.22,
+            "max": 1.29,
+            "name": "листинг+фильтр L2(12) \/ order",
+            "plan": []
+        },
+        {
+            "ms": 0.89,
+            "max": 0.93,
+            "name": "листинг+фильтр L2(12) \/ price_asc",
+            "plan": {
+                "temporary": true
+            }
+        },
+        {
+            "ms": 1.28,
+            "max": 1.35,
+            "name": "листинг+фильтр L2(12) \/ new",
+            "plan": []
+        },
+        {
+            "ms": 1.17,
+            "max": 1.2,
+            "name": "счётчик с потолком root(1)",
+            "plan": []
+        },
+        {
+            "ms": 0.97,
+            "max": 1.05,
+            "name": "счётчик точный root(1)",
+            "plan": []
+        },
+        {
+            "ms": 0.59,
+            "max": 0.61,
+            "name": "счётчик с потолком L1(2)",
+            "plan": []
+        },
+        {
+            "ms": 0.52,
+            "max": 0.54,
+            "name": "счётчик точный L1(2)",
+            "plan": []
+        },
+        {
+            "ms": 1.65,
+            "max": 1.77,
+            "name": "счётчик с фильтром и потолком root(1)",
+            "plan": {
+                "temporary": true
+            }
+        },
+        {
+            "ms": 6.24,
+            "max": 6.35,
+            "name": "счётчики бренда в root(1), без фильтра",
+            "plan": []
+        },
+        {
+            "ms": 6.56,
+            "max": 6.59,
+            "name": "счётчики бренда в root(1), выбран цвет",
+            "plan": {
+                "temporary": true
+            }
+        },
+        {
+            "ms": 3.54,
+            "max": 3.69,
+            "name": "счётчики бренда в L1(2), без фильтра",
+            "plan": {
+                "temporary": true
+            }
+        },
+        {
+            "ms": 3.61,
+            "max": 3.66,
+            "name": "счётчики бренда в L1(2), выбран цвет",
+            "plan": {
+                "temporary": true
+            }
+        },
+        {
+            "ms": 0.56,
+            "max": 0.57,
+            "name": "карточка товара (5 запросов, среднее на товар)",
+            "plan": []
+        },
+        {
+            "ms": 0.51,
+            "max": 0.57,
+            "name": "поиск FULLTEXT «красный диван»",
+            "plan": []
+        },
+        {
+            "ms": 0.45,
+            "max": 0.47,
+            "name": "поиск FULLTEXT «стол» (частое слово)",
+            "plan": []
+        },
+        {
+            "ms": 0.11,
+            "max": 0.12,
+            "name": "поиск по артикулу (префикс)",
+            "plan": {
+                "temporary": true
+            }
+        },
+        {
+            "ms": 0.12,
+            "max": 0.15,
+            "name": "админка: список, страница 1",
+            "plan": []
+        },
+        {
+            "ms": 1.98,
+            "max": 2.07,
+            "name": "админка: список, глубокая страница",
+            "plan": []
+        },
+        {
+            "ms": 0.22,
+            "max": 0.24,
+            "name": "админка: фильтр по основной категории",
+            "plan": {
+                "filesort": true
+            }
+        },
+        {
+            "ms": 2.68,
+            "max": 2.78,
+            "name": "админка: поиск LIKE %…% по названию (известное слабое место)",
+            "plan": []
+        }
+    ],
+    "sizes": [
+        {
+            "t": "bn_field_values",
+            "mb": "42.1",
+            "r": 193036
+        },
+        {
+            "t": "bn_products",
+            "mb": "27.4",
+            "r": 8340
+        },
+        {
+            "t": "bn_product_categories",
+            "mb": "20.6",
+            "r": 52515
+        },
+        {
+            "t": "bn_field_texts",
+            "mb": "11.4",
+            "r": 19424
+        },
+        {
+            "t": "bn_search",
+            "mb": "5.7",
+            "r": 9482
+        },
+        {
+            "t": "bn_variant_prices",
+            "mb": "3.8",
+            "r": 22183
+        },
+        {
+            "t": "bn_variants",
+            "mb": "3.5",
+            "r": 21749
+        },
+        {
+            "t": "bn_stock_levels",
+            "mb": "0.5",
+            "r": 11085
+        },
+        {
+            "t": "bn_orders",
+            "mb": "0.1",
+            "r": 0
+        },
+        {
+            "t": "bn_carts",
+            "mb": "0.1",
+            "r": 0
+        },
+        {
+            "t": "bn_customers",
+            "mb": "0.1",
+            "r": 0
+        },
+        {
+            "t": "bn_fields",
+            "mb": "0.1",
+            "r": 19
+        },
+        {
+            "t": "bn_cart_items",
+            "mb": "0.0",
+            "r": 0
+        },
+        {
+            "t": "bn_field_media",
+            "mb": "0.0",
+            "r": 0
+        },
+        {
+            "t": "bn_order_items",
+            "mb": "0.0",
+            "r": 0
+        },
+        {
+            "t": "bn_payments",
+            "mb": "0.0",
+            "r": 0
+        },
+        {
+            "t": "bn_stock_movements",
+            "mb": "0.0",
+            "r": 0
+        },
+        {
+            "t": "bn_category_fields",
+            "mb": "0.0",
+            "r": 0
+        },
+        {
+            "t": "bn_external_ids",
+            "mb": "0.0",
+            "r": 0
+        },
+        {
+            "t": "bn_field_options",
+            "mb": "0.0",
+            "r": 147
+        },
+        {
+            "t": "bn_fieldgroups",
+            "mb": "0.0",
+            "r": 0
+        },
+        {
+            "t": "bn_order_adjustments",
+            "mb": "0.0",
+            "r": 0
+        },
+        {
+            "t": "bn_order_history",
+            "mb": "0.0",
+            "r": 0
+        },
+        {
+            "t": "bn_payment_methods",
+            "mb": "0.0",
+            "r": 0
+        },
+        {
+            "t": "bn_shipping_methods",
+            "mb": "0.0",
+            "r": 0
+        },
+        {
+            "t": "bn_statuses",
+            "mb": "0.0",
+            "r": 0
+        },
+        {
+            "t": "bn_price_lists",
+            "mb": "0.0",
+            "r": 1
+        },
+        {
+            "t": "bn_product_axes",
+            "mb": "0.0",
+            "r": 0
+        },
+        {
+            "t": "bn_status_transitions",
+            "mb": "0.0",
+            "r": 0
+        },
+        {
+            "t": "bn_stock_locations",
+            "mb": "0.0",
+            "r": 1
+        }
+    ]
+}
