@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<config>
+	<fieldset name="shop" label="COM_DHARMASHOP_CONFIG_SHOP" description="COM_DHARMASHOP_CONFIG_SHOP_DESC">
+		<field name="currency_code" type="text" label="COM_DHARMASHOP_CONFIG_CURRENCY_CODE" description="COM_DHARMASHOP_CONFIG_CURRENCY_CODE_DESC" default="RUB" maxlength="3" filter="string" />
+		<field name="currency_symbol" type="text" label="COM_DHARMASHOP_CONFIG_CURRENCY_SYMBOL" default="₽" maxlength="8" filter="string" />
+		<field name="currency_position" type="list" label="COM_DHARMASHOP_CONFIG_CURRENCY_POSITION" default="after" validate="options">
+			<option value="before">COM_DHARMASHOP_CONFIG_CURRENCY_BEFORE</option>
+			<option value="after">COM_DHARMASHOP_CONFIG_CURRENCY_AFTER</option>
+		</field>
+		<field name="currency_decimals" type="integer" label="COM_DHARMASHOP_CONFIG_CURRENCY_DECIMALS" default="0" first="0" last="4" step="1" />
+	</fieldset>
+	<fieldset name="catalog" label="COM_DHARMASHOP_CONFIG_CATALOG">
+		<field name="list_limit" type="integer" label="COM_DHARMASHOP_CONFIG_LIST_LIMIT" default="24" first="6" last="96" step="6" />
+	</fieldset>
+	<fieldset name="permissions" label="JCONFIG_PERMISSIONS_LABEL" description="JCONFIG_PERMISSIONS_DESC">
+		<field name="rules" type="rules" label="JCONFIG_PERMISSIONS_LABEL" validate="rules" filter="rules" component="com_dharmashop" section="component" />
+	</fieldset>
+</config>
