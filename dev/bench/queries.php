@@ -101,6 +101,25 @@ foreach (['order', 'price_asc', 'new'] as $oname) {
     }, $sql);
 }
 
+// 2b. Страница на середине каталога (смещение N/2, кратно 24) — для сравнения с RadicalMart.
+$mid = (int) (floor($n / 2 / 24) * 24);
+foreach (['order', 'price_asc'] as $oname) {
+    $sql = listingIdsSql(1, $orders[$oname], 24, $mid);
+    $add("листинг root(1) / $oname / середина каталога", function () use ($db, $sql) {
+        $ids = $db->setQuery($sql)->loadColumn();
+        $db->setQuery(cardsSql($ids))->loadAssocList();
+    }, $sql);
+}
+
+// 2c. Одно поле фильтра (материал) в корне — для сравнения с RadicalMart, где проверялся один фильтр.
+$one = 'AND EXISTS (SELECT 1 FROM bn_field_values v WHERE v.product_id = pc.product_id AND v.field_id = 2 AND v.option_id IN (33))';
+foreach (['order', 'price_asc'] as $oname) {
+    $sql = listingIdsSql(1, $orders[$oname], 24, 0, $one);
+    $add("листинг+1 фильтр root(1) / $oname", function () use ($db, $sql) {
+        $ids = $db->setQuery($sql)->loadColumn();
+        $db->setQuery(cardsSql($ids))->loadAssocList();
+    }, $sql);
+}
 // 3. Листинг + диапазон цены + 3 фильтра по полям (бренд, материал, цвет варианта).
 $filter = filterSql($brand, $material, $color);
 foreach (['root(1)' => 1, 'L1(2)' => 2, 'L2(12)' => 12] as $label => $cat) {

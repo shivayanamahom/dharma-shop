@@ -1,7 +1,7 @@
 <?php
 // Dev-only: собирает docs/BENCHMARKS.md из dev/bench/results/*.json (php dev/bench/report.php).
 $dir = __DIR__ . '/results';
-$sizes = [100, 10000, 100000];
+$sizes = [100, 10000, 50000, 100000];
 $data = [];
 foreach ($sizes as $n) {
     $f = "$dir/$n.json";
@@ -18,12 +18,22 @@ $out .= "- Время — медиана 9 прогонов после 2 про�
 $out .= '| Сценарий | ' . implode(' | ', array_map(fn ($n) => number_format($n, 0, '', ' ') . ' товаров', array_keys($data))) . " | План на максимальном размере |\n";
 $out .= '|---|' . str_repeat('---:|', count($data)) . "---|\n";
 $last = end($data);
-foreach ($base['results'] as $i => $row) {
+$byName = static function (array $d, string $name): ?array {
+    foreach ($d['results'] as $r) {
+        if ($r['name'] === $name) {
+            return $r;
+        }
+    }
+
+    return null;
+};
+foreach ($last['results'] as $row) {
     $cells = [];
     foreach ($data as $d) {
-        $cells[] = number_format($d['results'][$i]['ms'], 2, ',', '');
+        $r = $byName($d, $row['name']);
+        $cells[] = $r ? number_format($r['ms'], 2, ',', '') : '—';
     }
-    $plan = $last['results'][$i]['plan'] ?? [];
+    $plan = $row['plan'] ?? [];
     $out .= '| ' . $row['name'] . ' | ' . implode(' | ', $cells) . ' | ' . ($plan ? implode(', ', array_keys($plan)) : '—') . " |\n";
 }
 $out .= "\n## Размеры таблиц (МБ) на максимальном размере\n\n| Таблица | МБ | Строк (оценка) |\n|---|---:|---:|\n";

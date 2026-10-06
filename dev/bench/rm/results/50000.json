@@ -1,0 +1,488 @@
+{
+    "products": 50000,
+    "items": 173916,
+    "date": "2026-10-06T12:01:55+00:00",
+    "results": [
+        {
+            "name": "не-RM страница (статья), для вычитания базовой стоимости Joomla",
+            "path": "\/o-kompanii\/o-nas",
+            "http": 200,
+            "ttfb_ms": 207.3,
+            "ttfb_max": 277.6,
+            "size": 92656,
+            "db_queries": 53,
+            "db_ms": 142.1,
+            "rows_examined": 51283,
+            "top": [
+                {
+                    "ms": 136.53,
+                    "ex": 50011,
+                    "sent": 12,
+                    "sort": 12,
+                    "tmp": 0,
+                    "sql": "2026-10-06T12:01:07.866223Z SELECT p.id,p.title,p.alias,p.code,p.category,p.category_pathway,p.category_route,p.categories_additional,p.categories_all,p.created,p.introtext,p.prices,p.stock,p.in_stock,p.fields,p.shipping,p.state,p.media,p.params,p.plugins,p.language FROM `ol4oe_radicalmart_products`"
+                },
+                {
+                    "ms": 0.64,
+                    "ex": 0,
+                    "sent": 0,
+                    "sort": 0,
+                    "tmp": 0,
+                    "sql": "2026-10-06T12:01:07.710225Z INSERT INTO `ol4oe_session` (`session_id`,`guest`,`time`,`userid`,`username`,`client_id`) VALUES ('6a11bf16d3ed7c16cb8d203a6a43fd60', 1, '1791288067', 0, '', 0);"
+                },
+                {
+                    "ms": 0.59,
+                    "ex": 1,
+                    "sent": 0,
+                    "sort": 0,
+                    "tmp": 0,
+                    "sql": "2026-10-06T12:01:07.883967Z UPDATE `ol4oe_session` SET `data` = 'joomla|s:700:\\\"TzoyNDoiSm9vbWxhXFJlZ2lzdHJ5XFJlZ2lzdHJ5IjozOntzOjc6IgAqAGRhdGEiO086ODoic3RkQ2xhc3MiOjM6e3M6Nzoic2Vzc2lvbiI7Tzo4OiJzdGRDbGFzcyI6Mzp7czo3OiJjb3VudGVyIjtpOjE7czo1OiJ0aW1lciI7Tzo4OiJzdGRDbGFzcyI6Mzp7czo1OiJzdGFydCI7aToxNzkx"
+                }
+            ]
+        },
+        {
+            "name": "главная",
+            "path": "\/",
+            "http": 200,
+            "ttfb_ms": 206.9,
+            "ttfb_max": 209.9,
+            "size": 124851,
+            "db_queries": 77,
+            "db_ms": 138.3,
+            "rows_examined": 51557,
+            "top": [
+                {
+                    "ms": 133.43,
+                    "ex": 50011,
+                    "sent": 12,
+                    "sort": 12,
+                    "tmp": 0,
+                    "sql": "2026-10-06T12:01:10.712073Z SELECT p.id,p.title,p.alias,p.code,p.category,p.category_pathway,p.category_route,p.categories_additional,p.categories_all,p.created,p.introtext,p.prices,p.stock,p.in_stock,p.fields,p.shipping,p.state,p.media,p.params,p.plugins,p.language FROM `ol4oe_radicalmart_products`"
+                },
+                {
+                    "ms": 0.61,
+                    "ex": 0,
+                    "sent": 0,
+                    "sort": 0,
+                    "tmp": 0,
+                    "sql": "2026-10-06T12:01:10.552441Z INSERT INTO `ol4oe_session` (`session_id`,`guest`,`time`,`userid`,`username`,`client_id`) VALUES ('f794d08339181bee944162388d5660a9', 1, '1791288070', 0, '', 0);"
+                },
+                {
+                    "ms": 0.58,
+                    "ex": 1,
+                    "sent": 0,
+                    "sort": 0,
+                    "tmp": 0,
+                    "sql": "2026-10-06T12:01:10.730072Z UPDATE `ol4oe_session` SET `data` = 'joomla|s:700:\\\"TzoyNDoiSm9vbWxhXFJlZ2lzdHJ5XFJlZ2lzdHJ5IjozOntzOjc6IgAqAGRhdGEiO086ODoic3RkQ2xhc3MiOjM6e3M6Nzoic2Vzc2lvbiI7Tzo4OiJzdGRDbGFzcyI6Mzp7czo3OiJjb3VudGVyIjtpOjE7czo1OiJ0aW1lciI7Tzo4OiJzdGRDbGFzcyI6Mzp7czo1OiJzdGFydCI7aToxNzkx"
+                }
+            ]
+        },
+        {
+            "name": "категория «Продукция» (корень), стр. 1",
+            "path": "\/produktsiya",
+            "http": 200,
+            "ttfb_ms": 308.2,
+            "ttfb_max": 328.2,
+            "size": 178781,
+            "db_queries": 49,
+            "db_ms": 243.5,
+            "rows_examined": 77015,
+            "top": [
+                {
+                    "ms": 132.77,
+                    "ex": 50011,
+                    "sent": 12,
+                    "sort": 12,
+                    "tmp": 0,
+                    "sql": "2026-10-06T12:01:14.833118Z SELECT p.id,p.title,p.alias,p.code,p.category,p.category_pathway,p.category_route,p.categories_additional,p.categories_all,p.created,p.introtext,p.prices,p.stock,p.in_stock,p.fields,p.shipping,p.state,p.media,p.params,p.plugins,p.language FROM `ol4oe_radicalmart_products`"
+                },
+                {
+                    "ms": 94.26,
+                    "ex": 26156,
+                    "sent": 1,
+                    "sort": 0,
+                    "tmp": 0,
+                    "sql": "2026-10-06T12:01:14.688945Z SELECT COUNT(*) FROM `ol4oe_radicalmart_categories_items` AS `ci` WHERE `ci`.`state` = 1 AND `ci`.`category_id` = 2;"
+                },
+                {
+                    "ms": 9.29,
+                    "ex": 1,
+                    "sent": 0,
+                    "sort": 0,
+                    "tmp": 0,
+                    "sql": "2026-10-06T12:01:14.860752Z UPDATE `ol4oe_session` SET `data` = 'joomla|s:700:\\\"TzoyNDoiSm9vbWxhXFJlZ2lzdHJ5XFJlZ2lzdHJ5IjozOntzOjc6IgAqAGRhdGEiO086ODoic3RkQ2xhc3MiOjM6e3M6Nzoic2Vzc2lvbiI7Tzo4OiJzdGRDbGFzcyI6Mzp7czo3OiJjb3VudGVyIjtpOjE7czo1OiJ0aW1lciI7Tzo4OiJzdGRDbGFzcyI6Mzp7czo1OiJzdGFydCI7aToxNzkx"
+                }
+            ]
+        },
+        {
+            "name": "категория «Продукция», стр. 2",
+            "path": "\/produktsiya?start=23",
+            "http": 200,
+            "ttfb_ms": 305.3,
+            "ttfb_max": 429.1,
+            "size": 172741,
+            "db_queries": 53,
+            "db_ms": 238.3,
+            "rows_examined": 77043,
+            "top": [
+                {
+                    "ms": 135.2,
+                    "ex": 50011,
+                    "sent": 12,
+                    "sort": 12,
+                    "tmp": 0,
+                    "sql": "2026-10-06T12:01:19.041882Z SELECT p.id,p.title,p.alias,p.code,p.category,p.category_pathway,p.category_route,p.categories_additional,p.categories_all,p.created,p.introtext,p.prices,p.stock,p.in_stock,p.fields,p.shipping,p.state,p.media,p.params,p.plugins,p.language FROM `ol4oe_radicalmart_products`"
+                },
+                {
+                    "ms": 96.01,
+                    "ex": 26156,
+                    "sent": 1,
+                    "sort": 0,
+                    "tmp": 0,
+                    "sql": "2026-10-06T12:01:18.881351Z SELECT COUNT(*) FROM `ol4oe_radicalmart_categories_items` AS `ci` WHERE `ci`.`state` = 1 AND `ci`.`category_id` = 2;"
+                },
+                {
+                    "ms": 3.21,
+                    "ex": 47,
+                    "sent": 23,
+                    "sort": 0,
+                    "tmp": 0,
+                    "sql": "2026-10-06T12:01:18.884846Z SELECT ci.item_id FROM `ol4oe_radicalmart_categories_items` AS `ci` WHERE `ci`.`state` = 1 AND `ci`.`category_id` = 2 ORDER BY `ci`.`in_stock` DESC,`ci`.`ordering` ASC LIMIT 23, 23;"
+                }
+            ]
+        },
+        {
+            "name": "категория «Продукция», глубокая стр. (start=24978)",
+            "path": "\/produktsiya?start=24978",
+            "http": 200,
+            "ttfb_ms": 388.4,
+            "ttfb_max": 419.4,
+            "size": 167693,
+            "db_queries": 49,
+            "db_ms": 328.9,
+            "rows_examined": 102000,
+            "top": [
+                {
+                    "ms": 137.37,
+                    "ex": 50011,
+                    "sent": 12,
+                    "sort": 12,
+                    "tmp": 0,
+                    "sql": "2026-10-06T12:01:24.265304Z SELECT p.id,p.title,p.alias,p.code,p.category,p.category_pathway,p.category_route,p.categories_additional,p.categories_all,p.created,p.introtext,p.prices,p.stock,p.in_stock,p.fields,p.shipping,p.state,p.media,p.params,p.plugins,p.language FROM `ol4oe_radicalmart_products`"
+                },
+                {
+                    "ms": 92.91,
+                    "ex": 26156,
+                    "sent": 1,
+                    "sort": 0,
+                    "tmp": 0,
+                    "sql": "2026-10-06T12:01:24.018315Z SELECT COUNT(*) FROM `ol4oe_radicalmart_categories_items` AS `ci` WHERE `ci`.`state` = 1 AND `ci`.`category_id` = 2;"
+                },
+                {
+                    "ms": 86.03,
+                    "ex": 25002,
+                    "sent": 23,
+                    "sort": 0,
+                    "tmp": 0,
+                    "sql": "2026-10-06T12:01:24.104607Z SELECT ci.item_id FROM `ol4oe_radicalmart_categories_items` AS `ci` WHERE `ci`.`state` = 1 AND `ci`.`category_id` = 2 ORDER BY `ci`.`in_stock` DESC,`ci`.`ordering` ASC LIMIT 24978, 23;"
+                }
+            ]
+        },
+        {
+            "name": "категория-узел «Горячие смеси»",
+            "path": "\/produktsiya\/goryachie-asfaltobetonnye-smesi",
+            "http": 200,
+            "ttfb_ms": 212.2,
+            "ttfb_max": 220.1,
+            "size": 182802,
+            "db_queries": 54,
+            "db_ms": 140.2,
+            "rows_examined": 51637,
+            "top": [
+                {
+                    "ms": 133.03,
+                    "ex": 50011,
+                    "sent": 12,
+                    "sort": 12,
+                    "tmp": 0,
+                    "sql": "2026-10-06T12:01:27.212653Z SELECT p.id,p.title,p.alias,p.code,p.category,p.category_pathway,p.category_route,p.categories_additional,p.categories_all,p.created,p.introtext,p.prices,p.stock,p.in_stock,p.fields,p.shipping,p.state,p.media,p.params,p.plugins,p.language FROM `ol4oe_radicalmart_products`"
+                },
+                {
+                    "ms": 2.79,
+                    "ex": 791,
+                    "sent": 1,
+                    "sort": 0,
+                    "tmp": 0,
+                    "sql": "2026-10-06T12:01:27.068467Z SELECT COUNT(*) FROM `ol4oe_radicalmart_categories_items` AS `ci` WHERE `ci`.`state` = 1 AND `ci`.`category_id` = 6;"
+                },
+                {
+                    "ms": 0.62,
+                    "ex": 0,
+                    "sent": 0,
+                    "sort": 0,
+                    "tmp": 0,
+                    "sql": "2026-10-06T12:01:27.044931Z INSERT INTO `ol4oe_session` (`session_id`,`guest`,`time`,`userid`,`username`,`client_id`) VALUES ('ecdf8e97932f09e1dfe8bd92e849791f', 1, '1791288087', 0, '', 0);"
+                }
+            ]
+        },
+        {
+            "name": "категория-лист «Щебень гранитный»",
+            "path": "\/produktsiya\/inertnye-materialy\/sheben-granitnyy",
+            "http": 200,
+            "ttfb_ms": 226.4,
+            "ttfb_max": 259.3,
+            "size": 175467,
+            "db_queries": 50,
+            "db_ms": 157.7,
+            "rows_examined": 56042,
+            "top": [
+                {
+                    "ms": 135.3,
+                    "ex": 50011,
+                    "sent": 12,
+                    "sort": 12,
+                    "tmp": 0,
+                    "sql": "2026-10-06T12:01:30.402870Z SELECT p.id,p.title,p.alias,p.code,p.category,p.category_pathway,p.category_route,p.categories_additional,p.categories_all,p.created,p.introtext,p.prices,p.stock,p.in_stock,p.fields,p.shipping,p.state,p.media,p.params,p.plugins,p.language FROM `ol4oe_radicalmart_products`"
+                },
+                {
+                    "ms": 16.71,
+                    "ex": 5222,
+                    "sent": 1,
+                    "sort": 0,
+                    "tmp": 0,
+                    "sql": "2026-10-06T12:01:30.256256Z SELECT COUNT(*) FROM `ol4oe_radicalmart_categories_items` AS `ci` WHERE `ci`.`state` = 1 AND `ci`.`category_id` = 20;"
+                },
+                {
+                    "ms": 1.33,
+                    "ex": 23,
+                    "sent": 23,
+                    "sort": 0,
+                    "tmp": 0,
+                    "sql": "2026-10-06T12:01:30.228936Z SELECT ci.item_id FROM `ol4oe_radicalmart_categories_items` AS `ci` WHERE `ci`.`state` = 1 AND `ci`.`category_id` = 20 ORDER BY `ci`.`in_stock` DESC,`ci`.`ordering` ASC LIMIT 23;"
+                }
+            ]
+        },
+        {
+            "name": "корень, сортировка по цене",
+            "path": "\/produktsiya",
+            "http": 200,
+            "ttfb_ms": 309.5,
+            "ttfb_max": 332.1,
+            "size": 179690,
+            "db_queries": 45,
+            "db_ms": 254.4,
+            "rows_examined": 77002,
+            "top": [
+                {
+                    "ms": 143.83,
+                    "ex": 50011,
+                    "sent": 12,
+                    "sort": 12,
+                    "tmp": 0,
+                    "sql": "2026-10-06T12:01:34.560625Z SELECT p.id,p.title,p.alias,p.code,p.category,p.category_pathway,p.category_route,p.categories_additional,p.categories_all,p.created,p.introtext,p.prices,p.stock,p.in_stock,p.fields,p.shipping,p.state,p.media,p.params,p.plugins,p.language FROM `ol4oe_radicalmart_products`"
+                },
+                {
+                    "ms": 105.27,
+                    "ex": 26156,
+                    "sent": 1,
+                    "sort": 0,
+                    "tmp": 0,
+                    "sql": "2026-10-06T12:01:34.405004Z SELECT COUNT(*) FROM `ol4oe_radicalmart_categories_items` AS `ci` WHERE `ci`.`state` = 1 AND `ci`.`category_id` = 2;"
+                },
+                {
+                    "ms": 1.68,
+                    "ex": 23,
+                    "sent": 23,
+                    "sort": 0,
+                    "tmp": 0,
+                    "sql": "2026-10-06T12:01:34.289181Z SELECT ci.item_id FROM `ol4oe_radicalmart_categories_items` AS `ci` WHERE `ci`.`state` = 1 AND `ci`.`category_id` = 2 ORDER BY `ci`.`in_stock` DESC,`ci`.`ordering_price` ASC LIMIT 23;"
+                }
+            ]
+        },
+        {
+            "name": "корень, сортировка по названию",
+            "path": "\/produktsiya",
+            "http": 200,
+            "ttfb_ms": 301.5,
+            "ttfb_max": 307.3,
+            "size": 176936,
+            "db_queries": 49,
+            "db_ms": 234.5,
+            "rows_examined": 77001,
+            "top": [
+                {
+                    "ms": 132.15,
+                    "ex": 50011,
+                    "sent": 12,
+                    "sort": 12,
+                    "tmp": 0,
+                    "sql": "2026-10-06T12:01:38.582544Z SELECT p.id,p.title,p.alias,p.code,p.category,p.category_pathway,p.category_route,p.categories_additional,p.categories_all,p.created,p.introtext,p.prices,p.stock,p.in_stock,p.fields,p.shipping,p.state,p.media,p.params,p.plugins,p.language FROM `ol4oe_radicalmart_products`"
+                },
+                {
+                    "ms": 96.34,
+                    "ex": 26156,
+                    "sent": 1,
+                    "sort": 0,
+                    "tmp": 0,
+                    "sql": "2026-10-06T12:01:38.438785Z SELECT COUNT(*) FROM `ol4oe_radicalmart_categories_items` AS `ci` WHERE `ci`.`state` = 1 AND `ci`.`category_id` = 2;"
+                },
+                {
+                    "ms": 2.28,
+                    "ex": 24,
+                    "sent": 23,
+                    "sort": 0,
+                    "tmp": 0,
+                    "sql": "2026-10-06T12:01:38.332523Z SELECT ci.item_id FROM `ol4oe_radicalmart_categories_items` AS `ci` WHERE `ci`.`state` = 1 AND `ci`.`category_id` = 2 ORDER BY `ci`.`in_stock` DESC,`ci`.`ordering_title` ASC LIMIT 23;"
+                }
+            ]
+        },
+        {
+            "name": "корень, сортировка по дате (новые)",
+            "path": "\/produktsiya",
+            "http": 200,
+            "ttfb_ms": 306.3,
+            "ttfb_max": 314.8,
+            "size": 176879,
+            "db_queries": 49,
+            "db_ms": 244.7,
+            "rows_examined": 77014,
+            "top": [
+                {
+                    "ms": 135.38,
+                    "ex": 50011,
+                    "sent": 12,
+                    "sort": 12,
+                    "tmp": 0,
+                    "sql": "2026-10-06T12:01:42.669922Z SELECT p.id,p.title,p.alias,p.code,p.category,p.category_pathway,p.category_route,p.categories_additional,p.categories_all,p.created,p.introtext,p.prices,p.stock,p.in_stock,p.fields,p.shipping,p.state,p.media,p.params,p.plugins,p.language FROM `ol4oe_radicalmart_products`"
+                },
+                {
+                    "ms": 94.32,
+                    "ex": 26156,
+                    "sent": 1,
+                    "sort": 0,
+                    "tmp": 0,
+                    "sql": "2026-10-06T12:01:42.522768Z SELECT COUNT(*) FROM `ol4oe_radicalmart_categories_items` AS `ci` WHERE `ci`.`state` = 1 AND `ci`.`category_id` = 2;"
+                },
+                {
+                    "ms": 9.25,
+                    "ex": 1,
+                    "sent": 0,
+                    "sort": 0,
+                    "tmp": 0,
+                    "sql": "2026-10-06T12:01:42.697340Z UPDATE `ol4oe_session` SET `data` = 'joomla|s:700:\\\"TzoyNDoiSm9vbWxhXFJlZ2lzdHJ5XFJlZ2lzdHJ5IjozOntzOjc6IgAqAGRhdGEiO086ODoic3RkQ2xhc3MiOjM6e3M6Nzoic2Vzc2lvbiI7Tzo4OiJzdGRDbGFzcyI6Mzp7czo3OiJjb3VudGVyIjtpOjE7czo1OiJ0aW1lciI7Tzo4OiJzdGRDbGFzcyI6Mzp7czo1OiJzdGFydCI7aToxNzkx"
+                }
+            ]
+        },
+        {
+            "name": "корень + фильтр по полю «крупность = 8»",
+            "path": "\/produktsiya?filter[fields][krupnost]=8",
+            "http": 200,
+            "ttfb_ms": 527.5,
+            "ttfb_max": 568.7,
+            "size": 105123,
+            "db_queries": 48,
+            "db_ms": 476.2,
+            "rows_examined": 155445,
+            "top": [
+                {
+                    "ms": 204.86,
+                    "ex": 52316,
+                    "sent": 1,
+                    "sort": 0,
+                    "tmp": 1,
+                    "sql": "2026-10-06T12:01:49.411140Z SELECT COUNT(*) FROM `ol4oe_radicalmart_categories_items` AS `ci` WHERE `ci`.`state` = 1 AND `ci`.`category_id` = 2 AND ( SELECT 1 FROM `ol4oe_radicalmart_categories_items` AS `fsq`,JSON_TABLE(`fsq`.`filter_fields`, '$.*' COLUMNS (`krupnost` VARCHAR(100) PATH '$.\\\"krupnos"
+                },
+                {
+                    "ms": 138.27,
+                    "ex": 50011,
+                    "sent": 12,
+                    "sort": 12,
+                    "tmp": 0,
+                    "sql": "2026-10-06T12:01:49.557964Z SELECT p.id,p.title,p.alias,p.code,p.category,p.category_pathway,p.category_route,p.categories_additional,p.categories_all,p.created,p.introtext,p.prices,p.stock,p.in_stock,p.fields,p.shipping,p.state,p.media,p.params,p.plugins,p.language FROM `ol4oe_radicalmart_products`"
+                },
+                {
+                    "ms": 129.33,
+                    "ex": 52316,
+                    "sent": 5,
+                    "sort": 0,
+                    "tmp": 1,
+                    "sql": "2026-10-06T12:01:49.201023Z SELECT ci.item_id FROM `ol4oe_radicalmart_categories_items` AS `ci` WHERE `ci`.`state` = 1 AND `ci`.`category_id` = 2 AND ( SELECT 1 FROM `ol4oe_radicalmart_categories_items` AS `fsq`,JSON_TABLE(`fsq`.`filter_fields`, '$.*' COLUMNS (`krupnost` VARCHAR(100) PATH '$.\\\"krupn"
+                }
+            ]
+        },
+        {
+            "name": "карточка исходного товара",
+            "path": "\/produktsiya\/inertnye-materialy\/pgs\/pgs-peschano-graviynaya-smes-pgs",
+            "http": 200,
+            "ttfb_ms": 197.8,
+            "ttfb_max": 236.8,
+            "size": 91800,
+            "db_queries": 52,
+            "db_ms": 138.3,
+            "rows_examined": 50760,
+            "top": [
+                {
+                    "ms": 134.58,
+                    "ex": 50011,
+                    "sent": 12,
+                    "sort": 12,
+                    "tmp": 0,
+                    "sql": "2026-10-06T12:01:52.351467Z SELECT p.id,p.title,p.alias,p.code,p.category,p.category_pathway,p.category_route,p.categories_additional,p.categories_all,p.created,p.introtext,p.prices,p.stock,p.in_stock,p.fields,p.shipping,p.state,p.media,p.params,p.plugins,p.language FROM `ol4oe_radicalmart_products`"
+                },
+                {
+                    "ms": 0.62,
+                    "ex": 0,
+                    "sent": 0,
+                    "sort": 0,
+                    "tmp": 0,
+                    "sql": "2026-10-06T12:01:52.198087Z INSERT INTO `ol4oe_session` (`session_id`,`guest`,`time`,`userid`,`username`,`client_id`) VALUES ('819d90e17a5f9b0a00c38611b2d01cc4', 1, '1791288112', 0, '', 0);"
+                },
+                {
+                    "ms": 0.57,
+                    "ex": 1,
+                    "sent": 0,
+                    "sort": 0,
+                    "tmp": 0,
+                    "sql": "2026-10-06T12:01:52.369660Z UPDATE `ol4oe_session` SET `data` = 'joomla|s:700:\\\"TzoyNDoiSm9vbWxhXFJlZ2lzdHJ5XFJlZ2lzdHJ5IjozOntzOjc6IgAqAGRhdGEiO086ODoic3RkQ2xhc3MiOjM6e3M6Nzoic2Vzc2lvbiI7Tzo4OiJzdGRDbGFzcyI6Mzp7czo3OiJjb3VudGVyIjtpOjE7czo1OiJ0aW1lciI7Tzo4OiJzdGRDbGFzcyI6Mzp7czo1OiJzdGFydCI7aToxNzkx"
+                }
+            ]
+        },
+        {
+            "name": "карточка клонированного товара",
+            "path": "\/produktsiya\/inertnye-materialy\/sheben-dolomitovyy\/scheben-dolomitovyy-40-70-mm-m800-zagotovka-schd-40-70-m800-bn47855",
+            "http": 200,
+            "ttfb_ms": 196.8,
+            "ttfb_max": 202.9,
+            "size": 96822,
+            "db_queries": 49,
+            "db_ms": 137.4,
+            "rows_examined": 50756,
+            "top": [
+                {
+                    "ms": 133.7,
+                    "ex": 50011,
+                    "sent": 12,
+                    "sort": 12,
+                    "tmp": 0,
+                    "sql": "2026-10-06T12:01:55.074899Z SELECT p.id,p.title,p.alias,p.code,p.category,p.category_pathway,p.category_route,p.categories_additional,p.categories_all,p.created,p.introtext,p.prices,p.stock,p.in_stock,p.fields,p.shipping,p.state,p.media,p.params,p.plugins,p.language FROM `ol4oe_radicalmart_products`"
+                },
+                {
+                    "ms": 0.63,
+                    "ex": 1,
+                    "sent": 0,
+                    "sort": 0,
+                    "tmp": 0,
+                    "sql": "2026-10-06T12:01:55.091523Z UPDATE `ol4oe_session` SET `data` = 'joomla|s:700:\\\"TzoyNDoiSm9vbWxhXFJlZ2lzdHJ5XFJlZ2lzdHJ5IjozOntzOjc6IgAqAGRhdGEiO086ODoic3RkQ2xhc3MiOjM6e3M6Nzoic2Vzc2lvbiI7Tzo4OiJzdGRDbGFzcyI6Mzp7czo3OiJjb3VudGVyIjtpOjE7czo1OiJ0aW1lciI7Tzo4OiJzdGRDbGFzcyI6Mzp7czo1OiJzdGFydCI7aToxNzkx"
+                },
+                {
+                    "ms": 0.59,
+                    "ex": 0,
+                    "sent": 0,
+                    "sort": 0,
+                    "tmp": 0,
+                    "sql": "2026-10-06T12:01:54.922971Z INSERT INTO `ol4oe_session` (`session_id`,`guest`,`time`,`userid`,`username`,`client_id`) VALUES ('a267042ef7e9b2312fe18810c795b2fa', 1, '1791288114', 0, '', 0);"
+                }
+            ]
+        }
+    ]
+}
