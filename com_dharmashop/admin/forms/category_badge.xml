@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form>
+	<fields name="params">
+		<fieldset name="dharmashop_badge" label="COM_DHARMASHOP_BADGE_FIELDSET_LABEL">
+			<field name="badge_color" type="list" label="COM_DHARMASHOP_BADGE_COLOR_LABEL" description="COM_DHARMASHOP_BADGE_COLOR_DESC" default="primary" validate="options">
+				<option value="primary">COM_DHARMASHOP_COLOR_PRIMARY</option>
+				<option value="secondary">COM_DHARMASHOP_COLOR_SECONDARY</option>
+				<option value="success">COM_DHARMASHOP_COLOR_SUCCESS</option>
+				<option value="danger">COM_DHARMASHOP_COLOR_DANGER</option>
+				<option value="warning">COM_DHARMASHOP_COLOR_WARNING</option>
+				<option value="info">COM_DHARMASHOP_COLOR_INFO</option>
+				<option value="dark">COM_DHARMASHOP_COLOR_DARK</option>
+			</field>
+			<field name="badge_show_list" type="radio" label="COM_DHARMASHOP_BADGE_SHOW_LIST_LABEL" description="COM_DHARMASHOP_BADGE_SHOW_LIST_DESC" layout="joomla.form.field.radio.switcher" default="1">
+				<option value="0">JNO</option>
+				<option value="1">JYES</option>
+			</field>
+		</fieldset>
+	</fields>
+</form>

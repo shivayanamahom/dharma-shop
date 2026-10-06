@@ -16,6 +16,8 @@
 | `sync.sh` | раскладывает исходники в сайт без сборки zip (после первой установки) |
 | `db.sh "SQL"` | запрос к базе сайта; `PFX_` заменяется префиксом таблиц |
 | `web-login.sh` | вход в админку по HTTP, куки в `$COOKIES` (нужны `DHARMA_USER`, `DHARMA_PASS`, `DHARMA_URL`) |
+| `make-category.php <extension> "<название>" [родитель]` | создаёт категорию нужного типа (`com_dharmashop`, `.brand`, `.badge`) |
+| `save-product.sh "Название" <catid> <артикул> <цена> [brand] [badge]` | создаёт товар через форму админки по HTTP (нужен вход `web-login.sh`) |
 | `bench/bench.php` | генератор тестового каталога и замеры (`generate`/`run`/`all`/`drop`), см. `docs/BENCHMARKS_NOTES.md` |
 | `bench/report.php` | собирает `docs/BENCHMARKS.md` из `dev/bench/results/*.json` |
 | `bench/rm/clone.php` | размножает товары RadicalMart на тестовом сайте (`<N>` / `clean`); `DHARMA_SITE` = сайт с RM |

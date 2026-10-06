@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form>
+	<fields name="params">
+		<fieldset name="dharmashop_brand" label="COM_DHARMASHOP_BRAND_FIELDSET_LABEL">
+			<field name="brand_website" type="url" label="COM_DHARMASHOP_BRAND_WEBSITE_LABEL" description="COM_DHARMASHOP_BRAND_WEBSITE_DESC" validate="url" filter="url" relative="false" />
+		</fieldset>
+	</fields>
+</form>

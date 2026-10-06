@@ -1,0 +1,107 @@
+<?php
+
+/**
+ * Dharma Shop — универсальный лёгкий интернет-магазин для Joomla 6+.
+ *
+ * @package    com_dharmashop
+ * @copyright  (C) 2026 Dharma. Все права защищены.
+ * @license    GNU General Public License версии 2 или новее; см. LICENSE.txt
+ */
+
+declare(strict_types=1);
+
+namespace Dharma\Component\DharmaShop\Administrator\View\Products;
+
+use Joomla\CMS\Form\Form;
+use Joomla\CMS\Helper\ContentHelper;
+use Joomla\CMS\Language\Text;
+use Joomla\CMS\MVC\View\GenericDataException;
+use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
+use Joomla\CMS\Pagination\Pagination;
+use Joomla\CMS\Toolbar\Toolbar;
+use Joomla\CMS\Toolbar\ToolbarHelper;
+
+\defined('_JEXEC') or die;
+
+/**
+ * Список товаров.
+ */
+class HtmlView extends BaseHtmlView
+{
+    protected $option = 'com_dharmashop';
+
+    /** @var object[] */
+    protected array $items = [];
+
+    protected ?Pagination $pagination = null;
+
+    public ?Form $filterForm = null;
+
+    public array $activeFilters = [];
+
+    public function display($tpl = null): void
+    {
+        /** @var \Dharma\Component\DharmaShop\Administrator\Model\ProductsModel $model */
+        $model = $this->getModel();
+
+        $this->items = $model->getItems();
+        $this->pagination = $model->getPagination();
+        $this->filterForm = $model->getFilterForm();
+        $this->activeFilters = $model->getActiveFilters();
+
+        if ($errors = $model->getErrors()) {
+            throw new GenericDataException(implode("\n", $errors), 500);
+        }
+
+        $this->addToolbar();
+
+        parent::display($tpl);
+    }
+
+    protected function addToolbar(): void
+    {
+        $canDo = ContentHelper::getActions('com_dharmashop');
+        $toolbar = Toolbar::getInstance();
+        $state = $this->getModel()->getState();
+
+        ToolbarHelper::title(Text::_('COM_DHARMASHOP_PRODUCTS_TITLE'), 'cart');
+
+        if ($canDo->get('core.create')) {
+            $toolbar->addNew('product.add');
+        }
+
+        if ($canDo->get('core.edit.state') || $canDo->get('core.delete')) {
+            $dropdown = $toolbar->dropdownButton('status-group')
+                ->toggleSplit(false)
+                ->text('JTOOLBAR_CHANGE_STATUS')
+                ->icon('icon-ellipsis-h')
+                ->buttonClass('btn btn-action')
+                ->listCheck(true);
+
+            $childBar = $dropdown->getChildToolbar();
+
+            if ($canDo->get('core.edit.state')) {
+                $childBar->publish('products.publish')->listCheck(true);
+                $childBar->unpublish('products.unpublish')->listCheck(true);
+                $childBar->standardButton('featured', 'JFEATURE', 'products.featured')->listCheck(true);
+                $childBar->standardButton('unfeatured', 'JUNFEATURE', 'products.unfeatured')->listCheck(true);
+                $childBar->archive('products.archive')->listCheck(true);
+                $childBar->checkin('products.checkin');
+
+                if ((string) $state->get('filter.published') !== '-2') {
+                    $childBar->trash('products.trash')->listCheck(true);
+                }
+            }
+        }
+
+        if ($state->get('filter.published') == -2 && $canDo->get('core.delete')) {
+            $toolbar->delete('products.delete', 'JTOOLBAR_EMPTY_TRASH')
+                ->message('JGLOBAL_CONFIRM_DELETE')
+                ->listCheck(true);
+        }
+
+        if ($canDo->get('core.admin') || $canDo->get('core.options')) {
+            $toolbar->preferences('com_dharmashop');
+        }
+    }
+}

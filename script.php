@@ -95,11 +95,49 @@ return new class () implements ServiceProviderInterface {
                         $this->db->setQuery($query)->execute();
                     }
 
+                    $this->ensureDefaultCategory();
+
                     if ($type === 'install') {
                         $this->app->enqueueMessage(Text::_('PKG_DHARMASHOP_INSTALLED'), 'info');
                     }
 
                     return true;
+                }
+
+                /** Создаёт категорию «Без категории», если у компонента нет ни одной категории (товар нельзя сохранить без категории). */
+                private function ensureDefaultCategory(): void
+                {
+                    $count = (int) $this->db->setQuery(
+                        $this->db->getQuery(true)->select('COUNT(*)')->from($this->db->quoteName('#__categories'))
+                            ->where($this->db->quoteName('extension') . ' = ' . $this->db->quote('com_dharmashop'))
+                    )->loadResult();
+
+                    if ($count > 0) {
+                        return;
+                    }
+
+                    $table = new \Joomla\CMS\Table\Category($this->db);
+                    $table->setLocation(1, 'last-child');
+                    $data = [
+                        'title' => 'Без категории',
+                        'alias' => 'uncategorised',
+                        'extension' => 'com_dharmashop',
+                        'published' => 1,
+                        'access' => 1,
+                        'language' => '*',
+                        'description' => '',
+                        'params' => '{}',
+                        'metadata' => '{}',
+                        'created_user_id' => 0,
+                    ];
+
+                    if (!$table->bind($data) || !$table->check() || !$table->store()) {
+                        $this->app->enqueueMessage('Не удалось создать категорию по умолчанию: ' . $table->getError(), 'warning');
+
+                        return;
+                    }
+
+                    $table->rebuildPath($table->id);
                 }
             }
         );

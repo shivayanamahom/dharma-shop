@@ -1,0 +1,78 @@
+<?php
+
+/**
+ * Dharma Shop — универсальный лёгкий интернет-магазин для Joomla 6+.
+ *
+ * @package    com_dharmashop
+ * @copyright  (C) 2026 Dharma. Все права защищены.
+ * @license    GNU General Public License версии 2 или новее; см. LICENSE.txt
+ */
+
+declare(strict_types=1);
+
+namespace Dharma\Component\DharmaShop\Administrator\Service;
+
+use Dharma\Component\DharmaShop\Administrator\Catalog\Indexer;
+use Dharma\Component\DharmaShop\Administrator\Catalog\ProductRebuilder;
+use Dharma\Component\DharmaShop\Administrator\Catalog\VariantRepository;
+use Dharma\Component\DharmaShop\Administrator\Pricing\MoneyFormatter;
+use Dharma\Component\DharmaShop\Administrator\Pricing\PriceResolver;
+use Dharma\Component\DharmaShop\Administrator\Stock\StockService;
+use Joomla\CMS\Component\ComponentHelper;
+use Joomla\Database\DatabaseInterface;
+
+\defined('_JEXEC') or die;
+
+/**
+ * Службы ядра, общие для админки, сайта, консоли и плагинов:
+ *
+ *     $shop = Factory::getApplication()->bootComponent('com_dharmashop')->getServices();
+ */
+final class ShopServices
+{
+    private ?Indexer $indexer = null;
+
+    private ?ProductRebuilder $rebuilder = null;
+
+    private ?VariantRepository $variants = null;
+
+    private ?PriceResolver $prices = null;
+
+    private ?StockService $stock = null;
+
+    private ?MoneyFormatter $money = null;
+
+    public function __construct(private readonly DatabaseInterface $db)
+    {
+    }
+
+    public function indexer(): Indexer
+    {
+        return $this->indexer ??= new Indexer($this->db);
+    }
+
+    public function rebuilder(): ProductRebuilder
+    {
+        return $this->rebuilder ??= new ProductRebuilder($this->db);
+    }
+
+    public function prices(): PriceResolver
+    {
+        return $this->prices ??= new PriceResolver();
+    }
+
+    public function variants(): VariantRepository
+    {
+        return $this->variants ??= new VariantRepository($this->db, $this->prices());
+    }
+
+    public function stock(): StockService
+    {
+        return $this->stock ??= new StockService($this->db);
+    }
+
+    public function money(): MoneyFormatter
+    {
+        return $this->money ??= new MoneyFormatter(ComponentHelper::getParams('com_dharmashop'));
+    }
+}

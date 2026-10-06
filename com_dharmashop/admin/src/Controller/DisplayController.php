@@ -17,12 +17,12 @@ use Joomla\CMS\MVC\Controller\BaseController;
 \defined('_JEXEC') or die;
 
 /**
- * Показывает страницы компонента; по умолчанию — обзор.
+ * Показывает страницы компонента; по умолчанию — список товаров.
  */
 class DisplayController extends BaseController
 {
     /** Задаём явно, чтобы не зависеть от вывода имени компонента из пространства имён. */
     protected $option = 'com_dharmashop';
 
-    protected $default_view = 'dashboard';
+    protected $default_view = 'products';
 }
