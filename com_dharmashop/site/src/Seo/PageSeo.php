@@ -55,14 +55,14 @@ final class PageSeo
         // Явное значение (например, страница-дубль с параметрами) важнее настроек записи, меню и магазина.
         $robots = $robots ?? (string) ($item->metadata->get('robots') ?: $menu->get('robots') ?: $defaults->robots());
 
-        // Страницы постраничной навигации (со второй) получают уникальные заголовок и описание; h1 остаётся прежним.
+        // Страницы постраничной навигации (со второй) получают уникальные заголовок, описание и h1 (« — страница N»).
         $paged = static fn (string $value): string => $page > 1 && $value !== '' ? $value . ' — ' . Text::sprintf('COM_DHARMASHOP_PAGE_N', $page) : $value;
 
         return new PageMetadata(
             $paged($part('title', (string) $params->get('meta_title', ''), (string) $menu->get('page_title', ''))),
             $paged($part('description', (string) ($item->metadesc ?? ''), (string) $menu->get('menu-meta_description', ''))),
             $robots,
-            $part('h1', (string) $params->get('h1', ''), (string) $menu->get('page_heading', '')),
+            $paged($part('h1', (string) $params->get('h1', ''), (string) $menu->get('page_heading', ''))),
             $part('breadcrumb', (string) $params->get('breadcrumb_title', '')),
             $image,
             $url,

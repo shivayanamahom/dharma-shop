@@ -17,11 +17,11 @@ $modes = ['grid' => 'COM_DHARMASHOP_VIEW_GRID', 'list' => 'COM_DHARMASHOP_VIEW_L
     <?php if ($this->image !== '') : ?>
         <img class="img-fluid rounded mb-4" src="<?php echo $this->escape($this->image); ?>" alt="<?php echo $this->escape((string) ($this->item->params->get('image_alt') ?: $this->item->title)); ?>" decoding="async">
     <?php endif; ?>
-    <?php // Тексты и подкатегории — только на первой странице списка: на остальных они дублируют её содержимое (SEO). ?>
-    <?php if ($this->start === 0 && trim((string) $this->item->params->get('introtext', '')) !== '') : ?>
+    <?php // Полное описание — только на первой странице списка: на остальных оно дублирует её содержимое (SEO); интро остаётся. ?>
+    <?php if (trim((string) $this->item->params->get('introtext', '')) !== '') : ?>
         <div class="mb-4"><?php echo $this->text((string) $this->item->params->get('introtext')); ?></div>
     <?php endif; ?>
-    <?php if ($this->start === 0 && $this->subcategories) : ?>
+    <?php if ($this->subcategories) : ?>
         <section class="mb-5" aria-labelledby="dharmashop-subcategories-title">
             <h2 id="dharmashop-subcategories-title" class="h4 mb-3"><?php echo Text::_($this->item->id ? 'COM_DHARMASHOP_SUBBRANDS' : 'COM_DHARMASHOP_BRANDS'); ?></h2>
             <div class="<?php echo $this->escape($this->subcategoryGridClasses); ?>">

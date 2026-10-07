@@ -17,8 +17,8 @@ $modes = ['grid' => 'COM_DHARMASHOP_VIEW_GRID', 'list' => 'COM_DHARMASHOP_VIEW_L
     <?php if ($this->image !== '') : ?>
         <img class="img-fluid rounded mb-4" src="<?php echo $this->escape($this->image); ?>" alt="<?php echo $this->escape((string) ($this->item->params->get('image_alt') ?: $this->item->title)); ?>" decoding="async">
     <?php endif; ?>
-    <?php // Тексты и подкатегории — только на первой странице списка: на остальных они дублируют её содержимое (SEO). ?>
-    <?php if ($this->start === 0 && trim((string) $this->item->params->get('introtext', '')) !== '') : ?>
+    <?php // Полное описание — только на первой странице списка: на остальных оно дублирует её содержимое (SEO); интро остаётся. ?>
+    <?php if (trim((string) $this->item->params->get('introtext', '')) !== '') : ?>
         <div class="mb-4"><?php echo $this->text((string) $this->item->params->get('introtext')); ?></div>
     <?php endif; ?>
     <form action="<?php echo $this->escape($this->categoryRoute((int) $this->item->id)); ?>" method="get" class="mb-4" data-dharmashop-listing-controls>
