@@ -34,6 +34,7 @@ trait ListingTrait
     public string $ordering = 'order';
     public int $menuId = 0;
     public int $start = 0;
+    public bool $catalogMode = false;
     public ?Pagination $pagination = null;
     public string $cardFolder = 'product-card';
     private MoneyFormatter $money;
@@ -88,6 +89,7 @@ trait ListingTrait
         $this->menuId = $ownView ? (int) $active->id : 0;
         $this->mergeDisplay($menu, $keys);
         $this->money = new MoneyFormatter($settings);
+        $this->catalogMode = (int) $settings->get('catalog_mode', 0) === 1;
 
         $defaultCard = (string) $this->params->get('product_card_layout', 'grid');
         // Старый default.php остаётся совместимым именем сетки.
@@ -199,7 +201,8 @@ trait ListingTrait
             'badges' => array_map(fn (object $badge): object => (object) ((array) $badge + ['url' => $this->badgeRoute($badge->id)]), $item->badges),
             'categoryTitle' => (string) ($item->category_title ?? ''),
             'categoryUrl' => $this->categoryRoute((int) $item->catid),
-            'showQty' => (int) $this->params->get('product_card_qty', 0) === 1]);
+            'catalogMode' => $this->catalogMode,
+            'showQty' => !$this->catalogMode && (int) $this->params->get('product_card_qty', 0) === 1]);
     }
 
     private function mergeDisplay(Registry $source, array $keys): void

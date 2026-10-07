@@ -99,9 +99,14 @@ class HtmlView extends BaseHtmlView
         $wa->getRegistry()->addExtensionRegistryFile('com_dharmashop');
         $wa->useScript('com_dharmashop.listing');
 
-        // Кнопки «−»/«+» виджета количества: скрипт только если виджет включён в карточках.
-        if ((int) $this->params->get('product_card_qty', 0) === 1) {
-            $wa->useScript('com_dharmashop.qty');
+        // Режим каталога (настройки магазина): без корзины — ни виджета количества, ни кнопки, ни их скриптов.
+        if (!$this->catalogMode) {
+            $wa->useScript('com_dharmashop.cart');
+
+            // Кнопки «−»/«+» виджета количества: скрипт только если виджет включён в карточках.
+            if ((int) $this->params->get('product_card_qty', 0) === 1) {
+                $wa->useScript('com_dharmashop.qty');
+            }
         }
 
         // Скрипт — только для выбранного типа пагинации (обычная работает без скриптов).

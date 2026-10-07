@@ -2,6 +2,10 @@
 <config>
 	<!-- Разделы настроек магазина (вкладки): Магазин, Каталог, Изображения, SEO, Оформление заказа, Права. Новые разделы добавляются сюда fieldset-ом. -->
 	<fieldset name="shop" label="COM_DHARMASHOP_CONFIG_SHOP" description="COM_DHARMASHOP_CONFIG_SHOP_DESC">
+		<field name="catalog_mode" type="radio" layout="joomla.form.field.radio.switcher" default="0" filter="integer" label="COM_DHARMASHOP_CONFIG_CATALOG_MODE" description="COM_DHARMASHOP_CONFIG_CATALOG_MODE_DESC">
+			<option value="0">JNO</option>
+			<option value="1">JYES</option>
+		</field>
 		<field name="currency_code" type="text" label="COM_DHARMASHOP_CONFIG_CURRENCY_CODE" description="COM_DHARMASHOP_CONFIG_CURRENCY_CODE_DESC" default="RUB" maxlength="3" filter="string" />
 		<field name="currency_symbol" type="text" label="COM_DHARMASHOP_CONFIG_CURRENCY_SYMBOL" default="₽" maxlength="8" filter="string" />
 		<field name="currency_position" type="list" label="COM_DHARMASHOP_CONFIG_CURRENCY_POSITION" default="after" validate="options">
@@ -136,6 +140,10 @@
 			<option value="random">COM_DHARMASHOP_CONFIG_IMAGE_NAME_RANDOM</option>
 			<option value="original_random">COM_DHARMASHOP_CONFIG_IMAGE_NAME_ORIGINAL_RANDOM</option>
 			<option value="original">COM_DHARMASHOP_CONFIG_IMAGE_NAME_ORIGINAL</option>
+		</field>
+		<field name="image_convert_webp" type="radio" layout="joomla.form.field.radio.switcher" label="COM_DHARMASHOP_CONFIG_IMAGE_CONVERT_WEBP" description="COM_DHARMASHOP_CONFIG_IMAGE_CONVERT_WEBP_DESC" default="0" filter="integer" validate="options">
+			<option value="0">JNO</option>
+			<option value="1">JYES</option>
 		</field>
 		<field name="image_name_prefix" type="text" label="COM_DHARMASHOP_CONFIG_IMAGE_NAME_PREFIX" description="COM_DHARMASHOP_CONFIG_IMAGE_NAME_PREFIX_DESC" default="" maxlength="30" filter="string" hint="shop" />
 	</fieldset>

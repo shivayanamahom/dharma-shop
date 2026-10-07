@@ -26,6 +26,12 @@
 			"dependencies": ["core", "com_dharmashop.listing"]
 		},
 		{
+			"name": "com_dharmashop.cart",
+			"type": "script",
+			"uri": "com_dharmashop/cart.js",
+			"attributes": { "defer": true }
+		},
+		{
 			"name": "com_dharmashop.qty",
 			"type": "script",
 			"uri": "com_dharmashop/qty.js",
