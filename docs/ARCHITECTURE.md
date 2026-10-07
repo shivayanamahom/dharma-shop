@@ -370,6 +370,8 @@ CREATE TABLE `#__dharmashop_field_values` (
 
 Поля вкладки «SEO» (форма `category.xml`, fieldset `seo`): `params.meta_title`, `categories.metadesc`, `params.meta_image`, `metadata.robots`, `params.breadcrumb_title`, `params.h1`. `Seo\SeoSettings` отдаёт шаблон типа страницы из настроек компонента (`seo_<тип>_<title|description|h1|breadcrumb>`, пока не сохранялись — встроенные), `robots()`, `openGraph()`, `defaultImage()`; `Seo\SeoHints` подставляет в пустые поля формы подсказку «Из компонента (шаблон)». Подстановка значений в шаблон и вывод тегов — в сайтовой части (виды категорий, брендов, бейджей, товара): приоритет «поле записи → шаблон из настроек»; для картинки «поле записи → изображение записи → изображение по умолчанию».
 
+**Цены категории** (`{category.price_min}`, `{category.price_max}`) отдельно не хранятся и не пересчитываются: у каждой строки индекса `product_categories` уже лежит актуальная копия цены `price_sort` (её обновляют сохранение товара, `SaleScheduler` и команда «Пересчитать цену и наличие»), а `SELECT MIN(price_sort), MAX(price_sort) … WHERE catid = ? AND state = 1` по индексу `idx_l_price` выполняется без чтения таблицы (`Select tables optimized away`, проверено EXPLAIN с `FORCE INDEX`; время не зависит от числа товаров). Индекс-подсказку `FORCE INDEX (idx_l_price)` указывать в запросе; результат кэшировать на время запроса страницы (на уровне Joomla — меткой категории). Число товаров категории — запрос с потолком (как счётчики листинга).
+
 ## 6. События
 
 Имена свои, префикс `onDharmaShop`. Каждое — типизированный класс события, аргументы читаются геттерами, изменяемое — через сеттеры. Подписчики — `SubscriberInterface`. Группа плагинов загружается по назначению (`PluginHelper::importPlugin`).
