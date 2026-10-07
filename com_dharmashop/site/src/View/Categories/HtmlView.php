@@ -4,6 +4,9 @@ namespace Dharma\Component\DharmaShop\Site\View\Categories;
 
 use Dharma\Component\DharmaShop\Site\Seo\CollectionMetadata;
 use Dharma\Component\DharmaShop\Site\Seo\PageMetadata;
+use Dharma\Component\DharmaShop\Site\Placeholder\CategoryValues;
+use Dharma\Component\DharmaShop\Site\Placeholder\GlobalValues;
+use Dharma\Component\DharmaShop\Site\Placeholder\Renderer;
 use Dharma\Component\DharmaShop\Site\Seo\PageSeo;
 use Dharma\Component\DharmaShop\Site\Support\MediaUrl;
 use Dharma\Component\DharmaShop\Site\Support\Grid;
@@ -32,6 +35,8 @@ class HtmlView extends BaseHtmlView
     private ?MoneyFormatter $money = null;
     public bool $showHeading = true;
     public string $image = '';
+    /** @var array<string, string|callable> значения подстановок страницы (SEO и тексты) */
+    private array $textValues = [];
 
     public function display($tpl = null): void
     {
@@ -73,7 +78,8 @@ class HtmlView extends BaseHtmlView
         $this->setLayout($this->existingLayout((string) $this->params->get('categories_layout', 'default'), 'components/com_dharmashop/tmpl/categories'));
         $this->showHeading = (int) $menu->get('show_page_heading', 1) === 1;
         $this->image = MediaUrl::absolute((string) $this->parent->params->get('image', ''));
-        $values = ['category.title' => $this->parent->title, 'category.parent' => $ancestors ? end($ancestors)->title : ''];
+        $this->textValues = CategoryValues::build('category', $this->parent, $ancestors, $model, $this->money);
+        $values = $this->textValues;
         // SEO пункта меню относится к его собственной странице, не ко всем дочерним категориям.
         $menuId = max(0, (int) ($active->query['id'] ?? 0));
         $menuId = $menuId <= 1 ? 0 : $menuId;
@@ -90,17 +96,24 @@ class HtmlView extends BaseHtmlView
         }
         $service->apply($this->seo, $this->getDocument(), $collection);
         $pastMenu = $menuId <= 1;
-        $parentTitle = '';
+        $chain = [];
         foreach (array_merge($ancestors, $this->parent->id ? [$this->parent] : []) as $ancestor) {
             if ((int) $ancestor->id === $menuId) {
                 $pastMenu = true;
             } elseif ($pastMenu) {
-                $meta = $service->resolve('category', $ancestor, ['category.title' => $ancestor->title, 'category.parent' => $parentTitle], new Registry(), $this->absoluteRoute((int) $ancestor->id));
+                $meta = $service->resolve('category', $ancestor, CategoryValues::build('category', $ancestor, $chain, $model, $this->money),
+                    new Registry(), $this->absoluteRoute((int) $ancestor->id));
                 $app->getPathway()->addItem($meta->breadcrumb, $this->categoryRoute((int) $ancestor->id));
             }
-            $parentTitle = $ancestor->title;
+            $chain[] = $ancestor;
         }
         parent::display($tpl);
+    }
+
+    /** Тексты категории (интро, описание) с подстановками {category.title}, {category.price_min} и др. */
+    public function text(string $html): string
+    {
+        return (new Renderer())->renderHtml($html, $this->textValues + GlobalValues::build(ComponentHelper::getParams('com_dharmashop')));
     }
 
     public function categoryRoute(int $id): string
@@ -133,7 +146,7 @@ class HtmlView extends BaseHtmlView
             'showIntro' => (int) $this->params->get('category_card_intro', 1) === 1,
             'showCount' => (int) $this->params->get('category_card_count', 0) === 1,
             'showPrices' => (int) $this->params->get('category_card_prices', 0) === 1,
-            'productCount' => (int) ($stats->product_count ?? 0), 'priceRange' => $range]);
+            'productCount' => (string) ($stats->product_count ?? '0'), 'priceRange' => $range]);
     }
 
     private function absoluteRoute(int $id): string

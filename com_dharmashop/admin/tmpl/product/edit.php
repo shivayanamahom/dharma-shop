@@ -114,7 +114,7 @@ $canAdmin = $this->getCurrentUser()->authorise('core.admin', 'com_dharmashop');
         </div>
         </div>
         <div class="col-lg-3">
-            <?php // Боковая колонка — рамки (fieldset), как в RadicalMart: категории, шорткоды, основное, публикация (внизу). ?>
+            <?php // Боковая колонка — рамки (fieldset): категории, шорткоды, основное, публикация (внизу). ?>
             <fieldset class="options-form form-vertical mb-3">
                 <legend><?php echo Text::_('COM_DHARMASHOP_SIDEBAR_CATEGORIES'); ?></legend>
                 <?php foreach (['catid', 'extra_catids', 'brand_id', 'badge_ids'] as $name) : ?>

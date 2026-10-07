@@ -254,14 +254,27 @@ final class Indexer
             $sortOrder = max(-2147483648, min(2147483647, (int) ($row['sort_order'] ?? 0)));
 
             if ($action !== 'manual') {
-                $query = $db->createQuery()
-                    ->select($action === 'first' ? 'MIN(pc.sort_order)' : 'MAX(pc.sort_order)')
-                    ->from($db->quoteName('#__dharmashop_product_categories', 'pc'))
-                    ->join('INNER', $db->quoteName('#__categories', 'c') . ' ON c.id = pc.catid')
-                    ->where('pc.catid = :c')->where('c.extension = ' . $db->quote('com_dharmashop'))
-                    ->bind(':c', $catid, ParameterType::INTEGER);
-                $edge = $db->setQuery($query)->loadResult();
-                $sortOrder = $edge === null ? 0 : max(-2147483648, min(2147483647, (int) $edge + ($action === 'first' ? -1 : 1)));
+                // Граница порядка в категории без самого товара: по одному точному обращению к индексу (catid, state, sort_order)
+                // на состояние; товары в корзине не учитываются. Время не зависит от числа товаров в категории.
+                $function = $action === 'first' ? 'MIN' : 'MAX';
+                $edge = null;
+
+                foreach ([0, 1, 2] as $state) {
+                    $query = $db->createQuery()
+                        ->select($function . '(pc.sort_order)')
+                        ->from($db->quoteName('#__dharmashop_product_categories', 'pc'))
+                        ->where('pc.catid = :c')->where('pc.state = :s')->where('pc.product_id <> :p')
+                        ->bind(':c', $catid, ParameterType::INTEGER)
+                        ->bind(':s', $state, ParameterType::INTEGER)
+                        ->bind(':p', $productId, ParameterType::INTEGER);
+                    $value = $db->setQuery($query)->loadResult();
+
+                    if ($value !== null) {
+                        $edge = $edge === null ? (int) $value : ($action === 'first' ? min($edge, (int) $value) : max($edge, (int) $value));
+                    }
+                }
+
+                $sortOrder = $edge === null ? 0 : max(-2147483648, min(2147483647, $edge + ($action === 'first' ? -1 : 1)));
             }
 
             Sql::exec($db,

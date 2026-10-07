@@ -18,7 +18,7 @@ $modes = ['grid' => 'COM_DHARMASHOP_VIEW_GRID', 'list' => 'COM_DHARMASHOP_VIEW_L
         <img class="img-fluid rounded mb-4" src="<?php echo $this->escape($this->image); ?>" alt="<?php echo $this->escape((string) ($this->item->params->get('image_alt') ?: $this->item->title)); ?>" decoding="async">
     <?php endif; ?>
     <?php if (trim((string) $this->item->params->get('introtext', '')) !== '') : ?>
-        <div class="mb-4"><?php echo $this->item->params->get('introtext'); ?></div>
+        <div class="mb-4"><?php echo $this->text((string) $this->item->params->get('introtext')); ?></div>
     <?php endif; ?>
     <?php if ($this->subcategories) : ?>
         <section class="mb-5" aria-labelledby="dharmashop-subcategories-title">
@@ -84,6 +84,6 @@ $modes = ['grid' => 'COM_DHARMASHOP_VIEW_GRID', 'list' => 'COM_DHARMASHOP_VIEW_L
             <?php if ($this->next) : ?><a class="btn btn-outline-primary" rel="next" href="<?php echo $this->escape($this->listingRoute($this->next)); ?>"><?php echo Text::_('COM_DHARMASHOP_NEXT_PAGE'); ?></a><?php endif; ?>
         </nav>
     <?php endif; ?>
-    <?php if (trim((string) $this->item->description) !== '') : ?><div class="mt-4"><?php echo $this->item->description; ?></div><?php endif; ?>
+    <?php if (trim((string) $this->item->description) !== '') : ?><div class="mt-4"><?php echo $this->text((string) $this->item->description); ?></div><?php endif; ?>
     <?php echo $hooks->render('afterContent'); ?>
 </section>

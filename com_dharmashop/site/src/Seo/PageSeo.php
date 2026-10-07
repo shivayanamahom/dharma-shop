@@ -5,6 +5,7 @@ namespace Dharma\Component\DharmaShop\Site\Seo;
 
 use Dharma\Component\DharmaShop\Administrator\Seo\SeoSettings;
 use Dharma\Component\DharmaShop\Site\Placeholder\Renderer;
+use Dharma\Component\DharmaShop\Site\Placeholder\GlobalValues;
 use Dharma\Component\DharmaShop\Site\Support\MediaUrl;
 use Joomla\CMS\Document\HtmlDocument;
 use Joomla\CMS\Factory;
@@ -27,12 +28,22 @@ final class PageSeo
         $defaults = new SeoSettings($this->settings);
         $renderer = new Renderer();
         $params = $item->params;
-        $values += ['global.sitename' => (string) $app->get('sitename'), 'global.currency' => (string) $this->settings->get('currency_symbol', '₽')];
-        $text = static fn (string $value): string => trim(strip_tags(html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+        $values += GlobalValues::build($this->settings);
+        // Неразрывные пробелы из форматирования цен в заголовках и описаниях заменяются обычными.
+        $text = static fn (string $value): string => trim(str_replace("\u{00A0}", ' ', strip_tags(html_entity_decode($value, ENT_QUOTES | ENT_HTML5, 'UTF-8'))));
         $part = function (string $key, string $own, string $menuValue = '') use ($defaults, $renderer, $values, $area, $text): string {
-            $template = trim($own) !== '' ? $own : (trim($menuValue) !== '' ? $menuValue : $defaults->template($area, $key));
+            $templates = [trim($own), trim($menuValue), $defaults->template($area, $key), SeoSettings::builtin($area, $key)];
 
-            return $text($renderer->render($template, $values));
+            // Первый шаблон, который после подстановки не пуст (запись → пункт меню → настройки → встроенный).
+            foreach (array_filter($templates, static fn (string $template): bool => $template !== '') as $template) {
+                $result = $text($renderer->render($template, $values));
+
+                if ($result !== '') {
+                    return $result;
+                }
+            }
+
+            return '';
         };
         $image = '';
         foreach ([$params->get('meta_image', ''), $params->get('image', ''), $defaults->defaultImage()] as $candidate) {

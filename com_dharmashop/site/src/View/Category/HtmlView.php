@@ -6,6 +6,10 @@ namespace Dharma\Component\DharmaShop\Site\View\Category;
 use Dharma\Component\DharmaShop\Administrator\Pricing\MoneyFormatter;
 use Dharma\Component\DharmaShop\Site\Model\CategoryModel;
 use Dharma\Component\DharmaShop\Site\Seo\PageMetadata;
+use Dharma\Component\DharmaShop\Site\Placeholder\CategoryValues;
+use Dharma\Component\DharmaShop\Site\Placeholder\GlobalValues;
+use Dharma\Component\DharmaShop\Site\Placeholder\ProductValues;
+use Dharma\Component\DharmaShop\Site\Placeholder\Renderer;
 use Dharma\Component\DharmaShop\Site\Seo\PageSeo;
 use Dharma\Component\DharmaShop\Site\Support\Grid;
 use Dharma\Component\DharmaShop\Site\Support\MediaUrl;
@@ -40,8 +44,10 @@ class HtmlView extends BaseHtmlView
     public int $menuId = 0;
     public int $after = 0;
     public int $next = 0;
-    public ?int $productCount = null;
+    public ?string $productCount = null;
     public string $priceRange = '';
+    /** @var array<string, string|callable> значения подстановок страницы (SEO и тексты) */
+    private array $textValues = [];
     private string $subcategoryLayout = 'default';
     private array $subcategoryStats = [];
     private MoneyFormatter $money;
@@ -102,7 +108,7 @@ class HtmlView extends BaseHtmlView
         $showPrices = (int) $this->params->get('category_price_range', 0) === 1;
         if ($showCount || $showPrices) {
             $stats = $model->getProductStats($showPrices);
-            $this->productCount = $showCount ? (int) $stats->product_count : null;
+            $this->productCount = $showCount ? (string) $stats->product_count : null;
             $this->priceRange = $showPrices ? $this->formatRange($stats->price_min, $stats->price_max) : '';
         }
         if ((int) $this->params->get('category_card_count', 0) || (int) $this->params->get('category_card_prices', 0)) {
@@ -111,26 +117,32 @@ class HtmlView extends BaseHtmlView
         $seo = new PageSeo($settings);
         $menuCategory = max(0, (int) ($active->query['id'] ?? 0));
         $ownMenu = ($menuCategory <= 1 ? 0 : $menuCategory) === (int) $this->item->id ? $menu : new Registry();
-        $this->seo = $seo->resolve('category', $this->item, ['category.title' => $this->item->title,
-            'category.parent' => $ancestors ? end($ancestors)->title : ''], $ownMenu, $this->absoluteRoute((int) $this->item->id));
+        $this->textValues = CategoryValues::build('category', $this->item, $ancestors, $model, $this->money);
+        $this->seo = $seo->resolve('category', $this->item, $this->textValues, $ownMenu, $this->absoluteRoute((int) $this->item->id));
         // Социальные теги работают; ItemList добавим вместе с содержимым и ссылками карточек.
         $seo->apply($this->seo, $this->getDocument());
         $pastMenu = $menuCategory <= 1;
-        $parentTitle = '';
+        $chain = [];
         foreach (array_merge($ancestors, $this->item->id ? [$this->item] : []) as $ancestor) {
             if ((int) $ancestor->id === $menuCategory) {
                 $pastMenu = true;
             } elseif ($pastMenu) {
-                $page = $seo->resolve('category', $ancestor, ['category.title' => $ancestor->title,
-                    'category.parent' => $parentTitle], new Registry(), $this->absoluteRoute((int) $ancestor->id));
+                $page = $seo->resolve('category', $ancestor, CategoryValues::build('category', $ancestor, $chain, $model, $this->money),
+                    new Registry(), $this->absoluteRoute((int) $ancestor->id));
                 $app->getPathway()->addItem($page->breadcrumb, $this->categoryRoute((int) $ancestor->id));
             }
-            $parentTitle = (string) $ancestor->title;
+            $chain[] = $ancestor;
         }
         $wa = $this->getDocument()->getWebAssetManager();
         $wa->getRegistry()->addExtensionRegistryFile('com_dharmashop');
         $wa->useScript('com_dharmashop.listing');
         parent::display($tpl);
+    }
+
+    /** Тексты категории (интро, описание) с подстановками {category.title}, {category.price_min} и др. */
+    public function text(string $html): string
+    {
+        return (new Renderer())->renderHtml($html, $this->textValues + GlobalValues::build(ComponentHelper::getParams('com_dharmashop')));
     }
 
     public function categoryRoute(int $id): string
@@ -156,9 +168,15 @@ class HtmlView extends BaseHtmlView
     public function renderProduct(object $item): string
     {
         $layout = new FileLayout('components.dharmashop.product-card.' . $this->cardLayout, null, ['component' => 'none', 'client' => 0]);
+        $intro = (string) $item->introtext;
+        if ((int) $this->params->get('product_card_intro', 1) === 1) {
+            $values = ProductValues::build($item, $this->money) + GlobalValues::build(ComponentHelper::getParams('com_dharmashop'));
+            $intro = (new Renderer())->render($intro, $values);
+        }
 
         return $layout->render(['item' => $item, 'params' => clone $this->params, 'mode' => $this->productView,
             'showIntro' => (int) $this->params->get('product_card_intro', 1) === 1,
+            'intro' => $intro,
             'priceRange' => $this->formatRange($item->price_min, $item->price_max)]);
     }
 
@@ -172,7 +190,7 @@ class HtmlView extends BaseHtmlView
             'showIntro' => (int) $this->params->get('category_card_intro', 1) === 1,
             'showCount' => (int) $this->params->get('category_card_count', 0) === 1,
             'showPrices' => (int) $this->params->get('category_card_prices', 0) === 1,
-            'productCount' => (int) ($stats->product_count ?? 0),
+            'productCount' => (string) ($stats->product_count ?? '0'),
             'priceRange' => $this->formatRange($stats->price_min ?? null, $stats->price_max ?? null)]);
     }
 

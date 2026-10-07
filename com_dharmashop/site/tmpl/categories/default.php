@@ -17,7 +17,7 @@ $hooks = new LayoutHooks('category', 'categories', $this->parent, $this->params,
         <img class="img-fluid rounded mb-4" src="<?php echo $this->escape($this->image); ?>" alt="<?php echo $this->escape((string) ($this->parent->params->get('image_alt') ?: $this->parent->title)); ?>" decoding="async">
     <?php endif; ?>
     <?php if (trim((string) $this->parent->params->get('introtext', '')) !== '') : ?>
-        <div class="mb-4"><?php echo $this->parent->params->get('introtext'); ?></div>
+        <div class="mb-4"><?php echo $this->text((string) $this->parent->params->get('introtext')); ?></div>
     <?php endif; ?>
     <?php if ($this->items) : ?>
         <div class="<?php echo $this->escape($this->gridClasses); ?>">
@@ -29,7 +29,7 @@ $hooks = new LayoutHooks('category', 'categories', $this->parent, $this->params,
         <p class="text-body-secondary"><?php echo Text::_('COM_DHARMASHOP_NO_SUBCATEGORIES'); ?></p>
     <?php endif; ?>
     <?php if (trim((string) $this->parent->description) !== '') : ?>
-        <div class="mt-4"><?php echo $this->parent->description; ?></div>
+        <div class="mt-4"><?php echo $this->text((string) $this->parent->description); ?></div>
     <?php endif; ?>
     <?php echo $hooks->render('afterContent'); ?>
 </section>

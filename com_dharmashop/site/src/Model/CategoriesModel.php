@@ -14,6 +14,9 @@ use Joomla\Registry\Registry;
 /** Публичная ветка категорий. Доступ проверяется по всей цепочке родителей. */
 class CategoriesModel extends BaseDatabaseModel
 {
+    /** Потолок счётчика товаров: больше не считаем, чтобы время не зависело от размера каталога. */
+    public const COUNT_CAP = 10000;
+
     protected $option = 'com_dharmashop';
     private ?object $parent = null;
     private array $ancestors = [];
@@ -92,33 +95,63 @@ class CategoriesModel extends BaseDatabaseModel
     }
 
     /**
-     * Публикуемые товары по индексу, включая унаследованные связи подкатегорий.
-     * Один запрос только для карточек текущей страницы, без запросов из layout.
-     * @return array<int, object> catid => product_count, price_min/price_max (при запросе цен)
+     * Итоги для карточек подкатегорий: по каждой категории страницы число товаров (с потолком) и при необходимости цены.
+     * Запросы короткие и идут по индексу (время не зависит от размера каталога); их число равно числу карточек страницы.
+     *
+     * @return array<int, object> catid => (product_count: строка «12» или «10000+», price_min, price_max)
      */
     public function getCardStats(array $items, bool $withPrices): array
     {
-        $ids = array_values(array_unique(array_map(static fn (object $item): int => (int) $item->id, $items)));
-        if (!$ids) {
-            return [];
-        }
-        $db = $this->getDatabase();
-        $query = $db->createQuery()
-            ->select($db->quoteName('pc.catid'))
-            ->select('COUNT(*) AS ' . $db->quoteName('product_count'))
-            ->from($db->quoteName('#__dharmashop_product_categories', 'pc'))
-            ->whereIn($db->quoteName('pc.catid'), $ids)
-            ->where($db->quoteName('pc.state') . ' = 1')
-            ->group($db->quoteName('pc.catid'));
-        if ($withPrices) {
-            $query->join('INNER', $db->quoteName('#__dharmashop_products', 'p')
-                . ' ON ' . $db->quoteName('p.id') . ' = ' . $db->quoteName('pc.product_id'))
-                ->where($db->quoteName('p.state') . ' = 1')
-                ->select('MIN(' . $db->quoteName('p.price_min') . ') AS ' . $db->quoteName('price_min'))
-                ->select('MAX(' . $db->quoteName('p.price_max') . ') AS ' . $db->quoteName('price_max'));
+        $stats = [];
+
+        foreach (array_unique(array_map(static fn (object $item): int => (int) $item->id, $items)) as $id) {
+            $range = $withPrices ? $this->getPriceRange($id) : ['min' => null, 'max' => null];
+            $stats[$id] = (object) ['product_count' => $this->getCountLabel($id), 'price_min' => $range['min'], 'price_max' => $range['max']];
         }
 
-        return $db->setQuery($query)->loadObjectList('catid');
+        return $stats;
+    }
+
+    /** Число товаров для показа: до потолка точно, больше — «10000+». */
+    public function getCountLabel(int $categoryId): string
+    {
+        $count = $this->getPublishedCount($categoryId, self::COUNT_CAP);
+
+        return $count > self::COUNT_CAP ? self::COUNT_CAP . '+' : (string) $count;
+    }
+
+    /**
+     * Самая низкая и высокая цена опубликованных товаров категории (с вложенными): по копии цены в индексе, без чтения таблицы товаров
+     * (`Select tables optimized away`, время не зависит от числа товаров). Корень (0) — без цен.
+     *
+     * @return  array{min: ?string, max: ?string}
+     */
+    public function getPriceRange(int $categoryId): array
+    {
+        if ($categoryId <= 0) {
+            return ['min' => null, 'max' => null];
+        }
+
+        $db = $this->getDatabase();
+        $row = $db->setQuery(
+            $db->createQuery()->select('MIN(price_sort) AS pmin, MAX(price_sort) AS pmax')
+                ->from($db->quoteName('#__dharmashop_product_categories') . ' FORCE INDEX (idx_l_price)')
+                ->where('catid = :c')->where('state = 1')->bind(':c', $categoryId, ParameterType::INTEGER)
+        )->loadObject();
+
+        return ['min' => isset($row->pmin) ? (string) $row->pmin : null, 'max' => isset($row->pmax) ? (string) $row->pmax : null];
+    }
+
+    /** Число опубликованных товаров категории с потолком: чтение останавливается на $cap + 1 строках. Корень (0) — весь каталог. */
+    public function getPublishedCount(int $categoryId, int $cap = 10000): int
+    {
+        $db = $this->getDatabase();
+        $limit = $cap + 1;
+        $inner = $categoryId > 0
+            ? 'SELECT 1 FROM #__dharmashop_product_categories WHERE catid = ' . $categoryId . ' AND state = 1 LIMIT ' . $limit
+            : 'SELECT 1 FROM #__dharmashop_products WHERE state = 1 LIMIT ' . $limit;
+
+        return (int) $db->setQuery('SELECT COUNT(*) FROM (' . $inner . ') AS capped')->loadResult();
     }
 
     private function loadCategory(int $id): ?object

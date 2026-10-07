@@ -74,15 +74,13 @@ class CategoryModel extends CategoriesModel
         return ['items' => $items, 'next' => $more && $items ? (int) end($items)->id : 0];
     }
 
-    /** Итоги всей категории запрашиваются только при включённых настройках вывода. */
+    /** Итоги всей категории (по индексу, с потолком); цены нужны только если включены настройками. Корень цен не имеет. */
     public function getProductStats(bool $prices): object
     {
-        $query = $this->productsQuery()->select('COUNT(*) AS product_count');
-        if ($prices) {
-            $query->select('MIN(p.price_min) AS price_min, MAX(p.price_max) AS price_max');
-        }
+        $category = (int) $this->getParent()->id;
+        $range = $prices ? $this->getPriceRange($category) : ['min' => null, 'max' => null];
 
-        return $this->getDatabase()->setQuery($query)->loadObject();
+        return (object) ['product_count' => $this->getCountLabel($category), 'price_min' => $range['min'], 'price_max' => $range['max']];
     }
 
     private function productsQuery(): QueryInterface
