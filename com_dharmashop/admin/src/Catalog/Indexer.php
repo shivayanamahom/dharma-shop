@@ -199,7 +199,12 @@ final class Indexer
         }
     }
 
-    /** Перестраивает родительские строки, сохраняя ручной порядок каждой ещё актуальной строки. @param int[] $productIds */
+    /**
+     * Перестраивает родительские строки: лишние удаляются, недостающие добавляются. Строки, нужные и до, и после, не трогаются,
+     * поэтому их ручной порядок сохраняется без временных таблиц (им нужна отдельная привилегия БД, которой у части хостингов нет).
+     *
+     * @param int[] $productIds
+     */
     private function rebuildParentsForProducts(array $productIds): void
     {
         $ids = array_values(array_unique(array_filter(array_map('intval', $productIds))));
@@ -209,34 +214,27 @@ final class Indexer
         }
 
         $in = implode(',', $ids);
-        $backup = 'dharma_product_sort_backup';
-        $this->db->setQuery('DROP TEMPORARY TABLE IF EXISTS ' . $backup)->execute();
-        $this->db->setQuery('CREATE TEMPORARY TABLE ' . $backup . ' (catid INT UNSIGNED NOT NULL, product_id INT UNSIGNED NOT NULL, sort_order INT NOT NULL, PRIMARY KEY (catid, product_id)) ENGINE=MEMORY')->execute();
 
-        try {
-            $this->db->setQuery(
-                'INSERT INTO ' . $backup . ' (catid, product_id, sort_order) '
-                . 'SELECT catid, product_id, sort_order FROM #__dharmashop_product_categories '
-                . 'WHERE direct = 0 AND product_id IN (' . $in . ')'
-            )->execute();
-            $this->db->setQuery('DELETE FROM #__dharmashop_product_categories WHERE direct = 0 AND product_id IN (' . $in . ')')->execute();
-            $this->db->setQuery(
-                'INSERT IGNORE INTO #__dharmashop_product_categories (catid, product_id, direct, is_main, state, in_stock, created, title_sort) '
-                . 'SELECT anc.id, pc.product_id, 0, 0, 0, 0, NOW(), \'\' '
-                . 'FROM #__dharmashop_product_categories pc '
-                . 'JOIN #__categories sub ON sub.id = pc.catid '
-                . 'JOIN #__categories anc ON anc.extension = sub.extension AND anc.lft < sub.lft AND anc.rgt > sub.rgt '
-                . 'WHERE pc.direct = 1 AND pc.product_id IN (' . $in . ')'
-            )->execute();
-            $this->db->setQuery(
-                'UPDATE #__dharmashop_product_categories pc JOIN ' . $backup . ' old_order '
-                . 'ON old_order.catid = pc.catid AND old_order.product_id = pc.product_id '
-                . 'SET pc.sort_order = old_order.sort_order WHERE pc.direct = 0'
-            )->execute();
-            $this->refreshProducts($ids);
-        } finally {
-            $this->db->setQuery('DROP TEMPORARY TABLE IF EXISTS ' . $backup)->execute();
-        }
+        // Родители, которые нужны сейчас: предки прямых категорий товара в своём типе (категории, бренды).
+        $needed = 'SELECT DISTINCT d.product_id, anc.id AS catid FROM #__dharmashop_product_categories d '
+            . 'JOIN #__categories sub ON sub.id = d.catid '
+            . 'JOIN #__categories anc ON anc.extension = sub.extension AND anc.lft < sub.lft AND anc.rgt > sub.rgt '
+            . 'WHERE d.direct = 1 AND d.product_id IN (' . $in . ')';
+
+        // Лишние родительские строки (прямая привязка к потомку исчезла).
+        $this->db->setQuery(
+            'DELETE pc FROM #__dharmashop_product_categories pc LEFT JOIN (' . $needed . ') need '
+            . 'ON need.product_id = pc.product_id AND need.catid = pc.catid '
+            . 'WHERE pc.direct = 0 AND pc.product_id IN (' . $in . ') AND need.catid IS NULL'
+        )->execute();
+
+        // Недостающие; существующие строки (и их порядок) INSERT IGNORE не затрагивает.
+        $this->db->setQuery(
+            'INSERT IGNORE INTO #__dharmashop_product_categories (catid, product_id, direct, is_main, state, in_stock, created, title_sort) '
+            . 'SELECT need.catid, need.product_id, 0, 0, 0, 0, NOW(), \'\' FROM (' . $needed . ') need'
+        )->execute();
+
+        $this->refreshProducts($ids);
     }
 
     /** Сохраняет порядок товара в каждой его категории; catid из запроса проверяется по строкам его индекса. */
