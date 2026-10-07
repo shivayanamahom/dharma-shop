@@ -93,6 +93,19 @@ $extraFieldsets = array_filter(['dharmashop_brand', 'dharmashop_badge'], fn (str
             <?php echo HTMLHelper::_('uitab.endTab'); ?>
         <?php endif; ?>
 
+        <?php if ($this->extension === CategoryTypes::CATEGORY) : ?>
+            <?php echo HTMLHelper::_('uitab.addTab', 'categoryTab', 'order', Text::_('COM_DHARMASHOP_TAB_ORDER')); ?>
+            <fieldset class="options-form">
+                <legend><?php echo Text::_('COM_DHARMASHOP_ORDER_BLOCK_QTY'); ?></legend>
+                <?php echo $this->form->renderFieldset('dharmashop_order_qty'); ?>
+            </fieldset>
+            <fieldset class="options-form">
+                <legend><?php echo Text::_('COM_DHARMASHOP_ORDER_BLOCK_STOCK'); ?></legend>
+                <?php echo $this->form->renderFieldset('dharmashop_order_stock'); ?>
+            </fieldset>
+            <?php echo HTMLHelper::_('uitab.endTab'); ?>
+        <?php endif; ?>
+
         <?php foreach ($extraFieldsets as $name) : ?>
             <?php echo HTMLHelper::_('uitab.addTab', 'categoryTab', $name, Text::_($isBadge ? 'COM_DHARMASHOP_BADGE_FIELDSET_LABEL' : 'COM_DHARMASHOP_BRAND_FIELDSET_LABEL')); ?>
             <?php echo $this->form->renderFieldset($name); ?>

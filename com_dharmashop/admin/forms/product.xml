@@ -31,22 +31,31 @@
 		<field name="sale_price" type="number" label="COM_DHARMASHOP_FIELD_SALE_PRICE_LABEL" description="COM_DHARMASHOP_FIELD_SALE_PRICE_DESC" step="0.01" min="0" />
 		<field name="sale_start" type="calendar" label="COM_DHARMASHOP_FIELD_SALE_START_LABEL" translateformat="true" showtime="true" filter="user_utc" showon="sale_price!:" />
 		<field name="sale_end" type="calendar" label="COM_DHARMASHOP_FIELD_SALE_END_LABEL" translateformat="true" showtime="true" filter="user_utc" showon="sale_price!:" />
-		<field name="unit" type="text" label="COM_DHARMASHOP_FIELD_UNIT_LABEL" description="COM_DHARMASHOP_FIELD_UNIT_DESC" maxlength="20" />
-		<field name="qty_min" type="number" label="COM_DHARMASHOP_FIELD_QTY_MIN_LABEL" step="0.001" min="0.001" default="1" />
-		<field name="qty_step" type="number" label="COM_DHARMASHOP_FIELD_QTY_STEP_LABEL" step="0.001" min="0.001" default="1" />
-		<field name="stock_tracked" type="radio" label="COM_DHARMASHOP_FIELD_STOCK_TRACKED_LABEL" description="COM_DHARMASHOP_FIELD_STOCK_TRACKED_DESC" layout="joomla.form.field.radio.switcher" default="0">
-			<option value="0">JNO</option>
-			<option value="1">JYES</option>
-		</field>
-		<field name="stock_qty" type="number" label="COM_DHARMASHOP_FIELD_STOCK_QTY_LABEL" step="0.001" default="0" showon="stock_tracked:1" />
-		<field name="backorder" type="radio" label="COM_DHARMASHOP_FIELD_BACKORDER_LABEL" description="COM_DHARMASHOP_FIELD_BACKORDER_DESC" layout="joomla.form.field.radio.switcher" default="0" showon="stock_tracked:1">
-			<option value="0">JNO</option>
-			<option value="1">JYES</option>
-		</field>
+		<field name="stock_qty" type="number" label="COM_DHARMASHOP_FIELD_STOCK_QTY_LABEL" step="0.001" default="0" />
 		<field name="weight" type="number" label="COM_DHARMASHOP_FIELD_WEIGHT_LABEL" step="0.001" min="0" />
 		<field name="length" type="number" label="COM_DHARMASHOP_FIELD_LENGTH_LABEL" step="0.01" min="0" />
 		<field name="width" type="number" label="COM_DHARMASHOP_FIELD_WIDTH_LABEL" step="0.01" min="0" />
 		<field name="height" type="number" label="COM_DHARMASHOP_FIELD_HEIGHT_LABEL" step="0.01" min="0" />
+	</fieldset>
+
+	<fieldset name="order_qty">
+		<field name="qty_min" type="number" label="COM_DHARMASHOP_ORDER_QTY_MIN" description="COM_DHARMASHOP_ORDER_QTY_MIN_DESC" step="0.001" min="0.001" />
+		<field name="qty_step" type="number" label="COM_DHARMASHOP_ORDER_QTY_STEP" description="COM_DHARMASHOP_ORDER_QTY_STEP_DESC" step="0.001" min="0.001" />
+		<field name="qty_max" type="number" label="COM_DHARMASHOP_ORDER_QTY_MAX" description="COM_DHARMASHOP_ORDER_QTY_MAX_DESC" step="0.001" min="0" />
+		<field name="unit" type="text" label="COM_DHARMASHOP_ORDER_UNIT" description="COM_DHARMASHOP_ORDER_UNIT_DESC" maxlength="20" />
+	</fieldset>
+
+	<fieldset name="order_stock">
+		<field name="stock_tracked" type="list" label="COM_DHARMASHOP_ORDER_STOCK_TRACKED" description="COM_DHARMASHOP_ORDER_STOCK_TRACKED_DESC" default="" validate="options">
+			<option value="">COM_DHARMASHOP_ORDER_INHERIT</option>
+			<option value="1">JYES</option>
+			<option value="0">JNO</option>
+		</field>
+		<field name="backorder" type="list" label="COM_DHARMASHOP_ORDER_BACKORDER" description="COM_DHARMASHOP_ORDER_BACKORDER_DESC" default="" validate="options">
+			<option value="">COM_DHARMASHOP_ORDER_INHERIT</option>
+			<option value="1">JYES</option>
+			<option value="0">JNO</option>
+		</field>
 	</fieldset>
 
 	<fieldset name="publishing">

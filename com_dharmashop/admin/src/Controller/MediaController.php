@@ -46,7 +46,7 @@ class MediaController extends BaseController
 
             $file = $this->input->files->get('file', [], 'raw');
             $folder = (string) $this->input->post->getString('folder', 'common');
-            $uploader = new ImageUploader(ComponentHelper::getParams('com_media'), JPATH_ROOT);
+            $uploader = new ImageUploader(ComponentHelper::getParams('com_media'), JPATH_ROOT, ComponentHelper::getParams('com_dharmashop'));
 
             echo new JsonResponse($uploader->store(is_array($file) ? $file : [], $folder));
         } catch (\RuntimeException $e) {

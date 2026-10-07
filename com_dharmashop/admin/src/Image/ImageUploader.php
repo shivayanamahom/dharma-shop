@@ -35,8 +35,30 @@ final class ImageUploader
         'svg' => ['image/svg+xml', 'text/xml', 'text/plain', 'application/xml'],
     ];
 
-    public function __construct(private readonly Registry $mediaParams, private readonly string $root)
+    /**
+     * @param  Registry  $mediaParams  настройки «Медиа» Joomla (расширения, размер)
+     * @param  string    $root         корень сайта
+     * @param  Registry  $shopParams   настройки магазина (имена файлов: image_name_mode, image_name_prefix)
+     */
+    public function __construct(private readonly Registry $mediaParams, private readonly string $root, private readonly ?Registry $shopParams = null)
     {
+    }
+
+    /** Имя файла без расширения по настройкам магазина: «оригинальное», «случайное» или «оригинальное + случайный хвост»; перед ним — префикс. */
+    private function baseName(string $original): string
+    {
+        $mode = (string) $this->shopParams?->get('image_name_mode', 'random');
+        $prefix = trim(preg_replace('/[^a-z0-9_-]/', '', strtolower((string) $this->shopParams?->get('image_name_prefix', ''))) ?? '', '-_');
+        $slug = OutputFilter::stringURLSafe($original) ?: 'image';
+        $random = bin2hex(random_bytes(5));
+
+        $base = match ($mode) {
+            'original' => $slug,
+            'original_random' => $slug . '-' . $random,
+            default => $random,
+        };
+
+        return ($prefix !== '' ? $prefix . '-' : '') . $base;
     }
 
     /** @return string[] */
@@ -128,7 +150,7 @@ final class ImageUploader
             throw new \RuntimeException('COM_DHARMASHOP_UPLOAD_ERROR_STORE');
         }
 
-        $base = OutputFilter::stringURLSafe(pathinfo($original, PATHINFO_FILENAME)) ?: 'image';
+        $base = $this->baseName(pathinfo($original, PATHINFO_FILENAME));
         $name = $base . '.' . $extension;
 
         for ($i = 2; is_file($directory . '/' . $name); $i++) {

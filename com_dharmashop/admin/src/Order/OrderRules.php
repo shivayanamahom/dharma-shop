@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Dharma\Component\DharmaShop\Administrator\Order;
 
 use Dharma\Component\DharmaShop\Administrator\Support\Sql;
+use Joomla\CMS\Language\Text;
 use Joomla\Database\DatabaseInterface;
 use Joomla\Database\ParameterType;
 use Joomla\Registry\Registry;
@@ -33,13 +34,33 @@ final class OrderRules
 {
     public const FIELDS = ['qty_min', 'qty_step', 'qty_max', 'unit', 'stock_tracked', 'backorder'];
 
-    private const BUILTIN = ['qty_min' => 1.0, 'qty_step' => 1.0, 'qty_max' => 0.0, 'unit' => '', 'stock_tracked' => 0, 'backorder' => 0];
+    private const BUILTIN = ['qty_min' => 1.0, 'qty_step' => 1.0, 'qty_max' => 0.0, 'unit' => 'шт', 'stock_tracked' => 0, 'backorder' => 0];
 
     /** @var array<int, array<string, mixed>>|null настройки каждой категории магазина: id => params */
     private ?array $categoryParams = null;
 
     public function __construct(private readonly DatabaseInterface $db, private readonly Registry $params)
     {
+    }
+
+    /** Сбрасывает кэш настроек категорий (после их изменения в этом же запросе). */
+    public function flush(): void
+    {
+        $this->categoryParams = null;
+    }
+
+    /** Подпись источника значения: «из настроек магазина» или «из категории «…»». */
+    public function sourceLabel(int|string $source): string
+    {
+        if (!is_int($source)) {
+            return Text::_('COM_DHARMASHOP_ORDER_FROM_SETTINGS');
+        }
+
+        $title = (string) $this->db->setQuery(
+            $this->db->createQuery()->select('title')->from('#__categories')->where('id = ' . $source)
+        )->loadResult();
+
+        return Text::sprintf('COM_DHARMASHOP_ORDER_FROM_CATEGORY', $title);
     }
 
     /** Значения из общих настроек магазина (ключи order_<поле>); не заданные — встроенные. @return array<string, float|int|string> */
@@ -49,7 +70,9 @@ final class OrderRules
 
         foreach (self::FIELDS as $field) {
             $raw = $this->params->get('order_' . $field);
-            $values[$field] = self::cast($field, $raw === null || $raw === '' ? self::BUILTIN[$field] : $raw);
+            // Пока настройки магазина не сохранялись, действуют встроенные значения; пустая единица, заданная намеренно, остаётся пустой.
+            $useBuiltin = $raw === null || ($raw === '' && $field !== 'unit');
+            $values[$field] = self::cast($field, $useBuiltin ? self::BUILTIN[$field] : $raw);
         }
 
         return $values;

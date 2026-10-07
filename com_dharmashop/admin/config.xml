@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <config>
+	<!-- Разделы настроек магазина (вкладки): Магазин, Каталог, Изображения, Оформление заказа, Права. Новые разделы добавляются сюда fieldset-ом. -->
 	<fieldset name="shop" label="COM_DHARMASHOP_CONFIG_SHOP" description="COM_DHARMASHOP_CONFIG_SHOP_DESC">
 		<field name="currency_code" type="text" label="COM_DHARMASHOP_CONFIG_CURRENCY_CODE" description="COM_DHARMASHOP_CONFIG_CURRENCY_CODE_DESC" default="RUB" maxlength="3" filter="string" />
 		<field name="currency_symbol" type="text" label="COM_DHARMASHOP_CONFIG_CURRENCY_SYMBOL" default="₽" maxlength="8" filter="string" />
@@ -9,9 +10,42 @@
 		</field>
 		<field name="currency_decimals" type="integer" label="COM_DHARMASHOP_CONFIG_CURRENCY_DECIMALS" default="0" first="0" last="4" step="1" />
 	</fieldset>
-	<fieldset name="catalog" label="COM_DHARMASHOP_CONFIG_CATALOG">
-		<field name="list_limit" type="integer" label="COM_DHARMASHOP_CONFIG_LIST_LIMIT" default="24" first="6" last="96" step="6" />
+
+	<fieldset name="catalog" label="COM_DHARMASHOP_CONFIG_CATALOG" description="COM_DHARMASHOP_CONFIG_CATALOG_DESC">
+		<field name="list_limit" type="integer" label="COM_DHARMASHOP_CONFIG_LIST_LIMIT" description="COM_DHARMASHOP_CONFIG_LIST_LIMIT_DESC" default="24" first="6" last="96" step="6" />
+		<field name="list_ordering" type="list" label="COM_DHARMASHOP_CONFIG_LIST_ORDERING" description="COM_DHARMASHOP_CONFIG_LIST_ORDERING_DESC" default="order" validate="options">
+			<option value="order">COM_DHARMASHOP_CAT_ORDERING_ORDER</option>
+			<option value="price_asc">COM_DHARMASHOP_CAT_ORDERING_PRICE_ASC</option>
+			<option value="price_desc">COM_DHARMASHOP_CAT_ORDERING_PRICE_DESC</option>
+			<option value="new">COM_DHARMASHOP_CAT_ORDERING_NEW</option>
+			<option value="title">COM_DHARMASHOP_CAT_ORDERING_TITLE</option>
+		</field>
 	</fieldset>
+
+	<fieldset name="images" label="COM_DHARMASHOP_CONFIG_IMAGES" description="COM_DHARMASHOP_CONFIG_IMAGES_DESC">
+		<field name="image_name_mode" type="list" label="COM_DHARMASHOP_CONFIG_IMAGE_NAME_MODE" description="COM_DHARMASHOP_CONFIG_IMAGE_NAME_MODE_DESC" default="random" validate="options">
+			<option value="random">COM_DHARMASHOP_CONFIG_IMAGE_NAME_RANDOM</option>
+			<option value="original_random">COM_DHARMASHOP_CONFIG_IMAGE_NAME_ORIGINAL_RANDOM</option>
+			<option value="original">COM_DHARMASHOP_CONFIG_IMAGE_NAME_ORIGINAL</option>
+		</field>
+		<field name="image_name_prefix" type="text" label="COM_DHARMASHOP_CONFIG_IMAGE_NAME_PREFIX" description="COM_DHARMASHOP_CONFIG_IMAGE_NAME_PREFIX_DESC" default="" maxlength="30" filter="string" hint="shop" />
+	</fieldset>
+
+	<fieldset name="order" label="COM_DHARMASHOP_CONFIG_ORDER" description="COM_DHARMASHOP_CONFIG_ORDER_DESC">
+		<field name="order_qty_min" type="number" label="COM_DHARMASHOP_ORDER_QTY_MIN" description="COM_DHARMASHOP_ORDER_QTY_MIN_DESC" default="1" min="0.001" step="0.001" />
+		<field name="order_qty_step" type="number" label="COM_DHARMASHOP_ORDER_QTY_STEP" description="COM_DHARMASHOP_ORDER_QTY_STEP_DESC" default="1" min="0.001" step="0.001" />
+		<field name="order_qty_max" type="number" label="COM_DHARMASHOP_ORDER_QTY_MAX" description="COM_DHARMASHOP_ORDER_QTY_MAX_DESC" default="0" min="0" step="0.001" />
+		<field name="order_unit" type="text" label="COM_DHARMASHOP_ORDER_UNIT" description="COM_DHARMASHOP_ORDER_UNIT_DESC" default="шт" maxlength="20" />
+		<field name="order_stock_tracked" type="radio" label="COM_DHARMASHOP_ORDER_STOCK_TRACKED" description="COM_DHARMASHOP_ORDER_STOCK_TRACKED_DESC" layout="joomla.form.field.radio.switcher" default="0">
+			<option value="0">JNO</option>
+			<option value="1">JYES</option>
+		</field>
+		<field name="order_backorder" type="radio" label="COM_DHARMASHOP_ORDER_BACKORDER" description="COM_DHARMASHOP_ORDER_BACKORDER_DESC" layout="joomla.form.field.radio.switcher" default="0">
+			<option value="0">JNO</option>
+			<option value="1">JYES</option>
+		</field>
+	</fieldset>
+
 	<fieldset name="permissions" label="JCONFIG_PERMISSIONS_LABEL" description="JCONFIG_PERMISSIONS_DESC">
 		<field name="rules" type="rules" label="JCONFIG_PERMISSIONS_LABEL" validate="rules" filter="rules" component="com_dharmashop" section="component" />
 	</fieldset>

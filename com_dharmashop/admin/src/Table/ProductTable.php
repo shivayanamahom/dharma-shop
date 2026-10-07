@@ -104,8 +104,24 @@ class ProductTable extends Table
         }
 
         $this->variants_mode = 1;
-        $this->qty_min = (float) $this->qty_min > 0 ? $this->qty_min : 1;
-        $this->qty_step = (float) $this->qty_step > 0 ? $this->qty_step : 1;
+
+        // Правила оформления заказа необязательны: пустое значение = «наследовать» (NULL).
+        foreach (['unit', 'qty_min', 'qty_step', 'qty_max', 'stock_tracked', 'backorder'] as $field) {
+            if ($this->$field === '' || $this->$field === null) {
+                $this->$field = null;
+            }
+        }
+
+        foreach (['qty_min', 'qty_step'] as $field) {
+            if ($this->$field !== null && (float) $this->$field <= 0) {
+                $this->$field = null;
+            }
+        }
+
+        if ($this->qty_max !== null && (float) $this->qty_max < 0) {
+            $this->qty_max = null;
+        }
+
         $this->metakey = trim(preg_replace('/\s*,\s*/', ', ', str_replace(["\n", "\r", '"', '<', '>'], '', (string) $this->metakey)), ', ');
 
         return true;

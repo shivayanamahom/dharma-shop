@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace Dharma\Component\DharmaShop\Administrator\Model;
 
+use Dharma\Component\DharmaShop\Administrator\Order\InheritHints;
 use Dharma\Component\DharmaShop\Administrator\Service\ShopServices;
 use Dharma\Component\DharmaShop\Administrator\Support\CategoryTypes;
 use Joomla\CMS\Factory;
@@ -47,7 +48,7 @@ class ProductModel extends AdminModel
     ];
 
     /** Поля формы, которые относятся к варианту, а не к карточке. */
-    private const VARIANT_FIELDS = ['sku', 'stock_tracked', 'backorder', 'weight', 'length', 'width', 'height', 'price', 'sale_price', 'sale_start', 'sale_end'];
+    private const VARIANT_FIELDS = ['sku', 'weight', 'length', 'width', 'height', 'price', 'sale_price', 'sale_start', 'sale_end'];
 
     public function getTable($name = 'Product', $prefix = 'Administrator', $options = []): Table
     {
@@ -64,6 +65,16 @@ class ProductModel extends AdminModel
         $form = $this->loadForm('com_dharmashop.product', 'product', ['control' => 'jform', 'load_data' => $loadData]);
 
         return empty($form) ? false : $form;
+    }
+
+    protected function preprocessForm(Form $form, $data, $group = 'content'): void
+    {
+        // Подсказки «Наследуется: …» у правил оформления заказа по основной категории товара.
+        $catid = (int) (is_array($data) ? ($data['catid'] ?? 0) : ($data->catid ?? 0));
+        $rules = $this->shop()->orderRules();
+        InheritHints::apply($form, $rules, $rules->forCategory($catid), null, '');
+
+        parent::preprocessForm($form, $data, $group);
     }
 
     protected function loadFormData(): mixed
@@ -98,7 +109,6 @@ class ProductModel extends AdminModel
         $item->brand_id = 0;
         $item->badge_ids = [];
         $item->sku = $item->price = $item->sale_price = $item->sale_start = $item->sale_end = null;
-        $item->stock_tracked = $item->backorder = 0;
         $item->stock_qty = 0;
         $item->weight = $item->length = $item->width = $item->height = null;
 
@@ -149,7 +159,15 @@ class ProductModel extends AdminModel
         $db->transactionStart();
 
         try {
-            $variantId = $shop->variants()->saveDefault($id, array_intersect_key($data, array_flip(self::VARIANT_FIELDS)));
+            // Итоговые учёт остатков и «продавать без остатка» (товар → категории → настройки) записываем в вариант:
+            // от них зависит наличие в списках.
+            $row = $db->setQuery($db->createQuery()->select('*')->from('#__dharmashop_products')->where('id = ' . $id))->loadAssoc() ?: [];
+            $policy = $shop->orderRules()->forProduct($row);
+            $variantData = array_intersect_key($data, array_flip(self::VARIANT_FIELDS)) + [
+                'stock_tracked' => $policy['stock_tracked'],
+                'backorder' => $policy['backorder'],
+            ];
+            $variantId = $shop->variants()->saveDefault($id, $variantData);
             $shop->stock()->setQty($variantId, (float) str_replace(',', '.', (string) ($data['stock_qty'] ?? 0)), 'manual', $userId);
             $shop->rebuilder()->rebuild($id);
             $shop->indexer()->setCategories(

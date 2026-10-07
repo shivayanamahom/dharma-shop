@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Dharma\Component\DharmaShop\Administrator\Model;
 
 use Dharma\Component\DharmaShop\Administrator\Image\ImageCleaner;
+use Dharma\Component\DharmaShop\Administrator\Order\InheritHints;
 use Dharma\Component\DharmaShop\Administrator\Support\CategoryTypes;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Form\Form;
@@ -115,6 +116,20 @@ class CategoryModel extends AdminModel
             $form->loadFile(JPATH_ADMINISTRATOR . '/components/com_dharmashop/forms/' . $file . '.xml', false);
         }
 
+        if ($extension === CategoryTypes::CATEGORY) {
+            // Подсказки «Наследуется: …»: для существующей — без её собственных значений, для новой — по родителю.
+            $rules = Factory::getApplication()->bootComponent('com_dharmashop')->getServices()->orderRules();
+            $id = (int) (is_array($data) ? ($data['id'] ?? 0) : ($data->id ?? 0));
+            $parent = (int) (is_array($data) ? ($data['parent_id'] ?? 0) : ($data->parent_id ?? 0));
+            $inherited = $id > 0 ? $rules->forCategory($id, false) : $rules->forCategory($parent > 1 ? $parent : 0);
+            InheritHints::apply($form, $rules, $inherited, 'params', 'order_');
+        } else {
+            // Правила оформления заказа есть только у категорий магазина.
+            foreach (['order_qty_min', 'order_qty_step', 'order_qty_max', 'order_unit', 'order_stock_tracked', 'order_backorder'] as $field) {
+                $form->removeField($field, 'params');
+            }
+        }
+
         if ($extension === CategoryTypes::BADGE) {
             // Бейдж — плоский справочник без страницы и настроек списка.
             $form->removeField('parent_id');
@@ -186,6 +201,7 @@ class CategoryModel extends AdminModel
         }
 
         $oldParent = $id > 0 ? $this->getParentOf($id) : null;
+        $oldOrderParams = $id > 0 ? $this->orderParams($this->paramsOf($id)) : [];
 
         if (!parent::save($data)) {
             return false;
@@ -200,6 +216,8 @@ class CategoryModel extends AdminModel
 
             return false;
         }
+
+        $this->applyOrderRules($id, $oldOrderParams, $table);
 
         // Перемещение в дереве меняет родительские строки витринного индекса у товаров поддерева.
         if ($oldParent !== null && $oldParent !== (int) $table->parent_id) {
@@ -299,6 +317,64 @@ class CategoryModel extends AdminModel
         }
 
         return true;
+    }
+
+    /** @return array<string, mixed> параметры записи (JSON → массив) */
+    private function paramsOf(int $id): array
+    {
+        $db = $this->getDatabase();
+
+        return json_decode((string) $db->setQuery($db->createQuery()->select('params')->from('#__categories')->where('id = :id')->bind(':id', $id, ParameterType::INTEGER))->loadResult(), true) ?: [];
+    }
+
+    /** @return array<string, string> только правила оформления заказа */
+    private function orderParams(array $params): array
+    {
+        $result = [];
+
+        foreach (['order_qty_min', 'order_qty_step', 'order_qty_max', 'order_unit', 'order_stock_tracked', 'order_backorder'] as $key) {
+            $result[$key] = (string) ($params[$key] ?? '');
+        }
+
+        return $result;
+    }
+
+    /**
+     * Если у категории изменились правила оформления заказа, пересчитывает учёт остатков у товаров этой ветки
+     * (сразу, если их не больше 5000; иначе просит запустить команду обслуживания).
+     */
+    private function applyOrderRules(int $id, array $before, Table $table): void
+    {
+        if ($table->extension !== CategoryTypes::CATEGORY) {
+            return;
+        }
+
+        $after = $this->orderParams(json_decode((string) $table->params, true) ?: []);
+
+        if ($after === $before) {
+            return;
+        }
+
+        $app = Factory::getApplication();
+        $shop = $app->bootComponent('com_dharmashop')->getServices();
+        $rules = $shop->orderRules();
+        $rules->flush();
+        $ids = $rules->subtree($id);
+        $db = $this->getDatabase();
+        $count = (int) $db->setQuery($db->createQuery()->select('COUNT(*)')->from('#__dharmashop_products')->where('catid IN (' . implode(',', array_map('intval', $ids)) . ')'))->loadResult();
+
+        if ($count > 5000) {
+            $app->enqueueMessage(Text::_('COM_DHARMASHOP_ORDER_RECALC_NEEDED'), 'warning');
+
+            return;
+        }
+
+        if ($count > 0) {
+            $rules->materializeCategories($ids);
+            $shop->rebuilder()->rebuildCategories($ids);
+            $shop->indexer()->refreshCategories($ids);
+            $app->enqueueMessage(Text::sprintf('COM_DHARMASHOP_ORDER_RECALC_DONE', $count), 'message');
+        }
     }
 
     private function getExtensionOf(int $id): string

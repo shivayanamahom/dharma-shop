@@ -39,7 +39,7 @@ class ImageuploadField extends FormField
         $wa->getRegistry()->addExtensionRegistryFile('com_dharmashop');
         $wa->useScript('com_dharmashop.uploader')->useStyle('com_dharmashop.uploader');
 
-        $uploader = new ImageUploader(ComponentHelper::getParams('com_media'), JPATH_ROOT);
+        $uploader = new ImageUploader(ComponentHelper::getParams('com_media'), JPATH_ROOT, ComponentHelper::getParams('com_dharmashop'));
         $value = trim((string) strstr(((string) $this->value) . '#', '#', true));
         $folder = (string) ($this->element['folder'] ?: 'common');
         $attr = static fn (string $v): string => htmlspecialchars($v, ENT_QUOTES, 'UTF-8');

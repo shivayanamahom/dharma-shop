@@ -56,17 +56,11 @@ $canAdmin = $this->getCurrentUser()->authorise('core.admin', 'com_dharmashop');
                         <?php echo $this->form->renderField($name); ?>
                     <?php endforeach; ?>
                 </fieldset>
-                <fieldset class="options-form">
-                    <legend><?php echo Text::_('COM_DHARMASHOP_FIELDSET_UNITS'); ?></legend>
-                    <?php foreach (['unit', 'qty_min', 'qty_step'] as $name) : ?>
-                        <?php echo $this->form->renderField($name); ?>
-                    <?php endforeach; ?>
-                </fieldset>
             </div>
             <div class="col-lg-6">
                 <fieldset class="options-form">
                     <legend><?php echo Text::_('COM_DHARMASHOP_FIELDSET_STOCK'); ?></legend>
-                    <?php foreach (['stock_tracked', 'stock_qty', 'backorder'] as $name) : ?>
+                    <?php foreach (['stock_qty'] as $name) : ?>
                         <?php echo $this->form->renderField($name); ?>
                     <?php endforeach; ?>
                 </fieldset>
@@ -78,6 +72,17 @@ $canAdmin = $this->getCurrentUser()->authorise('core.admin', 'com_dharmashop');
                 </fieldset>
             </div>
         </div>
+        <?php echo HTMLHelper::_('uitab.endTab'); ?>
+
+        <?php echo HTMLHelper::_('uitab.addTab', 'productTab', 'order', Text::_('COM_DHARMASHOP_TAB_ORDER')); ?>
+        <fieldset class="options-form">
+            <legend><?php echo Text::_('COM_DHARMASHOP_ORDER_BLOCK_QTY'); ?></legend>
+            <?php echo $this->form->renderFieldset('order_qty'); ?>
+        </fieldset>
+        <fieldset class="options-form">
+            <legend><?php echo Text::_('COM_DHARMASHOP_ORDER_BLOCK_STOCK'); ?></legend>
+            <?php echo $this->form->renderFieldset('order_stock'); ?>
+        </fieldset>
         <?php echo HTMLHelper::_('uitab.endTab'); ?>
 
         <?php echo HTMLHelper::_('uitab.addTab', 'productTab', 'publishing', Text::_('JGLOBAL_FIELDSET_PUBLISHING')); ?>
