@@ -15,11 +15,15 @@ use Joomla\Database\ParameterType;
  * Маршруты витрины без числовых ID: в адресе только алиасы вложенной цепочкой
  * (`/tovary-kategorii/stoly/obedennye-stoly`, `/stoly/obedennye-stoly`). Алиас категории уникален внутри родителя
  * (проверяет `Table\Category`), поэтому разбор однозначен. Адрес строится от пункта меню нужного вида (корень — id 0 или 1).
- * Виды `brands`, `badges`, `product` пока без вложенности: их страниц ещё нет.
+ * Бренды (`/proizvoditeli/ikea/ikea-hemnes`) и бейджи (`/bejdzhi/hit`) устроены так же; страницы товара появятся позже.
  */
 class Router extends RouterView
 {
     protected $name = 'dharmashop';
+    private const CATEGORY = 'com_dharmashop';
+    private const BRAND = 'com_dharmashop.brand';
+    private const BADGE = 'com_dharmashop.badge';
+
     private array $categoryCache = [];
     private array $childCache = [];
 
@@ -27,13 +31,14 @@ class Router extends RouterView
     {
         $this->registerView((new RouterViewConfiguration('categories'))->setKey('id')->setNestable());
         $this->registerView((new RouterViewConfiguration('category'))->setKey('id')->setNestable());
-        foreach (['product', 'brands', 'badges'] as $view) {
-            $config = new RouterViewConfiguration($view);
-            if ($view !== 'badges') {
-                $config->setKey('id');
-            }
-            $this->registerView($config);
-        }
+        // Бренды: список (пункт меню) → страница бренда (вложенная: бренд внутри бренда). Бейджи: список → страница бейджа.
+        $brands = new RouterViewConfiguration('brands');
+        $this->registerView($brands);
+        $this->registerView((new RouterViewConfiguration('brand'))->setKey('id')->setParent($brands)->setNestable());
+        $badges = new RouterViewConfiguration('badges');
+        $this->registerView($badges);
+        $this->registerView((new RouterViewConfiguration('badge'))->setKey('id')->setParent($badges));
+        $this->registerView((new RouterViewConfiguration('product'))->setKey('id'));
         parent::__construct($app, $menu);
         $this->attachRule(new MenuRules($this));
         $this->attachRule(new StandardRules($this));
@@ -60,13 +65,33 @@ class Router extends RouterView
         return $this->child((string) $segment, $query);
     }
 
+    public function getBrandSegment($id, $query): array
+    {
+        return $this->chain((int) $id, $this->rootKey($query, 'brands'), self::BRAND);
+    }
+
+    public function getBrandId($segment, $query): int|false
+    {
+        return $this->child((string) $segment, $query, self::BRAND);
+    }
+
+    public function getBadgeSegment($id, $query): array
+    {
+        return $this->chain((int) $id, null, self::BADGE);
+    }
+
+    public function getBadgeId($segment, $query): int|false
+    {
+        return $this->child((string) $segment, $query, self::BADGE);
+    }
+
     /** Цепочка алиасов от категории вверх; последний элемент — корень (ключ 0 или 1, значение пустое). */
-    private function chain(int $id, int $root): array
+    private function chain(int $id, ?int $root, string $extension = self::CATEGORY): array
     {
         $segments = [];
 
         while ($id > 1 && !isset($segments[$id])) {
-            $item = $this->category($id);
+            $item = $this->category($id, $extension);
 
             if (!$item) {
                 break;
@@ -76,7 +101,9 @@ class Router extends RouterView
             $id = (int) $item->parent_id;
         }
 
-        $segments[$root] = '';
+        if ($root !== null) {
+            $segments[$root] = '';
+        }
 
         return $segments;
     }
@@ -90,15 +117,15 @@ class Router extends RouterView
     }
 
     /** Категория по алиасу внутри родителя из запроса (корень — Joomla 1). */
-    private function child(string $alias, array $query): int|false
+    private function child(string $alias, array $query, string $extension = self::CATEGORY): int|false
     {
         $parent = max(1, (int) ($query['id'] ?? 0));
-        $key = $parent . '/' . $alias;
+        $key = $extension . '/' . $parent . '/' . $alias;
 
         if (!array_key_exists($key, $this->childCache)) {
             $db = $this->db;
             $select = $db->createQuery()->select($db->quoteName('id'))->from($db->quoteName('#__categories'))
-                ->where($db->quoteName('extension') . ' = ' . $db->quote('com_dharmashop'))
+                ->where($db->quoteName('extension') . ' = ' . $db->quote($extension))
                 ->where($db->quoteName('parent_id') . ' = :parent')->where($db->quoteName('alias') . ' = :alias')
                 ->bind(':parent', $parent, ParameterType::INTEGER)->bind(':alias', $alias);
             $found = $db->setQuery($select)->loadResult();
@@ -108,16 +135,18 @@ class Router extends RouterView
         return $this->childCache[$key];
     }
 
-    private function category(int $id): ?object
+    private function category(int $id, string $extension = self::CATEGORY): ?object
     {
-        if (!array_key_exists($id, $this->categoryCache)) {
+        $cacheKey = $extension . '/' . $id;
+
+        if (!array_key_exists($cacheKey, $this->categoryCache)) {
             $query = $this->db->createQuery()->select($this->db->quoteName(['id', 'parent_id', 'alias']))
                 ->from($this->db->quoteName('#__categories'))->where($this->db->quoteName('id') . ' = :id')
                 ->bind(':id', $id, ParameterType::INTEGER)
-                ->where($this->db->quoteName('extension') . ' = ' . $this->db->quote('com_dharmashop'));
-            $this->categoryCache[$id] = $this->db->setQuery($query)->loadObject();
+                ->where($this->db->quoteName('extension') . ' = ' . $this->db->quote($extension));
+            $this->categoryCache[$cacheKey] = $this->db->setQuery($query)->loadObject();
         }
 
-        return $this->categoryCache[$id];
+        return $this->categoryCache[$cacheKey];
     }
 }

@@ -10,7 +10,11 @@ cp "$S/com_dharmashop/dharmashop.xml" "$T/administrator/components/com_dharmasho
 for l in ru-RU en-GB; do
   cp "$S/com_dharmashop/admin/language/$l/"*.ini "$T/administrator/language/$l/"
 done
-[ -d "$S/com_dharmashop/site" ] && $R "$S/com_dharmashop/site/" "$T/components/com_dharmashop/" --exclude /layouts/ || true
+[ -d "$S/com_dharmashop/site" ] && $R "$S/com_dharmashop/site/" "$T/components/com_dharmashop/" --exclude /layouts/ --exclude /language/ || true
+# Языковые файлы сайта (при установке пакета манифест кладёт их в language/<тег>/).
+for l in ru-RU en-GB; do
+  [ -f "$S/com_dharmashop/site/language/$l/com_dharmashop.ini" ] && cp "$S/com_dharmashop/site/language/$l/com_dharmashop.ini" "$T/language/$l/com_dharmashop.ini" || true
+done
 # Общая библиотека: дополнительные пользовательские файлы не удаляем.
 if [ -d "$S/files_dharmashop_layouts/layouts" ]; then
   mkdir -p "$T/layouts/components/dharmashop"

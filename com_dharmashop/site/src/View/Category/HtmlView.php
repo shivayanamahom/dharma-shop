@@ -52,9 +52,10 @@ class HtmlView extends BaseHtmlView
         $active = $app->getMenu()->getActive();
         $this->showHeading = (int) $menu->get('show_page_heading', 1) === 1;
         $this->image = MediaUrl::absolute((string) $this->item->params->get('image', ''));
-        $this->setLayout($this->existingLayout((string) $this->params->get('category_layout', 'default'), 'components/com_dharmashop/tmpl/category'));
-        $this->subcategoryGridClasses = Grid::classes($this->params, 'categories');
-        $this->subcategoryLayout = $this->existingLayout((string) $this->params->get('category_card_layout', 'default'), 'layouts/components/dharmashop/category-card');
+        $taxonomy = $this->taxonomy();
+        $this->setLayout($this->existingLayout((string) $this->params->get('category_layout', 'default'), 'components/com_dharmashop/tmpl/' . $taxonomy->pageView));
+        $this->subcategoryGridClasses = Grid::classes($this->params, $taxonomy->gridPrefix());
+        $this->subcategoryLayout = $this->existingLayout((string) $this->params->get($taxonomy->cardKey('layout'), 'default'), 'layouts/components/dharmashop/' . $taxonomy->cardFolder());
         $this->sortOptions = [
             'order' => Text::_('COM_DHARMASHOP_SORT_ORDER'), 'title' => Text::_('COM_DHARMASHOP_SORT_TITLE'),
             'price_asc' => Text::_('COM_DHARMASHOP_SORT_PRICE_ASC'), 'price_desc' => Text::_('COM_DHARMASHOP_SORT_PRICE_DESC'),
@@ -67,17 +68,17 @@ class HtmlView extends BaseHtmlView
             $this->productCount = $showCount ? (string) $stats->product_count : null;
             $this->priceRange = $showPrices ? $this->formatRange($stats->price_min, $stats->price_max) : '';
         }
-        if ((int) $this->params->get('category_card_count', 0) || (int) $this->params->get('category_card_prices', 0)) {
-            $this->subcategoryStats = $model->getCardStats($this->subcategories, (int) $this->params->get('category_card_prices', 0) === 1);
+        if ((int) $this->params->get($taxonomy->cardKey('count'), 0) || (int) $this->params->get($taxonomy->cardKey('prices'), 0)) {
+            $this->subcategoryStats = $model->getCardStats($this->subcategories, (int) $this->params->get($taxonomy->cardKey('prices'), 0) === 1);
         }
         $seo = new PageSeo($settings);
         $menuCategory = max(0, (int) ($active->query['id'] ?? 0));
         $ownMenu = ($menuCategory <= 1 ? 0 : $menuCategory) === (int) $this->item->id ? $menu : new Registry();
-        $this->textValues = CategoryValues::build('category', $this->item, $ancestors, $model, $this->money);
+        $this->textValues = CategoryValues::build($taxonomy->area, $this->item, $ancestors, $model, $this->money);
         // Сортировка и вид в запросе (форма без JavaScript): страница-дубль, канонический адрес — без параметров, индексировать не нужно.
         $query = $app->getInput()->get;
         $variant = $query->exists('sort') || $query->exists('product_view');
-        $this->seo = $seo->resolve('category', $this->item, $this->textValues, $ownMenu,
+        $this->seo = $seo->resolve($taxonomy->area, $this->item, $this->textValues, $ownMenu,
             $this->absoluteRoute((int) $this->item->id) . (!$variant && $this->after ? '?after=' . $this->after : ''),
             $variant ? 'noindex, follow' : null);
         // Социальные теги работают; ItemList добавим вместе с содержимым и ссылками карточек.
@@ -88,7 +89,7 @@ class HtmlView extends BaseHtmlView
             if ((int) $ancestor->id === $menuCategory) {
                 $pastMenu = true;
             } elseif ($pastMenu) {
-                $page = $seo->resolve('category', $ancestor, CategoryValues::build('category', $ancestor, $chain, $model, $this->money),
+                $page = $seo->resolve($taxonomy->area, $ancestor, CategoryValues::build($taxonomy->area, $ancestor, $chain, $model, $this->money),
                     new Registry(), $this->absoluteRoute((int) $ancestor->id));
                 $app->getPathway()->addItem($page->breadcrumb, $this->categoryRoute((int) $ancestor->id));
             }
@@ -127,13 +128,13 @@ class HtmlView extends BaseHtmlView
     public function renderSubcategory(object $item): string
     {
         $stats = $this->subcategoryStats[(int) $item->id] ?? null;
-        $layout = new FileLayout('components.dharmashop.category-card.' . $this->subcategoryLayout, null, ['component' => 'none', 'client' => 0]);
+        $layout = new FileLayout('components.dharmashop.' . $this->taxonomy()->cardFolder() . '.' . $this->subcategoryLayout, null, ['component' => 'none', 'client' => 0]);
 
         return $layout->render(['item' => $item, 'url' => $this->categoryRoute((int) $item->id),
             'showImage' => (int) $this->params->get('subcategory_show_image', 1) === 1,
-            'showIntro' => (int) $this->params->get('category_card_intro', 1) === 1,
-            'showCount' => (int) $this->params->get('category_card_count', 0) === 1,
-            'showPrices' => (int) $this->params->get('category_card_prices', 0) === 1,
+            'showIntro' => (int) $this->params->get($this->taxonomy()->cardKey('intro'), 1) === 1,
+            'showCount' => (int) $this->params->get($this->taxonomy()->cardKey('count'), 0) === 1,
+            'showPrices' => (int) $this->params->get($this->taxonomy()->cardKey('prices'), 0) === 1,
             'productCount' => (string) ($stats->product_count ?? '0'),
             'priceRange' => $this->formatRange($stats->price_min ?? null, $stats->price_max ?? null)]);
     }

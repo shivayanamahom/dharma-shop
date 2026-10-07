@@ -2,6 +2,7 @@
 declare(strict_types=1);
 namespace Dharma\Component\DharmaShop\Site\Model;
 
+use Dharma\Component\DharmaShop\Site\Support\Taxonomy;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
@@ -22,6 +23,12 @@ class CategoriesModel extends BaseDatabaseModel
     private array $ancestors = [];
     private ?array $items = null;
 
+    /** Тип записей модели; бренды и бейджи переопределяют. */
+    protected function taxonomy(): Taxonomy
+    {
+        return Taxonomy::category();
+    }
+
     public function getParent(): object
     {
         if ($this->parent !== null) {
@@ -32,11 +39,12 @@ class CategoriesModel extends BaseDatabaseModel
             throw new \RuntimeException(Text::_('COM_DHARMASHOP_CATEGORY_NOT_FOUND'), 404);
         }
         if ($id <= 1) {
-            $root = ComponentHelper::getParams('com_dharmashop')->get('root_category', []);
+            $taxonomy = $this->taxonomy();
+            $root = $taxonomy->rootParam !== '' ? ComponentHelper::getParams('com_dharmashop')->get($taxonomy->rootParam, []) : [];
             $data = json_decode(json_encode($root), true) ?: [];
-            $this->parent = (object) ($data + ['title' => Text::_('COM_DHARMASHOP_CATALOG'), 'description' => '', 'metadesc' => '']);
+            $this->parent = (object) ($data + ['title' => Text::_($taxonomy->rootTitle), 'description' => '', 'metadesc' => '']);
             if (trim((string) $this->parent->title) === '') {
-                $this->parent->title = Text::_('COM_DHARMASHOP_CATALOG');
+                $this->parent->title = Text::_($taxonomy->rootTitle);
             }
             $this->parent->id = 0;
             $this->parent->parent_id = 0;
@@ -79,7 +87,7 @@ class CategoriesModel extends BaseDatabaseModel
         $levels = array_map('intval', $this->getCurrentUser()->getAuthorisedViewLevels());
         $query = $db->createQuery()->select($db->quoteName(['id', 'parent_id', 'title', 'alias', 'description', 'params']))
             ->from($db->quoteName('#__categories'))
-            ->where($db->quoteName('extension') . ' = ' . $db->quote('com_dharmashop'))
+            ->where($db->quoteName('extension') . ' = ' . $db->quote($this->taxonomy()->extension))
             ->where($db->quoteName('parent_id') . ' = :parent')->bind(':parent', $parentId, ParameterType::INTEGER)
             ->where($db->quoteName('published') . ' = 1')
             ->where($db->quoteName('access') . ' IN (' . implode(',', $levels ?: [0]) . ')')
@@ -159,7 +167,7 @@ class CategoriesModel extends BaseDatabaseModel
         $db = $this->getDatabase();
         $query = $db->createQuery()->select($db->quoteName(['id', 'parent_id', 'title', 'alias', 'description', 'params', 'metadata', 'metadesc', 'published', 'access']))
             ->from($db->quoteName('#__categories'))->where($db->quoteName('id') . ' = :id')->bind(':id', $id, ParameterType::INTEGER)
-            ->where($db->quoteName('extension') . ' = ' . $db->quote('com_dharmashop'));
+            ->where($db->quoteName('extension') . ' = ' . $db->quote($this->taxonomy()->extension));
         $item = $db->setQuery($query)->loadObject();
         if ($item) {
             $item->params = new Registry($item->params);

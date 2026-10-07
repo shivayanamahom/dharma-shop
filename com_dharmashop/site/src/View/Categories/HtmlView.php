@@ -10,6 +10,7 @@ use Dharma\Component\DharmaShop\Site\Placeholder\Renderer;
 use Dharma\Component\DharmaShop\Site\Seo\PageSeo;
 use Dharma\Component\DharmaShop\Site\Support\MediaUrl;
 use Dharma\Component\DharmaShop\Site\Support\Grid;
+use Dharma\Component\DharmaShop\Site\Support\Taxonomy;
 use Dharma\Component\DharmaShop\Administrator\Pricing\MoneyFormatter;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
@@ -38,8 +39,15 @@ class HtmlView extends BaseHtmlView
     /** @var array<string, string|callable> значения подстановок страницы (SEO и тексты) */
     private array $textValues = [];
 
+    /** Тип записей списка; бренды и бейджи переопределяют. */
+    protected function taxonomy(): Taxonomy
+    {
+        return Taxonomy::category();
+    }
+
     public function display($tpl = null): void
     {
+        $taxonomy = $this->taxonomy();
         $app = Factory::getApplication();
         $model = $this->getModel();
         $this->parent = $model->getParent();
@@ -47,8 +55,8 @@ class HtmlView extends BaseHtmlView
         $ancestors = $model->getAncestors();
         $settings = ComponentHelper::getParams('com_dharmashop');
         $this->params = clone $settings;
-        $displayKeys = array_merge(Grid::keys('categories'), ['categories_layout', 'category_card_layout',
-            'category_card_intro', 'category_card_count', 'category_card_prices']);
+        $displayKeys = array_merge(Grid::keys($taxonomy->gridPrefix()), [$taxonomy->listLayoutKey(), $taxonomy->cardKey('layout'),
+            $taxonomy->cardKey('intro'), $taxonomy->cardKey('count'), $taxonomy->cardKey('prices')]);
         foreach (array_merge($ancestors, [$this->parent]) as $ancestor) {
             foreach ($displayKeys as $key) {
                 $value = $ancestor->params->get($key);
@@ -58,7 +66,7 @@ class HtmlView extends BaseHtmlView
             }
         }
         $active = $app->getMenu()->getActive();
-        $menu = $active && $active->component === 'com_dharmashop' && ($active->query['view'] ?? '') === 'categories'
+        $menu = $active && $active->component === 'com_dharmashop' && ($active->query['view'] ?? '') === $taxonomy->listView
             ? $active->getParams() : new Registry();
         foreach ($displayKeys as $key) {
             $value = $menu->get($key);
@@ -66,26 +74,26 @@ class HtmlView extends BaseHtmlView
                 $this->params->set($key, $value);
             }
         }
-        $this->columns = max(1, min(6, (int) $this->params->get('categories_columns', 3)));
-        $this->gridClasses = Grid::classes($this->params, 'categories');
-        $showCount = (int) $this->params->get('category_card_count', 0) === 1;
-        $showPrices = (int) $this->params->get('category_card_prices', 0) === 1;
+        $this->columns = max(1, min(6, (int) $this->params->get($taxonomy->gridPrefix() . '_columns', 3)));
+        $this->gridClasses = Grid::classes($this->params, $taxonomy->gridPrefix());
+        $showCount = (int) $this->params->get($taxonomy->cardKey('count'), 0) === 1;
+        $showPrices = (int) $this->params->get($taxonomy->cardKey('prices'), 0) === 1;
         if ($showCount || $showPrices) {
             $this->cardStats = $model->getCardStats($this->items, $showPrices);
         }
         $this->money = new MoneyFormatter($settings);
-        $this->cardLayout = $this->existingLayout((string) $this->params->get('category_card_layout', 'default'), 'layouts/components/dharmashop/category-card');
-        $this->setLayout($this->existingLayout((string) $this->params->get('categories_layout', 'default'), 'components/com_dharmashop/tmpl/categories'));
+        $this->cardLayout = $this->existingLayout((string) $this->params->get($taxonomy->cardKey('layout'), 'default'), 'layouts/components/dharmashop/' . $taxonomy->cardFolder());
+        $this->setLayout($this->existingLayout((string) $this->params->get($taxonomy->listLayoutKey(), 'default'), 'components/com_dharmashop/tmpl/' . $taxonomy->listView));
         $this->showHeading = (int) $menu->get('show_page_heading', 1) === 1;
         $this->image = MediaUrl::absolute((string) $this->parent->params->get('image', ''));
-        $this->textValues = CategoryValues::build('category', $this->parent, $ancestors, $model, $this->money);
+        $this->textValues = CategoryValues::build($taxonomy->area, $this->parent, $ancestors, $model, $this->money);
         $values = $this->textValues;
         // SEO пункта меню относится к его собственной странице, не ко всем дочерним категориям.
         $menuId = max(0, (int) ($active->query['id'] ?? 0));
         $menuId = $menuId <= 1 ? 0 : $menuId;
         $ownMenu = $menuId === (int) $this->parent->id ? $menu : new Registry();
         $service = new PageSeo($settings);
-        $this->seo = $service->resolve('category', $this->parent, $values, $ownMenu, $this->absoluteRoute((int) $this->parent->id));
+        $this->seo = $service->resolve($taxonomy->area, $this->parent, $values, $ownMenu, $this->absoluteRoute((int) $this->parent->id));
         $collection = null;
         if ((int) $settings->get('seo_structureddata', 1) === 1) {
             $entries = [];
@@ -101,7 +109,7 @@ class HtmlView extends BaseHtmlView
             if ((int) $ancestor->id === $menuId) {
                 $pastMenu = true;
             } elseif ($pastMenu) {
-                $meta = $service->resolve('category', $ancestor, CategoryValues::build('category', $ancestor, $chain, $model, $this->money),
+                $meta = $service->resolve($taxonomy->area, $ancestor, CategoryValues::build($taxonomy->area, $ancestor, $chain, $model, $this->money),
                     new Registry(), $this->absoluteRoute((int) $ancestor->id));
                 $app->getPathway()->addItem($meta->breadcrumb, $this->categoryRoute((int) $ancestor->id));
             }
@@ -118,22 +126,29 @@ class HtmlView extends BaseHtmlView
 
     public function categoryRoute(int $id): string
     {
+        $taxonomy = $this->taxonomy();
         $active = Factory::getApplication()->getMenu()->getActive();
-        if ($active && $active->component === 'com_dharmashop' && ($active->query['view'] ?? '') === 'categories') {
+        if ($active && $active->component === 'com_dharmashop' && ($active->query['view'] ?? '') === $taxonomy->listView) {
             $menuId = (int) ($active->query['id'] ?? 0);
             if (($menuId <= 1 && $id <= 1) || $menuId === $id) {
                 if ($active->home) {
                     return Uri::root(true) . '/';
                 }
-                return Route::_('index.php?Itemid=' . (int) $active->id, false);
+                // У пункта меню брендов и бейджей параметр id (корень) не ключ вида: без него адрес чистый, без «?id=0».
+                return $taxonomy->area === 'category'
+                    ? Route::_('index.php?Itemid=' . (int) $active->id, false)
+                    : Route::_('index.php?option=com_dharmashop&view=' . $taxonomy->listView . '&Itemid=' . (int) $active->id, false);
             }
         }
-        return Route::_('index.php?option=com_dharmashop&view=categories&id=' . $id, false);
+        // Списки брендов и бейджей плоские: карточка ведёт на страницу записи (вложенные бренды — внутри неё), у категорий вложен сам список.
+        $view = $taxonomy->area === 'category' ? $taxonomy->listView : $taxonomy->pageView;
+
+        return Route::_('index.php?option=com_dharmashop&view=' . $view . '&id=' . $id, false);
     }
 
     public function renderCard(object $item): string
     {
-        $layout = new FileLayout('components.dharmashop.category-card.' . $this->cardLayout, null, ['component' => 'none', 'client' => 0]);
+        $layout = new FileLayout('components.dharmashop.' . $this->taxonomy()->cardFolder() . '.' . $this->cardLayout, null, ['component' => 'none', 'client' => 0]);
         $stats = $this->cardStats[(int) $item->id] ?? null;
         $min = $stats->price_min ?? null;
         $max = $stats->price_max ?? null;
@@ -143,9 +158,9 @@ class HtmlView extends BaseHtmlView
         }
 
         return $layout->render(['item' => $item, 'url' => $this->categoryRoute((int) $item->id),
-            'showIntro' => (int) $this->params->get('category_card_intro', 1) === 1,
-            'showCount' => (int) $this->params->get('category_card_count', 0) === 1,
-            'showPrices' => (int) $this->params->get('category_card_prices', 0) === 1,
+            'showIntro' => (int) $this->params->get($this->taxonomy()->cardKey('intro'), 1) === 1,
+            'showCount' => (int) $this->params->get($this->taxonomy()->cardKey('count'), 0) === 1,
+            'showPrices' => (int) $this->params->get($this->taxonomy()->cardKey('prices'), 0) === 1,
             'productCount' => (string) ($stats->product_count ?? '0'), 'priceRange' => $range]);
     }
 

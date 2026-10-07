@@ -9,6 +9,7 @@ use Dharma\Component\DharmaShop\Site\Placeholder\GlobalValues;
 use Dharma\Component\DharmaShop\Site\Placeholder\ProductValues;
 use Dharma\Component\DharmaShop\Site\Placeholder\Renderer;
 use Dharma\Component\DharmaShop\Site\Support\Grid;
+use Dharma\Component\DharmaShop\Site\Support\Taxonomy;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Layout\FileLayout;
@@ -33,14 +34,23 @@ trait ListingTrait
     public int $menuId = 0;
     public int $after = 0;
     public int $next = 0;
+    public string $cardFolder = 'product-card';
     private MoneyFormatter $money;
+
+    /** Тип записей страницы; бренды и бейджи переопределяют. */
+    protected function taxonomy(): Taxonomy
+    {
+        return Taxonomy::category();
+    }
 
     /** Параметры, которые категория или пункт меню могут переопределять. */
     private function displayKeys(): array
     {
-        return array_merge(Grid::keys('category'), Grid::keys('categories'), ['category_layout', 'product_card_layout',
-            'product_card_intro', 'category_product_count', 'category_price_range', 'category_card_layout',
-            'category_card_intro', 'category_card_count', 'category_card_prices', 'list_limit', 'list_ordering',
+        $taxonomy = $this->taxonomy();
+
+        return array_merge(Grid::keys('category'), Grid::keys($taxonomy->gridPrefix()), ['category_layout', 'product_card_layout',
+            'product_card_intro', 'category_product_count', 'category_price_range', $taxonomy->cardKey('layout'),
+            $taxonomy->cardKey('intro'), $taxonomy->cardKey('count'), $taxonomy->cardKey('prices'), 'list_limit', 'list_ordering',
             'category_default_view', 'subcategory_show_image']);
     }
 
@@ -49,16 +59,30 @@ trait ListingTrait
     {
         $app = Factory::getApplication();
         $settings = ComponentHelper::getParams('com_dharmashop');
+        $taxonomy = $this->taxonomy();
         $this->item = $model->getParent();
         $this->params = clone $settings;
         $keys = $this->displayKeys();
+        $this->cardFolder = 'product-card';
+
+        // Бренды и бейджи: своя страница-макет (копия страницы товаров категории, готовая к правке) и переключатель карточек:
+        // включён (по умолчанию) — карточки товаров как в категориях, выключен — собственные карточки `{area}-product-card`.
+        // Остальное (колонки, вид, интро, лимит) наследуется от категорий и переопределяется в записи.
+        if ($taxonomy->area !== 'category') {
+            $this->params->set('category_layout', (string) $settings->get($taxonomy->area . '_layout', ''));
+
+            if ((int) $settings->get($taxonomy->area . '_use_category_cards', 1) === 0) {
+                $this->cardFolder = $taxonomy->area . '-product-card';
+                $this->params->set('product_card_layout', (string) $settings->get($taxonomy->area . '_product_card_layout', ''));
+            }
+        }
 
         foreach (array_merge($ancestors, [$this->item]) as $ancestor) {
             $this->mergeDisplay($ancestor->params, $keys);
         }
 
         $active = $app->getMenu()->getActive();
-        $ownView = $active && $active->component === 'com_dharmashop' && ($active->query['view'] ?? '') === 'category';
+        $ownView = $active && $active->component === 'com_dharmashop' && ($active->query['view'] ?? '') === $taxonomy->pageView;
         $menu = $ownView ? $active->getParams() : new Registry();
         $this->menuId = $ownView ? (int) $active->id : 0;
         $this->mergeDisplay($menu, $keys);
@@ -75,7 +99,7 @@ trait ListingTrait
             : (in_array($defaultView, $modes, true) ? $defaultView : 'grid');
         // Стандартные файлы выбираются режимом; собственный файл получает mode в displayData.
         $this->cardLayout = $this->existingLayout(in_array($defaultCard, $modes, true) ? $this->productView : $defaultCard,
-            'layouts/components/dharmashop/product-card', $this->productView);
+            'layouts/components/dharmashop/' . $this->cardFolder, $this->productView);
         $this->gridClasses = Grid::classes($this->params, 'category');
         $ordering = $app->getInput()->getCmd('sort', (string) $this->params->get('list_ordering', 'order'));
         $this->ordering = in_array($ordering, CategoryModel::SORTS, true) ? $ordering : 'order';
@@ -104,7 +128,7 @@ trait ListingTrait
             }
         }
 
-        return Route::_('index.php?option=com_dharmashop&view=category&id=' . $id . ($this->menuId ? '&Itemid=' . $this->menuId : ''), false);
+        return Route::_('index.php?option=com_dharmashop&view=' . $this->taxonomy()->pageView . '&id=' . $id . ($this->menuId ? '&Itemid=' . $this->menuId : ''), false);
     }
 
     /**
@@ -133,7 +157,7 @@ trait ListingTrait
 
     public function renderProduct(object $item): string
     {
-        $layout = new FileLayout('components.dharmashop.product-card.' . $this->cardLayout, null, ['component' => 'none', 'client' => 0]);
+        $layout = new FileLayout('components.dharmashop.' . $this->cardFolder . '.' . $this->cardLayout, null, ['component' => 'none', 'client' => 0]);
         $intro = (string) $item->introtext;
 
         if ((int) $this->params->get('product_card_intro', 1) === 1) {
