@@ -16,6 +16,7 @@ use Dharma\Component\DharmaShop\Administrator\Image\ImageUploader;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Form\FormField;
+use Joomla\CMS\Form\Field\MediaField;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Session\Session;
 use Joomla\CMS\Uri\Uri;
@@ -44,6 +45,17 @@ class ImageuploadField extends FormField
         $attr = static fn (string $v): string => htmlspecialchars($v, ENT_QUOTES, 'UTF-8');
         $maxMb = $uploader->maxBytes() > 0 ? round($uploader->maxBytes() / 1048576, 1) : 0;
 
+        // Штатное поле Media: прячем внутри и открываем кнопкой «Выбрать с сервера».
+        // Штатное поле Media: прячем внутри и открываем кнопкой «Выбрать с сервера». getInput() у него защищённый — открываем через подкласс.
+        $native = new class ($this->form) extends MediaField {
+            public function inputHtml(): string
+            {
+                return $this->getInput();
+            }
+        };
+        $native->setup(new \SimpleXMLElement('<field name="dharmashop_native_' . $attr($this->fieldname) . '" type="media" types="images" preview="false" />'), $value);
+        $limits = Text::sprintf('COM_DHARMASHOP_UPLOAD_LIMITS', strtoupper(implode(', ', $uploader->allowedExtensions())), $maxMb ?: '—');
+
         return '<div class="dharmashop-uploader" data-url="' . $attr('index.php?option=com_dharmashop&task=media.upload&format=json')
             . '" data-token="' . $attr(Session::getFormToken()) . '" data-folder="' . $attr($folder)
             . '" data-root="' . $attr(Uri::root()) . '" data-max-bytes="' . (int) $uploader->maxBytes()
@@ -53,14 +65,21 @@ class ImageuploadField extends FormField
             . '" data-error-server="' . $attr(Text::_('COM_DHARMASHOP_UPLOAD_ERROR_SERVER')) . '">'
             . '<input type="hidden" class="dharmashop-uploader__input" name="' . $attr($this->name) . '" id="' . $attr($this->id) . '" value="' . $attr($value) . '">'
             . '<input type="file" class="dharmashop-uploader__file visually-hidden" tabindex="-1" aria-hidden="true" accept="image/*">'
-            . '<div class="dharmashop-uploader__drop" tabindex="0" role="button" aria-label="' . $attr(Text::_('COM_DHARMASHOP_UPLOAD_HINT')) . '">'
+            . '<div class="dharmashop-uploader__drop" tabindex="0" role="button" aria-label="' . $attr(Text::_('COM_DHARMASHOP_UPLOAD_DROP_TITLE')) . '">'
             . '<img class="dharmashop-uploader__preview" alt="" hidden>'
-            . '<span class="dharmashop-uploader__hint"><span class="icon-upload" aria-hidden="true"></span> ' . $attr(Text::_('COM_DHARMASHOP_UPLOAD_HINT')) . '</span>'
-            . '</div>'
+            . '<div class="dharmashop-uploader__hint">'
+            . '<span class="icon-upload dharmashop-uploader__icon" aria-hidden="true"></span>'
+            . '<span class="dharmashop-uploader__title">' . $attr(Text::_('COM_DHARMASHOP_UPLOAD_DROP_TITLE')) . '</span>'
+            . '<span class="dharmashop-uploader__or">' . $attr(Text::_('COM_DHARMASHOP_UPLOAD_DROP_OR')) . '</span>'
+            . '<small class="dharmashop-uploader__limits">' . $attr($limits) . '</small>'
+            . '</div></div>'
             . '<div class="progress mt-2" hidden><div class="progress-bar" role="progressbar" style="width:0%"></div></div>'
-            . '<div class="d-flex align-items-center gap-2 mt-2">'
-            . '<small class="dharmashop-uploader__path text-body-secondary flex-grow-1"></small>'
-            . '<button type="button" class="btn btn-sm btn-danger dharmashop-uploader__remove" hidden>' . $attr(Text::_('COM_DHARMASHOP_UPLOAD_REMOVE')) . '</button>'
-            . '</div></div>';
+            . '<div class="input-group mt-2">'
+            . '<input type="text" class="form-control dharmashop-uploader__path" readonly placeholder="' . $attr(Text::_('COM_DHARMASHOP_UPLOAD_NO_FILE')) . '" aria-label="' . $attr(Text::_('COM_DHARMASHOP_UPLOAD_PATH')) . '">'
+            . '<button type="button" class="btn btn-secondary dharmashop-uploader__server"><span class="icon-folder-open" aria-hidden="true"></span> ' . $attr(Text::_('COM_DHARMASHOP_UPLOAD_FROM_SERVER')) . '</button>'
+            . '<button type="button" class="btn btn-danger dharmashop-uploader__remove" title="' . $attr(Text::_('COM_DHARMASHOP_UPLOAD_REMOVE')) . '" disabled><span class="icon-times" aria-hidden="true"></span><span class="visually-hidden">' . $attr(Text::_('COM_DHARMASHOP_UPLOAD_REMOVE')) . '</span></button>'
+            . '</div>'
+            . '<div class="dharmashop-uploader__native" hidden>' . $native->inputHtml() . '</div>'
+            . '</div>';
     }
 }

@@ -27,6 +27,8 @@
 		const preview = root.querySelector('.dharmashop-uploader__preview');
 		const hint = root.querySelector('.dharmashop-uploader__hint');
 		const path = root.querySelector('.dharmashop-uploader__path');
+		const server = root.querySelector('.dharmashop-uploader__server');
+		const native = root.querySelector('.dharmashop-uploader__native');
 		const remove = root.querySelector('.dharmashop-uploader__remove');
 		const progress = root.querySelector('.progress');
 		const bar = root.querySelector('.progress-bar');
@@ -41,8 +43,8 @@
 
 			preview.hidden = !has;
 			hint.hidden = has;
-			remove.hidden = !has;
-			path.textContent = value;
+			remove.disabled = !has;
+			path.value = value;
 
 			if (has) {
 				preview.src = root.dataset.root + value.replace(/^\/+/, '');
@@ -142,6 +144,39 @@
 			root.classList.remove('is-dragover');
 			pick(event.dataTransfer && event.dataTransfer.files);
 		});
+
+		// «Выбрать с сервера»: открываем штатное окно выбора файла Joomla (поле Media спрятано внутри нашего поля)
+		// и забираем выбранный путь, когда он изменится. От внутреннего устройства окна не зависим: следим только за значением.
+		const nativeInput = native ? native.querySelector('input[type="text"], input.field-media-input') : null;
+		const nativeButton = native ? native.querySelector('.button-select') : null;
+
+		if (server && nativeInput && nativeButton) {
+			server.addEventListener('click', () => {
+				const before = nativeInput.value;
+				const started = Date.now();
+
+				nativeButton.click();
+
+				const timer = window.setInterval(() => {
+					if (!document.body.contains(root) || Date.now() - started > 600000) {
+						window.clearInterval(timer);
+
+						return;
+					}
+
+					const value = cleanPath(nativeInput.value);
+
+					if (nativeInput.value !== before && value !== '') {
+						window.clearInterval(timer);
+						input.value = value;
+						input.dispatchEvent(new Event('change', { bubbles: true }));
+						render();
+					}
+				}, 300);
+			});
+		} else if (server) {
+			server.hidden = true;
+		}
 
 		remove.addEventListener('click', () => {
 			input.value = '';

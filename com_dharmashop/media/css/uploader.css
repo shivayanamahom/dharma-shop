@@ -1,39 +1,83 @@
-/* Dharma Shop: загрузчик изображений. Только то, чего нет в Bootstrap: пунктирная область и подсветка при перетаскивании. */
+/*
+ * Dharma Shop: загрузчик изображений.
+ * Цвета берутся от текста темы (currentColor), поэтому одинаково работают в светлой и тёмной теме админки;
+ * акцент — штатный цвет ссылок шаблона. Переменных Bootstrap 5.3 в Atum нет, на них не опираемся.
+ */
+.dharmashop-uploader {
+	--dsu-accent: var(--link-color, #3d8fd1);
+	--dsu-line: color-mix(in srgb, currentColor 30%, transparent);
+	--dsu-fill: color-mix(in srgb, currentColor 5%, transparent);
+	max-width: 36rem;
+}
+
 .dharmashop-uploader__drop {
 	position: relative;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	flex-direction: column;
-	min-height: 9rem;
-	padding: 1rem;
+	min-height: 11rem;
+	padding: 1.25rem;
 	text-align: center;
 	cursor: pointer;
-	color: var(--bs-secondary-color);
-	border: 2px dashed var(--bs-border-color);
-	border-radius: var(--bs-border-radius);
-	background: var(--bs-tertiary-bg);
-	transition: border-color .15s, background-color .15s;
+	border: 2px dashed var(--dsu-line);
+	border-radius: .6rem;
+	background: var(--dsu-fill);
+	transition: border-color .15s ease, background-color .15s ease, box-shadow .15s ease;
 }
 
 .dharmashop-uploader__drop:hover,
-.dharmashop-uploader__drop:focus-visible,
-.dharmashop-uploader.is-dragover .dharmashop-uploader__drop {
-	border-color: var(--bs-primary);
-	background: var(--bs-secondary-bg);
+.dharmashop-uploader__drop:focus-visible {
+	border-color: var(--dsu-accent);
+	background: color-mix(in srgb, var(--dsu-accent) 8%, transparent);
 	outline: 0;
+}
+
+.dharmashop-uploader.is-dragover .dharmashop-uploader__drop {
+	border-style: solid;
+	border-color: var(--dsu-accent);
+	background: color-mix(in srgb, var(--dsu-accent) 16%, transparent);
+	box-shadow: 0 0 0 .25rem color-mix(in srgb, var(--dsu-accent) 25%, transparent);
 }
 
 .dharmashop-uploader.is-busy .dharmashop-uploader__drop {
 	cursor: progress;
-	opacity: .7;
+	opacity: .65;
+}
+
+.dharmashop-uploader__hint {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: .25rem;
+	pointer-events: none;
+}
+
+.dharmashop-uploader__icon {
+	font-size: 2.6rem;
+	line-height: 1;
+	color: var(--dsu-accent);
+}
+
+.dharmashop-uploader__title {
+	font-size: 1.05rem;
+	font-weight: 600;
+}
+
+.dharmashop-uploader__or {
+	text-decoration: underline;
+	text-decoration-color: var(--dsu-line);
+	text-underline-offset: .2em;
+}
+
+.dharmashop-uploader__limits {
+	opacity: .65;
 }
 
 .dharmashop-uploader__preview {
 	max-width: 100%;
-	max-height: 14rem;
+	max-height: 16rem;
 	object-fit: contain;
-	border-radius: var(--bs-border-radius-sm);
+	border-radius: .35rem;
 }
 
 .dharmashop-uploader__preview[hidden],
@@ -42,5 +86,5 @@
 }
 
 .dharmashop-uploader__path {
-	word-break: break-all;
+	font-size: .85rem;
 }
