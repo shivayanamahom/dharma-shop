@@ -34,6 +34,20 @@ class CategoryModel extends AdminModel
 
     private ?string $extension = null;
 
+    /**
+     * Пакетные операции окна на списке категорий/брендов/бейджей: имя поля => метод. Расширяется строкой здесь,
+     * методом batch<Имя> и полем в tmpl/categories/default_batch_body.php.
+     */
+    protected $batch_copymove = '';
+
+    protected $batch_commands = [
+        'assetgroup_id' => 'batchAccess',
+        'parent_id' => 'batchMoveParent',
+        'show_in_list' => 'batchShowInList',
+        'list_ordering' => 'batchListOrdering',
+        'list_limit' => 'batchListLimit',
+    ];
+
     public function getTable($name = 'Category', $prefix = 'Administrator', $options = []): Table
     {
         return parent::getTable($name, $prefix, $options);
@@ -252,5 +266,146 @@ class CategoryModel extends AdminModel
         $db = $this->getDatabase();
 
         return (int) $db->setQuery($db->createQuery()->select('parent_id')->from('#__categories')->where('id = :id')->bind(':id', $id, ParameterType::INTEGER))->loadResult();
+    }
+
+    // ------------------------------------------------------------------ пакетная обработка
+
+    /**
+     * Применяет изменение к каждой выбранной записи, на правку которой есть право (ресурс «<тип>.category.<id>»).
+     *
+     * @param   int[]     $pks
+     * @param   callable  $change  (Table $table, int $id): bool — true, если запись изменена и её надо сохранить
+     */
+    private function batchEach(array $pks, array $contexts, callable $change): bool
+    {
+        $app = Factory::getApplication();
+        $user = $app->getIdentity();
+
+        foreach (array_map('intval', $pks) as $pk) {
+            $table = $this->getTable();
+
+            if (!$table->load($pk)) {
+                continue;
+            }
+
+            $asset = ($contexts[$pk] ?? '') !== '' ? $contexts[$pk] : $table->extension . '.category.' . $pk;
+
+            if (!$user->authorise('core.edit', $asset)) {
+                $app->enqueueMessage(Text::sprintf('COM_DHARMASHOP_BATCH_ENTRY_SKIP_NO_ACCESS', $table->title), 'warning');
+                continue;
+            }
+
+            try {
+                if ($change($table, $pk) && !$table->store()) {
+                    throw new \RuntimeException($table->getError());
+                }
+            } catch (\RuntimeException $e) {
+                $app->enqueueMessage(Text::sprintf('COM_DHARMASHOP_BATCH_ENTRY_SKIP', $table->title, Text::_($e->getMessage())), 'warning');
+            }
+        }
+
+        return true;
+    }
+
+    /** Изменяет одно значение в параметрах записи. */
+    private function batchParam(array $pks, array $contexts, string $key, string|int $value): bool
+    {
+        return $this->batchEach($pks, $contexts, function (Table $table) use ($key, $value): bool {
+            $params = new \Joomla\Registry\Registry($table->params);
+
+            if ((string) $params->get($key, '') === (string) $value) {
+                return false;
+            }
+
+            $params->set($key, $value);
+            $table->params = (string) $params;
+
+            return true;
+        });
+    }
+
+    /** Переносит записи под нового родителя того же типа (1 — в корень); вложенные переезжают вместе с записью. */
+    protected function batchMoveParent($value, $pks, $contexts): bool
+    {
+        $parent = (int) $value;
+        $db = $this->getDatabase();
+        $services = Factory::getApplication()->bootComponent('com_dharmashop')->getServices();
+        $moved = [];
+
+        $result = $this->batchEach((array) $pks, (array) $contexts, function (Table $table, int $pk) use ($parent, $db, &$moved): bool {
+            if ((int) $table->parent_id === $parent) {
+                return false;
+            }
+
+            if ($table->extension === CategoryTypes::BADGE) {
+                throw new \RuntimeException('COM_DHARMASHOP_BATCH_ERROR_BADGE_FLAT');
+            }
+
+            if ($parent > 1) {
+                $target = $db->setQuery($db->createQuery()->select('extension, lft, rgt')->from('#__categories')->where('id = ' . $parent))->loadObject();
+
+                if (!$target || $target->extension !== $table->extension) {
+                    throw new \RuntimeException('COM_DHARMASHOP_ERROR_PARENT_TYPE');
+                }
+
+                if ($parent === $pk || ($target->lft >= $table->lft && $target->rgt <= $table->rgt)) {
+                    throw new \RuntimeException('COM_DHARMASHOP_BATCH_ERROR_INTO_SELF');
+                }
+
+                if (!Factory::getApplication()->getIdentity()->authorise('core.create', $table->extension . '.category.' . $parent)) {
+                    throw new \RuntimeException('COM_DHARMASHOP_BATCH_ERROR_CREATE_DENIED');
+                }
+            }
+
+            $table->setLocation($parent, 'last-child');
+            $table->parent_id = $parent;
+            $moved[] = $pk;
+
+            return true;
+        });
+
+        foreach ($moved as $pk) {
+            $table = $this->getTable();
+            $table->load($pk);
+            $table->rebuildPath($table->id);
+            $table->rebuild($table->id, $table->lft, $table->level, $table->path);
+            $services->indexer()->rebuildCategorySubtree($pk);
+        }
+
+        return $result;
+    }
+
+    /** «Показывать в списке» (0/1). */
+    protected function batchShowInList($value, $pks, $contexts): bool
+    {
+        return $this->batchParam((array) $pks, (array) $contexts, 'show_in_list', (int) ((string) $value === 'yes'));
+    }
+
+    /** Сортировка товаров по умолчанию (значения из списка формы; `global` — как в настройках магазина). */
+    protected function batchListOrdering($value, $pks, $contexts): bool
+    {
+        $allowed = ['order', 'price_asc', 'price_desc', 'new', 'title', 'global'];
+
+        if (!in_array((string) $value, $allowed, true)) {
+            $this->setError(Text::_('COM_DHARMASHOP_BATCH_ERROR_VALUE'));
+
+            return false;
+        }
+
+        return $this->batchParam((array) $pks, (array) $contexts, 'list_ordering', (string) $value === 'global' ? '' : (string) $value);
+    }
+
+    /** Число товаров на странице (0 — как в настройках магазина). */
+    protected function batchListLimit($value, $pks, $contexts): bool
+    {
+        $limit = (string) $value === 'global' ? 0 : (int) $value;
+
+        if ($limit < 0 || $limit > 200) {
+            $this->setError(Text::_('COM_DHARMASHOP_BATCH_ERROR_VALUE'));
+
+            return false;
+        }
+
+        return $this->batchParam((array) $pks, (array) $contexts, 'list_limit', $limit);
     }
 }

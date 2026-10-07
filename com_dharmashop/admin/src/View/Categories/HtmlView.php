@@ -107,6 +107,17 @@ class HtmlView extends BaseHtmlView
                     $childBar->trash('categories.trash')->listCheck(true);
                 }
             }
+
+            // Пакетная обработка (состав — tmpl/categories/default_batch_body.php и CategoryModel::$batch_commands).
+            if ($canDo->get('core.create') && $canDo->get('core.edit')) {
+                $childBar->popupButton('batch', 'JTOOLBAR_BATCH')
+                    ->popupType('inline')
+                    ->textHeader(Text::_('COM_DHARMASHOP_BATCH_OPTIONS_CATEGORIES'))
+                    ->url('#joomla-dialog-batch')
+                    ->modalWidth('800px')
+                    ->modalHeight('fit-content')
+                    ->listCheck(true);
+            }
         }
 
         if ($state->get('filter.published') == -2 && $canDo->get('core.delete')) {

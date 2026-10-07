@@ -14,6 +14,7 @@ namespace Dharma\Component\DharmaShop\Administrator\Controller;
 
 use Dharma\Component\DharmaShop\Administrator\Support\CategoryTypes;
 use Joomla\CMS\MVC\Controller\FormController;
+use Joomla\CMS\Router\Route;
 
 \defined('_JEXEC') or die;
 
@@ -72,5 +73,20 @@ class CategoryController extends FormController
         }
 
         return CategoryTypes::normalize($extension);
+    }
+
+    /** Пакетная обработка выбранных записей (окно «Пакетная обработка» на списке). Права проверяются по ресурсам «<тип>.category.<id>». */
+    public function batch($model = null)
+    {
+        $this->checkToken();
+
+        $extension = CategoryTypes::normalize($this->input->getString('extension', CategoryTypes::CATEGORY));
+        $this->extension = $extension;
+        $this->context = 'category';
+
+        $model = $this->getModel('Category', 'Administrator', []);
+        $this->setRedirect(Route::_('index.php?option=com_dharmashop&view=categories&extension=' . $extension, false));
+
+        return parent::batch($model);
     }
 }

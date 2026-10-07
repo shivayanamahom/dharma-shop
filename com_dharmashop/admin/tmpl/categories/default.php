@@ -206,6 +206,11 @@ $ordering = $this->ordering;
                     <?php echo $this->pagination->getListFooter(); ?>
                 <?php endif; ?>
 
+                <?php // Окно пакетной обработки (открывается из «Действий»). ?>
+                <?php if ($user->authorise('core.create', 'com_dharmashop') && $user->authorise('core.edit', 'com_dharmashop')) : ?>
+                    <template id="joomla-dialog-batch"><?php echo $this->loadTemplate('batch_body'); ?></template>
+                <?php endif; ?>
+
                 <input type="hidden" name="extension" value="<?php echo $this->escape($extension); ?>">
                 <input type="hidden" name="task" value="">
                 <input type="hidden" name="boxchecked" value="0">
