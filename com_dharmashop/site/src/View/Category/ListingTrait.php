@@ -202,6 +202,7 @@ trait ListingTrait
             'categoryTitle' => (string) ($item->category_title ?? ''),
             'categoryUrl' => $this->categoryRoute((int) $item->catid),
             'catalogMode' => $this->catalogMode,
+            'cartText' => trim((string) ComponentHelper::getParams('com_dharmashop')->get('cart_button_text', '')),
             'showQty' => !$this->catalogMode && (int) $this->params->get('product_card_qty', 0) === 1]);
     }
 

@@ -77,7 +77,6 @@
             <field name="category_columns_xl" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS_XL" validate="options" default="3" showon="category_breakpoints:1"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
             <field name="category_columns_xxl" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS_XXL" validate="options" default="3" showon="category_breakpoints:1"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
             <field name="product_card_intro" label="COM_DHARMASHOP_DISPLAY_SHOW_INTRO" type="radio" layout="joomla.form.field.radio.switcher" default="1" filter="integer"><option value="0">JNO</option><option value="1">JYES</option></field>
-            <field name="product_card_qty" label="COM_DHARMASHOP_DISPLAY_SHOW_QTY" type="radio" layout="joomla.form.field.radio.switcher" default="0" filter="integer"><option value="0">JNO</option><option value="1">JYES</option></field>
             <field name="category_product_count" label="COM_DHARMASHOP_DISPLAY_SHOW_LIST_COUNT" type="radio" layout="joomla.form.field.radio.switcher" default="0" filter="integer"><option value="0">JNO</option><option value="1">JYES</option></field>
             <field name="category_price_range" label="COM_DHARMASHOP_DISPLAY_SHOW_LIST_PRICES" type="radio" layout="joomla.form.field.radio.switcher" default="0" filter="integer"><option value="0">JNO</option><option value="1">JYES</option></field>
         </fieldset>
@@ -126,6 +125,18 @@
             <field name="display_product_note" type="note" description="COM_DHARMASHOP_DISPLAY_PLANNED_DESC" class="alert alert-info" />
             <field name="product_layout" type="layout" layoutgroup="product" label="COM_DHARMASHOP_LAYOUT_PRODUCT_LABEL" validate="options"></field>
         </fieldset>
+	</fieldset>
+
+	<fieldset name="cart" label="COM_DHARMASHOP_CONFIG_CART" description="COM_DHARMASHOP_CONFIG_CART_DESC">
+		<field name="cart_button_text" type="text" label="COM_DHARMASHOP_CONFIG_CART_BUTTON_TEXT" description="COM_DHARMASHOP_CONFIG_CART_BUTTON_TEXT_DESC" hint="COM_DHARMASHOP_CONFIG_CART_BUTTON_TEXT_HINT" filter="string" />
+		<field name="product_card_qty" type="radio" layout="joomla.form.field.radio.switcher" default="0" filter="integer" label="COM_DHARMASHOP_CONFIG_CART_QTY_CARD" description="COM_DHARMASHOP_CONFIG_CART_QTY_CARD_DESC">
+			<option value="0">JNO</option>
+			<option value="1">JYES</option>
+		</field>
+		<field name="product_page_qty" type="radio" layout="joomla.form.field.radio.switcher" default="1" filter="integer" label="COM_DHARMASHOP_CONFIG_CART_QTY_PAGE" description="COM_DHARMASHOP_CONFIG_CART_QTY_PAGE_DESC">
+			<option value="0">JNO</option>
+			<option value="1">JYES</option>
+		</field>
 	</fieldset>
 
 	<fieldset name="images" label="COM_DHARMASHOP_CONFIG_IMAGES" description="COM_DHARMASHOP_CONFIG_IMAGES_DESC">

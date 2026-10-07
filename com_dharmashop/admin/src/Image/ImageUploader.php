@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Dharma\Component\DharmaShop\Administrator\Image;
 
 use Joomla\CMS\Filter\OutputFilter;
+use Joomla\CMS\Image\Image;
 use enshrined\svgSanitize\Sanitizer;
 use Joomla\Registry\Registry;
 
@@ -52,6 +53,9 @@ final class ImageUploader
 
     /** Предел площади изображения (пикселей): защита от «бомб» распаковки при последующей обработке. */
     private const MAX_PIXELS = 80000000;
+
+    /** Качество новых WebP-файлов; используется штатный Image API Joomla поверх GD. */
+    private const WEBP_QUALITY = 82;
 
     /** Корневая папка загрузок внутри images/ по настройке «Папка для изображений» (латиница, цифры, - _ и вложенность через /; пусто — dharmashop). */
     public static function baseFolder(?Registry $shopParams): string
@@ -195,32 +199,100 @@ final class ImageUploader
 
         $this->guardBaseFolder();
 
-        $base = $this->baseName(pathinfo($original, PATHINFO_FILENAME));
-        $name = $base . '.' . $extension;
+        $convertedFile = null;
+        $storedExtension = $extension;
 
-        // Имя «занимаем» атомарно (режим x): два одновременных запроса не затрут друг друга.
-        for ($i = 2; ($handle = @fopen($directory . '/' . $name, 'x')) === false; $i++) {
-            if ($i > 200) {
+        try {
+            if (
+                $svgClean === null
+                && (int) $this->shopParams?->get('image_convert_webp', 0) === 1
+                && in_array($mime, ['image/jpeg', 'image/png', 'image/avif'], true)
+            ) {
+                $convertedFile = self::toWebp($file['tmp_name'], $width, $height);
+                $storedExtension = 'webp';
+            }
+
+            $base = $this->baseName(pathinfo($original, PATHINFO_FILENAME));
+            $name = $base . '.' . $storedExtension;
+
+            // Имя «занимаем» атомарно (режим x): два одновременных запроса не затрут друг друга.
+            for ($i = 2; ($handle = @fopen($directory . '/' . $name, 'x')) === false; $i++) {
+                if ($i > 200) {
+                    throw new \RuntimeException('COM_DHARMASHOP_UPLOAD_ERROR_STORE');
+                }
+
+                $name = $base . '-' . $i . '.' . $storedExtension;
+            }
+
+            fclose($handle);
+            $target = $directory . '/' . $name;
+            $saved = match (true) {
+                $svgClean !== null => file_put_contents($target, $svgClean) !== false,
+                $convertedFile !== null => @copy($convertedFile, $target),
+                default => move_uploaded_file($file['tmp_name'], $target),
+            };
+
+            if (!$saved) {
+                @unlink($target);
+
                 throw new \RuntimeException('COM_DHARMASHOP_UPLOAD_ERROR_STORE');
             }
 
-            $name = $base . '-' . $i . '.' . $extension;
+            @chmod($target, 0644);
+
+            return ['path' => $relative . '/' . $name, 'width' => $width, 'height' => $height];
+        } finally {
+            if ($convertedFile !== null && is_file($convertedFile)) {
+                @unlink($convertedFile);
+            }
+        }
+    }
+
+    /** Конвертирует поддерживаемые Joomla растровые форматы через штатный Image API и проверяет результат. */
+    private static function toWebp(string $source, int $width, int $height): string
+    {
+        if (!extension_loaded('gd') || !function_exists('imagewebp')) {
+            throw new \RuntimeException('COM_DHARMASHOP_UPLOAD_ERROR_WEBP');
         }
 
-        fclose($handle);
-        $target = $directory . '/' . $name;
+        $temporary = tempnam(sys_get_temp_dir(), 'dharmashop-webp-');
 
-        $saved = $svgClean !== null ? file_put_contents($target, $svgClean) !== false : move_uploaded_file($file['tmp_name'], $target);
-
-        if (!$saved) {
-            @unlink($target);
-
-            throw new \RuntimeException('COM_DHARMASHOP_UPLOAD_ERROR_STORE');
+        if ($temporary === false) {
+            throw new \RuntimeException('COM_DHARMASHOP_UPLOAD_ERROR_WEBP');
         }
 
-        @chmod($target, 0644);
+        $image = null;
 
-        return ['path' => $relative . '/' . $name, 'width' => $width, 'height' => $height];
+        try {
+            $image = new Image($source);
+
+            if (!$image->toFile($temporary, IMAGETYPE_WEBP, ['quality' => self::WEBP_QUALITY])) {
+                throw new \RuntimeException('COM_DHARMASHOP_UPLOAD_ERROR_WEBP');
+            }
+
+            $result = @getimagesize($temporary);
+
+            if (
+                $result === false
+                || ($result['mime'] ?? '') !== 'image/webp'
+                || (int) $result[0] !== $width
+                || (int) $result[1] !== $height
+            ) {
+                throw new \RuntimeException('COM_DHARMASHOP_UPLOAD_ERROR_WEBP');
+            }
+
+            return $temporary;
+        } catch (\Throwable $error) {
+            @unlink($temporary);
+
+            if ($error instanceof \RuntimeException && $error->getMessage() === 'COM_DHARMASHOP_UPLOAD_ERROR_WEBP') {
+                throw $error;
+            }
+
+            throw new \RuntimeException('COM_DHARMASHOP_UPLOAD_ERROR_WEBP', 0, $error);
+        } finally {
+            $image?->destroy();
+        }
     }
 
     /** SVG чистим штатным санитайзером Joomla (скрипты, обработчики событий, внешние ссылки); пустой результат — отказ. */
