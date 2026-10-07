@@ -18,12 +18,20 @@ final class PlaceholderCatalog
 {
     /**
      * @param   string  $area  category, brand или badge
+     * @param   bool    $root  true — страница корня раздела: только название и глобальные
      *
      * @return  array<int, array{label: string, items: string[]}>  группы: ключ подписи и коды подстановок
      */
-    public static function groups(string $area): array
+    public static function groups(string $area, bool $root = false): array
     {
         $own = [$area . '.title'];
+
+        if ($root) {
+            return [
+                ['label' => 'COM_DHARMASHOP_PH_GROUP_' . strtoupper($area), 'items' => $own],
+                ['label' => 'COM_DHARMASHOP_PH_GROUP_GLOBAL', 'items' => ['global.sitename', 'global.currency']],
+            ];
+        }
 
         if ($area === 'category') {
             $own[] = 'category.parent';

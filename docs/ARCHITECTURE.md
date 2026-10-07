@@ -374,6 +374,10 @@ CREATE TABLE `#__dharmashop_field_values` (
 
 **Цены категории** (`{category.price_min}`, `{category.price_max}`) отдельно не хранятся и не пересчитываются: у каждой строки индекса `product_categories` уже лежит актуальная копия цены `price_sort` (её обновляют сохранение товара, `SaleScheduler` и команда «Пересчитать цену и наличие»), а `SELECT MIN(price_sort), MAX(price_sort) … WHERE catid = ? AND state = 1` по индексу `idx_l_price` выполняется без чтения таблицы (`Select tables optimized away`, проверено EXPLAIN с `FORCE INDEX`; время не зависит от числа товаров). Индекс-подсказку `FORCE INDEX (idx_l_price)` указывать в запросе; результат кэшировать на время запроса страницы (на уровне Joomla — меткой категории). Число товаров категории — запрос с потолком (как счётчики листинга).
 
+### 5.18 Страница корня раздела (реализовано, C17)
+
+`RootController` (`root.edit/apply/save/cancel`), `RootModel` (`FormModel`), вид и шаблон `root`, форма `forms/root.xml` (структура полей как у категории, поэтому `SeoHints`, справочник шорткодов и вкладка SEO работают без изменений). Данные — JSON в параметрах компонента: `root_category`, `root_brand` (`title`, `description`, `metadesc`, `metadata.robots`, `params.{image, image_alt, introtext, meta_title, meta_image, breadcrumb_title, h1}`); сохранение — запись параметров расширения (`#__extensions`) с очисткой кэша, права `core.edit` компонента, токен формы. Пока пусто — действуют названия по умолчанию («Каталог», «Бренды») и шаблоны SEO из настроек. Сайт при выводе корня раздела читает эти параметры. Подстановки на странице корня: `{category.title}` / `{brand.title}` (название раздела), глобальные; цены и счётчики по всему каталогу — позже.
+
 ## 6. События
 
 Имена свои, префикс `onDharmaShop`. Каждое — типизированный класс события, аргументы читаются геттерами, изменяемое — через сеттеры. Подписчики — `SubscriberInterface`. Группа плагинов загружается по назначению (`PluginHelper::importPlugin`).

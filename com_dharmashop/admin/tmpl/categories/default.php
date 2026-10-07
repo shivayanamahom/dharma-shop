@@ -83,14 +83,20 @@ $ordering = $this->ordering;
                         </thead>
                         <tbody<?php echo $saveOrder ? ' class="js-draggable" data-url="' . $saveOrderingUrl . '" data-direction="' . strtolower($listDirn) . '" data-nested="true"' : ''; ?>>
                             <?php if (!$isBadge && !$filtered) : ?>
-                                <?php // Служебная корневая запись: обычная строка таблицы, но без выбора и правки (как в RadicalMart). ?>
+                                <?php // Корневая запись: без выбора и перетаскивания, но с правкой страницы раздела (заголовок, тексты, SEO). ?>
                                 <tr class="row-root" title="<?php echo Text::_('COM_DHARMASHOP_ROOT_NOTE', true); ?>">
                                     <td class="text-center"><input type="checkbox" class="form-check-input" disabled aria-label="<?php echo Text::_('COM_DHARMASHOP_ROOT_CATEGORY', true); ?>"></td>
                                     <td class="text-center d-none d-md-table-cell"><span class="sortable-handler inactive"><span class="icon-ellipsis-v"></span></span></td>
                                     <td class="text-center"><?php echo HTMLHelper::_('jgrid.published', 1, 0, 'categories.', false); ?></td>
                                     <td class="text-center d-none d-md-table-cell"><span class="icon-image text-body-secondary" aria-hidden="true"></span></td>
                                     <th scope="row">
-                                        <?php echo Text::_($isBrand ? 'COM_DHARMASHOP_ROOT_BRAND' : 'COM_DHARMASHOP_ROOT_CATEGORY'); ?>
+                                        <?php if ($user->authorise('core.edit', 'com_dharmashop')) : ?>
+                                            <a href="<?php echo Route::_('index.php?option=com_dharmashop&task=root.edit&extension=' . $extension); ?>" title="<?php echo Text::_('JACTION_EDIT'); ?>">
+                                                <?php echo Text::_($isBrand ? 'COM_DHARMASHOP_ROOT_BRAND' : 'COM_DHARMASHOP_ROOT_CATEGORY'); ?>
+                                            </a>
+                                        <?php else : ?>
+                                            <?php echo Text::_($isBrand ? 'COM_DHARMASHOP_ROOT_BRAND' : 'COM_DHARMASHOP_ROOT_CATEGORY'); ?>
+                                        <?php endif; ?>
                                         <div class="small"><?php echo Text::sprintf('JGLOBAL_LIST_ALIAS', 'root'); ?></div>
                                     </th>
                                     <td class="small d-none d-md-table-cell">
