@@ -150,6 +150,11 @@ $money = $shop->money();
                     </table>
 
                     <?php echo $this->pagination->getListFooter(); ?>
+
+                    <?php // Окно пакетной обработки (открывается кнопкой в «Действиях»). ?>
+                    <?php if ($user->authorise('core.create', 'com_dharmashop') && $user->authorise('core.edit', 'com_dharmashop')) : ?>
+                        <template id="joomla-dialog-batch"><?php echo $this->loadTemplate('batch_body'); ?></template>
+                    <?php endif; ?>
                 <?php endif; ?>
 
                 <input type="hidden" name="task" value="">

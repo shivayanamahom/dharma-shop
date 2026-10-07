@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Dharma\Component\DharmaShop\Administrator\Model;
 
 use Dharma\Component\DharmaShop\Administrator\Service\ShopServices;
+use Dharma\Component\DharmaShop\Administrator\Support\CategoryTypes;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Form\Form;
 use Joomla\CMS\Language\Text;
@@ -31,6 +32,20 @@ class ProductModel extends AdminModel
     public $typeAlias = 'com_dharmashop.product';
 
     protected $text_prefix = 'COM_DHARMASHOP';
+
+    /**
+     * Пакетные операции: имя поля окна «Пакетная обработка» => метод. Состав расширяется добавлением строки сюда,
+     * метода batch<Имя> и поля в tmpl/products/default_batch_body.php. Копирование/перемещение штатной «категории» не используем.
+     */
+    protected $batch_copymove = '';
+
+    protected $batch_commands = [
+        'category_id' => 'batchMoveCategory',
+        'extra_category_id' => 'batchAddCategory',
+        'brand_id' => 'batchSetBrand',
+        'badge_add_id' => 'batchAddBadge',
+        'badge_remove_id' => 'batchRemoveBadge',
+    ];
 
     /** Поля формы, которые относятся к варианту, а не к карточке. */
     private const VARIANT_FIELDS = ['sku', 'stock_tracked', 'backorder', 'weight', 'length', 'width', 'height', 'price', 'sale_price', 'sale_start', 'sale_end'];
@@ -230,5 +245,191 @@ class ProductModel extends AdminModel
         $this->shop()->indexer()->refreshProducts($pks);
 
         return true;
+    }
+
+    // ------------------------------------------------------------------ пакетная обработка
+
+    /** Значение «Без бренда» в окне пакетной обработки. */
+    private const BATCH_NO_BRAND = -1;
+
+    /**
+     * Применяет изменение таксономии к каждому выбранному товару, у которого пользователю разрешена правка.
+     *
+     * @param   int[]     $pks
+     * @param   callable  $change  (int $id, object $row, array $taxonomy): ?array новая таксономия или null — пропустить
+     */
+    private function batchTaxonomy(array $pks, callable $change): bool
+    {
+        $db = $this->getDatabase();
+        $app = Factory::getApplication();
+        $user = $app->getIdentity();
+        $indexer = $this->shop()->indexer();
+
+        foreach (array_map('intval', $pks) as $id) {
+            $row = $db->setQuery($db->createQuery()->select('id, title, catid, created_by')->from('#__dharmashop_products')->where('id = ' . $id))->loadObject();
+
+            if (!$row) {
+                continue;
+            }
+
+            $canEdit = $user->authorise('core.edit', 'com_dharmashop.product.' . $id)
+                || ($user->authorise('core.edit.own', 'com_dharmashop.product.' . $id) && (int) $row->created_by === (int) $user->id);
+
+            if (!$canEdit) {
+                $app->enqueueMessage(Text::sprintf('COM_DHARMASHOP_BATCH_SKIP_NO_ACCESS', $row->title), 'warning');
+                continue;
+            }
+
+            $taxonomy = $indexer->getTaxonomy($id) + ['main' => (int) $row->catid];
+            $taxonomy['main'] = (int) $row->catid;
+
+            try {
+                $new = $change($id, $row, $taxonomy);
+            } catch (\RuntimeException $e) {
+                $app->enqueueMessage(Text::sprintf('COM_DHARMASHOP_BATCH_SKIP', $row->title, Text::_($e->getMessage())), 'warning');
+                continue;
+            }
+
+            if ($new === null) {
+                continue;
+            }
+
+            $indexer->setCategories($id, (int) $new['main'], $new['extra'], (int) $new['brand'], $new['badges']);
+        }
+
+        return true;
+    }
+
+    /** Тип записи-категории по номеру или пустая строка. */
+    private function categoryExtension(int $id): string
+    {
+        $db = $this->getDatabase();
+
+        return (string) $db->setQuery($db->createQuery()->select('extension')->from('#__categories')->where('id = ' . $id))->loadResult();
+    }
+
+    /** Переносит товары в основную категорию (меняет адрес товара, права наследуются от новой категории). */
+    protected function batchMoveCategory($value, $pks, $contexts): bool
+    {
+        $target = (int) $value;
+
+        if ($this->categoryExtension($target) !== CategoryTypes::CATEGORY) {
+            $this->setError(Text::_('COM_DHARMASHOP_BATCH_ERROR_CATEGORY'));
+
+            return false;
+        }
+
+        if (!Factory::getApplication()->getIdentity()->authorise('core.create', 'com_dharmashop.category.' . $target)) {
+            $this->setError(Text::_('COM_DHARMASHOP_BATCH_ERROR_CREATE_DENIED'));
+
+            return false;
+        }
+
+        return $this->batchTaxonomy((array) $pks, function (int $id, object $row, array $tax) use ($target): ?array {
+            if ((int) $row->catid === $target) {
+                return null;
+            }
+
+            $table = $this->getTable();
+            $table->load($id);
+            $table->catid = $target;
+
+            if (!$table->store()) {
+                throw new \RuntimeException($table->getError());
+            }
+
+            $tax['main'] = $target;
+            $tax['extra'] = array_values(array_diff($tax['extra'], [$target]));
+
+            return $tax;
+        });
+    }
+
+    /** Добавляет товары в дополнительную категорию. */
+    protected function batchAddCategory($value, $pks, $contexts): bool
+    {
+        $target = (int) $value;
+
+        if ($this->categoryExtension($target) !== CategoryTypes::CATEGORY) {
+            $this->setError(Text::_('COM_DHARMASHOP_BATCH_ERROR_CATEGORY'));
+
+            return false;
+        }
+
+        return $this->batchTaxonomy((array) $pks, function (int $id, object $row, array $tax) use ($target): ?array {
+            if ($tax['main'] === $target || in_array($target, $tax['extra'], true)) {
+                return null;
+            }
+
+            $tax['extra'][] = $target;
+
+            return $tax;
+        });
+    }
+
+    /** Задаёт бренд товаров или снимает его (значение «Без бренда»). */
+    protected function batchSetBrand($value, $pks, $contexts): bool
+    {
+        $brand = (int) $value === self::BATCH_NO_BRAND ? 0 : (int) $value;
+
+        if ($brand > 0 && $this->categoryExtension($brand) !== CategoryTypes::BRAND) {
+            $this->setError(Text::_('COM_DHARMASHOP_BATCH_ERROR_BRAND'));
+
+            return false;
+        }
+
+        return $this->batchTaxonomy((array) $pks, function (int $id, object $row, array $tax) use ($brand): ?array {
+            if ((int) $tax['brand'] === $brand) {
+                return null;
+            }
+
+            $tax['brand'] = $brand;
+
+            return $tax;
+        });
+    }
+
+    /** Добавляет бейдж товарам. */
+    protected function batchAddBadge($value, $pks, $contexts): bool
+    {
+        $badge = (int) $value;
+
+        if ($this->categoryExtension($badge) !== CategoryTypes::BADGE) {
+            $this->setError(Text::_('COM_DHARMASHOP_BATCH_ERROR_BADGE'));
+
+            return false;
+        }
+
+        return $this->batchTaxonomy((array) $pks, function (int $id, object $row, array $tax) use ($badge): ?array {
+            if (in_array($badge, $tax['badges'], true)) {
+                return null;
+            }
+
+            $tax['badges'][] = $badge;
+
+            return $tax;
+        });
+    }
+
+    /** Снимает бейдж с товаров. */
+    protected function batchRemoveBadge($value, $pks, $contexts): bool
+    {
+        $badge = (int) $value;
+
+        if ($this->categoryExtension($badge) !== CategoryTypes::BADGE) {
+            $this->setError(Text::_('COM_DHARMASHOP_BATCH_ERROR_BADGE'));
+
+            return false;
+        }
+
+        return $this->batchTaxonomy((array) $pks, function (int $id, object $row, array $tax) use ($badge): ?array {
+            if (!in_array($badge, $tax['badges'], true)) {
+                return null;
+            }
+
+            $tax['badges'] = array_values(array_diff($tax['badges'], [$badge]));
+
+            return $tax;
+        });
     }
 }

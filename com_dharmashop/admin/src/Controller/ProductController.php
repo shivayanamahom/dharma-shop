@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Dharma\Component\DharmaShop\Administrator\Controller;
 
 use Joomla\CMS\MVC\Controller\FormController;
+use Joomla\CMS\Router\Route;
 
 \defined('_JEXEC') or die;
 
@@ -47,5 +48,16 @@ class ProductController extends FormController
 
         return $user->authorise('core.edit.own', 'com_dharmashop.product.' . $recordId)
             && (int) ($data['created_by'] ?? 0) === (int) $user->id;
+    }
+
+    /** Пакетная обработка выбранных товаров (окно «Пакетная обработка» на списке). */
+    public function batch($model = null)
+    {
+        $this->checkToken();
+
+        $model = $this->getModel('Product', 'Administrator', []);
+        $this->setRedirect(Route::_('index.php?option=com_dharmashop&view=products' . $this->getRedirectToListAppend(), false));
+
+        return parent::batch($model);
     }
 }
