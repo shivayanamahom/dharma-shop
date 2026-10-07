@@ -74,6 +74,12 @@ class ProductsController extends AdminController
         $this->runCommand('sales');
     }
 
+    /** Пошагово конвертирует уже загруженные изображения магазина в WebP. */
+    public function cmdWebp(): void
+    {
+        $this->runCommand('webp');
+    }
+
     /**
      * Запускает команду обслуживания на время не дольше бюджета. Если каталог не закончился, курсор хранится в сессии
      * пользователя, и повторный запуск продолжает с места остановки (полный прогон больших каталогов — консольной командой).
@@ -89,7 +95,9 @@ class ProductsController extends AdminController
         }
 
         $key = 'com_dharmashop.command.' . $name;
-        $cursor = (int) $this->app->getUserState($key, 0);
+        $cursor = $name === 'webp'
+            ? (array) $this->app->getUserState($key, [])
+            : (int) $this->app->getUserState($key, 0);
 
         try {
             $result = $this->app->bootComponent('com_dharmashop')->getServices()->maintenance()->run($name, $cursor);
@@ -102,16 +110,22 @@ class ProductsController extends AdminController
 
         if ($result['done']) {
             $this->app->setUserState($key, null);
-            $this->setRedirect($this->listUrl(), Text::sprintf('COM_DHARMASHOP_CMD_DONE', Text::_(MaintenanceService::COMMANDS[$name]), $result['processed']));
+
+            if ($name === 'webp') {
+                $message = Text::sprintf('COM_DHARMASHOP_CMD_WEBP_DONE', (int) ($result['converted'] ?? 0), (int) ($result['failed'] ?? 0));
+            } else {
+                $message = Text::sprintf('COM_DHARMASHOP_CMD_DONE', Text::_(MaintenanceService::COMMANDS[$name]), $result['processed']);
+            }
+
+            $this->setRedirect($this->listUrl(), $message);
 
             return;
         }
 
         $this->app->setUserState($key, $result['cursor']);
-        $this->setRedirect(
-            $this->listUrl(),
-            Text::sprintf('COM_DHARMASHOP_CMD_CONTINUE', Text::_(MaintenanceService::COMMANDS[$name]), $result['processed']),
-            'warning'
-        );
+        $message = $name === 'webp'
+            ? Text::sprintf('COM_DHARMASHOP_CMD_WEBP_CONTINUE', (int) ($result['converted'] ?? 0), (int) ($result['failed'] ?? 0))
+            : Text::sprintf('COM_DHARMASHOP_CMD_CONTINUE', Text::_(MaintenanceService::COMMANDS[$name]), $result['processed']);
+        $this->setRedirect($this->listUrl(), $message, 'warning');
     }
 }

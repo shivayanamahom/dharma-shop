@@ -16,6 +16,7 @@ use Dharma\Component\DharmaShop\Administrator\Catalog\GalleryRepository;
 use Dharma\Component\DharmaShop\Administrator\Catalog\Indexer;
 use Dharma\Component\DharmaShop\Administrator\Catalog\ProductRebuilder;
 use Dharma\Component\DharmaShop\Administrator\Catalog\VariantRepository;
+use Dharma\Component\DharmaShop\Administrator\Image\ImageWebpMigration;
 use Dharma\Component\DharmaShop\Administrator\Maintenance\MaintenanceService;
 use Dharma\Component\DharmaShop\Administrator\Order\OrderRules;
 use Dharma\Component\DharmaShop\Administrator\Pricing\MoneyFormatter;
@@ -51,6 +52,8 @@ final class ShopServices
     private ?SaleScheduler $sales = null;
 
     private ?MaintenanceService $maintenance = null;
+
+    private ?ImageWebpMigration $imageWebpMigration = null;
 
     private ?OrderRules $orderRules = null;
 
@@ -100,7 +103,12 @@ final class ShopServices
 
     public function maintenance(): MaintenanceService
     {
-        return $this->maintenance ??= new MaintenanceService($this->db, $this->indexer(), $this->rebuilder(), $this->sales(), $this->orderRules());
+        return $this->maintenance ??= new MaintenanceService($this->db, $this->indexer(), $this->rebuilder(), $this->sales(), $this->orderRules(), $this->imageWebpMigration());
+    }
+
+    public function imageWebpMigration(): ImageWebpMigration
+    {
+        return $this->imageWebpMigration ??= new ImageWebpMigration($this->db, JPATH_ROOT);
     }
 
     public function orderRules(): OrderRules

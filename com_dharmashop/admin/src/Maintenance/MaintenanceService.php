@@ -14,6 +14,7 @@ namespace Dharma\Component\DharmaShop\Administrator\Maintenance;
 
 use Dharma\Component\DharmaShop\Administrator\Catalog\Indexer;
 use Dharma\Component\DharmaShop\Administrator\Catalog\ProductRebuilder;
+use Dharma\Component\DharmaShop\Administrator\Image\ImageWebpMigration;
 use Dharma\Component\DharmaShop\Administrator\Order\OrderRules;
 use Dharma\Component\DharmaShop\Administrator\Pricing\SaleScheduler;
 use Dharma\Component\DharmaShop\Administrator\Support\Sql;
@@ -33,6 +34,7 @@ final class MaintenanceService
         'index' => 'COM_DHARMASHOP_CMD_INDEX',
         'products' => 'COM_DHARMASHOP_CMD_PRODUCTS',
         'sales' => 'COM_DHARMASHOP_CMD_SALES',
+        'webp' => 'COM_DHARMASHOP_CMD_WEBP',
     ];
 
     public function __construct(
@@ -41,6 +43,7 @@ final class MaintenanceService
         private readonly ProductRebuilder $rebuilder,
         private readonly SaleScheduler $sales,
         private readonly OrderRules $rules,
+        private readonly ImageWebpMigration $webp,
         private readonly int $chunk = 1000,
     ) {
     }
@@ -52,12 +55,12 @@ final class MaintenanceService
 
     /**
      * @param   string  $command   index | products | sales
-     * @param   int     $cursor    id последнего обработанного товара (0 — с начала)
+     * @param   int|array  $cursor  курсор товара или этапа обработки изображений
      * @param   int     $budgetMs  сколько миллисекунд можно работать; после очередной порции команда останавливается
      *
-     * @return  array{processed: int, cursor: int, done: bool}
+     * @return  array{processed: int, cursor: int|array, done: bool, converted?: int, failed?: int}
      */
-    public function run(string $command, int $cursor = 0, int $budgetMs = 8000): array
+    public function run(string $command, int|array $cursor = 0, int $budgetMs = 8000): array
     {
         if (!self::isCommand($command)) {
             throw new \InvalidArgumentException('Неизвестная команда: ' . $command);
@@ -66,6 +69,12 @@ final class MaintenanceService
         if ($command === 'sales') {
             return ['processed' => $this->sales->run(), 'cursor' => 0, 'done' => true];
         }
+
+        if ($command === 'webp') {
+            return $this->webp->run(is_array($cursor) ? $cursor : [], min($budgetMs, 5000));
+        }
+
+        $cursor = is_int($cursor) ? $cursor : 0;
 
         $start = hrtime(true);
         $processed = 0;
