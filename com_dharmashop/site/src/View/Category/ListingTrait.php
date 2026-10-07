@@ -50,7 +50,7 @@ trait ListingTrait
         $taxonomy = $this->taxonomy();
 
         return array_merge(Grid::keys('category'), Grid::keys($taxonomy->gridPrefix()), ['category_layout', 'product_card_layout',
-            'product_card_intro', 'category_product_count', 'category_price_range', $taxonomy->cardKey('layout'),
+            'product_card_intro', 'product_card_qty', 'category_product_count', 'category_price_range', $taxonomy->cardKey('layout'),
             $taxonomy->cardKey('intro'), $taxonomy->cardKey('count'), $taxonomy->cardKey('prices'), 'list_limit', 'list_ordering',
             'category_default_view', 'subcategory_show_image']);
     }
@@ -119,6 +119,7 @@ trait ListingTrait
         $pagination = new Pagination($total, intdiv($this->start, $limit) * $limit, $limit);
         $this->start = $pagination->limitstart;
         $this->items = $total ? $model->getProducts($this->ordering, $limit, $this->start) : [];
+        $model->attachCardData($this->items);
         $this->pagination = $total > $limit ? $pagination : null;
 
         if ($this->pagination) {
@@ -171,6 +172,14 @@ trait ListingTrait
         return $found;
     }
 
+    /** Адрес страницы бейджа (кэшируется: на странице бейджей мало, карточек много). */
+    private function badgeRoute(int $id): string
+    {
+        static $routes = [];
+
+        return $routes[$id] ??= Route::_('index.php?option=com_dharmashop&view=badge&id=' . $id, false);
+    }
+
     public function renderProduct(object $item): string
     {
         $layout = new FileLayout('components.dharmashop.' . $this->cardFolder . '.' . $this->cardLayout, null, ['component' => 'none', 'client' => 0]);
@@ -184,7 +193,13 @@ trait ListingTrait
         return $layout->render(['item' => $item, 'params' => clone $this->params, 'mode' => $this->productView,
             'showIntro' => (int) $this->params->get('product_card_intro', 1) === 1,
             'intro' => $intro,
-            'priceRange' => $this->formatRange($item->price_min, $item->price_max)]);
+            'priceRange' => $this->formatRange($item->price_min, $item->price_max),
+            'oldPrice' => $item->base_price !== null ? $this->money->format($item->base_price) : '',
+            'discountPercent' => (int) $item->discount_percent,
+            'badges' => array_map(fn (object $badge): object => (object) ((array) $badge + ['url' => $this->badgeRoute($badge->id)]), $item->badges),
+            'categoryTitle' => (string) ($item->category_title ?? ''),
+            'categoryUrl' => $this->categoryRoute((int) $item->catid),
+            'showQty' => (int) $this->params->get('product_card_qty', 0) === 1]);
     }
 
     private function mergeDisplay(Registry $source, array $keys): void

@@ -49,7 +49,8 @@ class CategoryModel extends CategoriesModel
         $sort = $db->quoteName($column);
         $query = $this->productsQuery()
             ->select($db->quoteName(['p.id', 'p.catid', 'p.title', 'p.alias', 'p.cover', 'p.cover_alt',
-                'p.introtext', 'p.price_min', 'p.price_max', 'p.in_stock', 'p.unit', 'p.params']))
+                'p.introtext', 'p.price_min', 'p.price_max', 'p.in_stock', 'p.unit', 'p.qty_min', 'p.qty_step', 'p.params']))
+            ->select($db->quoteName('c.title', 'category_title'))
             ->order($sort . ' ' . $direction)->order('p.id ' . $direction);
         $items = $db->setQuery($query, max(0, $start), $limit)->loadObjectList();
 
@@ -58,6 +59,69 @@ class CategoryModel extends CategoriesModel
         }
 
         return $items;
+    }
+
+    /**
+     * Данные карточек страницы одним пакетом (без запросов на каждую карточку): обычная цена и размер скидки варианта по умолчанию
+     * и бейджи товара (только опубликованные, доступные посетителю). Поля добавляются в объекты товаров: base_price, discount_percent, badges.
+     *
+     * @param   object[]  $items
+     */
+    public function attachCardData(array $items): void
+    {
+        if (!$items) {
+            return;
+        }
+
+        $db = $this->getDatabase();
+        $ids = array_map(static fn (object $item): int => (int) $item->id, $items);
+        $list = implode(',', $ids);
+        $prices = [];
+
+        foreach ($db->setQuery(
+            'SELECT v.product_id, vp.price, vp.price_final FROM ' . $db->quoteName('#__dharmashop_variants', 'v')
+            . ' JOIN ' . $db->quoteName('#__dharmashop_variant_prices', 'vp') . ' ON vp.variant_id = v.id'
+            . ' WHERE v.product_id IN (' . $list . ') AND v.is_default = 1 AND vp.price_list_id = 1'
+        )->loadObjectList() as $row) {
+            $prices[(int) $row->product_id] = $row;
+        }
+
+        $levels = implode(',', array_map('intval', $this->getCurrentUser()->getAuthorisedViewLevels()) ?: [0]);
+        $badges = [];
+
+        foreach ($db->setQuery(
+            'SELECT pc.product_id, c.id, c.title, c.params FROM ' . $db->quoteName('#__dharmashop_product_categories', 'pc')
+            . ' JOIN ' . $db->quoteName('#__categories', 'c') . ' ON c.id = pc.catid'
+            . ' WHERE pc.product_id IN (' . $list . ') AND pc.direct = 1 AND c.extension = ' . $db->quote('com_dharmashop.badge')
+            . ' AND c.published = 1 AND c.access IN (' . $levels . ') ORDER BY c.lft'
+        )->loadObjectList() as $row) {
+            $params = new Registry($row->params);
+
+            // Настройка бейджа «Показывать в списках»: выключенный бейдж на карточках не выводится.
+            if ((int) $params->get('badge_show_list', 1) !== 1) {
+                continue;
+            }
+
+            $color = (string) $params->get('badge_color', 'primary');
+            $badges[(int) $row->product_id][] = (object) [
+                'id' => (int) $row->id,
+                'title' => (string) $row->title,
+                'color' => in_array($color, ['primary', 'secondary', 'success', 'danger', 'warning', 'info', 'light', 'dark'], true) ? $color : 'primary',
+            ];
+        }
+
+        foreach ($items as $item) {
+            $id = (int) $item->id;
+            $item->badges = $badges[$id] ?? [];
+            $item->base_price = null;
+            $item->discount_percent = 0;
+            $row = $prices[$id] ?? null;
+
+            if ($row && $row->price !== null && $row->price_final !== null && (float) $row->price > 0 && (float) $row->price_final < (float) $row->price) {
+                $item->base_price = (string) $row->price;
+                $item->discount_percent = (int) round((1 - (float) $row->price_final / (float) $row->price) * 100);
+            }
+        }
     }
 
     /** Итоги всей категории (по индексу, с потолком); цены нужны только если включены настройками. Корень цен не имеет. */
