@@ -53,9 +53,16 @@
 }
 
 .dharmashop-uploader__icon {
-	font-size: 2.6rem;
-	line-height: 1;
+	width: 4rem;
+	height: 4rem;
+	margin-bottom: .35rem;
 	color: var(--dsu-accent);
+	transition: transform .2s ease;
+}
+
+.dharmashop-uploader__drop:hover .dharmashop-uploader__icon,
+.dharmashop-uploader.is-dragover .dharmashop-uploader__icon {
+	transform: translateY(-.2rem);
 }
 
 .dharmashop-uploader__title {

@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace Dharma\Component\DharmaShop\Administrator\Model;
 
+use Dharma\Component\DharmaShop\Administrator\Image\ImageCleaner;
 use Dharma\Component\DharmaShop\Administrator\Support\CategoryTypes;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Form\Form;
@@ -224,7 +225,31 @@ class CategoryModel extends AdminModel
             }
         }
 
-        return parent::delete($pks);
+        // Картинки удаляемых записей запоминаем до удаления: после него записей в базе уже нет.
+        $files = [];
+
+        foreach (array_map('intval', (array) $pks) as $pk) {
+            $params = json_decode((string) $db->setQuery($db->createQuery()->select('params')->from('#__categories')->where('id = ' . $pk))->loadResult(), true) ?: [];
+
+            foreach (['image', 'icon'] as $key) {
+                if (!empty($params[$key])) {
+                    $files[] = (string) $params[$key];
+                }
+            }
+        }
+
+        if (!parent::delete($pks)) {
+            return false;
+        }
+
+        // После удаления убираем только свои файлы, на которые больше никто не ссылается (правила — ImageCleaner).
+        $cleaner = new ImageCleaner($db, JPATH_ROOT);
+
+        foreach (array_unique($files) as $file) {
+            $cleaner->deleteIfUnused($file);
+        }
+
+        return true;
     }
 
     /**
