@@ -19,6 +19,13 @@
 			"dependencies": ["com_dharmashop.listing"]
 		},
 		{
+			"name": "com_dharmashop.loadmore",
+			"type": "script",
+			"uri": "com_dharmashop/loadmore.js",
+			"attributes": { "defer": true },
+			"dependencies": ["core", "com_dharmashop.listing"]
+		},
+		{
 			"name": "com_dharmashop.uploader",
 			"type": "script",
 			"uri": "com_dharmashop/uploader.js",

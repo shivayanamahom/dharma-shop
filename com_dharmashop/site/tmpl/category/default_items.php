@@ -18,5 +18,5 @@ use Joomla\CMS\Language\Text;
         </div>
     <?php endif; ?>
     <?php if ($this->pagination) : ?>
-        <div class="mt-4"><?php echo $this->pagination->getPaginationLinks(); ?></div>
+        <div class="mt-4" data-dharmashop-pagination><?php echo $this->pagination->getPaginationLinks(); ?></div>
     <?php endif; ?>

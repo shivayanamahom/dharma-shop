@@ -58,6 +58,7 @@
         })
         .then((html) => {
           container.innerHTML = html;
+          document.dispatchEvent(new CustomEvent('dharmashop:updated'));
           if (container.getBoundingClientRect().top < 0) {
             container.scrollIntoView({ block: 'start' });
           }

@@ -99,8 +99,15 @@ class HtmlView extends BaseHtmlView
         $wa->getRegistry()->addExtensionRegistryFile('com_dharmashop');
         $wa->useScript('com_dharmashop.listing');
 
-        if ((int) $settings->get('ajax_pagination', 0) === 1) {
+        // Скрипт — только для выбранного типа пагинации (обычная работает без скриптов).
+        $paginationType = (string) $settings->get('pagination_type', 'standard');
+
+        if ($paginationType === 'ajax') {
             $wa->useScript('com_dharmashop.pagination');
+        } elseif ($paginationType === 'more' || $paginationType === 'infinite') {
+            Text::script('COM_DHARMASHOP_SHOW_MORE');
+            $this->getDocument()->addScriptOptions('com_dharmashop.pagination', ['type' => $paginationType]);
+            $wa->useScript('com_dharmashop.loadmore');
         }
 
         parent::display($tpl);
