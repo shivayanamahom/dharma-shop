@@ -63,7 +63,7 @@
 	</fieldset>
 
 	<fieldset name="category_order" addfieldprefix="Dharma\Component\DharmaShop\Administrator\Field">
-		<field name="category_order" type="categoryorder" label="COM_DHARMASHOP_ORDER_CATEGORY_LABEL" description="COM_DHARMASHOP_ORDER_CATEGORY_DESC" hiddenLabel="true" filter="unset" />
+		<field name="category_order" type="categoryorder" label="COM_DHARMASHOP_ORDER_CATEGORY_LABEL" description="COM_DHARMASHOP_ORDER_CATEGORY_DESC" hiddenLabel="true" filter="Dharma\Component\DharmaShop\Administrator\Support\FormFilters::categoryOrder" />
 	</fieldset>
 
 	<fieldset name="display" addfieldprefix="Dharma\Component\DharmaShop\Administrator\Field">
