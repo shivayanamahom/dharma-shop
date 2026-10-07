@@ -26,6 +26,12 @@
 			"dependencies": ["core", "com_dharmashop.listing"]
 		},
 		{
+			"name": "com_dharmashop.qty",
+			"type": "script",
+			"uri": "com_dharmashop/qty.js",
+			"attributes": { "defer": true }
+		},
+		{
 			"name": "com_dharmashop.uploader",
 			"type": "script",
 			"uri": "com_dharmashop/uploader.js",

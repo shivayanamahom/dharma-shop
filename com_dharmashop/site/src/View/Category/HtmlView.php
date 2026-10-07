@@ -99,6 +99,11 @@ class HtmlView extends BaseHtmlView
         $wa->getRegistry()->addExtensionRegistryFile('com_dharmashop');
         $wa->useScript('com_dharmashop.listing');
 
+        // Кнопки «−»/«+» виджета количества: скрипт только если виджет включён в карточках.
+        if ((int) $this->params->get('product_card_qty', 0) === 1) {
+            $wa->useScript('com_dharmashop.qty');
+        }
+
         // Скрипт — только для выбранного типа пагинации (обычная работает без скриптов).
         $paginationType = (string) $settings->get('pagination_type', 'standard');
 
