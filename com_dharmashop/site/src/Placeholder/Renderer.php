@@ -31,6 +31,8 @@ final class Renderer
             return $html;
         }
 
+        // Код подстановки, скопированный из справочника вместе с форматированием (<code>{...}</code>), выводится обычным текстом.
+        $html = (string) preg_replace('~<(code|kbd|samp|tt)(?:\s[^>]*)?>\s*(' . self::TOKEN . ')\s*</\1>~iu', '$2', $html);
         $resolve = $this->resolver($values);
         $parts = preg_split('/(<[^>]*>)/u', $html, -1, PREG_SPLIT_DELIM_CAPTURE) ?: [$html];
 

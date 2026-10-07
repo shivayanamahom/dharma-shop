@@ -53,7 +53,7 @@ final class PlaceholderPanel
                 . '<th scope="col" class="w-25">' . $e(Text::_('COM_DHARMASHOP_PH_NOW')) . '</th></tr></thead><tbody>';
 
             foreach ($group['items'] as $item) {
-                $html .= '<tr><td>' . $e($item['name']) . '</td><td><code class="user-select-all">' . $e($item['code']) . '</code></td><td class="text-muted">' . $e($item['value']) . '</td></tr>';
+                $html .= '<tr><td>' . $e($item['name']) . '</td><td><input type="text" readonly class="form-control form-control-sm font-monospace" value="' . $e($item['code']) . '" aria-label="' . $e($item['name']) . '"></td><td class="text-muted">' . $e($item['value']) . '</td></tr>';
             }
 
             $html .= '</tbody></table>';

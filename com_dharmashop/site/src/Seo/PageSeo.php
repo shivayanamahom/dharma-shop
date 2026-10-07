@@ -22,7 +22,7 @@ final class PageSeo
     {
     }
 
-    public function resolve(string $area, object $item, array $values, Registry $menu, string $url): PageMetadata
+    public function resolve(string $area, object $item, array $values, Registry $menu, string $url, ?string $robots = null): PageMetadata
     {
         $app = Factory::getApplication();
         $defaults = new SeoSettings($this->settings);
@@ -51,7 +51,8 @@ final class PageSeo
                 break;
             }
         }
-        $robots = (string) ($item->metadata->get('robots') ?: $menu->get('robots') ?: $defaults->robots());
+        // Явное значение (например, страница-дубль с параметрами) важнее настроек записи, меню и магазина.
+        $robots = $robots ?? (string) ($item->metadata->get('robots') ?: $menu->get('robots') ?: $defaults->robots());
 
         return new PageMetadata(
             $part('title', (string) $params->get('meta_title', ''), (string) $menu->get('page_title', '')),

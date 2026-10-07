@@ -30,11 +30,7 @@ $modes = ['grid' => 'COM_DHARMASHOP_VIEW_GRID', 'list' => 'COM_DHARMASHOP_VIEW_L
             </div>
         </section>
     <?php endif; ?>
-    <form action="<?php echo $this->escape($this->categoryRoute((int) $this->item->id)); ?>" method="get" class="mb-4" data-dharmashop-listing-controls>
-        <input type="hidden" name="option" value="com_dharmashop">
-        <input type="hidden" name="view" value="category">
-        <input type="hidden" name="id" value="<?php echo (int) $this->item->id; ?>">
-        <?php if ($this->menuId) : ?><input type="hidden" name="Itemid" value="<?php echo $this->menuId; ?>"><?php endif; ?>
+    <form action="<?php echo $this->escape($this->categoryRoute((int) $this->item->id)); ?>" method="get" class="mb-4" data-dharmashop-listing-controls>escape($this->categoryRoute((int) $this->item->id)); ?>" method="get" class="mb-4" data-dharmashop-listing-controls>
         <div class="d-flex flex-column flex-lg-row align-items-lg-end justify-content-between gap-3">
             <div>
                 <label for="dharmashop-sort" class="form-label"><?php echo Text::_('COM_DHARMASHOP_SORT_LABEL'); ?></label>
@@ -64,26 +60,8 @@ $modes = ['grid' => 'COM_DHARMASHOP_VIEW_GRID', 'list' => 'COM_DHARMASHOP_VIEW_L
             <?php if ($this->priceRange !== '') : ?><span><?php echo $this->escape(Text::sprintf('COM_DHARMASHOP_CARD_PRICE_RANGE', $this->priceRange)); ?></span><?php endif; ?>
         </div>
     <?php endif; ?>
-    <?php if (!$this->items) : ?>
-        <p class="text-body-secondary"><?php echo Text::_('COM_DHARMASHOP_NO_PRODUCTS'); ?></p>
-    <?php elseif ($this->productView === 'table') : ?>
-        <div class="table-responsive">
-            <table class="table align-middle">
-                <caption class="visually-hidden"><?php echo Text::_('COM_DHARMASHOP_PRODUCTS'); ?></caption>
-                <tbody><?php foreach ($this->items as $product) : ?><?php echo $this->renderProduct($product); ?><?php endforeach; ?></tbody>
-            </table>
-        </div>
-    <?php else : ?>
-        <div class="<?php echo $this->escape($this->productView === 'list' ? 'row row-cols-1 g-3' : $this->gridClasses); ?>">
-            <?php foreach ($this->items as $product) : ?><div class="col"><?php echo $this->renderProduct($product); ?></div><?php endforeach; ?>
-        </div>
-    <?php endif; ?>
-    <?php if ($this->after || $this->next) : ?>
-        <nav class="d-flex justify-content-between gap-3 mt-4" aria-label="<?php echo Text::_('COM_DHARMASHOP_PRODUCT_PAGES'); ?>">
-            <div><?php if ($this->after) : ?><a class="btn btn-outline-secondary" href="<?php echo $this->escape($this->listingRoute()); ?>"><?php echo Text::_('COM_DHARMASHOP_FIRST_PAGE'); ?></a><?php endif; ?></div>
-            <?php if ($this->next) : ?><a class="btn btn-outline-primary" rel="next" href="<?php echo $this->escape($this->listingRoute($this->next)); ?>"><?php echo Text::_('COM_DHARMASHOP_NEXT_PAGE'); ?></a><?php endif; ?>
-        </nav>
-    <?php endif; ?>
+    <?php // Список товаров и ссылки порций: этот же блок отдаёт AJAX-фрагмент (RawView), JavaScript заменяет им содержимое без смены адреса. ?>
+    <div data-dharmashop-listing aria-live="polite"><?php echo $this->loadTemplate('items'); ?></div>
     <?php if (trim((string) $this->item->description) !== '') : ?><div class="mt-4"><?php echo $this->text((string) $this->item->description); ?></div><?php endif; ?>
     <?php echo $hooks->render('afterContent'); ?>
 </section>
