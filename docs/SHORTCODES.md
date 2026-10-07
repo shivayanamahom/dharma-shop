@@ -4,6 +4,8 @@
 
 Имена только наши: подстановки `{область.имя}`, шорткоды `{dharma-…}`, события `onDharmaShop…`.
 
+**Обновление 2026-10-07:** движок `Site\Placeholder\Renderer` уже применяется к SEO списка категорий: `category.title`, `category.parent`, `global.sitename`, `global.currency`. Прежние отметки «этап сайт» для этих четырёх кодов выполнены на этом виде; ценовые/количественные коды и обработка текстов записей остаются планом.
+
 ## 1. Подстановки в шаблонах `{область.имя}`
 
 Используются там, где пользователь задаёт шаблон текста: SEO-шаблоны страниц (настройки → «SEO», C16), позже письма, названия позиций в заказе, тексты уведомлений. Правила: фигурные скобки, латиница, точка между областью и именем; неизвестная подстановка выводится как есть (не ломает страницу); значения экранируются при выводе; один движок подстановки на всех (класс `Placeholder\Renderer`, этап «сайт»; пока шаблоны только хранятся и показываются в подсказках).
@@ -80,13 +82,61 @@
 | `onDharmaShopListingQuery`, `ProductPrepare`, `ProductDisplay`, `PriceResolve`, `StockChange`, `IndexRebuild` | план | витрина и индекс |
 | `onDharmaShopFieldTypes…` (группа `dharmashopfield`) | план, этап 2 | поля |
 | `onDharmaShopCart…`, `Checkout…`, `Shipping…`, `Payment…`, `Order…`, `Notify…` | план, этап 5 | корзина, заказ |
+| `onDharmaShopMetadataReady` | **есть (C28/C29)** | Группа `dharmashop`; событие Joomla Event с `page` (readonly `Site\Seo\PageMetadata`), `document` (`HtmlDocument`), `settings` (`Registry` настроек магазина), `content` (readonly `Site\Seo\CollectionMetadata` или `null`). `content`: название списка, упорядоченные `items` с `name`/абсолютным `url`, тип элемента (на категории `CollectionPage`). После применения базовых тегов, до рендера страницы; только сайт/HTML. Социальный плагин использует `page`, плагин Schema.org — также `content`, без запросов каталога. |
+| `onDharmaShopCategoryBeforeTitle` | **есть (C31)** | До заголовка страницы категории; общий для `categories` и будущего `category`, различать по `view`. |
+| `onDharmaShopCategoryAfterTitle` | **есть (C31)** | После заголовка страницы категории. |
+| `onDharmaShopCategoryBeforeContent` | **есть (C31)** | Перед содержимым категории: изображение, интро, список и полное описание. |
+| `onDharmaShopCategoryAfterContent` | **есть (C31)** | После всего содержимого категории, например для связанных товаров. |
+| `onDharmaShopProductBeforeTitle` | **подготовлено (C31)** | До заголовка товара; вызов расставлен в заготовке `tmpl/product/default.php`, ждёт публичного вида/данных товара. |
+| `onDharmaShopProductAfterTitle` | **подготовлено (C31)** | После заголовка товара. |
+| `onDharmaShopProductBeforeContent` | **подготовлено (C31)** | Перед основным содержимым товара. |
+| `onDharmaShopProductAfterContent` | **подготовлено (C31)** | После основного содержимого товара. |
 | `onDharmaShopSettingsPrepareForm`, `AdminToolsCollect` | план | вкладки настроек и панель инструментов от плагинов |
 | `onDharmaShopOrderRulesResolve` | **предложено** | итоговые правила оформления (количество, единица, учёт остатков) для товара: плагин может переопределить результат `Order\OrderRules` (C14), например, для оптовых групп |
 | `onDharmaShopSeoPlaceholders` | **предложено** | плагин добавляет свои подстановки в `Placeholder\Renderer` (значения по области и имени) |
 | `onDharmaShopImageStored` | **предложено** | после загрузки изображения (`ImageUploader::store`): плагин конвертирует в WebP, нарезает размеры (F10) |
 
+### Контракт точек вывода C31
+
+Группа плагинов `dharmashop`, событие `Site\Event\LayoutRenderEvent` (Joomla CMS immutable event + ResultAware, принимает только строки). Аргументы:
+
+- `entity`: `category` / `product`.
+- `view`: `categories` / `category` / `product`; `categories` — список дочерних категорий, `category` — будущий список товаров выбранной категории.
+- `position`: `beforeTitle` / `afterTitle` / `beforeContent` / `afterContent`.
+- `item`: текущая проверенная моделью категория/товар; на корне списка категорий — виртуальная запись `id=0` из `root_category`, а не запись БД.
+- `items`: записи текущего списка в порядке вывода; на отдельном товаре пустой массив.
+- `params`: копия разрешённых параметров отображения (меню/категория/родители/магазин).
+- `page`: готовый `PageMetadata` или `null` в будущих видах до подключения SEO.
+
+Обработчик добавляет HTML через `$event->addResult($html)`. Обычный `return $html` диспетчер в результат не собирает. Прямой `echo` нарушает расположение блока; использовать только результат события. Строки объединяются без дополнительной обёртки и экранирования в порядке обработчиков Joomla; HTML, Bootstrap-классы и экранирование данных формирует сам плагин. Пустая строка/отсутствие результата ничего не выводит. Заменять аргументы события нельзя; контекст записи используется для чтения и построения своего блока, не для сохранения данных.
+
+Точки вокруг заголовка вызываются даже при скрытом h1. Точки контента охватывают всё содержимое страницы после заголовка. События не вызываются внутри каждой карточки списка. Только сайт/HTML/com_dharmashop, без запросов БД в механизме вызова. В заготовках `category`/`product` вызовы активируются только после передачи реальной проверенной записи `item` будущим видом; сейчас эти виды не реализованы.
+
+Пример методов плагина `CMSPlugin implements SubscriberInterface`:
+
+```php
+use Dharma\Component\DharmaShop\Site\Event\LayoutRenderEvent;
+
+public static function getSubscribedEvents(): array
+{
+    return ['onDharmaShopCategoryAfterContent' => 'afterCategory'];
+}
+
+public function afterCategory(LayoutRenderEvent $event): void
+{
+    if ($event->getArgument('view') !== 'category') {
+        return; // Этот пример предназначен для будущего списка товаров категории.
+    }
+    $category = $event->getArgument('item');
+    $title = htmlspecialchars((string) $category->title, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    $event->addResult('<aside class="mt-4"><h2 class="h5">Дополнительно: ' . $title . '</h2></aside>');
+}
+```
+
+Это пример подключения, демонстрационный плагин не создавался. Для работающего сейчас списка подкатегорий фильтровать по `view=categories`.
+
 ## 4. Где в коде
 
 - Шаблоны SEO и их значения по умолчанию: `admin/src/Seo/SeoSettings.php`, подсказки — `SeoHints.php`; настройки — `admin/config.xml`, вкладка `seo`.
 - Правила оформления заказа: `admin/src/Order/OrderRules.php`.
-- События: каталог плагинов и обработчиков появится вместе с первым плагином пакета; имена — по `ARCHITECTURE.md` §6.
+- Точки макетов: `site/src/Support/LayoutHooks.php`, `site/src/Event/LayoutRenderEvent.php`; вызовы — `site/tmpl/categories/default.php`, `category/default.php`, `product/default.php`. Социальный и Schema.org плагины уже входят в пакет; остальные события — по `ARCHITECTURE.md` §6.
