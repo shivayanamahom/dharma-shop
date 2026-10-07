@@ -3,7 +3,6 @@ declare(strict_types=1);
 
 namespace Dharma\Component\DharmaShop\Site\Model;
 
-use Joomla\CMS\Language\Text;
 use Joomla\Database\ParameterType;
 use Joomla\Database\QueryInterface;
 use Joomla\Registry\Registry;
@@ -16,8 +15,21 @@ class CategoryModel extends CategoriesModel
     /** Колонки сортировки выбираются только из этого списка. */
     public const SORTS = ['order', 'price_asc', 'price_desc', 'new', 'title'];
 
-    /** @return array{items: array, next: int} Порция по ключу, без OFFSET и дублей товара. */
-    public function getProducts(string $ordering, int $limit, int $after = 0): array
+    /** Число видимых товаров списка (для постраничной навигации). */
+    public function getTotal(): int
+    {
+        $db = $this->getDatabase();
+
+        return (int) $db->setQuery($this->productsQuery()->select('COUNT(*)'))->loadResult();
+    }
+
+    /**
+     * Страница товаров: со смещением $start. Сортировка стабильна при равных значениях (второй ключ — id).
+     * Смещение идёт по узкому индексу категории; глубокие страницы дороже первых (см. DECISIONS C44).
+     *
+     * @return array Товары страницы.
+     */
+    public function getProducts(string $ordering, int $limit, int $start = 0): array
     {
         $ordering = in_array($ordering, self::SORTS, true) ? $ordering : 'order';
         $db = $this->getDatabase();
@@ -33,45 +45,19 @@ class CategoryModel extends CategoriesModel
             'title' => 'p.title',
             default => 'p.id',
         };
-        $descending = in_array($ordering, ['price_desc', 'new'], true);
-        $direction = $descending ? 'DESC' : 'ASC';
-        $comparison = $descending ? '<' : '>';
+        $direction = in_array($ordering, ['price_desc', 'new'], true) ? 'DESC' : 'ASC';
         $sort = $db->quoteName($column);
-        $query = $this->productsQuery();
-
-        if ($after > 0) {
-            $anchorQuery = clone $query;
-            $anchorQuery->select($sort . ' AS ' . $db->quoteName('cursor_value'))
-                ->where('p.id = :anchor')->bind(':anchor', $after, ParameterType::INTEGER);
-            $anchor = $db->setQuery($anchorQuery)->loadObject();
-            if (!$anchor) {
-                throw new \RuntimeException(Text::_('COM_DHARMASHOP_CATEGORY_NOT_FOUND'), 404);
-            }
-            $query->bind(':cursor_id', $after, ParameterType::INTEGER);
-            if ($anchor->cursor_value === null) {
-                $condition = '(' . $sort . ' IS NULL AND p.id ' . $comparison . ' :cursor_id)';
-                $query->where($descending ? $condition : '(' . $sort . ' IS NOT NULL OR ' . $condition . ')');
-            } else {
-                $value = (string) $anchor->cursor_value;
-                $query->where('(' . $sort . ' ' . $comparison . ' :cursor_value OR (' . $sort . ' = :cursor_equal AND p.id '
-                    . $comparison . ' :cursor_id)' . ($descending ? ' OR ' . $sort . ' IS NULL' : '') . ')')
-                    ->bind(':cursor_value', $value)->bind(':cursor_equal', $value);
-            }
-        }
-
-        $query->select($db->quoteName(['p.id', 'p.catid', 'p.title', 'p.alias', 'p.cover', 'p.cover_alt',
-            'p.introtext', 'p.price_min', 'p.price_max', 'p.in_stock', 'p.unit', 'p.params']))
+        $query = $this->productsQuery()
+            ->select($db->quoteName(['p.id', 'p.catid', 'p.title', 'p.alias', 'p.cover', 'p.cover_alt',
+                'p.introtext', 'p.price_min', 'p.price_max', 'p.in_stock', 'p.unit', 'p.params']))
             ->order($sort . ' ' . $direction)->order('p.id ' . $direction);
-        $items = $db->setQuery($query, 0, $limit + 1)->loadObjectList();
-        $more = count($items) > $limit;
-        if ($more) {
-            array_pop($items);
-        }
+        $items = $db->setQuery($query, max(0, $start), $limit)->loadObjectList();
+
         foreach ($items as $item) {
             $item->params = new Registry($item->params);
         }
 
-        return ['items' => $items, 'next' => $more && $items ? (int) end($items)->id : 0];
+        return $items;
     }
 
     /** Итоги всей категории (по индексу, с потолком); цены нужны только если включены настройками. Корень цен не имеет. */

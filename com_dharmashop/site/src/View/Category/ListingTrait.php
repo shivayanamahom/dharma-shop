@@ -13,6 +13,7 @@ use Dharma\Component\DharmaShop\Site\Support\Taxonomy;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Layout\FileLayout;
+use Joomla\CMS\Pagination\Pagination;
 use Joomla\CMS\Router\Route;
 use Joomla\Registry\Registry;
 
@@ -32,8 +33,8 @@ trait ListingTrait
     public string $productView = 'grid';
     public string $ordering = 'order';
     public int $menuId = 0;
-    public int $after = 0;
-    public int $next = 0;
+    public int $start = 0;
+    public ?Pagination $pagination = null;
     public string $cardFolder = 'product-card';
     private MoneyFormatter $money;
 
@@ -103,18 +104,30 @@ trait ListingTrait
         $this->gridClasses = Grid::classes($this->params, 'category');
         $ordering = $app->getInput()->getCmd('sort', (string) $this->params->get('list_ordering', 'order'));
         $this->ordering = in_array($ordering, CategoryModel::SORTS, true) ? $ordering : 'order';
-        $this->after = max(0, $app->getInput()->getInt('after'));
+        // Joomla в адресах пишет `start` (штатная навигация); `limitstart` тоже понимается.
+        $this->start = max(0, $app->getInput()->getInt('start', $app->getInput()->getInt('limitstart')));
 
         return $menu;
     }
 
-    /** Читает порцию товаров по ключу (без OFFSET). */
+    /** Читает страницу товаров и готовит штатную постраничную навигацию Joomla. */
     protected function loadProducts(CategoryModel $model): void
     {
         $limit = max(1, min(200, (int) $this->params->get('list_limit', 24)));
-        $products = $model->getProducts($this->ordering, $limit, $this->after);
-        $this->items = $products['items'];
-        $this->next = $products['next'];
+        $total = $model->getTotal();
+        // Смещение кратно размеру страницы: один адрес на одну страницу.
+        $pagination = new Pagination($total, intdiv($this->start, $limit) * $limit, $limit);
+        $this->start = $pagination->limitstart;
+        $this->items = $total ? $model->getProducts($this->ordering, $limit, $this->start) : [];
+        $this->pagination = $total > $limit ? $pagination : null;
+
+        if ($this->pagination) {
+            // Фрагмент (format=raw) не должен попадать в ссылки; сортировка и вид сохраняются, только если они пришли в запросе.
+            $query = Factory::getApplication()->getInput()->get;
+            $pagination->setAdditionalUrlParam('format', null);
+            $pagination->setAdditionalUrlParam('sort', $query->exists('sort') ? $this->ordering : null);
+            $pagination->setAdditionalUrlParam('product_view', $query->exists('product_view') ? $this->productView : null);
+        }
     }
 
     public function categoryRoute(int $id): string
@@ -129,30 +142,6 @@ trait ListingTrait
         }
 
         return Route::_('index.php?option=com_dharmashop&view=' . $this->taxonomy()->pageView . '&id=' . $id . ($this->menuId ? '&Itemid=' . $this->menuId : ''), false);
-    }
-
-    /**
-     * Адрес порции списка для ссылок без JavaScript: адрес категории и `?after=`. Сортировка и вид в адрес не попадают
-     * (их переключает JavaScript без смены адреса); если они пришли в запросе (форма без JavaScript), сохраняются.
-     */
-    public function listingRoute(int $after = 0): string
-    {
-        $input = Factory::getApplication()->getInput()->get;
-        $query = [];
-
-        if ($input->exists('sort')) {
-            $query['sort'] = $this->ordering;
-        }
-
-        if ($input->exists('product_view')) {
-            $query['product_view'] = $this->productView;
-        }
-
-        if ($after) {
-            $query['after'] = $after;
-        }
-
-        return $this->categoryRoute((int) $this->item->id) . ($query ? '?' . http_build_query($query) : '');
     }
 
     public function renderProduct(object $item): string

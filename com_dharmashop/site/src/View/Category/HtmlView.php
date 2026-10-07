@@ -79,7 +79,7 @@ class HtmlView extends BaseHtmlView
         $query = $app->getInput()->get;
         $variant = $query->exists('sort') || $query->exists('product_view');
         $this->seo = $seo->resolve($taxonomy->area, $this->item, $this->textValues, $ownMenu,
-            $this->absoluteRoute((int) $this->item->id) . (!$variant && $this->after ? '?after=' . $this->after : ''),
+            $this->absoluteRoute((int) $this->item->id) . (!$variant && $this->start ? '?start=' . $this->start : ''),
             $variant ? 'noindex, follow' : null);
         // Социальные теги работают; ItemList добавим вместе с содержимым и ссылками карточек.
         $seo->apply($this->seo, $this->getDocument());
@@ -115,7 +115,7 @@ class HtmlView extends BaseHtmlView
             return;
         }
 
-        $target = $this->absoluteRoute((int) $this->item->id) . ($this->after ? '?after=' . $this->after : '');
+        $target = $this->absoluteRoute((int) $this->item->id) . ($this->start ? '?start=' . $this->start : '');
         $app->redirect($target, 301);
     }
 
