@@ -27,6 +27,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\Log\Log;
 use Joomla\CMS\MVC\Model\AdminModel;
 use Joomla\CMS\Table\Table;
+use Joomla\Database\ParameterType;
 use Joomla\Registry\Registry;
 
 \defined('_JEXEC') or die;
@@ -240,7 +241,7 @@ class ProductModel extends AdminModel
                 (int) $data['catid'],
                 (array) ($data['extra_catids'] ?? []),
                 (int) ($data['brand_id'] ?? 0),
-                (array) ($data['badge_ids'] ?? []),
+                $this->withSaleBadge($variantId, (array) ($data['badge_ids'] ?? []), $params),
                 (string) $params->get('new_product_position', 'last'),
                 (new CategoryPositionRules($db, (string) $params->get('new_product_position', 'last')))
                     ->forCategories(array_merge([(int) $data['catid']], array_map('intval', (array) ($data['extra_catids'] ?? []))))
@@ -272,6 +273,45 @@ class ProductModel extends AdminModel
         $this->deleteFiles($removedFiles);
 
         return true;
+    }
+
+    /**
+     * Бейдж скидки по настройкам: ставится, если у варианта по умолчанию действующая скидка (итоговая цена ниже обычной), и снимается, если её нет.
+     * Если переключатель выключен или бейдж не выбран/удалён, набор бейджей не меняется.
+     *
+     * @param   int[]  $badges
+     *
+     * @return  int[]
+     */
+    private function withSaleBadge(int $variantId, array $badges, Registry $params): array
+    {
+        $saleId = (int) $params->get('sale_badge_id', 0);
+
+        if ((int) $params->get('auto_sale_badge', 1) !== 1 || $saleId <= 0) {
+            return $badges;
+        }
+
+        $db = $this->getDatabase();
+        $extension = CategoryTypes::BADGE;
+        $exists = (int) $db->setQuery(
+            $db->createQuery()->select('COUNT(*)')->from($db->quoteName('#__categories'))
+                ->where('id = :id')->where('extension = :extension')->where('published = 1')
+                ->bind(':id', $saleId, ParameterType::INTEGER)->bind(':extension', $extension)
+        )->loadResult();
+
+        if (!$exists) {
+            return $badges;
+        }
+
+        $discounted = (int) $db->setQuery(
+            $db->createQuery()->select('COUNT(*)')->from($db->quoteName('#__dharmashop_variant_prices'))
+                ->where('variant_id = :variant')->where('price > 0')->where('price_final < price')
+                ->bind(':variant', $variantId, ParameterType::INTEGER)
+        )->loadResult() > 0;
+        $badges = array_values(array_unique(array_map('intval', $badges)));
+        $without = array_values(array_diff($badges, [$saleId]));
+
+        return $discounted ? array_merge($without, [$saleId]) : $without;
     }
 
     /** @param string[] $paths */

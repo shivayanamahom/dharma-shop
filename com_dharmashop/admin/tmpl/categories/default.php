@@ -36,8 +36,9 @@ $isBadge = $extension === CategoryTypes::BADGE;
 $isBrand = $extension === CategoryTypes::BRAND;
 $filtered = !empty($this->activeFilters);
 
+$saveOrderingUrl = 'index.php?option=com_dharmashop&task=categories.saveOrderAjax&extension=' . $extension . '&tmpl=component&' . Session::getFormToken() . '=1';
+
 if ($saveOrder && !empty($this->items)) {
-    $saveOrderingUrl = 'index.php?option=com_dharmashop&task=categories.saveOrderAjax&extension=' . $extension . '&tmpl=component&' . Session::getFormToken() . '=1';
     HTMLHelper::_('draggablelist.draggable');
 }
 

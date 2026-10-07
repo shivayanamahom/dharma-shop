@@ -14,13 +14,14 @@ ROOT = Path(__file__).resolve().parents[2]
 SITE = Path(os.environ.get("DHARMA_SITE", "/Volumes/Work/Server/www/test")).resolve()
 BASE = os.environ.get("DHARMA_URL", "https://test.test").rstrip("/")
 COOKIE_PATH = Path(os.environ.get("COOKIES", "/tmp/dharma-seed-100.cookies"))
-MANIFEST = ROOT / "dev/seed/manifest.json"
+NOTE = os.environ.get("SEED_NOTE", "seed-100")
+MANIFEST = ROOT / os.environ.get("SEED_MANIFEST", "dev/seed/manifest.json")
 if BASE != "https://test.test":
     raise SystemExit("Отказ: очистка разрешена только на https://test.test")
 
 data = json.loads(MANIFEST.read_text(encoding="utf-8"))
-if data.get("seed") != "seed-100" or data.get("base_url") != BASE:
-    raise SystemExit("Манифест не подтверждает seed-100 на test.test")
+if data.get("seed") != NOTE or data.get("base_url") != BASE:
+    raise SystemExit("Манифест не подтверждает набор на test.test")
 def req(url: str, pairs: list[tuple[str, str]] | None = None):
     args = ["curl", "-skL", "-b", str(COOKIE_PATH), "-c", str(COOKIE_PATH), "--max-time", "60", "-w", "\n__FINAL__%{url_effective}\t%{http_code}"]
     for key, value in pairs or []:
@@ -108,17 +109,17 @@ if taxonomy:
 for row in taxonomy:
     cid = int(row["id"])
     extension = str(row["extension"])
-    found = sql("select id from PFX_categories where id=" + str(cid) + " and note='seed-100' and extension='" + extension.replace("'", "''") + "'")
+    found = sql("select id from PFX_categories where id=" + str(cid) + " and note='" + NOTE + "' and extension='" + extension.replace("'", "''") + "'")
     if not found:
         continue
     url = "/administrator/index.php?option=com_dharmashop&view=categories&extension=" + urllib.parse.quote(extension)
     action(url, "categories.delete", [cid], extension)
     if sql("select id from PFX_categories where id=" + str(cid)):
         print(f"Не удалена штатным действием (проверьте права или пустоту): {cid} {row['title']}")
-print(f"Обработано таксономий: {len(taxonomy)} (только ID из манифеста с note=seed-100)")
+print(f"Обработано таксономий: {len(taxonomy)} (только ID из манифеста с заметкой набора)")
 
 for group in ("categories", "brands", "badges"):
-    data[group] = [row for row in data.get(group, []) if sql("select id from PFX_categories where id=" + str(int(row["id"])) + " and note='seed-100'")]
+    data[group] = [row for row in data.get(group, []) if sql("select id from PFX_categories where id=" + str(int(row["id"])) + " and note='" + NOTE + "'")]
 data["products"] = []
 data["files"] = [item for item in data.get("files", []) if (SITE / str(item.get("path", ""))).is_file()]
 data["cleaned_at"] = __import__("datetime").datetime.now().isoformat(timespec="seconds")

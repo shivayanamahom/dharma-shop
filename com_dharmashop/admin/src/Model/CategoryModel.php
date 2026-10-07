@@ -272,9 +272,18 @@ class CategoryModel extends AdminModel
     public function delete(&$pks): bool
     {
         $db = $this->getDatabase();
+        $selected = array_values(array_unique(array_map('intval', (array) $pks)));
 
-        foreach (array_map('intval', (array) $pks) as $pk) {
-            $children = (int) $db->setQuery($db->createQuery()->select('COUNT(*)')->from('#__categories')->where('parent_id = ' . $pk))->loadResult();
+        // Вложенные записи удаляются вместе с родителем, если выбраны все: порядок — от глубоких к верхним.
+        if (count($selected) > 1) {
+            $levels = $db->setQuery($db->createQuery()->select(['id', 'level'])->from('#__categories')->whereIn('id', $selected))->loadAssocList('id', 'level');
+            usort($selected, static fn (int $x, int $y): int => (int) ($levels[$y] ?? 0) <=> (int) ($levels[$x] ?? 0));
+            $pks = $selected;
+        }
+
+        foreach ($selected as $pk) {
+            $children = (int) $db->setQuery($db->createQuery()->select('COUNT(*)')->from('#__categories')->where('parent_id = ' . $pk)
+                ->where('id NOT IN (' . implode(',', $selected) . ')'))->loadResult();
             $products = (int) $db->setQuery($db->createQuery()->select('COUNT(*)')->from('#__dharmashop_product_categories')->where('catid = ' . $pk))->loadResult();
 
             if ($children > 0 || $products > 0) {

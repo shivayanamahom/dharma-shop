@@ -138,6 +138,7 @@ return new class () implements ServiceProviderInterface {
                     $this->ensureDefaultCategory();
 
                     if ($type === 'install') {
+                        $this->ensureDefaultBadges();
                         $this->app->enqueueMessage(Text::_('PKG_DHARMASHOP_INSTALLED'), 'info');
                     }
 
@@ -241,6 +242,68 @@ return new class () implements ServiceProviderInterface {
                         if (!Folder::create(dirname($destination)) || !File::copy($source . '/' . $relative, $destination)) {
                             throw new \RuntimeException('Не удалось перенести макет: ' . $relative . '. Снимок: ' . $this->layoutMigrationBackup);
                         }
+                    }
+                }
+
+                /**
+                 * Три бейджа магазина при первой установке: «Хит», «Новинка», «Акция». Бейдж «Акция» запоминается в настройках
+                 * (`sale_badge_id`) для автоматической установки товарам со скидкой. При обновлении не вызывается, чтобы не вернуть удалённое.
+                 */
+                private function ensureDefaultBadges(): void
+                {
+                    $extension = 'com_dharmashop.badge';
+                    $exists = (int) $this->db->setQuery(
+                        $this->db->getQuery(true)->select('COUNT(*)')->from($this->db->quoteName('#__categories'))
+                            ->where($this->db->quoteName('extension') . ' = ' . $this->db->quote($extension))
+                    )->loadResult();
+
+                    if ($exists > 0) {
+                        return;
+                    }
+
+                    $saleId = 0;
+
+                    foreach ([['Хит', 'khit', 'danger'], ['Новинка', 'novinka', 'success'], ['Акция', 'akciya', 'warning']] as [$title, $alias, $color]) {
+                        $table = new \Joomla\CMS\Table\Category($this->db);
+                        $table->setLocation(1, 'last-child');
+                        $data = [
+                            'title' => $title,
+                            'alias' => $alias,
+                            'extension' => $extension,
+                            'published' => 1,
+                            'access' => 1,
+                            'language' => '*',
+                            'description' => '',
+                            'params' => json_encode(['badge_color' => $color, 'badge_show_list' => 1]),
+                            'metadata' => '{}',
+                            'created_user_id' => 0,
+                        ];
+
+                        if (!$table->bind($data) || !$table->check() || !$table->store()) {
+                            $this->app->enqueueMessage('Не удалось создать бейдж «' . $title . '»: ' . $table->getError(), 'warning');
+
+                            continue;
+                        }
+
+                        $table->rebuildPath($table->id);
+
+                        if ($alias === 'akciya') {
+                            $saleId = (int) $table->id;
+                        }
+                    }
+
+                    if ($saleId > 0) {
+                        $query = $this->db->getQuery(true)->select($this->db->quoteName('params'))->from($this->db->quoteName('#__extensions'))
+                            ->where($this->db->quoteName('type') . ' = ' . $this->db->quote('component'))
+                            ->where($this->db->quoteName('element') . ' = ' . $this->db->quote('com_dharmashop'));
+                        $params = json_decode((string) $this->db->setQuery($query)->loadResult(), true) ?: [];
+                        $params['sale_badge_id'] = $saleId;
+                        $params += ['auto_sale_badge' => 1];
+                        $update = $this->db->getQuery(true)->update($this->db->quoteName('#__extensions'))
+                            ->set($this->db->quoteName('params') . ' = ' . $this->db->quote(json_encode($params)))
+                            ->where($this->db->quoteName('type') . ' = ' . $this->db->quote('component'))
+                            ->where($this->db->quoteName('element') . ' = ' . $this->db->quote('com_dharmashop'));
+                        $this->db->setQuery($update)->execute();
                     }
                 }
 
