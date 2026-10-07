@@ -138,15 +138,15 @@ $catLink = function (object $entry) use ($user): string {
                                             </div>
                                         </div>
                                     </th>
-                                    <td class="small d-none d-md-table-cell">
+                                    <td class="d-none d-md-table-cell">
                                         <?php if ($item->main) : ?>
-                                            <div class="fw-bold"><?php echo $catLink($item->main); ?></div>
+                                            <div class="fw-bold fs-4 mb-1"><?php echo $catLink($item->main); ?></div>
                                         <?php endif; ?>
                                         <?php if ($item->extra) : ?>
-                                            <div><?php echo implode(', ', array_map($catLink, $item->extra)); ?></div>
+                                            <div class="small"><?php echo implode(', ', array_map($catLink, $item->extra)); ?></div>
                                         <?php endif; ?>
                                         <?php if ($item->brand) : ?>
-                                            <div class="text-body-secondary"><?php echo Text::_('COM_DHARMASHOP_LIST_BRAND'); ?>: <?php echo $catLink($item->brand); ?></div>
+                                            <div class="small text-body-secondary"><?php echo Text::_('COM_DHARMASHOP_LIST_BRAND'); ?>: <?php echo $catLink($item->brand); ?></div>
                                         <?php endif; ?>
                                         <?php if ($item->badges) : ?>
                                             <div class="mt-1">
