@@ -131,7 +131,7 @@ $ordering = $this->ordering;
                                     }
                                 }
 
-                                $image = trim((string) strstr($params->get('image', '') . '#', '#', true));
+                                $image = trim((string) strstr(($params->get('image', '') ?: $params->get('icon', '')) . '#', '#', true));
                                 ?>
                                 <tr class="row<?php echo $i % 2; ?>" data-draggable-group="<?php echo (int) $item->parent_id; ?>" data-item-id="<?php echo (int) $item->id; ?>" data-parents="<?php echo $parentsStr; ?>" data-level="<?php echo (int) $item->level; ?>">
                                     <td class="text-center"><?php echo HTMLHelper::_('grid.id', $i, $item->id, false, 'cid', 'cb', $item->title); ?></td>

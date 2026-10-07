@@ -37,6 +37,16 @@ $extraFieldsets = array_filter(['dharmashop_brand', 'dharmashop_badge'], fn (str
         <?php echo HTMLHelper::_('uitab.addTab', 'categoryTab', 'details', Text::_('COM_DHARMASHOP_TAB_MAIN')); ?>
         <div class="row">
             <div class="col-lg-9">
+                <div class="row">
+                    <div class="col-md-6">
+                        <?php echo $this->form->renderField('image', 'params'); ?>
+                        <?php echo $this->form->renderField('image_alt', 'params'); ?>
+                    </div>
+                    <div class="col-md-6">
+                        <?php echo $this->form->renderField('icon', 'params'); ?>
+                    </div>
+                </div>
+                <?php echo $this->form->renderField('introtext', 'params'); ?>
                 <?php echo $this->form->renderField('description'); ?>
             </div>
             <div class="col-lg-3">
@@ -50,10 +60,6 @@ $extraFieldsets = array_filter(['dharmashop_brand', 'dharmashop_badge'], fn (str
                 ?>
             </div>
         </div>
-        <?php echo HTMLHelper::_('uitab.endTab'); ?>
-
-        <?php echo HTMLHelper::_('uitab.addTab', 'categoryTab', 'image', Text::_('COM_DHARMASHOP_CAT_FIELDSET_IMAGE')); ?>
-        <?php echo $this->form->renderFieldset('dharmashop_image'); ?>
         <?php echo HTMLHelper::_('uitab.endTab'); ?>
 
         <?php if (!$isBadge) : ?>
@@ -76,7 +82,7 @@ $extraFieldsets = array_filter(['dharmashop_brand', 'dharmashop_badge'], fn (str
         <?php echo HTMLHelper::_('uitab.endTab'); ?>
 
         <?php if ($canAdmin) : ?>
-            <?php echo HTMLHelper::_('uitab.addTab', 'categoryTab', 'permissions', Text::_('JGLOBAL_FIELDSET_RULES')); ?>
+            <?php echo HTMLHelper::_('uitab.addTab', 'categoryTab', 'permissions', Text::_('JGLOBAL_ACTION_PERMISSIONS_LABEL')); ?>
             <?php echo $this->form->getInput('rules'); ?>
             <?php echo HTMLHelper::_('uitab.endTab'); ?>
         <?php endif; ?>

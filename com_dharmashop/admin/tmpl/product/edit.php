@@ -96,7 +96,7 @@ $canAdmin = $this->getCurrentUser()->authorise('core.admin', 'com_dharmashop');
         <?php echo HTMLHelper::_('uitab.endTab'); ?>
 
         <?php if ($canAdmin) : ?>
-            <?php echo HTMLHelper::_('uitab.addTab', 'productTab', 'permissions', Text::_('JGLOBAL_FIELDSET_RULES')); ?>
+            <?php echo HTMLHelper::_('uitab.addTab', 'productTab', 'permissions', Text::_('JGLOBAL_ACTION_PERMISSIONS_LABEL')); ?>
             <?php echo $this->form->getInput('rules'); ?>
             <?php echo HTMLHelper::_('uitab.endTab'); ?>
         <?php endif; ?>
