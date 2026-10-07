@@ -15,8 +15,10 @@ namespace Dharma\Component\DharmaShop\Administrator\Service;
 use Dharma\Component\DharmaShop\Administrator\Catalog\Indexer;
 use Dharma\Component\DharmaShop\Administrator\Catalog\ProductRebuilder;
 use Dharma\Component\DharmaShop\Administrator\Catalog\VariantRepository;
+use Dharma\Component\DharmaShop\Administrator\Maintenance\MaintenanceService;
 use Dharma\Component\DharmaShop\Administrator\Pricing\MoneyFormatter;
 use Dharma\Component\DharmaShop\Administrator\Pricing\PriceResolver;
+use Dharma\Component\DharmaShop\Administrator\Pricing\SaleScheduler;
 use Dharma\Component\DharmaShop\Administrator\Stock\StockService;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\Database\DatabaseInterface;
@@ -41,6 +43,10 @@ final class ShopServices
     private ?StockService $stock = null;
 
     private ?MoneyFormatter $money = null;
+
+    private ?SaleScheduler $sales = null;
+
+    private ?MaintenanceService $maintenance = null;
 
     public function __construct(private readonly DatabaseInterface $db)
     {
@@ -74,5 +80,15 @@ final class ShopServices
     public function money(): MoneyFormatter
     {
         return $this->money ??= new MoneyFormatter(ComponentHelper::getParams('com_dharmashop'));
+    }
+
+    public function sales(): SaleScheduler
+    {
+        return $this->sales ??= new SaleScheduler($this->db, $this->rebuilder(), $this->indexer());
+    }
+
+    public function maintenance(): MaintenanceService
+    {
+        return $this->maintenance ??= new MaintenanceService($this->db, $this->indexer(), $this->rebuilder(), $this->sales());
     }
 }

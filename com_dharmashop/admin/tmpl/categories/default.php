@@ -83,18 +83,25 @@ $ordering = $this->ordering;
                         </thead>
                         <tbody<?php echo $saveOrder ? ' class="js-draggable" data-url="' . $saveOrderingUrl . '" data-direction="' . strtolower($listDirn) . '" data-nested="true"' : ''; ?>>
                             <?php if (!$isBadge && !$filtered) : ?>
-                                <tr class="table-secondary">
-                                    <td></td>
-                                    <td class="d-none d-md-table-cell"></td>
-                                    <td class="text-center"><span class="icon-publish" aria-hidden="true"></span></td>
-                                    <td class="d-none d-md-table-cell"></td>
+                                <?php // Служебная корневая запись: обычная строка таблицы, но без выбора и правки (как в RadicalMart). ?>
+                                <tr class="row-root" title="<?php echo Text::_('COM_DHARMASHOP_ROOT_NOTE', true); ?>">
+                                    <td class="text-center"><input type="checkbox" class="form-check-input" disabled aria-label="<?php echo Text::_('COM_DHARMASHOP_ROOT_CATEGORY', true); ?>"></td>
+                                    <td class="text-center d-none d-md-table-cell"><span class="sortable-handler inactive"><span class="icon-ellipsis-v"></span></span></td>
+                                    <td class="text-center"><?php echo HTMLHelper::_('jgrid.published', 1, 0, 'categories.', false); ?></td>
+                                    <td class="text-center d-none d-md-table-cell"><span class="icon-image text-body-secondary" aria-hidden="true"></span></td>
                                     <th scope="row">
                                         <?php echo Text::_($isBrand ? 'COM_DHARMASHOP_ROOT_BRAND' : 'COM_DHARMASHOP_ROOT_CATEGORY'); ?>
-                                        <div class="small text-body-secondary"><?php echo Text::_('COM_DHARMASHOP_ROOT_NOTE'); ?></div>
+                                        <div class="small"><?php echo Text::sprintf('JGLOBAL_LIST_ALIAS', 'root'); ?></div>
                                     </th>
-                                    <td class="d-none d-md-table-cell"></td>
-                                    <td class="d-none d-md-table-cell"></td>
-                                    <td class="d-none d-md-table-cell"></td>
+                                    <td class="small d-none d-md-table-cell">
+                                        <div>
+                                            <?php echo Text::_($isBrand ? 'COM_DHARMASHOP_CAT_DISPLAY_BRAND_LIST' : 'COM_DHARMASHOP_CAT_DISPLAY_CATEGORY_LIST'); ?>:
+                                            <span class="text-danger"><?php echo Text::_('COM_DHARMASHOP_HIDE'); ?></span>
+                                        </div>
+                                        <div class="text-body-secondary"><?php echo Text::_('COM_DHARMASHOP_ROOT_SERVICE'); ?></div>
+                                    </td>
+                                    <td class="text-center d-none d-md-table-cell text-body-secondary">—</td>
+                                    <td class="small d-none d-md-table-cell text-body-secondary">—</td>
                                     <td class="d-none d-md-table-cell">1</td>
                                 </tr>
                             <?php endif; ?>

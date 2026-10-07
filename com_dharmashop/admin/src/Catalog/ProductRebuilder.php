@@ -29,20 +29,28 @@ final class ProductRebuilder
 
     public function rebuild(int $productId): void
     {
+        $this->rebuildRange($productId, $productId);
+    }
+
+    /** Пересчитывает производные поля товаров с id от $from до $to включительно одним запросом. */
+    public function rebuildRange(int $from, int $to): void
+    {
         $priceList = $this->priceListId;
         $sql = 'UPDATE #__dharmashop_products p LEFT JOIN ('
             . 'SELECT v.product_id AS pid, MIN(vp.price_final) AS mn, MAX(vp.price_final) AS mx, MAX(v.in_stock) AS ins, COUNT(*) AS c '
             . 'FROM #__dharmashop_variants v '
             . 'LEFT JOIN #__dharmashop_variant_prices vp ON vp.variant_id = v.id AND vp.price_list_id = :pl '
-            . 'WHERE v.product_id = :p AND v.state = 1 GROUP BY v.product_id'
+            . 'WHERE v.product_id BETWEEN :f AND :t AND v.state = 1 GROUP BY v.product_id'
             . ') a ON a.pid = p.id '
             . 'SET p.price_min = a.mn, p.price_max = a.mx, p.in_stock = COALESCE(a.ins, 0), p.variants_count = COALESCE(a.c, 0) '
-            . 'WHERE p.id = :p2';
+            . 'WHERE p.id BETWEEN :f2 AND :t2';
 
         Sql::exec($this->db, $sql, [
             ':pl' => [$priceList, ParameterType::INTEGER],
-            ':p' => [$productId, ParameterType::INTEGER],
-            ':p2' => [$productId, ParameterType::INTEGER],
+            ':f' => [$from, ParameterType::INTEGER],
+            ':t' => [$to, ParameterType::INTEGER],
+            ':f2' => [$from, ParameterType::INTEGER],
+            ':t2' => [$to, ParameterType::INTEGER],
         ]);
     }
 }

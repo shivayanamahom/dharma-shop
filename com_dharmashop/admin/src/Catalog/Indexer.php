@@ -228,7 +228,8 @@ final class Indexer
         Sql::exec($this->db, 'DELETE FROM #__dharmashop_product_categories WHERE product_id = :p', [':p' => [$productId, ParameterType::INTEGER]]);
     }
 
-    private function refreshRange(int $from, int $to): void
+    /** Обновляет в индексе копии состояния, цены, наличия и т. п. для товаров с id от $from до $to. */
+    public function refreshRange(int $from, int $to): void
     {
         Sql::exec(
             $this->db,
