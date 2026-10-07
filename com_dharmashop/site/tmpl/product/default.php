@@ -17,6 +17,7 @@ $page = ($this->seo ?? null) instanceof PageMetadata ? $this->seo : null;
 $hooks = new LayoutHooks('product', 'product', $this->item, $params, [], $page);
 $heading = $page?->h1 ?? (string) ($this->item->title ?? '');
 ?>
+<div id="dharma_shop" class="dharmaProduct">
 <section class="py-4">
     <?php echo $hooks->render('beforeTitle'); ?>
     <?php if (($this->showHeading ?? true) && $heading !== '') : ?>
@@ -27,3 +28,4 @@ $heading = $page?->h1 ?? (string) ($this->item->title ?? '');
     <?php // Здесь будет контент страницы товара. ?>
     <?php echo $hooks->render('afterContent'); ?>
 </section>
+</div>

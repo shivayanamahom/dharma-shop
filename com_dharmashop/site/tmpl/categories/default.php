@@ -6,6 +6,7 @@ use Dharma\Component\DharmaShop\Site\Support\LayoutHooks;
 
 $hooks = new LayoutHooks('category', 'categories', $this->parent, $this->params, $this->items, $this->seo);
 ?>
+<div id="dharma_shop" class="dharmaCategories">
 <section class="py-4">
     <?php echo $hooks->render('beforeTitle'); ?>
     <?php if ($this->showHeading && $this->seo->h1 !== '') : ?>
@@ -33,3 +34,4 @@ $hooks = new LayoutHooks('category', 'categories', $this->parent, $this->params,
     <?php endif; ?>
     <?php echo $hooks->render('afterContent'); ?>
 </section>
+</div>
