@@ -13,7 +13,7 @@ $icons = [
     'table' => 'M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2zm15 2h-4v3h4zm0 4h-4v3h4zm0 4h-4v3h3a1 1 0 0 0 1-1zm-5 3v-3H6v3zm-5 0v-3H1v2a1 1 0 0 0 1 1zm-4-4h4V8H1zm0-4h4V4H1zm5-3v3h4V4zm4 4H6v3h4z',
 ];
 ?>
-<section class="py-4">
+<section class="py-4 dharmashop-page dharmashop-page-category">
     <?php echo $hooks->render('beforeTitle'); ?>
     <?php if ($this->showHeading && $this->seo->h1 !== '') : ?>
         <h1 class="mb-4"><?php echo $this->escape($this->seo->h1); ?></h1>
@@ -25,7 +25,7 @@ $icons = [
     <?php endif; ?>
     <?php // Полное описание — только на первой странице списка: на остальных оно дублирует её содержимое (SEO); интро остаётся. ?>
     <?php if (trim((string) $this->item->params->get('introtext', '')) !== '') : ?>
-        <div class="mb-4"><?php echo $this->text((string) $this->item->params->get('introtext')); ?></div>
+        <div class="mb-4 dharmashop-intro"><?php echo $this->text((string) $this->item->params->get('introtext')); ?></div>
     <?php endif; ?>
     <?php if ($this->subcategories) : ?>
         <section class="mb-5" aria-labelledby="dharmashop-subcategories-title">
@@ -72,6 +72,6 @@ $icons = [
     <?php endif; ?>
     <?php // Список товаров и ссылки порций: этот же блок отдаёт AJAX-фрагмент (RawView), JavaScript заменяет им содержимое без смены адреса. ?>
     <div data-dharmashop-listing aria-live="polite"><?php echo $this->loadTemplate('items'); ?></div>
-    <?php if ($this->start === 0 && trim((string) $this->item->description) !== '') : ?><div class="mt-4"><?php echo $this->text((string) $this->item->description); ?></div><?php endif; ?>
+    <?php if ($this->start === 0 && trim((string) $this->item->description) !== '') : ?><div class="mt-4 dharmashop-fulltext"><?php echo $this->text((string) $this->item->description); ?></div><?php endif; ?>
     <?php echo $hooks->render('afterContent'); ?>
 </section>
