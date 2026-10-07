@@ -10,6 +10,11 @@ cp "$S/com_dharmashop/dharmashop.xml" "$T/administrator/components/com_dharmasho
 for l in ru-RU en-GB; do
   cp "$S/com_dharmashop/admin/language/$l/"*.ini "$T/administrator/language/$l/"
 done
-[ -d "$S/com_dharmashop/site" ] && $R "$S/com_dharmashop/site/" "$T/components/com_dharmashop/" || true
+[ -d "$S/com_dharmashop/site" ] && $R "$S/com_dharmashop/site/" "$T/components/com_dharmashop/" --exclude /layouts/ || true
+# Общая библиотека: дополнительные пользовательские файлы не удаляем.
+if [ -d "$S/files_dharmashop_layouts/layouts" ]; then
+  mkdir -p "$T/layouts/components/dharmashop"
+  rsync -a --exclude .DS_Store "$S/files_dharmashop_layouts/layouts/" "$T/layouts/components/dharmashop/"
+fi
 [ -d "$S/com_dharmashop/media" ] && $R "$S/com_dharmashop/media/" "$T/media/com_dharmashop/" || true
 echo synced

@@ -22,6 +22,8 @@ use Joomla\CMS\Language\Text;
 use Joomla\Database\DatabaseInterface;
 use Joomla\DI\Container;
 use Joomla\DI\ServiceProviderInterface;
+use Joomla\Filesystem\File;
+use Joomla\Filesystem\Folder;
 
 return new class () implements ServiceProviderInterface {
     public function register(Container $container): void
@@ -34,7 +36,15 @@ return new class () implements ServiceProviderInterface {
                 private const MIN_PHP = '8.3.0';
 
                 /** Плагины пакета, которые включаем сразу после установки: [группа, элемент]. */
-                private const PLUGINS = [];
+                private const PLUGINS = [['dharmashop', 'social'], ['dharmashop', 'structureddata']];
+
+                /** Обновление не должно включать плагин, отключённый владельцем сайта. */
+                private array $existingPlugins = [];
+
+                /** Снимок переноса C32 сохраняется, если установка завершилась ошибкой. */
+                private ?string $layoutMigrationBackup = null;
+
+                private int $layoutMigrationConflicts = 0;
 
                 public function __construct(
                     private readonly CMSApplicationInterface $app,
@@ -63,6 +73,15 @@ return new class () implements ServiceProviderInterface {
                         return true;
                     }
 
+                    foreach (self::PLUGINS as [$group, $element]) {
+                        $query = $this->db->createQuery()->select('extension_id')->from($this->db->quoteName('#__extensions'))
+                            ->where('type = ' . $this->db->quote('plugin'))->where('folder = ' . $this->db->quote($group))
+                            ->where('element = ' . $this->db->quote($element));
+                        if ($this->db->setQuery($query)->loadResult()) {
+                            $this->existingPlugins[$group . '/' . $element] = true;
+                        }
+                    }
+
                     if (version_compare(PHP_VERSION, self::MIN_PHP, '<')) {
                         $this->app->enqueueMessage(sprintf('Dharma Shop требует PHP %s или новее.', self::MIN_PHP), 'error');
 
@@ -71,6 +90,15 @@ return new class () implements ServiceProviderInterface {
 
                     if (version_compare(JVERSION, self::MIN_JOOMLA, '<')) {
                         $this->app->enqueueMessage(sprintf('Dharma Shop требует Joomla %s или новее.', self::MIN_JOOMLA), 'error');
+
+                        return false;
+                    }
+
+                    try {
+                        $this->prepareLayoutMigration();
+                    } catch (\Throwable $error) {
+                        $this->app->enqueueMessage('Dharma Shop: ' . $error->getMessage()
+                            . ($this->layoutMigrationBackup !== null ? '. Снимок переноса: ' . $this->layoutMigrationBackup : ''), 'error');
 
                         return false;
                     }
@@ -84,7 +112,19 @@ return new class () implements ServiceProviderInterface {
                         return true;
                     }
 
+                    try {
+                        $this->finishLayoutMigration();
+                    } catch (\Throwable $error) {
+                        $this->app->enqueueMessage('Dharma Shop: ' . $error->getMessage()
+                            . '. Снимок переноса: ' . $this->layoutMigrationBackup, 'error');
+
+                        return false;
+                    }
+
                     foreach (self::PLUGINS as [$group, $element]) {
+                        if (isset($this->existingPlugins[$group . '/' . $element])) {
+                            continue;
+                        }
                         $query = $this->db->getQuery(true)
                             ->update($this->db->quoteName('#__extensions'))
                             ->set($this->db->quoteName('enabled') . ' = 1')
@@ -102,6 +142,106 @@ return new class () implements ServiceProviderInterface {
                     }
 
                     return true;
+                }
+
+                /** Сохраняет старые файлы до удаления папки layouts установщиком компонента. */
+                private function prepareLayoutMigration(): void
+                {
+                    $legacy = JPATH_ROOT . '/components/com_dharmashop/layouts';
+                    if (!is_dir($legacy)) {
+                        return;
+                    }
+
+                    $legacyFiles = $this->layoutFiles($legacy);
+                    $shared = JPATH_ROOT . '/layouts/components/dharmashop';
+                    $sharedFiles = is_dir($shared) ? $this->layoutFiles($shared) : [];
+                    $temporary = rtrim((string) $this->app->get('tmp_path', JPATH_ROOT . '/tmp'), '/\\');
+                    $this->layoutMigrationBackup = $temporary . '/dharmashop-layouts-' . bin2hex(random_bytes(12));
+
+                    $this->copyLayoutFiles($legacy, $this->layoutMigrationBackup . '/legacy', $legacyFiles);
+                    $this->copyLayoutFiles($shared, $this->layoutMigrationBackup . '/shared', $sharedFiles);
+
+                    foreach ($legacyFiles as $relative) {
+                        if (is_file($shared . '/' . $relative)
+                            && hash_file('sha256', $legacy . '/' . $relative) !== hash_file('sha256', $shared . '/' . $relative)) {
+                            $this->layoutMigrationConflicts++;
+                        }
+                    }
+
+                    // Старые переопределения сохраняются; существующие новые имеют приоритет.
+                    foreach (glob(JPATH_ROOT . '/templates/*', GLOB_ONLYDIR) ?: [] as $template) {
+                        $old = $template . '/html/layouts/com_dharmashop';
+                        if (is_dir($old)) {
+                            $this->copyLayoutFiles(
+                                $old,
+                                $template . '/html/layouts/components/dharmashop',
+                                $this->layoutFiles($old),
+                                false,
+                            );
+                        }
+                    }
+                }
+
+                /** Переносит сохранённые файлы после установки файлового расширения и компонента. */
+                private function finishLayoutMigration(): void
+                {
+                    if ($this->layoutMigrationBackup === null) {
+                        return;
+                    }
+
+                    $target = JPATH_ROOT . '/layouts/components/dharmashop';
+                    foreach (['legacy', 'shared'] as $source) {
+                        $directory = $this->layoutMigrationBackup . '/' . $source;
+                        if (is_dir($directory)) {
+                            $this->copyLayoutFiles($directory, $target, $this->layoutFiles($directory));
+                        }
+                    }
+
+                    if ($this->layoutMigrationConflicts > 0) {
+                        $this->app->enqueueMessage(
+                            'Dharma Shop: сохранены существующие общие макеты. Конфликтующие старые файлы доступны в ' . $this->layoutMigrationBackup,
+                            'warning',
+                        );
+                    } elseif (is_dir($this->layoutMigrationBackup) && !Folder::delete($this->layoutMigrationBackup)) {
+                        $this->app->enqueueMessage('Dharma Shop: снимок переноса остался в ' . $this->layoutMigrationBackup, 'warning');
+                    }
+                }
+
+                /** Ссылки и специальные файлы не должны теряться при переносе. */
+                private function layoutFiles(string $directory): array
+                {
+                    if (is_link($directory)) {
+                        throw new \RuntimeException('Перенос макетов остановлен: каталог является ссылкой: ' . $directory);
+                    }
+
+                    $files = [];
+                    $iterator = new \RecursiveIteratorIterator(
+                        new \RecursiveDirectoryIterator($directory, \FilesystemIterator::SKIP_DOTS),
+                        \RecursiveIteratorIterator::SELF_FIRST,
+                    );
+                    foreach ($iterator as $entry) {
+                        if ($entry->isLink() || (!$entry->isDir() && !$entry->isFile())) {
+                            throw new \RuntimeException('Перенос макетов остановлен: неподдерживаемый файл: ' . $entry->getPathname());
+                        }
+                        if ($entry->isFile()) {
+                            $files[] = substr($entry->getPathname(), strlen(rtrim($directory, '/\\')) + 1);
+                        }
+                    }
+
+                    return $files;
+                }
+
+                private function copyLayoutFiles(string $source, string $target, array $files, bool $overwrite = true): void
+                {
+                    foreach ($files as $relative) {
+                        $destination = $target . '/' . $relative;
+                        if (!$overwrite && file_exists($destination)) {
+                            continue;
+                        }
+                        if (!Folder::create(dirname($destination)) || !File::copy($source . '/' . $relative, $destination)) {
+                            throw new \RuntimeException('Не удалось перенести макет: ' . $relative . '. Снимок: ' . $this->layoutMigrationBackup);
+                        }
+                    }
                 }
 
                 /** Создаёт категорию «Без категории», если у компонента нет ни одной категории (товар нельзя сохранить без категории). */

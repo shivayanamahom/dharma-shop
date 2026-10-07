@@ -25,6 +25,15 @@
 		<folder>css</folder>
 		<folder>js</folder>
 	</media>
+	<files folder="site">
+		<folder>src</folder>
+		<folder>tmpl</folder>
+	</files>
+
+	<languages folder="site">
+		<language tag="ru-RU">language/ru-RU/com_dharmashop.ini</language>
+		<language tag="en-GB">language/en-GB/com_dharmashop.ini</language>
+	</languages>
 
 	<administration>
 		<menu>COM_DHARMASHOP</menu>

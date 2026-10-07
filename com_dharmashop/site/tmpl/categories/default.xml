@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+	<layout title="COM_DHARMASHOP_CATEGORIES_VIEW_DEFAULT_TITLE" option="COM_DHARMASHOP_CATEGORIES_VIEW_DEFAULT_OPTION">
+		<message><![CDATA[COM_DHARMASHOP_CATEGORIES_VIEW_DEFAULT_DESC]]></message>
+	</layout>
+	<fields name="request">
+		<fieldset name="request">
+			<field name="id" type="category" label="COM_DHARMASHOP_MENU_PARENT_CATEGORY" extension="com_dharmashop" show_root="true" layout="joomla.form.field.list-fancy-select" />
+		</fieldset>
+	</fields>
+
+    <fields name="params">
+        <fieldset name="categories_display" label="COM_DHARMASHOP_CONFIG_DISPLAY" addfieldprefix="Dharma\Component\DharmaShop\Administrator\Field">
+            <field name="categories_layout" type="layout" layoutgroup="categories" label="COM_DHARMASHOP_LAYOUT_CATEGORIES" validate="options"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option></field>
+            <field name="category_card_layout" type="layout" layoutgroup="category_card" label="COM_DHARMASHOP_LAYOUT_CATEGORY_CARD" validate="options"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option></field>
+            <field name="categories_breakpoints" label="COM_DHARMASHOP_DISPLAY_BREAKPOINTS" type="list" default="" validate="options" description="COM_DHARMASHOP_DISPLAY_BREAKPOINTS_DESC"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option><option value="0">JNO</option><option value="1">JYES</option></field>
+            <field name="categories_columns" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS" validate="options" showon="categories_breakpoints:0[OR]categories_breakpoints:" description="COM_DHARMASHOP_DISPLAY_COLUMNS_DESC"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+            <field name="categories_columns_xs" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS_XS" validate="options" showon="categories_breakpoints:1"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+            <field name="categories_columns_sm" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS_SM" validate="options" showon="categories_breakpoints:1"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+            <field name="categories_columns_md" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS_MD" validate="options" showon="categories_breakpoints:1"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+            <field name="categories_columns_lg" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS_LG" validate="options" showon="categories_breakpoints:1"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+            <field name="categories_columns_xl" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS_XL" validate="options" showon="categories_breakpoints:1"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+            <field name="categories_columns_xxl" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS_XXL" validate="options" showon="categories_breakpoints:1"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+            <field name="category_card_intro" label="COM_DHARMASHOP_DISPLAY_SHOW_INTRO" type="list" default="" validate="options"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option><option value="0">JNO</option><option value="1">JYES</option></field>
+            <field name="category_card_count" label="COM_DHARMASHOP_DISPLAY_SHOW_COUNT" type="list" default="" validate="options" description="COM_DHARMASHOP_DISPLAY_SHOW_COUNT_DESC"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option><option value="0">JNO</option><option value="1">JYES</option></field>
+            <field name="category_card_prices" label="COM_DHARMASHOP_DISPLAY_SHOW_PRICES" type="list" default="" validate="options" description="COM_DHARMASHOP_DISPLAY_SHOW_PRICES_DESC"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option><option value="0">JNO</option><option value="1">JYES</option></field>
+        </fieldset>
+    </fields>
+</metadata>

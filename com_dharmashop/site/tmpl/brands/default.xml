@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+	<layout title="COM_DHARMASHOP_BRANDS_VIEW_DEFAULT_TITLE" option="COM_DHARMASHOP_BRANDS_VIEW_DEFAULT_OPTION">
+		<message><![CDATA[COM_DHARMASHOP_BRANDS_VIEW_DEFAULT_DESC]]></message>
+	</layout>
+	<fields name="request">
+		<fieldset name="request">
+			<field name="id" type="category" label="COM_DHARMASHOP_MENU_PARENT_BRAND" extension="com_dharmashop.brand" show_root="true" layout="joomla.form.field.list-fancy-select" />
+		</fieldset>
+	</fields>
+</metadata>

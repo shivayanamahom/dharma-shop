@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="file" method="upgrade">
+    <name>FILES_DHARMASHOP_LAYOUTS</name>
+    <author>Dharma</author>
+    <creationDate>2026-10</creationDate>
+    <copyright>(C) 2026 Dharma</copyright>
+    <license>GNU General Public License version 2 or later</license>
+    <version>0.1.0</version>
+    <description>FILES_DHARMASHOP_LAYOUTS_DESCRIPTION</description>
+    <fileset>
+        <files folder="layouts/category-card" target="layouts/components/dharmashop/category-card">
+            <filename>default.php</filename>
+        </files>
+        <files folder="layouts/product-card" target="layouts/components/dharmashop/product-card">
+            <filename>default.php</filename>
+            <filename>grid.php</filename>
+            <filename>list.php</filename>
+            <filename>table.php</filename>
+        </files>
+        <files folder="layouts/brand-card" target="layouts/components/dharmashop/brand-card">
+            <filename>default.php</filename>
+        </files>
+        <files folder="layouts/badge-card" target="layouts/components/dharmashop/badge-card">
+            <filename>default.php</filename>
+        </files>
+    </fileset>
+    <languages>
+        <language tag="ru-RU">language/ru-RU/files_dharmashop_layouts.sys.ini</language>
+        <language tag="en-GB">language/en-GB/files_dharmashop_layouts.sys.ini</language>
+    </languages>
+</extension>

@@ -6,6 +6,12 @@
 	"license": "GPL-2.0-or-later",
 	"assets": [
 		{
+			"name": "com_dharmashop.listing",
+			"type": "script",
+			"uri": "com_dharmashop/listing.js",
+			"attributes": { "defer": true }
+		},
+		{
 			"name": "com_dharmashop.uploader",
 			"type": "script",
 			"uri": "com_dharmashop/uploader.js",
