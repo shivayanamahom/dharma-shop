@@ -15,6 +15,7 @@ namespace Dharma\Component\DharmaShop\Administrator\Controller;
 use Dharma\Component\DharmaShop\Administrator\Image\ImageUploader;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Language\Text;
+use Joomla\CMS\Log\Log;
 use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\Response\JsonResponse;
 use Joomla\CMS\Session\Session;
@@ -31,9 +32,15 @@ class MediaController extends BaseController
     public function upload(): void
     {
         $this->app->setHeader('Content-Type', 'application/json; charset=utf-8');
+        $this->app->setHeader('X-Content-Type-Options', 'nosniff');
+        $this->app->setHeader('Cache-Control', 'no-store');
         $this->app->sendHeaders();
 
         try {
+            if (strtoupper($this->input->getMethod()) !== 'POST') {
+                throw new \RuntimeException('JERROR_ALERTNOAUTHOR');
+            }
+
             if (!Session::checkToken('post')) {
                 throw new \RuntimeException('JINVALID_TOKEN_NOTICE');
             }
@@ -51,6 +58,10 @@ class MediaController extends BaseController
             echo new JsonResponse($uploader->store(is_array($file) ? $file : [], $folder));
         } catch (\RuntimeException $e) {
             echo new JsonResponse(null, Text::_($e->getMessage()), true);
+        } catch (\Throwable $e) {
+            // Подробности — в журнал, пользователю общее сообщение (без путей и текста исключения).
+            Log::add($e->getMessage(), Log::ERROR, 'com_dharmashop');
+            echo new JsonResponse(null, Text::_('COM_DHARMASHOP_UPLOAD_ERROR_STORE'), true);
         }
 
         $this->app->close();

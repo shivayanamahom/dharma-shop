@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Dharma\Component\DharmaShop\Administrator\Image;
 
 use Joomla\CMS\Filter\OutputFilter;
+use enshrined\svgSanitize\Sanitizer;
 use Joomla\Registry\Registry;
 
 \defined('_JEXEC') or die;
@@ -45,6 +46,12 @@ final class ImageUploader
     }
 
     public const DEFAULT_BASE = 'dharmashop';
+
+    /** Допустимые типы подпапок (атрибут folder поля): произвольные имена папок создавать нельзя. */
+    public const FOLDERS = ['categories', 'icons', 'seo', 'products', 'gallery', 'common'];
+
+    /** Предел площади изображения (пикселей): защита от «бомб» распаковки при последующей обработке. */
+    private const MAX_PIXELS = 80000000;
 
     /** Корневая папка загрузок внутри images/ по настройке «Папка для изображений» (латиница, цифры, - _ и вложенность через /; пусто — dharmashop). */
     public static function baseFolder(?Registry $shopParams): string
@@ -154,13 +161,10 @@ final class ImageUploader
         }
 
         $width = $height = 0;
+        $svgClean = null;
 
         if ($extension === 'svg') {
-            $content = (string) file_get_contents($file['tmp_name']);
-
-            if (!str_contains(strtolower($content), '<svg') || preg_match('/<script|\son[a-z]+\s*=|javascript:|<foreignObject|<!ENTITY/i', $content)) {
-                throw new \RuntimeException('COM_DHARMASHOP_UPLOAD_ERROR_SVG');
-            }
+            $svgClean = self::cleanSvg((string) file_get_contents($file['tmp_name']));
         } else {
             $info = @getimagesize($file['tmp_name']);
 
@@ -169,9 +173,18 @@ final class ImageUploader
             }
 
             [$width, $height] = [(int) $info[0], (int) $info[1]];
+
+            if ($width < 1 || $height < 1 || $width * $height > self::MAX_PIXELS) {
+                throw new \RuntimeException('COM_DHARMASHOP_UPLOAD_ERROR_DIMENSIONS');
+            }
+
+            // Файл, в который дописан PHP-код (картинка-«полиглот»), не принимаем.
+            if (self::containsPhp($file['tmp_name'])) {
+                throw new \RuntimeException('COM_DHARMASHOP_UPLOAD_ERROR_TYPE');
+            }
         }
 
-        $folder = trim(preg_replace('/[^a-z0-9_-]/', '', strtolower($folder)) ?? '', '-_') ?: 'common';
+        $folder = in_array($folder, self::FOLDERS, true) ? $folder : 'common';
         $sub = $this->subFolder($folder);
         $relative = self::baseFolder($this->shopParams) . ($sub !== '' ? '/' . $sub : '');
         $directory = rtrim($this->root, '/') . '/' . $relative;
@@ -180,20 +193,133 @@ final class ImageUploader
             throw new \RuntimeException('COM_DHARMASHOP_UPLOAD_ERROR_STORE');
         }
 
+        $this->guardBaseFolder();
+
         $base = $this->baseName(pathinfo($original, PATHINFO_FILENAME));
         $name = $base . '.' . $extension;
 
-        for ($i = 2; is_file($directory . '/' . $name); $i++) {
+        // Имя «занимаем» атомарно (режим x): два одновременных запроса не затрут друг друга.
+        for ($i = 2; ($handle = @fopen($directory . '/' . $name, 'x')) === false; $i++) {
+            if ($i > 200) {
+                throw new \RuntimeException('COM_DHARMASHOP_UPLOAD_ERROR_STORE');
+            }
+
             $name = $base . '-' . $i . '.' . $extension;
         }
 
-        if (!move_uploaded_file($file['tmp_name'], $directory . '/' . $name)) {
+        fclose($handle);
+        $target = $directory . '/' . $name;
+
+        $saved = $svgClean !== null ? file_put_contents($target, $svgClean) !== false : move_uploaded_file($file['tmp_name'], $target);
+
+        if (!$saved) {
+            @unlink($target);
+
             throw new \RuntimeException('COM_DHARMASHOP_UPLOAD_ERROR_STORE');
         }
 
-        @chmod($directory . '/' . $name, 0644);
+        @chmod($target, 0644);
 
         return ['path' => $relative . '/' . $name, 'width' => $width, 'height' => $height];
+    }
+
+    /** SVG чистим штатным санитайзером Joomla (скрипты, обработчики событий, внешние ссылки); пустой результат — отказ. */
+    private static function cleanSvg(string $content): string
+    {
+        if (!str_contains(strtolower($content), '<svg') || stripos($content, '<!ENTITY') !== false) {
+            throw new \RuntimeException('COM_DHARMASHOP_UPLOAD_ERROR_SVG');
+        }
+
+        $sanitizer = new Sanitizer();
+        $sanitizer->removeRemoteReferences(true);
+        $clean = $sanitizer->sanitize($content);
+
+        // Внешние стили и ресурсы в SVG не нужны: @import и url() не на внутренний якорь отклоняем.
+        if (is_string($clean) && preg_match('/@import|url\s*\(\s*[\'"]?\s*(?!#)/i', $clean)) {
+            throw new \RuntimeException('COM_DHARMASHOP_UPLOAD_ERROR_SVG');
+        }
+
+        if (!is_string($clean) || !str_contains(strtolower($clean), '<svg')) {
+            throw new \RuntimeException('COM_DHARMASHOP_UPLOAD_ERROR_SVG');
+        }
+
+        return $clean;
+    }
+
+    /** Есть ли в файле открывающий тег PHP (в сжатых данных картинок такая последовательность не встречается). */
+    private static function containsPhp(string $path): bool
+    {
+        $handle = fopen($path, 'rb');
+
+        if ($handle === false) {
+            return true;
+        }
+
+        $tail = '';
+
+        while (!feof($handle)) {
+            $chunk = $tail . (string) fread($handle, 1048576);
+
+            if (stripos($chunk, '<?php') !== false) {
+                fclose($handle);
+
+                return true;
+            }
+
+            $tail = substr($chunk, -4);
+        }
+
+        fclose($handle);
+
+        return false;
+    }
+
+    /**
+     * В корневой папке загрузок кладём .htaccess: скрипты не исполняются, браузеру запрещено угадывать тип,
+     * SVG отдаётся с песочницей (на случай прямого открытия). Для nginx действует настройка сервера.
+     */
+    private function guardBaseFolder(): void
+    {
+        $file = rtrim($this->root, '/') . '/' . self::baseFolder($this->shopParams) . '/.htaccess';
+
+        if (is_file($file)) {
+            return;
+        }
+
+        $rules = "# Dharma Shop: загруженные файлы — только данные, не код.\n"
+            . "<FilesMatch \"\\.(php|phtml|phar|php[0-9]?|pl|py|cgi|sh)$\">\n    Require all denied\n</FilesMatch>\n"
+            . "Options -ExecCGI -Indexes\n"
+            . "<IfModule mod_headers.c>\n    Header set X-Content-Type-Options \"nosniff\"\n"
+            . "    <FilesMatch \"\\.svg$\">\n        Header set Content-Security-Policy \"default-src 'none'; style-src 'unsafe-inline'; sandbox\"\n    </FilesMatch>\n</IfModule>\n";
+
+        @file_put_contents($file, $rules);
+    }
+
+    /**
+     * Фильтр значения поля изображения (для атрибута filter полей формы): только относительный путь внутри images/
+     * к файлу с допустимым расширением, без «..», схем (javascript:, http:) и служебных символов; остальное — пустая строка.
+     * Хвост «#joomlaImage://…» штатного поля Media сохраняется, если он выглядит как штатный.
+     */
+    public static function filterPath(mixed $value): string
+    {
+        $value = trim((string) $value);
+        $path = (string) strstr($value . '#', '#', true);
+        $hash = substr($value, strlen($path));
+
+        if ($path === '') {
+            return '';
+        }
+
+        $extensions = implode('|', array_keys(self::MIME));
+
+        if (
+            !preg_match('#^images/[^\x00-\x1f<>"\'`\\:?*|]+\.(?:' . $extensions . ')$#iu', $path)
+            || str_contains($path, '..') || str_contains($path, '//')
+        ) {
+            return '';
+        }
+
+        return $path . (preg_match('#^\#joomlaImage://local-[a-z0-9_-]+/[^\s<>"\'`]*$#i', $hash) ? $hash : '');
     }
 
     private static function iniBytes(string $value): int

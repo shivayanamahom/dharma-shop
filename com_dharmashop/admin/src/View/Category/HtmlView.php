@@ -12,7 +12,9 @@ declare(strict_types=1);
 
 namespace Dharma\Component\DharmaShop\Administrator\View\Category;
 
+use Dharma\Component\DharmaShop\Administrator\Seo\PlaceholderCatalog;
 use Dharma\Component\DharmaShop\Administrator\Support\CategoryTypes;
+use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Form\Form;
 use Joomla\CMS\Language\Text;
@@ -39,6 +41,12 @@ class HtmlView extends BaseHtmlView
     /** @var array{total: int, published: int, in_stock: int} число товаров записи */
     protected array $counts = ['total' => 0, 'published' => 0, 'in_stock' => 0];
 
+    /** Цена товаров записи «от — до» для боковой панели ('—', если цен нет). */
+    protected string $priceRange = '—';
+
+    /** Справочник шорткодов: группы с кодами, названиями и текущими значениями этой записи. @var array<int, array{title: string, items: array<int, array{code: string, name: string, value: string}>}> */
+    protected array $placeholders = [];
+
     /** Список полей для штатных блоков joomla.edit.* (задаётся в шаблоне на время вывода бокового блока). */
     public ?array $fields = null;
 
@@ -60,10 +68,45 @@ class HtmlView extends BaseHtmlView
         $this->extension = $model->getExtension();
         $this->form = $model->getForm();
         $this->counts = $model->getProductCounts((int) $item->id);
+        $this->buildPlaceholders($model);
 
         $this->addToolbar();
 
         parent::display($tpl);
+    }
+
+    /** Цена «от — до» и справочник шорткодов с текущими значениями записи (у новой записи — прочерки). */
+    private function buildPlaceholders(object $model): void
+    {
+        $shop = Factory::getApplication()->bootComponent('com_dharmashop')->getServices();
+        $money = $shop->money();
+        $id = (int) $this->item->id;
+        $range = $model->getPriceRange($id);
+        $none = '—';
+        $min = $range['min'] !== null ? $money->format($range['min']) : $none;
+        $max = $range['max'] !== null ? $money->format($range['max']) : $none;
+        $this->priceRange = $range['min'] === null ? $none : ($range['min'] === $range['max'] ? $min : $min . ' — ' . $max);
+
+        $area = $this->extension === CategoryTypes::BRAND ? 'brand' : ($this->extension === CategoryTypes::BADGE ? 'badge' : 'category');
+        $values = [
+            $area . '.title' => $id > 0 ? (string) $this->item->title : $none,
+            'category.parent' => ($parent = $model->getTitleOf((int) ($this->item->parent_id ?? 0))) !== '' ? $parent : $none,
+            $area . '.price_min' => $min,
+            $area . '.price_max' => $max,
+            $area . '.count' => $id > 0 ? (string) $this->counts['published'] : $none,
+            'global.sitename' => (string) Factory::getApplication()->get('sitename'),
+            'global.currency' => (string) ComponentHelper::getParams('com_dharmashop')->get('currency_symbol', '₽'),
+        ];
+
+        foreach (PlaceholderCatalog::groups($area) as $group) {
+            $items = [];
+
+            foreach ($group['items'] as $code) {
+                $items[] = ['code' => '{' . $code . '}', 'name' => Text::_(PlaceholderCatalog::labelKey($code)), 'value' => $values[$code] ?? $none];
+            }
+
+            $this->placeholders[] = ['title' => Text::_($group['label']), 'items' => $items];
+        }
     }
 
     protected function addToolbar(): void

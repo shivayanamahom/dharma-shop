@@ -27,24 +27,14 @@ $canAdmin = $this->getCurrentUser()->authorise('core.admin', 'com_dharmashop');
 <form action="<?php echo Route::_('index.php?option=com_dharmashop&layout=edit&id=' . (int) $this->item->id); ?>" method="post" name="adminForm" id="product-form" aria-label="<?php echo Text::_('COM_DHARMASHOP_PRODUCT_FORM_LABEL', true); ?>" class="form-validate">
     <?php echo LayoutHelper::render('joomla.edit.title_alias', $this); ?>
 
-    <div class="main-card">
+    <div class="row">
+        <div class="col-lg-9">
+        <div class="main-card">
         <?php echo HTMLHelper::_('uitab.startTabSet', 'productTab', ['active' => 'details', 'recall' => true, 'breakpoint' => 768]); ?>
 
         <?php echo HTMLHelper::_('uitab.addTab', 'productTab', 'details', Text::_('COM_DHARMASHOP_TAB_MAIN')); ?>
-        <div class="row">
-            <div class="col-lg-9">
-                <?php echo $this->form->renderField('introtext'); ?>
-                <?php echo $this->form->renderField('fulltext'); ?>
-            </div>
-            <div class="col-lg-3">
-                <?php
-                // Боковой блок: категории, бренд и бейджи вместе с состоянием, в нужном порядке (штатный блок сам выводит catid).
-                $this->fields = ['catid', 'extra_catids', 'brand_id', 'badge_ids', ['published', 'state', 'enabled'], 'featured'];
-                echo LayoutHelper::render('joomla.edit.global', $this);
-                $this->fields = null;
-                ?>
-            </div>
-        </div>
+            <?php echo $this->form->renderField('introtext'); ?>
+            <?php echo $this->form->renderField('fulltext'); ?>
         <?php echo HTMLHelper::_('uitab.endTab'); ?>
 
         <?php echo HTMLHelper::_('uitab.addTab', 'productTab', 'price', Text::_('COM_DHARMASHOP_TAB_PRICE_STOCK')); ?>
@@ -107,6 +97,16 @@ $canAdmin = $this->getCurrentUser()->authorise('core.admin', 'com_dharmashop');
         <?php endif; ?>
 
         <?php echo HTMLHelper::_('uitab.endTabSet'); ?>
+        </div>
+        </div>
+        <div class="col-lg-3">
+                <?php
+                // Боковой блок: категории, бренд и бейджи вместе с состоянием, в нужном порядке (штатный блок сам выводит catid).
+                $this->fields = ['catid', 'extra_catids', 'brand_id', 'badge_ids', ['published', 'state', 'enabled'], 'featured'];
+                echo LayoutHelper::render('joomla.edit.global', $this);
+                $this->fields = null;
+                ?>
+        </div>
     </div>
 
     <input type="hidden" name="task" value="">

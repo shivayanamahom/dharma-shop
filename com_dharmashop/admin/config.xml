@@ -49,7 +49,7 @@
 			<option value="0">JNO</option>
 			<option value="1">JYES</option>
 		</field>
-		<field name="seo_default_image" type="imageupload" folder="seo" label="COM_DHARMASHOP_CONFIG_SEO_DEFAULT_IMAGE" description="COM_DHARMASHOP_CONFIG_SEO_DEFAULT_IMAGE_DESC" />
+		<field name="seo_default_image" type="imageupload" filter="Dharma\Component\DharmaShop\Administrator\Image\ImageUploader::filterPath" folder="seo" label="COM_DHARMASHOP_CONFIG_SEO_DEFAULT_IMAGE" description="COM_DHARMASHOP_CONFIG_SEO_DEFAULT_IMAGE_DESC" />
 		<field name="seo_category_spacer" type="spacer" label="COM_DHARMASHOP_CONFIG_SEO_CATEGORY" class="fw-bold" />
 		<field name="seo_category_title" type="text" label="COM_DHARMASHOP_SEO_TITLE_LABEL" default="{category.title} | {global.sitename}" filter="string" />
 		<field name="seo_category_description" type="textarea" label="COM_DHARMASHOP_SEO_DESCRIPTION_LABEL" default="{category.title} — {global.sitename}" rows="2" filter="string" />

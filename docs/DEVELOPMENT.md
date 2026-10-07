@@ -19,6 +19,7 @@
 | `make-category.php <extension> "<название>" [родитель]` | создаёт категорию нужного типа (`com_dharmashop`, `.brand`, `.badge`) |
 | `save-category.sh <extension> "Название" [родитель] [цвет]` | создаёт категорию/бренд/бейдж через форму админки по HTTP |
 | `save-product.sh "Название" <catid> <артикул> <цена> [brand] [badge]` | создаёт товар через форму админки по HTTP (нужен вход `web-login.sh`) |
+| `security-upload.sh` | проверка защиты загрузчика изображений (токен, права, подмена типа, обход путей, SVG); см. `docs/SECURITY.md` |
 | `bench/bench.php` | генератор тестового каталога и замеры (`generate`/`run`/`all`/`drop`), см. `docs/BENCHMARKS_NOTES.md` |
 | `bench/report.php` | собирает `docs/BENCHMARKS.md` из `dev/bench/results/*.json` |
 | `bench/rm/clone.php` | размножает товары RadicalMart на тестовом сайте (`<N>` / `clean`); `DHARMA_SITE` = сайт с RM |

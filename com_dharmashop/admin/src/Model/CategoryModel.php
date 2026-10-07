@@ -298,6 +298,41 @@ class CategoryModel extends AdminModel
         return ['total' => (int) ($row->total ?? 0), 'published' => (int) ($row->published ?? 0), 'in_stock' => (int) ($row->in_stock ?? 0)];
     }
 
+    /**
+     * Самая низкая и высокая цена опубликованных товаров записи (с вложенными): по копии цены в индексе,
+     * без чтения таблицы товаров (ARCHITECTURE.md §5.17).
+     *
+     * @return  array{min: ?string, max: ?string}
+     */
+    public function getPriceRange(int $id): array
+    {
+        if ($id <= 0) {
+            return ['min' => null, 'max' => null];
+        }
+
+        $db = $this->getDatabase();
+        $row = $db->setQuery(
+            $db->createQuery()
+                ->select('MIN(price_sort) AS pmin, MAX(price_sort) AS pmax')
+                ->from($db->quoteName('#__dharmashop_product_categories') . ' FORCE INDEX (idx_l_price)')
+                ->where('catid = :id')->where('state = 1')->bind(':id', $id, ParameterType::INTEGER)
+        )->loadObject();
+
+        return ['min' => isset($row->pmin) ? (string) $row->pmin : null, 'max' => isset($row->pmax) ? (string) $row->pmax : null];
+    }
+
+    /** Название записи по номеру (для шорткода родителя); пусто у корня. */
+    public function getTitleOf(int $id): string
+    {
+        if ($id <= 1) {
+            return '';
+        }
+
+        $db = $this->getDatabase();
+
+        return (string) $db->setQuery($db->createQuery()->select('title')->from('#__categories')->where('id = :id')->bind(':id', $id, ParameterType::INTEGER))->loadResult();
+    }
+
     /** Перестраивает дерево и пути (кнопка «Перестроить»). */
     public function rebuild(): bool
     {

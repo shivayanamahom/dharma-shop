@@ -13,6 +13,7 @@ declare(strict_types=1);
 \defined('_JEXEC') or die;
 
 use Dharma\Component\DharmaShop\Administrator\Support\CategoryTypes;
+use Joomla\CMS\Factory;
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Layout\LayoutHelper;
@@ -27,64 +28,56 @@ $canAdmin = $this->getCurrentUser()->authorise('core.admin', 'com_dharmashop');
 $isBadge = $this->extension === CategoryTypes::BADGE;
 $typeLabel = CategoryTypes::all()[$this->extension];
 $extraFieldsets = array_filter(['dharmashop_brand', 'dharmashop_badge'], fn (string $name) => (bool) $this->form->getFieldset($name));
+
+// Справочник шорткодов: штатное окно Joomla (по центру экрана, не зависит от прокрутки); кнопки — в боковой панели и на вкладке SEO.
+Factory::getApplication()->getDocument()->getWebAssetManager()->useScript('joomla.dialog-autocreate');
+$placeholdersButton = '<button type="button" class="btn btn-sm btn-secondary" data-joomla-dialog="'
+    . $this->escape(json_encode(['popupType' => 'inline', 'src' => '#dharma-placeholders', 'textHeader' => Text::_('COM_DHARMASHOP_PH_TITLE'), 'width' => '900px', 'height' => 'fit-content']))
+    . '"><span class="icon-code" aria-hidden="true"></span> ' . Text::_('COM_DHARMASHOP_PH_SHOW') . '</button>';
 ?>
 <form action="<?php echo Route::_('index.php?option=com_dharmashop&layout=edit&id=' . (int) $this->item->id . '&extension=' . $this->extension); ?>" method="post" name="adminForm" id="category-form" aria-label="<?php echo Text::_('COM_DHARMASHOP_CATEGORY_FORM_LABEL', true); ?>" class="form-validate">
     <?php echo LayoutHelper::render('joomla.edit.title_alias', $this); ?>
 
-    <div class="main-card">
+    <template id="dharma-placeholders">
+        <div class="p-3">
+            <div>
+                <p class="text-muted mb-3"><?php echo Text::_('COM_DHARMASHOP_PH_NOTE'); ?></p>
+                <?php foreach ($this->placeholders as $group) : ?>
+                    <table class="table table-bordered align-middle mb-4">
+                        <caption class="caption-top text-center fw-bold fs-5 pb-2"><?php echo $this->escape($group['title']); ?></caption>
+                        <thead>
+                            <tr>
+                                <th scope="col" class="w-50"><?php echo Text::_('COM_DHARMASHOP_PH_NAME'); ?></th>
+                                <th scope="col" class="w-25"><?php echo Text::_('COM_DHARMASHOP_PH_CODE'); ?></th>
+                                <th scope="col" class="w-25"><?php echo Text::_('COM_DHARMASHOP_PH_NOW'); ?></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php foreach ($group['items'] as $item) : ?>
+                                <tr>
+                                    <td><?php echo $this->escape($item['name']); ?></td>
+                                    <td><code class="user-select-all"><?php echo $this->escape($item['code']); ?></code></td>
+                                    <td class="text-muted"><?php echo $this->escape($item['value']); ?></td>
+                                </tr>
+                            <?php endforeach; ?>
+                        </tbody>
+                    </table>
+                <?php endforeach; ?>
+            </div>
+        </div>
+    </template>
+
+    <div class="row">
+        <div class="col-lg-9">
+        <div class="main-card">
         <?php echo HTMLHelper::_('uitab.startTabSet', 'categoryTab', ['active' => 'details', 'recall' => true, 'breakpoint' => 768]); ?>
 
         <?php echo HTMLHelper::_('uitab.addTab', 'categoryTab', 'details', Text::_('COM_DHARMASHOP_TAB_MAIN')); ?>
-        <div class="row">
-            <div class="col-lg-9">
-                <?php echo $this->form->renderField('image', 'params'); ?>
-                <?php echo $this->form->renderField('image_alt', 'params'); ?>
-                <?php echo $this->form->renderField('icon', 'params'); ?>
-                <?php echo $this->form->renderField('introtext', 'params'); ?>
-                <?php echo $this->form->renderField('description'); ?>
-            </div>
-            <div class="col-lg-3">
-                <?php
-                // Боковая колонка: родитель и состояние, затем карточка со сведениями, затем доступ и заметка.
-                $this->fields = $isBadge ? [['published', 'state', 'enabled']] : ['parent_id', ['published', 'state', 'enabled']];
-                echo LayoutHelper::render('joomla.edit.global', $this);
-                $this->fields = ['access', 'note'];
-                ob_start();
-                echo LayoutHelper::render('joomla.edit.global', $this);
-                $afterInfo = ob_get_clean();
-                $this->fields = null;
-                ?>
-                <fieldset class="options-form form-vertical mb-3">
-                        <div class="control-group">
-                            <div class="control-label"><label for="cat-type"><?php echo Text::_('COM_DHARMASHOP_CAT_TYPE'); ?></label></div>
-                            <div class="controls"><input type="text" id="cat-type" class="form-control" value="<?php echo $this->escape(Text::_($typeLabel)); ?>" readonly></div>
-                        </div>
-                        <div class="control-group">
-                            <div class="control-label"><label for="cat-id"><?php echo 'ID'; ?></label></div>
-                            <div class="controls"><input type="text" id="cat-id" class="form-control" value="<?php echo $this->item->id ? (int) $this->item->id : '—'; ?>" readonly></div>
-                        </div>
-                </fieldset>
-                <fieldset class="options-form form-vertical mb-3">
-                    <legend><?php echo Text::_('COM_DHARMASHOP_CAT_COUNTS'); ?></legend>
-                        <div class="control-group">
-                            <div class="control-label"><label for="cat-cnt-total"><?php echo Text::_('COM_DHARMASHOP_CAT_COUNT_TOTAL_LABEL'); ?></label></div>
-                            <div class="controls"><input type="text" id="cat-cnt-total" class="form-control" value="<?php echo (int) $this->counts['total']; ?>" readonly></div>
-                        </div>
-                        <div class="control-group">
-                            <div class="control-label"><label for="cat-cnt-published"><?php echo Text::_('COM_DHARMASHOP_CAT_COUNT_PUBLISHED_LABEL'); ?></label></div>
-                            <div class="controls"><input type="text" id="cat-cnt-published" class="form-control" value="<?php echo (int) $this->counts['published']; ?>" readonly></div>
-                        </div>
-                        <div class="control-group">
-                            <div class="control-label"><label for="cat-cnt-stock"><?php echo Text::_('COM_DHARMASHOP_CAT_COUNT_IN_STOCK_LABEL'); ?></label></div>
-                            <div class="controls"><input type="text" id="cat-cnt-stock" class="form-control" value="<?php echo (int) $this->counts['in_stock']; ?>" readonly></div>
-                        </div>
-                    <?php if ($this->item->id && $this->counts['total'] > 0) : ?>
-                        <a class="btn btn-sm btn-primary" href="<?php echo Route::_('index.php?option=com_dharmashop&view=products&filter[category_id]=' . (int) $this->item->id . '&filter[published]=*'); ?>"><?php echo Text::_('COM_DHARMASHOP_CAT_SHOW_PRODUCTS'); ?></a>
-                    <?php endif; ?>
-                </fieldset>
-                <?php echo $afterInfo; ?>
-            </div>
-        </div>
+            <?php echo $this->form->renderField('image', 'params'); ?>
+            <?php echo $this->form->renderField('image_alt', 'params'); ?>
+            <?php echo $this->form->renderField('icon', 'params'); ?>
+            <?php echo $this->form->renderField('introtext', 'params'); ?>
+            <?php echo $this->form->renderField('description'); ?>
         <?php echo HTMLHelper::_('uitab.endTab'); ?>
 
         <?php if (!$isBadge) : ?>
@@ -126,6 +119,54 @@ $extraFieldsets = array_filter(['dharmashop_brand', 'dharmashop_badge'], fn (str
         <?php endif; ?>
 
         <?php echo HTMLHelper::_('uitab.endTabSet'); ?>
+        </div>
+        </div>
+        <div class="col-lg-3">
+                <?php
+                // Боковая колонка: родитель и состояние, затем карточка со сведениями, затем доступ и заметка.
+                $this->fields = $isBadge ? [['published', 'state', 'enabled']] : ['parent_id', ['published', 'state', 'enabled']];
+                echo LayoutHelper::render('joomla.edit.global', $this);
+                $this->fields = ['access', 'note'];
+                ob_start();
+                echo LayoutHelper::render('joomla.edit.global', $this);
+                $afterInfo = ob_get_clean();
+                $this->fields = null;
+                ?>
+                <fieldset class="options-form form-vertical mb-3">
+                        <div class="control-group">
+                            <div class="control-label"><label for="cat-type"><?php echo Text::_('COM_DHARMASHOP_CAT_TYPE'); ?></label></div>
+                            <div class="controls"><input type="text" id="cat-type" class="form-control" value="<?php echo $this->escape(Text::_($typeLabel)); ?>" readonly></div>
+                        </div>
+                        <div class="control-group">
+                            <div class="control-label"><label for="cat-id"><?php echo 'ID'; ?></label></div>
+                            <div class="controls"><input type="text" id="cat-id" class="form-control" value="<?php echo $this->item->id ? (int) $this->item->id : '—'; ?>" readonly></div>
+                        </div>
+                </fieldset>
+                <fieldset class="options-form form-vertical mb-3">
+                    <legend><?php echo Text::_('COM_DHARMASHOP_CAT_COUNTS'); ?></legend>
+                        <div class="control-group">
+                            <div class="control-label"><label for="cat-cnt-total"><?php echo Text::_('COM_DHARMASHOP_CAT_COUNT_TOTAL_LABEL'); ?></label></div>
+                            <div class="controls"><input type="text" id="cat-cnt-total" class="form-control" value="<?php echo (int) $this->counts['total']; ?>" readonly></div>
+                        </div>
+                        <div class="control-group">
+                            <div class="control-label"><label for="cat-cnt-published"><?php echo Text::_('COM_DHARMASHOP_CAT_COUNT_PUBLISHED_LABEL'); ?></label></div>
+                            <div class="controls"><input type="text" id="cat-cnt-published" class="form-control" value="<?php echo (int) $this->counts['published']; ?>" readonly></div>
+                        </div>
+                        <div class="control-group">
+                            <div class="control-label"><label for="cat-cnt-stock"><?php echo Text::_('COM_DHARMASHOP_CAT_COUNT_IN_STOCK_LABEL'); ?></label></div>
+                            <div class="controls"><input type="text" id="cat-cnt-stock" class="form-control" value="<?php echo (int) $this->counts['in_stock']; ?>" readonly></div>
+                        </div>
+                        <div class="control-group">
+                            <div class="control-label"><label for="cat-price-range"><?php echo Text::_('COM_DHARMASHOP_CAT_PRICE_RANGE_LABEL'); ?></label></div>
+                            <div class="controls"><input type="text" id="cat-price-range" class="form-control" value="<?php echo $this->escape($this->priceRange); ?>" readonly></div>
+                        </div>
+                    <?php if ($this->item->id && $this->counts['total'] > 0) : ?>
+                        <a class="btn btn-sm btn-primary" href="<?php echo Route::_('index.php?option=com_dharmashop&view=products&filter[category_id]=' . (int) $this->item->id . '&filter[published]=*'); ?>"><?php echo Text::_('COM_DHARMASHOP_CAT_SHOW_PRODUCTS'); ?></a>
+                    <?php endif; ?>
+                    <?php echo $placeholdersButton; ?>
+                </fieldset>
+                <?php echo $afterInfo; ?>
+        </div>
     </div>
 
     <?php echo $this->form->getInput('extension'); ?>

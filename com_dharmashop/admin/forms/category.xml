@@ -21,9 +21,9 @@
 
 	<fields name="params" addfieldprefix="Dharma\Component\DharmaShop\Administrator\Field">
 		<fieldset name="dharmashop_media" label="COM_DHARMASHOP_CAT_FIELDSET_MEDIA">
-			<field name="image" type="imageupload" folder="categories" label="COM_DHARMASHOP_CAT_IMAGE_LABEL" description="COM_DHARMASHOP_CAT_IMAGE_DESC" />
+			<field name="image" type="imageupload" filter="Dharma\Component\DharmaShop\Administrator\Image\ImageUploader::filterPath" folder="categories" label="COM_DHARMASHOP_CAT_IMAGE_LABEL" description="COM_DHARMASHOP_CAT_IMAGE_DESC" />
 			<field name="image_alt" type="text" label="COM_DHARMASHOP_CAT_IMAGE_ALT_LABEL" />
-			<field name="icon" type="imageupload" folder="icons" label="COM_DHARMASHOP_CAT_ICON_LABEL" description="COM_DHARMASHOP_CAT_ICON_DESC" />
+			<field name="icon" type="imageupload" filter="Dharma\Component\DharmaShop\Administrator\Image\ImageUploader::filterPath" folder="icons" label="COM_DHARMASHOP_CAT_ICON_LABEL" description="COM_DHARMASHOP_CAT_ICON_DESC" />
 		</fieldset>
 		<fieldset name="dharmashop_text">
 			<field name="introtext" type="editor" label="COM_DHARMASHOP_CAT_INTROTEXT_LABEL" description="COM_DHARMASHOP_CAT_INTROTEXT_DESC" buttons="true" filter="\Joomla\CMS\Component\ComponentHelper::filterText" />
@@ -69,7 +69,7 @@
 		</fields>
 		<field name="metadesc" type="textarea" label="COM_DHARMASHOP_SEO_DESCRIPTION_LABEL" description="COM_DHARMASHOP_SEO_DESCRIPTION_DESC" rows="3" maxlength="300" charcounter="true" />
 		<fields name="params">
-			<field name="meta_image" type="imageupload" folder="seo" label="COM_DHARMASHOP_SEO_IMAGE_LABEL" description="COM_DHARMASHOP_SEO_IMAGE_DESC" />
+			<field name="meta_image" type="imageupload" filter="Dharma\Component\DharmaShop\Administrator\Image\ImageUploader::filterPath" folder="seo" label="COM_DHARMASHOP_SEO_IMAGE_LABEL" description="COM_DHARMASHOP_SEO_IMAGE_DESC" />
 		</fields>
 		<fields name="metadata">
 			<field name="robots" type="list" label="COM_DHARMASHOP_SEO_ROBOTS_LABEL" validate="options">
