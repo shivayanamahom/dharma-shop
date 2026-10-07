@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS `#__dharmashop_products` (
   `alias` varchar(190) NOT NULL,
   `introtext` text NULL,
   `fulltext` mediumtext NULL,
+  `search_text` text NULL,
   `state` tinyint NOT NULL DEFAULT 0,
   `variants_mode` tinyint unsigned NOT NULL DEFAULT 1,
   `unit` varchar(20) NULL,

@@ -19,6 +19,7 @@
 		</field>
 		<field name="introtext" type="editor" label="COM_DHARMASHOP_FIELD_INTROTEXT_LABEL" description="COM_DHARMASHOP_FIELD_INTROTEXT_DESC" buttons="true" filter="\Joomla\CMS\Component\ComponentHelper::filterText" />
 		<field name="fulltext" type="editor" label="COM_DHARMASHOP_FIELD_FULLTEXT_LABEL" buttons="true" filter="\Joomla\CMS\Component\ComponentHelper::filterText" />
+		<field name="search_text" type="textarea" label="COM_DHARMASHOP_FIELD_SEARCH_TEXT_LABEL" description="COM_DHARMASHOP_FIELD_SEARCH_TEXT_DESC" rows="6" filter="string" />
 	</fieldset>
 
 	<fieldset name="media" addfieldprefix="Dharma\Component\DharmaShop\Administrator\Field">

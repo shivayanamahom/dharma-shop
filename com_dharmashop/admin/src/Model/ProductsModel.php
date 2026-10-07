@@ -163,10 +163,10 @@ class ProductsModel extends ListModel
             return;
         }
 
-        // Обычный поиск: вхождение в название, алиас или артикул любого варианта.
+        // Обычный поиск: вхождение в название, алиас, артикул любого варианта или «текст для поиска».
         $like = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $search) . '%';
-        $query->where('(' . $db->quoteName('a.title') . ' LIKE :s1 OR ' . $db->quoteName('a.alias') . ' LIKE :s2 OR a.id IN (SELECT sv.product_id FROM ' . $variants . ' AS sv WHERE sv.sku LIKE :s3))')
-            ->bind(':s1', $like)->bind(':s2', $like)->bind(':s3', $like);
+        $query->where('(' . $db->quoteName('a.title') . ' LIKE :s1 OR ' . $db->quoteName('a.alias') . ' LIKE :s2 OR a.id IN (SELECT sv.product_id FROM ' . $variants . ' AS sv WHERE sv.sku LIKE :s3) OR ' . $db->quoteName('a.search_text') . ' LIKE :s4)')
+            ->bind(':s1', $like)->bind(':s2', $like)->bind(':s3', $like)->bind(':s4', $like);
     }
 
     /**

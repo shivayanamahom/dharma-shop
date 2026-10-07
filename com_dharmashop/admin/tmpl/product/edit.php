@@ -42,6 +42,7 @@ $canAdmin = $this->getCurrentUser()->authorise('core.admin', 'com_dharmashop');
             </fieldset>
             <?php echo $this->form->renderField('introtext'); ?>
             <?php echo $this->form->renderField('fulltext'); ?>
+            <?php echo $this->form->renderField('search_text'); ?>
         <?php echo HTMLHelper::_('uitab.endTab'); ?>
 
         <?php echo HTMLHelper::_('uitab.addTab', 'productTab', 'price', Text::_('COM_DHARMASHOP_TAB_PRICE_STOCK')); ?>

@@ -125,6 +125,7 @@ CREATE TABLE `#__dharmashop_products` (
   `alias`         varchar(190) NOT NULL,
   `introtext`     text NULL,
   `fulltext`      mediumtext NULL,
+  `search_text`   text NULL,                            -- «текст для поиска»: синонимы, разговорные названия (вводится вручную, на странице не показывается)
   `state`         tinyint NOT NULL DEFAULT 0,           -- 1 опубликован, 0 снят, 2 архив, -2 корзина
   `variants_mode` tinyint unsigned NOT NULL DEFAULT 1,  -- 1 один вариант, 2 несколько
   `unit`          varchar(20) NULL,                     -- правила оформления заказа: NULL = наследовать (C14, §5.16)
@@ -269,7 +270,7 @@ CREATE TABLE `#__dharmashop_field_values` (
 
 ### 5.6 Поиск
 
-`#__dharmashop_search`: `product_id` PK, `title_norm` varchar(255), `body` mediumtext (описание без HTML + значения строковых полей); `FULLTEXT (title_norm, body)`. Поиск по артикулу — префиксный по `variants.sku` (`uq_sku`). Интеграция с Умным поиском Joomla — плагином `finder`.
+`#__dharmashop_search`: `product_id` PK, `title_norm` varchar(255), `body` mediumtext (описание без HTML + `products.search_text` + значения строковых полей); `FULLTEXT (title_norm, body)`. Поиск по артикулу — префиксный по `variants.sku` (`uq_sku`). Интеграция с Умным поиском Joomla — плагином `finder`.
 
 ### 5.7 Корзины
 

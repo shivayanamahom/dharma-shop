@@ -105,6 +105,10 @@ class ProductTable extends Table
 
         $this->variants_mode = 1;
 
+        // Текст для поиска: без тегов, лишние пробелы и пустые строки убираются; пусто — NULL.
+        $this->search_text = trim(preg_replace('/[ \t]+/u', ' ', strip_tags((string) $this->search_text)) ?? '');
+        $this->search_text = $this->search_text === '' ? null : $this->search_text;
+
         // Правила оформления заказа необязательны: пустое значение = «наследовать» (NULL).
         foreach (['unit', 'qty_min', 'qty_step', 'qty_max', 'stock_tracked', 'backorder'] as $field) {
             if ($this->$field === '' || $this->$field === null) {
