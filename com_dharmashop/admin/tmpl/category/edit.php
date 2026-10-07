@@ -37,15 +37,9 @@ $extraFieldsets = array_filter(['dharmashop_brand', 'dharmashop_badge'], fn (str
         <?php echo HTMLHelper::_('uitab.addTab', 'categoryTab', 'details', Text::_('COM_DHARMASHOP_TAB_MAIN')); ?>
         <div class="row">
             <div class="col-lg-9">
-                <div class="row">
-                    <div class="col-md-6">
-                        <?php echo $this->form->renderField('image', 'params'); ?>
-                        <?php echo $this->form->renderField('image_alt', 'params'); ?>
-                    </div>
-                    <div class="col-md-6">
-                        <?php echo $this->form->renderField('icon', 'params'); ?>
-                    </div>
-                </div>
+                <?php echo $this->form->renderField('image', 'params'); ?>
+                <?php echo $this->form->renderField('image_alt', 'params'); ?>
+                <?php echo $this->form->renderField('icon', 'params'); ?>
                 <?php echo $this->form->renderField('introtext', 'params'); ?>
                 <?php echo $this->form->renderField('description'); ?>
             </div>
