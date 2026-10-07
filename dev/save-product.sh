@@ -10,5 +10,5 @@ curl -sk -b "$J" -c "$J" -o /dev/null -w "save http=%{http_code} -> %{redirect_u
  --data-urlencode "jform[introtext]=Краткое описание" --data-urlencode "jform[fulltext]=<p>Полное описание</p>" \
  --data-urlencode "jform[sku]=$3" --data-urlencode "jform[price]=$4" --data-urlencode "jform[unit]=шт" \
  --data-urlencode "jform[qty_min]=1" --data-urlencode "jform[qty_step]=1" --data-urlencode "jform[stock_tracked]=1" --data-urlencode "jform[stock_qty]=7" --data-urlencode "jform[backorder]=0" \
- ${5:+--data-urlencode "jform[brand_id]=$5"} ${6:+--data-urlencode "jform[badge_ids][]=$6"} --data-urlencode "jform[extra_catids][]=8" \
+ ${5:+--data-urlencode "jform[brand_id]=$5"} ${6:+--data-urlencode "jform[badge_ids][]=$6"} --data-urlencode "jform[extra_catids][]=${EXTRA:-12}" \
  --data-urlencode "jform[id]=0" --data-urlencode "task=product.apply" --data-urlencode "$TOKEN=1"

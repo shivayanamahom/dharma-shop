@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace Dharma\Component\DharmaShop\Administrator\Catalog;
 
+use Dharma\Component\DharmaShop\Administrator\Support\CategoryTypes;
 use Dharma\Component\DharmaShop\Administrator\Support\Sql;
 use Joomla\Database\DatabaseInterface;
 use Joomla\Database\ParameterType;
@@ -24,11 +25,11 @@ use Joomla\Database\ParameterType;
  */
 final class Indexer
 {
-    public const EXTENSION = 'com_dharmashop';
+    public const EXTENSION = CategoryTypes::CATEGORY;
 
-    public const EXTENSION_BRAND = 'com_dharmashop.brand';
+    public const EXTENSION_BRAND = CategoryTypes::BRAND;
 
-    public const EXTENSION_BADGE = 'com_dharmashop.badge';
+    public const EXTENSION_BADGE = CategoryTypes::BADGE;
 
     public function __construct(private readonly DatabaseInterface $db)
     {
@@ -134,6 +135,55 @@ final class Indexer
         );
 
         $this->refreshRange($from, $to);
+    }
+
+    /**
+     * Пересобирает родительские строки и копии столбцов для товаров из списка (после перемещения категории, бренда, бейджа).
+     *
+     * @param   int[]  $productIds
+     */
+    public function rebuildProducts(array $productIds, int $chunk = 500): void
+    {
+        foreach (array_chunk(array_values(array_unique(array_map('intval', $productIds))), $chunk) as $ids) {
+            $in = implode(',', $ids);
+
+            Sql::exec($this->db, 'DELETE FROM #__dharmashop_product_categories WHERE direct = 0 AND product_id IN (' . $in . ')');
+            Sql::exec(
+                $this->db,
+                'INSERT IGNORE INTO #__dharmashop_product_categories (catid, product_id, direct, is_main, state, in_stock, created, title_sort) '
+                . 'SELECT anc.id, pc.product_id, 0, 0, 0, 0, NOW(), \'\' '
+                . 'FROM #__dharmashop_product_categories pc '
+                . 'JOIN #__categories sub ON sub.id = pc.catid '
+                . 'JOIN #__categories anc ON anc.extension = sub.extension AND anc.lft < sub.lft AND anc.rgt > sub.rgt '
+                . 'WHERE pc.direct = 1 AND pc.product_id IN (' . $in . ')'
+            );
+            $this->refreshProducts($ids);
+        }
+    }
+
+    /**
+     * Перестраивает индекс товаров, привязанных к записи и её потомкам (вызывать после перемещения записи в дереве).
+     *
+     * @return  int  число обработанных товаров
+     */
+    public function rebuildCategorySubtree(int $categoryId): int
+    {
+        $query = Sql::query(
+            $this->db,
+            'SELECT DISTINCT pc.product_id FROM #__dharmashop_product_categories pc '
+            . 'JOIN #__categories c ON c.id = pc.catid '
+            . 'JOIN #__categories root ON root.id = :root AND c.extension = root.extension AND c.lft >= root.lft AND c.rgt <= root.rgt '
+            . 'WHERE pc.direct = 1',
+            [':root' => [$categoryId, ParameterType::INTEGER]]
+        );
+
+        $ids = array_map('intval', $this->db->setQuery($query)->loadColumn());
+
+        if ($ids) {
+            $this->rebuildProducts($ids);
+        }
+
+        return count($ids);
     }
 
     /** Полная пересборка кусками по ключу; возвращает число обработанных товаров. */
