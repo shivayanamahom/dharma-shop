@@ -30,5 +30,6 @@ $intro = trim(strip_tags((string) $item->params->get('introtext', '')));
         <?php if (!empty($displayData['showPrices']) && $displayData['priceRange'] !== '') : ?>
             <p class="card-text small mt-2 mb-0"><?php echo $escape(Text::sprintf('COM_DHARMASHOP_CARD_PRICE_RANGE', $displayData['priceRange'])); ?></p>
         <?php endif; ?>
+    <?php echo (new \Joomla\CMS\Layout\FileLayout('components.dharmashop.fields.default', null, ['component' => 'none', 'client' => 0]))->render(['fields' => $displayData['fields'] ?? $item->fields ?? [], 'context' => 'card']); ?>
     </div>
 </article>

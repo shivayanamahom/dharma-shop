@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form>
+    <fieldset name="details">
+        <field name="title" type="text" label="JGLOBAL_TITLE" required="true" filter="string" maxlength="255" class="input-xxlarge input-large-text" />
+        <field name="alias" type="text" label="JFIELD_ALIAS_LABEL" description="COM_DHARMASHOP_FIELDGROUP_ALIAS_DESC" filter="string" maxlength="190" hint="JFIELD_ALIAS_PLACEHOLDER" />
+        <field name="target" type="list" label="COM_DHARMASHOP_FIELD_TARGET_LABEL" description="COM_DHARMASHOP_FIELDGROUP_TARGET_DESC" required="true" default="product" filter="cmd" validate="options">
+            <option value="product">COM_DHARMASHOP_FIELD_TARGET_PRODUCT</option>
+            <option value="category">COM_DHARMASHOP_FIELD_TARGET_CATEGORY</option>
+        </field>
+        <field name="tab_mode" type="list" label="COM_DHARMASHOP_FIELDGROUP_TAB_LABEL" description="COM_DHARMASHOP_FIELDGROUP_TAB_DESC" required="true" default="fields" filter="cmd" validate="options">
+            <option value="fields">COM_DHARMASHOP_TAB_FIELDS</option>
+            <option value="group">COM_DHARMASHOP_FIELDGROUP_TAB_GROUP</option>
+        </field>
+    </fieldset>
+    <fieldset name="publishing">
+        <field name="id" type="text" label="JGLOBAL_FIELD_ID_LABEL" default="0" readonly="true" filter="int" />
+        <field name="state" type="list" label="JSTATUS" default="1" filter="int" validate="options" class="form-select-color-state">
+            <option value="1">JPUBLISHED</option>
+            <option value="0">JUNPUBLISHED</option>
+            <option value="2">JARCHIVED</option>
+            <option value="-2">JTRASHED</option>
+        </field>
+        <field name="ordering" type="number" label="JFIELD_ORDERING_LABEL" description="COM_DHARMASHOP_FIELDGROUP_ORDERING_DESC" filter="int" min="1" step="1" />
+    </fieldset>
+</form>

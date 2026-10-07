@@ -19,6 +19,7 @@ use Dharma\Component\DharmaShop\Administrator\Seo\SeoHints;
 use Dharma\Component\DharmaShop\Administrator\Seo\SeoSettings;
 use Dharma\Component\DharmaShop\Administrator\Support\CategoryTypes;
 use Joomla\CMS\Component\ComponentHelper;
+use Dharma\Component\DharmaShop\Administrator\Fields\FieldValues;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Form\Form;
 use Joomla\CMS\Language\Text;
@@ -104,7 +105,11 @@ class CategoryModel extends AdminModel
     {
         $form = $this->loadForm('com_dharmashop.category.' . $this->getExtension(), 'category', ['control' => 'jform', 'load_data' => $loadData]);
 
-        return empty($form) ? false : $form;
+        if (empty($form)) { return false; }
+        if ($this->getExtension() === CategoryTypes::CATEGORY) {
+            (new FieldValues($this->getDatabase()))->addToForm($form, 'category', $loadData ? $this->loadFormData() : $data, $loadData);
+        }
+        return $form;
     }
 
     protected function preprocessForm(Form $form, $data, $group = 'content'): void
@@ -241,6 +246,11 @@ class CategoryModel extends AdminModel
             return false;
         }
 
+        $fieldValues = new FieldValues($this->getDatabase());
+        try { $preparedFields = $extension === CategoryTypes::CATEGORY ? $fieldValues->prepare('category', $data) : []; }
+        catch (\Throwable $error) { $this->setError($error->getMessage()); return false; }
+        unset($data['custom_fields'], $data['custom_fields_present']);
+
         $oldParent = $id > 0 ? $this->getParentOf($id) : null;
         $oldOrderParams = $id > 0 ? $this->orderParams($this->paramsOf($id)) : [];
 
@@ -256,6 +266,19 @@ class CategoryModel extends AdminModel
             $this->setError($table->getError());
 
             return false;
+        }
+
+        if ($preparedFields) {
+            $db = $this->getDatabase();
+            $db->transactionStart();
+            try {
+                $fieldValues->save('category', $id, $preparedFields);
+                $db->transactionCommit();
+            } catch (\Throwable $error) {
+                $db->transactionRollback();
+                $this->setError($error->getMessage());
+                return false;
+            }
         }
 
         $this->applyOrderRules($id, $oldOrderParams, $table);
@@ -308,6 +331,11 @@ class CategoryModel extends AdminModel
 
         if (!parent::delete($pks)) {
             return false;
+        }
+
+        foreach ($selected as $deletedId) {
+            $exists = $db->setQuery($db->createQuery()->select('id')->from('#__categories')->where('id = ' . $deletedId))->loadResult();
+            if (!$exists) { (new FieldValues($db))->deleteEntity('category', $deletedId); }
         }
 
         // После удаления убираем только свои файлы, на которые больше никто не ссылается (правила — ImageCleaner).

@@ -49,11 +49,16 @@ DHARMA_SITE=/Volumes/Work/Server/www/test php dev/install.php "$PWD/dist/pkg_dha
 
 Реестр `com_dharmashop/media/joomla.asset.json` устанавливается в `media/com_dharmashop/joomla.asset.json`. Скрипты — отдельные файлы `media/js/` с именованными ресурсами, зависимости перечислять явно. Во frontend-виде добавить реестр через `$wa->getRegistry()->addExtensionRegistryFile('com_dharmashop')`, затем использовать только нужный `$wa->useScript(...)`. Для C34 это `com_dharmashop.listing` → установленный `media/com_dharmashop/js/listing.js`. Не подключать все ресурсы глобально и не писать script-теги в макетах. Uploader/gallery остаются ресурсами своих полей, нового CSS фронтенда нет.
 
+C48: `com_dharmashop.sale-countdown` подключается менеджером только там, где включён таймер и есть действующая акция с `discount_end`. Скрипт `media/js/sale-countdown.js` обновляет Bootstrap badge; в HTML уже есть начальный текст на случай отключённого JavaScript.
+
 ## Правила проверки реализации
 
 После C34 пакет установлен обновлением на test.test (`INSTALL OK`): модель/вид category, три карточки товара и listing.js присутствуют. Тесты, HTTP-рендер, браузер и замеры не запускались. Разметку/запросы/автоматическую отправку формы ещё требуется проверить отдельно по запросу пользователя.
 
 - После изменения схемы: удалить пакет (`dev/uninstall.php`), собрать, установить, проверить число таблиц (`dev/db.sh "show tables like 'PFX_dharmashop%'"`). Пока релизов нет, схему правим прямо в `install.mysql.utf8.sql`; после первого релиза — только через `sql/updates/mysql/<версия>.sql`.
+- C50 — исключение для сохранения действующего каталога: столбцы `target` в `fieldgroups`/`fields` добавляются идемпотентно в пакетном `script.php::upgradeFieldTargets()` при обновлении. Не деинсталлировать пакет ради этого изменения; текущие данные сохраняются. Новая установка использует обновлённый `install.mysql.utf8.sql`. Версия остаётся `0.1.0`.
+- C51: `script.php::upgradeFieldGroupTabs()` так же аддитивно добавляет `fieldgroups.tab_mode` со значением `fields`. Не деинсталлировать пакет; прежние группы и значения сохраняются. Административная папка `layouts` явно включена в манифест компонента.
+- C59: `script.php::upgradeFieldValueStorage()` добавляет `field_values.num_end` и индекс, создаёт `category_field_values/category_field_texts`. Установка только обновлением; определения, опции, значения и пользовательские записи сохраняются. Автоматические сценарии без запроса пользователя не запускать.
 - Изменения скорости на путях витрины — прогнать `dev/bench` минимум на 100 000 товаров и обновить `docs/BENCHMARKS.md`.
 - Пустые папки в манифесте компонента ломают установку (проверено: пустая `forms`).
 - Данные бенчмарка лежат в таблицах `bn_*` той же базы; после замеров `php dev/bench/bench.php drop`.

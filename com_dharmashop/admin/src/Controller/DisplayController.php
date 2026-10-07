@@ -13,6 +13,8 @@ declare(strict_types=1);
 namespace Dharma\Component\DharmaShop\Administrator\Controller;
 
 use Joomla\CMS\MVC\Controller\BaseController;
+use Joomla\CMS\Language\Text;
+use Joomla\CMS\Router\Route;
 
 \defined('_JEXEC') or die;
 
@@ -25,4 +27,18 @@ class DisplayController extends BaseController
     protected $option = 'com_dharmashop';
 
     protected $default_view = 'products';
+
+    public function display($cachable = false, $urlparams = [])
+    {
+        $view = $this->input->getCmd('view');
+        if (in_array($view, ['fieldgroup', 'field'], true) && $this->input->getCmd('layout') === 'edit') {
+            $id = $this->input->getInt('id');
+            if (!$this->checkEditId('com_dharmashop.edit.' . $view, $id)) {
+                $this->setRedirect(Route::_('index.php?option=com_dharmashop&view=' . ($view === 'field' ? 'fields' : 'fieldgroups'), false), Text::_('JLIB_APPLICATION_ERROR_UNHELD_ID'), 'error');
+                return false;
+            }
+        }
+
+        return parent::display($cachable, $urlparams);
+    }
 }

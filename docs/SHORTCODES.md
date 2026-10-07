@@ -82,7 +82,8 @@
 | `onDharmaShopProductBeforeSave` / `AfterSave`, `VariantBeforeSave` / `AfterSave`, `ProductBeforeDelete` / `AfterDelete` | план (этап 1, не подключены) | сейчас сохранение идёт без вызова событий; подключить вместе с первым плагином |
 | `onDharmaShopProductPrepareForm` | план | форма товара собирается в `ProductModel::preprocessForm` |
 | `onDharmaShopListingQuery`, `ProductPrepare`, `ProductDisplay`, `PriceResolve`, `StockChange`, `IndexRebuild` | план | витрина и индекс |
-| `onDharmaShopFieldTypes…` (группа `dharmashopfield`) | план, этап 2 | поля |
+| `onDharmaShopFieldTypesCollect` (группа `dharmashopfield`) | **есть (C53/C59)** | Аргумент `registry: Administrator\Fields\TypeRegistry`; провайдер добавляет `TypeInterface` через `register()`. Для ввода/проверки значений также реализует `ValueTypeInterface` (`input/defaultValue/decode/encode`), без новых событий и SQL в провайдере. Дубликаты ID запрещены, после dispatch реестр закрыт. |
+| Остальные события полей из ARCHITECTURE §6.2 | план, этап 2 | Ввод/значения/фильтрация/вывод ещё не подключены. |
 | `onDharmaShopCart…`, `Checkout…`, `Shipping…`, `Payment…`, `Order…`, `Notify…` | план, этап 5 | корзина, заказ |
 | `onDharmaShopMetadataReady` | **есть (C28/C29)** | Группа `dharmashop`; событие Joomla Event с `page` (readonly `Site\Seo\PageMetadata`), `document` (`HtmlDocument`), `settings` (`Registry` настроек магазина), `content` (readonly `Site\Seo\CollectionMetadata` или `null`). `content`: название списка, упорядоченные `items` с `name`/абсолютным `url`, тип элемента (на категории `CollectionPage`). После применения базовых тегов, до рендера страницы; только сайт/HTML. Социальный плагин использует `page`, плагин Schema.org — также `content`, без запросов каталога. |
 | `onDharmaShopCategoryBeforeTitle` | **есть (C31)** | До заголовка страницы категории; общий для `categories` и будущего `category`, различать по `view`. |

@@ -21,6 +21,7 @@ use Dharma\Component\DharmaShop\Administrator\Support\CategoryTypes;
 use Dharma\Component\DharmaShop\Administrator\Seo\SeoHints;
 use Dharma\Component\DharmaShop\Administrator\Seo\SeoSettings;
 use Joomla\CMS\Component\ComponentHelper;
+use Dharma\Component\DharmaShop\Administrator\Fields\FieldValues;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Form\Form;
 use Joomla\CMS\Language\Text;
@@ -71,7 +72,11 @@ class ProductModel extends AdminModel
     {
         $form = $this->loadForm('com_dharmashop.product', 'product', ['control' => 'jform', 'load_data' => $loadData]);
 
-        return empty($form) ? false : $form;
+        if (empty($form)) { return false; }
+        if (true) {
+            (new FieldValues($this->getDatabase()))->addToForm($form, 'product', $loadData ? $this->loadFormData() : $data, $loadData);
+        }
+        return $form;
     }
 
     protected function preprocessForm(Form $form, $data, $group = 'content'): void
@@ -213,6 +218,11 @@ class ProductModel extends AdminModel
             return false;
         }
 
+        $fieldValues = new FieldValues($db);
+        try { $preparedFields = $fieldValues->prepare('product', $data); }
+        catch (\Throwable $error) { $this->setError($error->getMessage()); return false; }
+        unset($data['custom_fields'], $data['custom_fields_present']);
+
         if (!parent::save($data)) {
             return false;
         }
@@ -253,6 +263,7 @@ class ProductModel extends AdminModel
                 $removedFiles = $shop->gallery()->save($id, (array) $data['gallery']);
             }
 
+            $fieldValues->save('product', $id, $preparedFields);
             $db->transactionCommit();
         } catch (\Throwable $e) {
             $db->transactionRollback();
@@ -358,6 +369,7 @@ class ProductModel extends AdminModel
             }
 
             $files = array_merge($files, $shop->gallery()->deleteForProduct($id));
+            (new FieldValues($db))->deleteEntity('product', $id);
             $shop->variants()->deleteForProduct($id);
             $shop->indexer()->deleteProduct($id);
             $db->setQuery('DELETE FROM #__dharmashop_search WHERE product_id = ' . $id)->execute();

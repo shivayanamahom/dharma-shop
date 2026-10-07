@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form><fields name="params"><fieldset name="type_number" label="COM_DHARMASHOP_FIELD_TYPE_NUMBER">
+    <field name="number_min" type="text" label="COM_DHARMASHOP_FIELD_MIN" showon=".type:number" filter="string"></field>
+    <field name="number_max" type="text" label="COM_DHARMASHOP_FIELD_MAX" showon=".type:number" filter="string"></field>
+    <field name="number_step" type="text" label="COM_DHARMASHOP_FIELD_STEP" showon=".type:number" filter="string"></field>
+    <field name="number_precision" type="number" label="COM_DHARMASHOP_FIELD_PRECISION" showon=".type:number" min="0" max="6" filter="int"></field>
+</fieldset></fields></form>

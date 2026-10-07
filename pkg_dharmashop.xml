@@ -12,6 +12,7 @@
 	<files>
 		<file type="file" id="files_dharmashop_layouts">files_dharmashop_layouts.zip</file>
 		<file type="component" id="com_dharmashop">com_dharmashop.zip</file>
+		<file type="plugin" id="basic" group="dharmashopfield">plg_dharmashopfield_basic.zip</file>
 		<file type="plugin" id="social" group="dharmashop">plg_dharmashop_social.zip</file>
 		<file type="plugin" id="structureddata" group="dharmashop">plg_dharmashop_structureddata.zip</file>
 	</files>

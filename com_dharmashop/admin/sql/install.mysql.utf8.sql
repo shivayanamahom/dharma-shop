@@ -143,6 +143,8 @@ CREATE TABLE IF NOT EXISTS `#__dharmashop_product_categories` (
 
 CREATE TABLE IF NOT EXISTS `#__dharmashop_fieldgroups` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `target` varchar(16) NOT NULL DEFAULT 'product',
+  `tab_mode` varchar(16) NOT NULL DEFAULT 'fields',
   `title` varchar(255) NOT NULL,
   `alias` varchar(190) NOT NULL,
   `ordering` int NOT NULL DEFAULT 0,
@@ -155,6 +157,7 @@ CREATE TABLE IF NOT EXISTS `#__dharmashop_fieldgroups` (
 
 CREATE TABLE IF NOT EXISTS `#__dharmashop_fields` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `target` varchar(16) NOT NULL DEFAULT 'product',
   `group_id` int unsigned NOT NULL DEFAULT 0,
   `alias` varchar(190) NOT NULL,
   `title` varchar(255) NOT NULL,
@@ -214,12 +217,14 @@ CREATE TABLE IF NOT EXISTS `#__dharmashop_field_values` (
   `field_id` int unsigned NOT NULL,
   `option_id` int unsigned NULL,
   `num` decimal(18,6) NULL,
+  `num_end` decimal(18,6) NULL,
   `str` varchar(190) NULL,
   PRIMARY KEY (`id`),
   KEY `idx_product` (`product_id`, `field_id`),
   KEY `idx_variant` (`variant_id`, `field_id`),
   KEY `idx_option` (`field_id`, `option_id`, `product_id`),
   KEY `idx_num` (`field_id`, `num`, `product_id`),
+  KEY `idx_num_end` (`field_id`, `num_end`, `product_id`),
   KEY `idx_str` (`field_id`, `str`, `product_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -232,6 +237,31 @@ CREATE TABLE IF NOT EXISTS `#__dharmashop_field_texts` (
   PRIMARY KEY (`id`),
   KEY `idx_product` (`product_id`, `field_id`),
   KEY `idx_variant` (`variant_id`, `field_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `#__dharmashop_category_field_values` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `category_id` int unsigned NOT NULL,
+  `field_id` int unsigned NOT NULL,
+  `option_id` int unsigned NULL,
+  `num` decimal(18,6) NULL,
+  `num_end` decimal(18,6) NULL,
+  `str` varchar(190) NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_category` (`category_id`, `field_id`),
+  KEY `idx_option` (`field_id`, `option_id`, `category_id`),
+  KEY `idx_num` (`field_id`, `num`, `category_id`),
+  KEY `idx_num_end` (`field_id`, `num_end`, `category_id`),
+  KEY `idx_str` (`field_id`, `str`, `category_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `#__dharmashop_category_field_texts` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `category_id` int unsigned NOT NULL,
+  `field_id` int unsigned NOT NULL,
+  `value` mediumtext NULL,
+  PRIMARY KEY (`id`),
+  KEY `idx_category` (`category_id`, `field_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `#__dharmashop_field_media` (

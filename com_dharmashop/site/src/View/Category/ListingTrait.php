@@ -9,6 +9,7 @@ use Dharma\Component\DharmaShop\Site\Placeholder\GlobalValues;
 use Dharma\Component\DharmaShop\Site\Placeholder\ProductValues;
 use Dharma\Component\DharmaShop\Site\Placeholder\Renderer;
 use Dharma\Component\DharmaShop\Site\Support\Grid;
+use Dharma\Component\DharmaShop\Site\Support\MediaUrl;
 use Dharma\Component\DharmaShop\Site\Support\Taxonomy;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
@@ -51,7 +52,7 @@ trait ListingTrait
         $taxonomy = $this->taxonomy();
 
         return array_merge(Grid::keys('category'), Grid::keys($taxonomy->gridPrefix()), ['category_layout', 'product_card_layout',
-            'product_card_intro', 'product_card_qty', 'category_product_count', 'category_price_range', $taxonomy->cardKey('layout'),
+            'product_card_intro', 'product_card_qty', 'product_card_images', 'category_product_count', 'category_price_range', $taxonomy->cardKey('layout'),
             $taxonomy->cardKey('intro'), $taxonomy->cardKey('count'), $taxonomy->cardKey('prices'), 'list_limit', 'list_ordering',
             'category_default_view', 'subcategory_show_image']);
     }
@@ -121,7 +122,7 @@ trait ListingTrait
         $pagination = new Pagination($total, intdiv($this->start, $limit) * $limit, $limit);
         $this->start = $pagination->limitstart;
         $this->items = $total ? $model->getProducts($this->ordering, $limit, $this->start) : [];
-        $model->attachCardData($this->items);
+        $model->attachCardData($this->items, $this->cardImagesLimit());
         $this->pagination = $total > $limit ? $pagination : null;
 
         if ($this->pagination) {
@@ -174,6 +175,32 @@ trait ListingTrait
         return $found;
     }
 
+    /** Сколько фото выводить в карточке: 1 — только первое (по умолчанию), 2–5 — столько, 0 — все. */
+    protected function cardImagesLimit(): int
+    {
+        $value = (string) $this->params->get('product_card_images', '1');
+
+        return in_array($value, ['0', '1', '2', '3', '4', '5'], true) ? (int) $value : 1;
+    }
+
+    /** Фото карточки (абсолютные адреса): галерея, если выводится больше одного фото, иначе обложка. */
+    private function cardImages(object $item): array
+    {
+        $images = [];
+
+        foreach ($item->images ?? [] as $image) {
+            if ($url = MediaUrl::absolute($image->path)) {
+                $images[] = (object) ['url' => $url, 'alt' => $image->alt !== '' ? $image->alt : (string) $item->title];
+            }
+        }
+
+        if (!$images && ($url = MediaUrl::absolute((string) ($item->cover ?? '')))) {
+            $images[] = (object) ['url' => $url, 'alt' => (string) ($item->cover_alt ?: $item->title)];
+        }
+
+        return $images;
+    }
+
     /** Адрес страницы бейджа (кэшируется: на странице бейджей мало, карточек много). */
     private function badgeRoute(int $id): string
     {
@@ -184,23 +211,35 @@ trait ListingTrait
 
     public function renderProduct(object $item): string
     {
-        $layout = new FileLayout('components.dharmashop.' . $this->cardFolder . '.' . $this->cardLayout, null, ['component' => 'none', 'client' => 0]);
+        // Единая точка сборки карточки: в default.php позже подключаются отдельные части (слайдер, цена, действия и т. п.).
+        $layout = new FileLayout('components.dharmashop.product-card.default', null, ['component' => 'none', 'client' => 0]);
         $intro = (string) $item->introtext;
+        $settings = ComponentHelper::getParams('com_dharmashop');
 
         if ((int) $this->params->get('product_card_intro', 1) === 1) {
-            $values = ProductValues::build($item, $this->money) + GlobalValues::build(ComponentHelper::getParams('com_dharmashop'));
+            $values = ProductValues::build($item, $this->money) + GlobalValues::build($settings);
             $intro = (new Renderer())->render($intro, $values);
         }
 
         return $layout->render(['item' => $item, 'params' => clone $this->params, 'mode' => $this->productView,
+            'cardFolder' => $this->cardFolder, 'cardLayout' => $this->cardLayout,
+            'fields' => $item->fields ?? [],
+            'productUrl' => Route::_('index.php?option=com_dharmashop&view=product&id=' . (int) $item->id, false),
             'showIntro' => (int) $this->params->get('product_card_intro', 1) === 1,
             'intro' => $intro,
             'priceRange' => $this->formatRange($item->price_min, $item->price_max),
             'oldPrice' => $item->base_price !== null ? $this->money->format($item->base_price) : '',
-            'discountPercent' => (int) $item->discount_percent,
+            'discountAmount' => $item->discount_amount !== null ? $this->money->format($item->discount_amount) : '',
+            'discountPercent' => (float) $item->discount_percent,
+            'showDiscount' => (int) $settings->get('product_card_show_discount', 1) === 1,
+            'discountDisplay' => $settings->get('product_card_discount_display', 'percent') === 'amount' ? 'amount' : 'percent',
+            'saleEndTimestamp' => (int) ($item->sale_end_timestamp ?? 0),
+            'showSaleCountdown' => (int) $settings->get('product_card_sale_countdown', 1) === 1,
+            'saleBadgeId' => (int) $settings->get('sale_badge_id', 0),
             'badges' => array_map(fn (object $badge): object => (object) ((array) $badge + ['url' => $this->badgeRoute($badge->id)]), $item->badges),
             'categoryTitle' => (string) ($item->category_title ?? ''),
             'categoryUrl' => $this->categoryRoute((int) $item->catid),
+            'images' => $this->cardImages($item),
             'catalogMode' => $this->catalogMode,
             'cartText' => trim((string) ComponentHelper::getParams('com_dharmashop')->get('cart_button_text', '')),
             'showQty' => !$this->catalogMode && (int) $this->params->get('product_card_qty', 0) === 1]);

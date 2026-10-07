@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form><fields name="params"><fieldset name="type_checkbox" label="COM_DHARMASHOP_FIELD_TYPE_CHECKBOX">
+    <field name="checkbox_mode" type="list" label="COM_DHARMASHOP_FIELD_CHECKBOX_MODE" default="single" filter="cmd" validate="options" showon=".type:checkbox"><option value="single">COM_DHARMASHOP_FIELD_CHECKBOX_SINGLE</option><option value="options">COM_DHARMASHOP_FIELD_CHECKBOX_OPTIONS</option></field>
+    <field name="checkbox_default" type="list" label="COM_DHARMASHOP_FIELD_DEFAULT" showon=".type:checkbox[AND]checkbox_mode:single" filter="string" validate="options"><option value="">COM_DHARMASHOP_FIELD_EMPTY</option><option value="0">JNO</option><option value="1">JYES</option></field>
+    <field name="checkbox_default_option" type="text" label="COM_DHARMASHOP_FIELD_DEFAULT" description="COM_DHARMASHOP_FIELD_CHECKBOX_DEFAULT_OPTION_DESC" hint="COM_DHARMASHOP_FIELD_CHECKBOX_DEFAULT_OPTION_HINT" showon=".type:checkbox[AND]checkbox_mode:options" filter="string" maxlength="255" />
+</fieldset></fields></form>

@@ -45,6 +45,12 @@ $canAdmin = $this->getCurrentUser()->authorise('core.admin', 'com_dharmashop');
             <?php echo $this->form->renderField('search_text'); ?>
         <?php echo HTMLHelper::_('uitab.endTab'); ?>
 
+        <?php echo LayoutHelper::render('field-tabs', [
+            'form' => $this->form,
+            'groups' => $this->fieldGroups,
+            'tabSet' => 'productTab',
+        ], JPATH_ADMINISTRATOR . '/components/com_dharmashop/layouts'); ?>
+
         <?php echo HTMLHelper::_('uitab.addTab', 'productTab', 'price', Text::_('COM_DHARMASHOP_TAB_PRICE_STOCK')); ?>
         <div class="row">
             <div class="col-lg-6">

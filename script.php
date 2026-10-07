@@ -36,7 +36,7 @@ return new class () implements ServiceProviderInterface {
                 private const MIN_PHP = '8.3.0';
 
                 /** Плагины пакета, которые включаем сразу после установки: [группа, элемент]. */
-                private const PLUGINS = [['dharmashop', 'social'], ['dharmashop', 'structureddata']];
+                private const PLUGINS = [['dharmashop', 'social'], ['dharmashop', 'structureddata'], ['dharmashopfield', 'basic']];
 
                 /** Обновление не должно включать плагин, отключённый владельцем сайта. */
                 private array $existingPlugins = [];
@@ -95,6 +95,9 @@ return new class () implements ServiceProviderInterface {
                     }
 
                     try {
+                        $this->upgradeFieldTargets();
+                        $this->upgradeFieldGroupTabs();
+                        $this->upgradeFieldValueStorage();
                         $this->prepareLayoutMigration();
                     } catch (\Throwable $error) {
                         $this->app->enqueueMessage('Dharma Shop: ' . $error->getMessage()
@@ -143,6 +146,72 @@ return new class () implements ServiceProviderInterface {
                     }
 
                     return true;
+                }
+
+                /** C50: аддитивное обновление существующей схемы без деинсталляции и удаления каталога. */
+                private function upgradeFieldTargets(): void
+                {
+                    $tables = $this->db->getTableList();
+
+                    foreach (['#__dharmashop_fieldgroups', '#__dharmashop_fields'] as $table) {
+                        $name = $this->db->replacePrefix($table);
+
+                        // При первой установке таблицы создаст install.mysql.utf8.sql компонента.
+                        if (!in_array($name, $tables, true)) {
+                            continue;
+                        }
+
+                        $columns = $this->db->getTableColumns($name, false);
+
+                        if (!isset($columns['target'])) {
+                            $this->db->setQuery('ALTER TABLE ' . $this->db->quoteName($name)
+                                . " ADD COLUMN `target` varchar(16) NOT NULL DEFAULT 'product' AFTER `id`")
+                                ->execute();
+                        }
+                    }
+                }
+
+                /** C59: additive category storage and second numeric range bound. */
+                private function upgradeFieldValueStorage(): void
+                {
+                    $name = $this->db->replacePrefix('#__dharmashop_field_values');
+                    if (!in_array($name, $this->db->getTableList(), true)) { return; }
+                    $columns = $this->db->getTableColumns($name, false);
+                    if (!isset($columns['num_end'])) {
+                        $this->db->setQuery('ALTER TABLE ' . $this->db->quoteName($name)
+                            . ' ADD COLUMN `num_end` decimal(18,6) NULL AFTER `num`, ADD KEY `idx_num_end` (`field_id`,`num_end`,`product_id`)')->execute();
+                    }
+                    $this->db->setQuery('CREATE TABLE IF NOT EXISTS `#__dharmashop_category_field_values` (
+                        `id` bigint unsigned NOT NULL AUTO_INCREMENT, `category_id` int unsigned NOT NULL,
+                        `field_id` int unsigned NOT NULL, `option_id` int unsigned NULL,
+                        `num` decimal(18,6) NULL, `num_end` decimal(18,6) NULL, `str` varchar(190) NULL,
+                        PRIMARY KEY (`id`), KEY `idx_category` (`category_id`,`field_id`),
+                        KEY `idx_option` (`field_id`,`option_id`,`category_id`), KEY `idx_num` (`field_id`,`num`,`category_id`),
+                        KEY `idx_num_end` (`field_id`,`num_end`,`category_id`), KEY `idx_str` (`field_id`,`str`,`category_id`)
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci')->execute();
+                    $this->db->setQuery('CREATE TABLE IF NOT EXISTS `#__dharmashop_category_field_texts` (
+                        `id` bigint unsigned NOT NULL AUTO_INCREMENT, `category_id` int unsigned NOT NULL,
+                        `field_id` int unsigned NOT NULL, `value` mediumtext NULL,
+                        PRIMARY KEY (`id`), KEY `idx_category` (`category_id`,`field_id`)
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci')->execute();
+                }
+
+                /** C51: способ размещения групп в форме; сохраняет все существующие записи. */
+                private function upgradeFieldGroupTabs(): void
+                {
+                    $name = $this->db->replacePrefix('#__dharmashop_fieldgroups');
+
+                    if (!in_array($name, $this->db->getTableList(), true)) {
+                        return;
+                    }
+
+                    $columns = $this->db->getTableColumns($name, false);
+
+                    if (!isset($columns['tab_mode'])) {
+                        $this->db->setQuery('ALTER TABLE ' . $this->db->quoteName($name)
+                            . " ADD COLUMN `tab_mode` varchar(16) NOT NULL DEFAULT 'fields' AFTER `target`")
+                            ->execute();
+                    }
                 }
 
                 /** Сохраняет старые файлы до удаления папки layouts установщиком компонента. */

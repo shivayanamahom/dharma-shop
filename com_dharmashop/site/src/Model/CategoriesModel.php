@@ -3,6 +3,7 @@ declare(strict_types=1);
 namespace Dharma\Component\DharmaShop\Site\Model;
 
 use Dharma\Component\DharmaShop\Site\Support\Taxonomy;
+use Dharma\Component\DharmaShop\Site\Support\EntityFields;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
@@ -72,6 +73,7 @@ class CategoriesModel extends BaseDatabaseModel
         }
         $this->parent = array_shift($chain);
         $this->ancestors = array_reverse($chain);
+        if ($this->taxonomy()->area === 'category') { EntityFields::attach($this->getDatabase(), [$this->parent], 'page', 'category'); }
         return $this->parent;
     }
 
@@ -103,6 +105,7 @@ class CategoriesModel extends BaseDatabaseModel
                 $this->items[] = $item;
             }
         }
+        if ($this->taxonomy()->area === 'category') { EntityFields::attach($db, $this->items, 'card', 'category'); }
         return $this->items;
     }
 

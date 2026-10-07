@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace Dharma\Component\DharmaShop\Site\Model;
 
+use Dharma\Component\DharmaShop\Site\Support\SaleCountdown;
+use Dharma\Component\DharmaShop\Site\Support\ProductFields;
 use Joomla\Database\ParameterType;
 use Joomla\Database\QueryInterface;
 use Joomla\Registry\Registry;
@@ -63,11 +65,11 @@ class CategoryModel extends CategoriesModel
 
     /**
      * Данные карточек страницы одним пакетом (без запросов на каждую карточку): обычная цена и размер скидки варианта по умолчанию
-     * и бейджи товара (только опубликованные, доступные посетителю). Поля добавляются в объекты товаров: base_price, discount_percent, badges.
+     * и бейджи товара (только опубликованные, доступные посетителю). Поля добавляются в объекты товаров: base_price, discount_amount, discount_percent, badges.
      *
      * @param   object[]  $items
      */
-    public function attachCardData(array $items): void
+    public function attachCardData(array $items, int $imagesLimit = 1): void
     {
         if (!$items) {
             return;
@@ -75,15 +77,32 @@ class CategoryModel extends CategoriesModel
 
         $db = $this->getDatabase();
         $ids = array_map(static fn (object $item): int => (int) $item->id, $items);
+        ProductFields::attach($db, $items, 'card');
         $list = implode(',', $ids);
         $prices = [];
 
         foreach ($db->setQuery(
-            'SELECT v.product_id, vp.price, vp.price_final FROM ' . $db->quoteName('#__dharmashop_variants', 'v')
+            'SELECT v.product_id, vp.price, vp.price_final, vp.discount_start, vp.discount_end FROM ' . $db->quoteName('#__dharmashop_variants', 'v')
             . ' JOIN ' . $db->quoteName('#__dharmashop_variant_prices', 'vp') . ' ON vp.variant_id = v.id'
             . ' WHERE v.product_id IN (' . $list . ') AND v.is_default = 1 AND vp.price_list_id = 1'
         )->loadObjectList() as $row) {
             $prices[(int) $row->product_id] = $row;
+        }
+
+        // Галерея товара для карусели в карточке: только если выводится больше одного фото (иначе хватает обложки). 0 — все (не больше 20).
+        $images = [];
+
+        if ($imagesLimit !== 1) {
+            $limit = $imagesLimit > 0 ? $imagesLimit : 20;
+
+            foreach ($db->setQuery(
+                'SELECT product_id, path, alt FROM ' . $db->quoteName('#__dharmashop_field_media')
+                . ' WHERE product_id IN (' . $list . ') AND field_id = 0 AND variant_id IS NULL ORDER BY product_id, ordering'
+            )->loadObjectList() as $row) {
+                if (count($images[(int) $row->product_id] ?? []) < $limit) {
+                    $images[(int) $row->product_id][] = (object) ['path' => (string) $row->path, 'alt' => (string) $row->alt];
+                }
+            }
         }
 
         $levels = implode(',', array_map('intval', $this->getCurrentUser()->getAuthorisedViewLevels()) ?: [0]);
@@ -113,13 +132,18 @@ class CategoryModel extends CategoriesModel
         foreach ($items as $item) {
             $id = (int) $item->id;
             $item->badges = $badges[$id] ?? [];
+            $item->images = $images[$id] ?? [];
             $item->base_price = null;
+            $item->discount_amount = null;
             $item->discount_percent = 0;
+            $item->sale_end_timestamp = null;
             $row = $prices[$id] ?? null;
 
             if ($row && $row->price !== null && $row->price_final !== null && (float) $row->price > 0 && (float) $row->price_final < (float) $row->price) {
                 $item->base_price = (string) $row->price;
-                $item->discount_percent = (int) round((1 - (float) $row->price_final / (float) $row->price) * 100);
+                $item->discount_amount = number_format((float) $row->price - (float) $row->price_final, 2, '.', '');
+                $item->discount_percent = (1 - (float) $row->price_final / (float) $row->price) * 100;
+                $item->sale_end_timestamp = SaleCountdown::endTimestamp($row->discount_start, $row->discount_end, true);
             }
         }
     }

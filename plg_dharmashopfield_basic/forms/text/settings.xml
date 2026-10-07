@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form><fields name="params"><fieldset name="type_text" label="COM_DHARMASHOP_FIELD_TYPE_TEXT">
+    <field name="text_maxlength" type="number" label="COM_DHARMASHOP_FIELD_MAXLENGTH" showon=".type:text" min="1" max="190" filter="int"></field>
+    <field name="text_hint" type="text" label="COM_DHARMASHOP_FIELD_HINT" showon=".type:text" filter="string"></field>
+    <field name="text_default" type="text" label="COM_DHARMASHOP_FIELD_DEFAULT" showon=".type:text" filter="string"></field>
+</fieldset></fields></form>

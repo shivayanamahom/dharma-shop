@@ -13,6 +13,8 @@ declare(strict_types=1);
 namespace Dharma\Component\DharmaShop\Administrator\View\Category;
 
 use Dharma\Component\DharmaShop\Administrator\Seo\PlaceholderCatalog;
+use Dharma\Component\DharmaShop\Administrator\Support\FieldGroupTabs;
+use Joomla\Database\DatabaseInterface;
 use Dharma\Component\DharmaShop\Administrator\Support\CategoryTypes;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
@@ -35,6 +37,9 @@ class HtmlView extends BaseHtmlView
     protected ?Form $form = null;
 
     protected ?object $item = null;
+
+    /** Опубликованные группы соответствующего назначения для вкладок дополнительных полей. */
+    protected array $fieldGroups = [];
 
     protected string $extension = CategoryTypes::CATEGORY;
 
@@ -67,6 +72,9 @@ class HtmlView extends BaseHtmlView
         $this->item = $item;
         $this->extension = $model->getExtension();
         $this->form = $model->getForm();
+        if ($this->extension === CategoryTypes::CATEGORY) {
+            $this->fieldGroups = FieldGroupTabs::load(Factory::getContainer()->get(DatabaseInterface::class), 'category');
+        }
         $this->counts = $model->getProductCounts((int) $item->id);
         $this->buildPlaceholders($model);
 

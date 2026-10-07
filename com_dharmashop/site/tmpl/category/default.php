@@ -74,6 +74,7 @@ $icons = [
     <?php // Список товаров и ссылки порций: этот же блок отдаёт AJAX-фрагмент (RawView), JavaScript заменяет им содержимое без смены адреса. ?>
     <div data-dharmashop-listing aria-live="polite"><?php echo $this->loadTemplate('items'); ?></div>
     <?php if ($this->start === 0 && trim((string) $this->item->description) !== '') : ?><div class="mt-4 dharmaFulltext"><?php echo $this->text((string) $this->item->description); ?></div><?php endif; ?>
+    <?php echo (new \Joomla\CMS\Layout\FileLayout('components.dharmashop.fields.default', null, ['component' => 'none', 'client' => 0]))->render(['fields' => $this->item->fields ?? [], 'context' => 'page']); ?>
     <?php echo $hooks->render('afterContent'); ?>
 </section>
 </div>

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form addfieldprefix="Dharma\Component\DharmaShop\Administrator\Field">
+    <fieldset name="details">
+        <field name="title" type="text" label="JGLOBAL_TITLE" required="true" filter="string" maxlength="255" class="input-large-text" />
+        <field name="alias" type="text" label="JFIELD_ALIAS_LABEL" description="COM_DHARMASHOP_FIELD_ALIAS_DESC" filter="string" maxlength="190" />
+        <field name="target" type="list" label="COM_DHARMASHOP_FIELD_TARGET_LABEL" required="true" default="product" filter="cmd" validate="options">
+            <option value="product">COM_DHARMASHOP_FIELD_TARGET_PRODUCT</option><option value="category">COM_DHARMASHOP_FIELD_TARGET_CATEGORY</option>
+        </field>
+        <field name="type" type="fieldtype" label="COM_DHARMASHOP_FIELD_TYPE_LABEL" default="text" required="true" filter="cmd" />
+        <field name="group_id" type="fieldgroupselect" label="COM_DHARMASHOP_FIELD_GROUP_LABEL" default="0" filter="uint">
+            <option value="0">COM_DHARMASHOP_FIELD_NO_GROUP</option>
+        </field>
+        <field name="required" type="radio" label="COM_DHARMASHOP_FIELD_REQUIRED" layout="joomla.form.field.radio.switcher" default="0" filter="int" validate="options"><option value="0">JNO</option><option value="1">JYES</option></field>
+        <field name="unit" type="unit" label="COM_DHARMASHOP_ORDER_UNIT_LABEL" description="COM_DHARMASHOP_FIELD_UNIT_DESC" filter="string" maxlength="20" showon="type:number,range"><option value="">COM_DHARMASHOP_FIELD_NO_UNIT</option></field>
+    </fieldset>
+    <fieldset name="application">
+        <field name="all_categories" type="radio" label="COM_DHARMASHOP_FIELD_ALL_CATEGORIES" layout="joomla.form.field.radio.switcher" default="1" filter="int" validate="options"><option value="0">JNO</option><option value="1">JYES</option></field>
+        <field name="catids" type="category" label="COM_DHARMASHOP_FIELD_CATEGORIES" extension="com_dharmashop" multiple="true" filter="intarray" layout="joomla.form.field.list-fancy-select" showon="all_categories:0" />
+    </fieldset>
+    <fieldset name="display_card" label="COM_DHARMASHOP_FIELD_DISPLAY_CARD">
+        <field name="in_card" type="radio" label="COM_DHARMASHOP_FIELD_DISPLAY_SHOW" layout="joomla.form.field.radio.switcher" default="0" filter="int" validate="options" showon="params.load_card:1"><option value="0">JNO</option><option value="1">JYES</option></field>
+    </fieldset>
+    <fieldset name="display_page" label="COM_DHARMASHOP_FIELD_DISPLAY_PAGE">
+        <field name="in_page" type="radio" label="COM_DHARMASHOP_FIELD_DISPLAY_SHOW" layout="joomla.form.field.radio.switcher" default="1" filter="int" validate="options" showon="params.load_page:1"><option value="0">JNO</option><option value="1">JYES</option></field>
+    </fieldset>
+    <fieldset name="display_filter" label="COM_DHARMASHOP_FIELD_DISPLAY_FILTER">
+        <field name="filterable" type="radio" label="COM_DHARMASHOP_FIELD_DISPLAY_SHOW" description="COM_DHARMASHOP_FIELD_FILTER_PENDING" layout="joomla.form.field.radio.switcher" default="0" filter="int" validate="options"><option value="0">JNO</option><option value="1">JYES</option></field>
+    </fieldset>
+    <fieldset name="display_variation" label="COM_DHARMASHOP_FIELD_DISPLAY_VARIATION">
+        <field name="variation_disabled" type="radio" label="COM_DHARMASHOP_FIELD_DISPLAY_SHOW" description="COM_DHARMASHOP_FIELD_VARIATION_LIST_ONLY" layout="joomla.form.field.radio.switcher" default="0" disabled="true" filter="unset" showon="type!:list"><option value="0">JNO</option><option value="1">JYES</option></field>
+    </fieldset>
+    <fields name="params">
+        <fieldset name="display_card">
+            <field name="load_card" type="radio" label="COM_DHARMASHOP_FIELD_DISPLAY_LOAD" description="COM_DHARMASHOP_FIELD_DISPLAY_LOAD_DESC" layout="joomla.form.field.radio.switcher" default="1" filter="int" validate="options"><option value="0">JNO</option><option value="1">JYES</option></field>
+            <field name="format_card" type="list" label="COM_DHARMASHOP_FIELD_DISPLAY_FORMAT" description="COM_DHARMASHOP_FIELD_DISPLAY_FORMAT_DESC" default="comma" filter="cmd" validate="options" showon="params.load_card:1">
+                <option value="comma">COM_DHARMASHOP_FIELD_FORMAT_COMMA</option><option value="list">COM_DHARMASHOP_FIELD_FORMAT_LIST</option><option value="image">COM_DHARMASHOP_FIELD_FORMAT_IMAGE</option><option value="image_title">COM_DHARMASHOP_FIELD_FORMAT_IMAGE_TITLE</option>
+            </field>
+        </fieldset>
+        <fieldset name="display_page">
+            <field name="load_page" type="radio" label="COM_DHARMASHOP_FIELD_DISPLAY_LOAD" description="COM_DHARMASHOP_FIELD_DISPLAY_LOAD_DESC" layout="joomla.form.field.radio.switcher" default="1" filter="int" validate="options"><option value="0">JNO</option><option value="1">JYES</option></field>
+            <field name="format_page" type="list" label="COM_DHARMASHOP_FIELD_DISPLAY_FORMAT" description="COM_DHARMASHOP_FIELD_DISPLAY_FORMAT_DESC" default="comma" filter="cmd" validate="options" showon="params.load_page:1">
+                <option value="comma">COM_DHARMASHOP_FIELD_FORMAT_COMMA</option><option value="list">COM_DHARMASHOP_FIELD_FORMAT_LIST</option><option value="image">COM_DHARMASHOP_FIELD_FORMAT_IMAGE</option><option value="image_title">COM_DHARMASHOP_FIELD_FORMAT_IMAGE_TITLE</option>
+            </field>
+        </fieldset>
+        <fieldset name="display_variation">
+            <field name="variation" type="radio" label="COM_DHARMASHOP_FIELD_DISPLAY_SHOW" description="COM_DHARMASHOP_FIELD_VARIATION_PENDING" layout="joomla.form.field.radio.switcher" default="0" filter="int" validate="options" showon=".type:list"><option value="0">JNO</option><option value="1">JYES</option></field>
+        </fieldset>
+    </fields>
+    <fieldset name="choices">
+        <field name="options" type="subform" label="COM_DHARMASHOP_FIELD_OPTIONS" multiple="true" layout="joomla.form.field.subform.repeatable-table" groupByFieldset="true" filter="array" validate="Subform" showon="type:list,checkbox">
+            <form>
+                <fieldset name="option_image" label="COM_DHARMASHOP_HEADING_IMAGE">
+                    <field name="id" type="hidden" filter="uint" />
+                    <field name="image" type="compactmedia" label="COM_DHARMASHOP_HEADING_IMAGE" hiddenLabel="true" filter="string" types="images" preview="true" preview_width="48" preview_height="48" />
+                </fieldset>
+                <fieldset name="option_title" label="JGLOBAL_TITLE">
+                    <field name="title" type="text" label="JGLOBAL_TITLE" hiddenLabel="true" filter="string" maxlength="255" />
+                </fieldset>
+                <fieldset name="option_alias" label="JFIELD_ALIAS_LABEL">
+                    <field name="alias" type="text" label="JFIELD_ALIAS_LABEL" hiddenLabel="true" filter="string" maxlength="190" />
+                </fieldset>
+            </form>
+        </field>
+    </fieldset>
+    <fieldset name="publishing">
+        <field name="id" type="text" label="JGLOBAL_FIELD_ID_LABEL" default="0" readonly="true" filter="int" />
+        <field name="state" type="list" label="JSTATUS" default="1" filter="int" validate="options" class="form-select-color-state"><option value="1">JPUBLISHED</option><option value="0">JUNPUBLISHED</option><option value="2">JARCHIVED</option><option value="-2">JTRASHED</option></field>
+        <field name="ordering" type="number" label="JFIELD_ORDERING_LABEL" min="1" step="1" filter="int" />
+        <field name="access" type="accesslevel" label="JFIELD_ACCESS_LABEL" default="1" filter="uint" validate="options" />
+    </fieldset>
+</form>

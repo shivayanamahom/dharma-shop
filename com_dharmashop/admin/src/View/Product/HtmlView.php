@@ -13,6 +13,8 @@ declare(strict_types=1);
 namespace Dharma\Component\DharmaShop\Administrator\View\Product;
 
 use Dharma\Component\DharmaShop\Administrator\Seo\PlaceholderCatalog;
+use Dharma\Component\DharmaShop\Administrator\Support\FieldGroupTabs;
+use Joomla\Database\DatabaseInterface;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Form\Form;
@@ -36,6 +38,9 @@ class HtmlView extends BaseHtmlView
     protected ?Form $form = null;
 
     protected ?object $item = null;
+
+    /** Опубликованные группы соответствующего назначения для вкладок дополнительных полей. */
+    protected array $fieldGroups = [];
 
     /**
      * Список полей для штатных блоков `joomla.edit.*` (они читают свойство `fields` вида). Задаётся в шаблоне только на время вывода
@@ -69,6 +74,7 @@ class HtmlView extends BaseHtmlView
             throw new GenericDataException(implode("\n", $errors), 500);
         }
 
+        $this->fieldGroups = FieldGroupTabs::load(Factory::getContainer()->get(DatabaseInterface::class), 'product');
         $this->buildPlaceholders();
         $this->addToolbar();
 

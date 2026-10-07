@@ -50,6 +50,12 @@ $placeholdersButton = PlaceholderPanel::button();
             <?php echo $this->form->renderField('description'); ?>
         <?php echo HTMLHelper::_('uitab.endTab'); ?>
 
+        <?php echo LayoutHelper::render('field-tabs', [
+            'form' => $this->form,
+            'groups' => $this->fieldGroups,
+            'tabSet' => 'categoryTab',
+        ], JPATH_ADMINISTRATOR . '/components/com_dharmashop/layouts'); ?>
+
         <?php echo HTMLHelper::_('uitab.addTab', 'categoryTab', 'display', Text::_('COM_DHARMASHOP_CAT_FIELDSET_DISPLAY')); ?>
             <p class="text-muted"><?php echo Text::_('COM_DHARMASHOP_DISPLAY_ENTITY_INHERIT_DESC'); ?></p>
             <?php if ($this->extension !== CategoryTypes::CATEGORY) : ?>

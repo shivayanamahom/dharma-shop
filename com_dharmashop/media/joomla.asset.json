@@ -38,6 +38,12 @@
 			"attributes": { "defer": true }
 		},
 		{
+			"name": "com_dharmashop.sale-countdown",
+			"type": "script",
+			"uri": "com_dharmashop/sale-countdown.js",
+			"attributes": { "defer": true }
+		},
+		{
 			"name": "com_dharmashop.uploader",
 			"type": "script",
 			"uri": "com_dharmashop/uploader.js",

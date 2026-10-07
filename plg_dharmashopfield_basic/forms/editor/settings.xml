@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form><fields name="params"><fieldset name="type_editor" label="COM_DHARMASHOP_FIELD_TYPE_EDITOR">
+    <field name="editor_height" type="number" label="COM_DHARMASHOP_FIELD_EDITOR_HEIGHT" showon=".type:editor" min="1" max="2000" filter="int"></field>
+</fieldset></fields></form>

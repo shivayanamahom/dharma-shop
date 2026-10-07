@@ -99,6 +99,16 @@ class HtmlView extends BaseHtmlView
         $wa->getRegistry()->addExtensionRegistryFile('com_dharmashop');
         $wa->useScript('com_dharmashop.listing');
 
+        if ((int) $settings->get('product_card_sale_countdown', 1) === 1
+            && array_filter($this->items, static fn (object $item): bool => !empty($item->sale_end_timestamp))) {
+            $wa->useScript('com_dharmashop.sale-countdown');
+        }
+
+        // Несколько фото в карточке — карусель Bootstrap (штатный скрипт Joomla, только при необходимости).
+        if ($this->cardImagesLimit() !== 1) {
+            $wa->useScript('bootstrap.carousel');
+        }
+
         // Режим каталога (настройки магазина): без корзины — ни виджета количества, ни кнопки, ни их скриптов.
         if (!$this->catalogMode) {
             $wa->useScript('com_dharmashop.cart');

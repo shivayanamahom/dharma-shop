@@ -106,3 +106,25 @@
 .dharmashop-uploader__path {
 	font-size: .85rem;
 }
+
+/* Native Media in option rows: thumbnail, path and buttons share one line. */
+.dharmashop-compact-media .field-media-preview {
+	flex: 0 0 48px;
+	inline-size: 48px;
+	max-inline-size: 48px;
+	block-size: 48px;
+	padding: 4px;
+	border-width: 1px;
+	border-radius: .25rem;
+}
+
+.dharmashop-compact-media .field-media-preview-icon {
+	inline-size: 24px;
+	block-size: 24px;
+	background-size: 24px;
+}
+
+.dharmashop-compact-media .input-group {
+	flex: 1 1 0;
+	min-inline-size: 0;
+}
