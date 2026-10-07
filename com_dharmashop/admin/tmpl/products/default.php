@@ -166,9 +166,11 @@ $catLink = function (object $entry) use ($user): string {
                                         <?php if ($item->price_min === null) : ?>
                                             <span class="text-body-secondary"><?php echo Text::_('COM_DHARMASHOP_PRICE_ON_REQUEST'); ?></span>
                                         <?php elseif ($hasDiscount) : ?>
-                                            <div class="text-body-secondary small"><del><?php echo $money->format($item->price_regular); ?></del></div>
                                             <div class="fw-bold"><?php echo $money->format($item->price_final); ?></div>
-                                            <span class="badge bg-danger"><?php echo $this->escape('−' . ((int) $item->discount_percent === 1 ? Discount::format($item->discount, 1) : $money->format($item->discount))); ?></span>
+                                            <div class="small text-nowrap">
+                                                <del class="text-body-secondary"><?php echo $money->format($item->price_regular); ?></del>
+                                                <span class="badge bg-danger"><?php echo $this->escape('−' . ((int) $item->discount_percent === 1 ? Discount::format($item->discount, 1) : $money->format($item->discount))); ?></span>
+                                            </div>
                                         <?php elseif ($item->price_max !== null && (float) $item->price_max > (float) $item->price_min) : ?>
                                             <?php echo Text::sprintf('COM_DHARMASHOP_PRICE_FROM', $money->format($item->price_min)); ?>
                                         <?php else : ?>
