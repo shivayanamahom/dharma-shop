@@ -14,6 +14,7 @@ namespace Dharma\Component\DharmaShop\Administrator\Maintenance;
 
 use Dharma\Component\DharmaShop\Administrator\Catalog\Indexer;
 use Dharma\Component\DharmaShop\Administrator\Catalog\ProductRebuilder;
+use Dharma\Component\DharmaShop\Administrator\Order\OrderRules;
 use Dharma\Component\DharmaShop\Administrator\Pricing\SaleScheduler;
 use Dharma\Component\DharmaShop\Administrator\Support\Sql;
 use Joomla\Database\DatabaseInterface;
@@ -39,6 +40,7 @@ final class MaintenanceService
         private readonly Indexer $indexer,
         private readonly ProductRebuilder $rebuilder,
         private readonly SaleScheduler $sales,
+        private readonly OrderRules $rules,
         private readonly int $chunk = 1000,
     ) {
     }
@@ -92,6 +94,7 @@ final class MaintenanceService
             if ($command === 'index') {
                 $this->indexer->rebuildRange($from, $to);
             } else {
+                $this->rules->materializeRange($from, $to);
                 $this->rebuilder->rebuildRange($from, $to);
                 $this->indexer->refreshRange($from, $to);
             }

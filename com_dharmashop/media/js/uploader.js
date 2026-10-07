@@ -122,9 +122,74 @@
 			}
 		};
 
-		drop.addEventListener('click', () => fileInput.click());
+		const choose = root.querySelector('.dharmashop-uploader__choose');
+		const pasteButton = root.querySelector('.dharmashop-uploader__paste');
+		const isMac = /Mac|iPhone|iPad/i.test(navigator.platform || navigator.userAgent);
+
+		if (isMac && pasteButton) {
+			pasteButton.textContent = pasteButton.textContent.replace('Ctrl+V', '\u2318V');
+		}
+
+		// Картинка из буфера (скриншот, скопированное изображение) получает имя по времени.
+		const fromBlob = (blob, type) => {
+			const extension = ({ 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif', 'image/avif': 'avif' })[type] || 'png';
+			const stamp = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 14);
+
+			return new File([blob], 'clipboard-' + stamp + '.' + extension, { type });
+		};
+
+		// Щелчок по области только ставит на неё фокус (чтобы можно было вставить Ctrl+V); выбор файла — кнопкой «выберите на устройстве».
+		if (choose) {
+			choose.addEventListener('click', (event) => {
+				event.stopPropagation();
+				fileInput.click();
+			});
+		}
+
+		// Вставка из буфера обмена: Ctrl+V / ⌘V, когда фокус на области (или внутри поля).
+		root.addEventListener('paste', (event) => {
+			const files = event.clipboardData && event.clipboardData.files ? Array.from(event.clipboardData.files) : [];
+			const image = files.find((file) => file.type.startsWith('image/'));
+
+			if (image) {
+				event.preventDefault();
+				upload(image.name && !/^image\.(png|jpe?g)$/i.test(image.name) ? image : fromBlob(image, image.type));
+			}
+		});
+
+		// Кнопка «вставьте из буфера»: то же самое через Clipboard API (браузер может запросить разрешение).
+		if (pasteButton) {
+			pasteButton.addEventListener('click', async (event) => {
+				event.stopPropagation();
+
+				if (!navigator.clipboard || typeof navigator.clipboard.read !== 'function') {
+					showError(root.dataset.errorPasteUnsupported);
+
+					return;
+				}
+
+				try {
+					const items = await navigator.clipboard.read();
+
+					for (const item of items) {
+						const type = item.types.find((t) => t.startsWith('image/'));
+
+						if (type) {
+							upload(fromBlob(await item.getType(type), type));
+
+							return;
+						}
+					}
+
+					showError(root.dataset.errorPasteEmpty);
+				} catch (e) {
+					showError(root.dataset.errorPasteDenied);
+				}
+			});
+		}
+
 		drop.addEventListener('keydown', (event) => {
-			if (event.key === 'Enter' || event.key === ' ') {
+			if (event.target === drop && (event.key === 'Enter' || event.key === ' ')) {
 				event.preventDefault();
 				fileInput.click();
 			}

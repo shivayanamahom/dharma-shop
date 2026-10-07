@@ -116,6 +116,23 @@ final class Indexer
         )->execute();
     }
 
+    /** Обновляет копии в индексе для товаров, основная категория которых входит в список. @param int[] $catids */
+    public function refreshCategories(array $catids): void
+    {
+        $in = implode(',', array_values(array_unique(array_filter(array_map('intval', $catids)))));
+
+        if ($in === '') {
+            return;
+        }
+
+        $this->db->setQuery(
+            'UPDATE #__dharmashop_product_categories pc JOIN #__dharmashop_products p ON p.id = pc.product_id '
+            . 'SET pc.state = p.state, pc.price_sort = p.price_min, pc.in_stock = p.in_stock, pc.featured = p.featured, '
+            . 'pc.created = p.created, pc.title_sort = LEFT(LOWER(p.title), 60), pc.is_main = IF(pc.catid = p.catid, 1, 0) '
+            . 'WHERE p.catid IN (' . $in . ')'
+        )->execute();
+    }
+
     /** Пересобирает родительские строки и копии столбцов для товаров с id от $from до $to включительно. */
     public function rebuildRange(int $from, int $to): void
     {

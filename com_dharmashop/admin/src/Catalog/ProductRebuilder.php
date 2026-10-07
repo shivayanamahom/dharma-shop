@@ -53,4 +53,26 @@ final class ProductRebuilder
             ':t2' => [$to, ParameterType::INTEGER],
         ]);
     }
+
+    /** Пересчитывает производные поля товаров, основная категория которых входит в список. @param int[] $catids */
+    public function rebuildCategories(array $catids): void
+    {
+        $in = implode(',', array_values(array_unique(array_filter(array_map('intval', $catids)))));
+
+        if ($in === '') {
+            return;
+        }
+
+        $priceList = $this->priceListId;
+        $sql = 'UPDATE #__dharmashop_products p LEFT JOIN ('
+            . 'SELECT v.product_id AS pid, MIN(vp.price_final) AS mn, MAX(vp.price_final) AS mx, MAX(v.in_stock) AS ins, COUNT(*) AS c '
+            . 'FROM #__dharmashop_variants v JOIN #__dharmashop_products pp ON pp.id = v.product_id AND pp.catid IN (' . $in . ') '
+            . 'LEFT JOIN #__dharmashop_variant_prices vp ON vp.variant_id = v.id AND vp.price_list_id = :pl '
+            . 'WHERE v.state = 1 GROUP BY v.product_id'
+            . ') a ON a.pid = p.id '
+            . 'SET p.price_min = a.mn, p.price_max = a.mx, p.in_stock = COALESCE(a.ins, 0), p.variants_count = COALESCE(a.c, 0) '
+            . 'WHERE p.catid IN (' . $in . ')';
+
+        Sql::exec($this->db, $sql, [':pl' => [$priceList, ParameterType::INTEGER]]);
+    }
 }

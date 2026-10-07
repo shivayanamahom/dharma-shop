@@ -16,6 +16,7 @@ use Dharma\Component\DharmaShop\Administrator\Catalog\Indexer;
 use Dharma\Component\DharmaShop\Administrator\Catalog\ProductRebuilder;
 use Dharma\Component\DharmaShop\Administrator\Catalog\VariantRepository;
 use Dharma\Component\DharmaShop\Administrator\Maintenance\MaintenanceService;
+use Dharma\Component\DharmaShop\Administrator\Order\OrderRules;
 use Dharma\Component\DharmaShop\Administrator\Pricing\MoneyFormatter;
 use Dharma\Component\DharmaShop\Administrator\Pricing\PriceResolver;
 use Dharma\Component\DharmaShop\Administrator\Pricing\SaleScheduler;
@@ -47,6 +48,8 @@ final class ShopServices
     private ?SaleScheduler $sales = null;
 
     private ?MaintenanceService $maintenance = null;
+
+    private ?OrderRules $orderRules = null;
 
     public function __construct(private readonly DatabaseInterface $db)
     {
@@ -89,6 +92,11 @@ final class ShopServices
 
     public function maintenance(): MaintenanceService
     {
-        return $this->maintenance ??= new MaintenanceService($this->db, $this->indexer(), $this->rebuilder(), $this->sales());
+        return $this->maintenance ??= new MaintenanceService($this->db, $this->indexer(), $this->rebuilder(), $this->sales(), $this->orderRules());
+    }
+
+    public function orderRules(): OrderRules
+    {
+        return $this->orderRules ??= new OrderRules($this->db, ComponentHelper::getParams('com_dharmashop'));
     }
 }

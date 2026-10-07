@@ -62,6 +62,9 @@ class ImageuploadField extends FormField
             . '" data-accept="' . $attr(implode(',', $uploader->allowedExtensions()))
             . '" data-error-type="' . $attr(Text::sprintf('COM_DHARMASHOP_UPLOAD_ERROR_TYPE_LIST', implode(', ', $uploader->allowedExtensions())))
             . '" data-error-size="' . $attr(Text::sprintf('COM_DHARMASHOP_UPLOAD_ERROR_SIZE_LIMIT', $maxMb))
+            . '" data-error-paste-unsupported="' . $attr(Text::_('COM_DHARMASHOP_UPLOAD_ERROR_PASTE_UNSUPPORTED'))
+            . '" data-error-paste-empty="' . $attr(Text::_('COM_DHARMASHOP_UPLOAD_ERROR_PASTE_EMPTY'))
+            . '" data-error-paste-denied="' . $attr(Text::_('COM_DHARMASHOP_UPLOAD_ERROR_PASTE_DENIED'))
             . '" data-error-server="' . $attr(Text::_('COM_DHARMASHOP_UPLOAD_ERROR_SERVER')) . '">'
             . '<input type="hidden" class="dharmashop-uploader__input" name="' . $attr($this->name) . '" id="' . $attr($this->id) . '" value="' . $attr($value) . '">'
             . '<input type="file" class="dharmashop-uploader__file visually-hidden" tabindex="-1" aria-hidden="true" accept="image/*">'
@@ -72,7 +75,11 @@ class ImageuploadField extends FormField
             . '<path d="M21 47h-3.5a11.5 11.5 0 0 1-1.7-22.9 16 16 0 0 1 31.4 2.2A10.4 10.4 0 0 1 46 47h-3"/>'
             . '<path d="M32 54V31"/><path d="M23.5 39.5 32 31l8.5 8.5"/></svg>'
             . '<span class="dharmashop-uploader__title">' . $attr(Text::_('COM_DHARMASHOP_UPLOAD_DROP_TITLE')) . '</span>'
-            . '<span class="dharmashop-uploader__or">' . $attr(Text::_('COM_DHARMASHOP_UPLOAD_DROP_OR')) . '</span>'
+            . '<span class="dharmashop-uploader__actions">'
+            . '<button type="button" class="btn btn-link dharmashop-uploader__choose">' . $attr(Text::_('COM_DHARMASHOP_UPLOAD_CHOOSE')) . '</button>'
+            . '<span aria-hidden="true">·</span>'
+            . '<button type="button" class="btn btn-link dharmashop-uploader__paste">' . $attr(Text::_('COM_DHARMASHOP_UPLOAD_PASTE')) . '</button>'
+            . '</span>'
             . '<small class="dharmashop-uploader__limits">' . $attr($limits) . '</small>'
             . '</div></div>'
             . '<div class="progress mt-2" hidden><div class="progress-bar" role="progressbar" style="width:0%"></div></div>'

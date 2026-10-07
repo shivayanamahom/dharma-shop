@@ -70,10 +70,21 @@
 	font-weight: 600;
 }
 
-.dharmashop-uploader__or {
-	text-decoration: underline;
-	text-decoration-color: var(--dsu-line);
-	text-underline-offset: .2em;
+.dharmashop-uploader__hint button {
+	pointer-events: auto;
+}
+
+.dharmashop-uploader__actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
+	gap: .25rem .5rem;
+}
+
+.dharmashop-uploader__actions .btn-link {
+	padding: 0;
+	vertical-align: baseline;
 }
 
 .dharmashop-uploader__limits {
