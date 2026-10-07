@@ -14,6 +14,8 @@ namespace Dharma\Component\DharmaShop\Administrator\Model;
 
 use Dharma\Component\DharmaShop\Administrator\Image\ImageCleaner;
 use Dharma\Component\DharmaShop\Administrator\Order\InheritHints;
+use Dharma\Component\DharmaShop\Administrator\Seo\SeoHints;
+use Dharma\Component\DharmaShop\Administrator\Seo\SeoSettings;
 use Dharma\Component\DharmaShop\Administrator\Support\CategoryTypes;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
@@ -130,6 +132,9 @@ class CategoryModel extends AdminModel
                 $form->removeField($field, 'params');
             }
         }
+
+        // Подсказки SEO: в пустых полях виден шаблон из настроек магазина.
+        SeoHints::apply($form, new SeoSettings(ComponentHelper::getParams('com_dharmashop')), $extension === CategoryTypes::BRAND ? 'brand' : ($extension === CategoryTypes::BADGE ? 'badge' : 'category'));
 
         if ($extension === CategoryTypes::BADGE) {
             // Бейдж — плоский справочник без страницы и настроек списка.

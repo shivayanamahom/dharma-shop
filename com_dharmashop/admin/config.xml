@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <config>
-	<!-- Разделы настроек магазина (вкладки): Магазин, Каталог, Изображения, Оформление заказа, Права. Новые разделы добавляются сюда fieldset-ом. -->
+	<!-- Разделы настроек магазина (вкладки): Магазин, Каталог, Изображения, SEO, Оформление заказа, Права. Новые разделы добавляются сюда fieldset-ом. -->
 	<fieldset name="shop" label="COM_DHARMASHOP_CONFIG_SHOP" description="COM_DHARMASHOP_CONFIG_SHOP_DESC">
 		<field name="currency_code" type="text" label="COM_DHARMASHOP_CONFIG_CURRENCY_CODE" description="COM_DHARMASHOP_CONFIG_CURRENCY_CODE_DESC" default="RUB" maxlength="3" filter="string" />
 		<field name="currency_symbol" type="text" label="COM_DHARMASHOP_CONFIG_CURRENCY_SYMBOL" default="₽" maxlength="8" filter="string" />
@@ -36,6 +36,40 @@
 			<option value="original">COM_DHARMASHOP_CONFIG_IMAGE_NAME_ORIGINAL</option>
 		</field>
 		<field name="image_name_prefix" type="text" label="COM_DHARMASHOP_CONFIG_IMAGE_NAME_PREFIX" description="COM_DHARMASHOP_CONFIG_IMAGE_NAME_PREFIX_DESC" default="" maxlength="30" filter="string" hint="shop" />
+	</fieldset>
+
+	<fieldset name="seo" label="COM_DHARMASHOP_CONFIG_SEO" description="COM_DHARMASHOP_CONFIG_SEO_DESC" addfieldprefix="Dharma\Component\DharmaShop\Administrator\Field">
+		<field name="seo_robots" type="list" label="COM_DHARMASHOP_SEO_ROBOTS_LABEL" description="COM_DHARMASHOP_CONFIG_SEO_ROBOTS_DESC" default="index, follow" validate="options">
+			<option value="index, follow">index, follow</option>
+			<option value="noindex, follow">noindex, follow</option>
+			<option value="index, nofollow">index, nofollow</option>
+			<option value="noindex, nofollow">noindex, nofollow</option>
+		</field>
+		<field name="seo_opengraph" type="radio" layout="joomla.form.field.radio.switcher" label="COM_DHARMASHOP_CONFIG_SEO_OPENGRAPH" description="COM_DHARMASHOP_CONFIG_SEO_OPENGRAPH_DESC" default="1" filter="integer">
+			<option value="0">JNO</option>
+			<option value="1">JYES</option>
+		</field>
+		<field name="seo_default_image" type="imageupload" folder="seo" label="COM_DHARMASHOP_CONFIG_SEO_DEFAULT_IMAGE" description="COM_DHARMASHOP_CONFIG_SEO_DEFAULT_IMAGE_DESC" />
+		<field name="seo_category_spacer" type="spacer" label="COM_DHARMASHOP_CONFIG_SEO_CATEGORY" class="fw-bold" />
+		<field name="seo_category_title" type="text" label="COM_DHARMASHOP_SEO_TITLE_LABEL" default="{category.title} | {global.sitename}" filter="string" />
+		<field name="seo_category_description" type="textarea" label="COM_DHARMASHOP_SEO_DESCRIPTION_LABEL" default="{category.title} — {global.sitename}" rows="2" filter="string" />
+		<field name="seo_category_h1" type="text" label="COM_DHARMASHOP_SEO_H1_LABEL" default="{category.title}" filter="string" />
+		<field name="seo_category_breadcrumb" type="text" label="COM_DHARMASHOP_SEO_BREADCRUMB_LABEL" default="{category.title}" filter="string" />
+		<field name="seo_brand_spacer" type="spacer" label="COM_DHARMASHOP_CONFIG_SEO_BRAND" class="fw-bold" />
+		<field name="seo_brand_title" type="text" label="COM_DHARMASHOP_SEO_TITLE_LABEL" default="{brand.title} | {global.sitename}" filter="string" />
+		<field name="seo_brand_description" type="textarea" label="COM_DHARMASHOP_SEO_DESCRIPTION_LABEL" default="{brand.title} — {global.sitename}" rows="2" filter="string" />
+		<field name="seo_brand_h1" type="text" label="COM_DHARMASHOP_SEO_H1_LABEL" default="{brand.title}" filter="string" />
+		<field name="seo_brand_breadcrumb" type="text" label="COM_DHARMASHOP_SEO_BREADCRUMB_LABEL" default="{brand.title}" filter="string" />
+		<field name="seo_badge_spacer" type="spacer" label="COM_DHARMASHOP_CONFIG_SEO_BADGE" class="fw-bold" />
+		<field name="seo_badge_title" type="text" label="COM_DHARMASHOP_SEO_TITLE_LABEL" default="{badge.title} | {global.sitename}" filter="string" />
+		<field name="seo_badge_description" type="textarea" label="COM_DHARMASHOP_SEO_DESCRIPTION_LABEL" default="{badge.title} — {global.sitename}" rows="2" filter="string" />
+		<field name="seo_badge_h1" type="text" label="COM_DHARMASHOP_SEO_H1_LABEL" default="{badge.title}" filter="string" />
+		<field name="seo_badge_breadcrumb" type="text" label="COM_DHARMASHOP_SEO_BREADCRUMB_LABEL" default="{badge.title}" filter="string" />
+		<field name="seo_product_spacer" type="spacer" label="COM_DHARMASHOP_CONFIG_SEO_PRODUCT" class="fw-bold" />
+		<field name="seo_product_title" type="text" label="COM_DHARMASHOP_SEO_TITLE_LABEL" default="{product.title} | {global.sitename}" filter="string" />
+		<field name="seo_product_description" type="textarea" label="COM_DHARMASHOP_SEO_DESCRIPTION_LABEL" default="{product.title} — {global.sitename}" rows="2" filter="string" />
+		<field name="seo_product_h1" type="text" label="COM_DHARMASHOP_SEO_H1_LABEL" default="{product.title}" filter="string" />
+		<field name="seo_product_breadcrumb" type="text" label="COM_DHARMASHOP_SEO_BREADCRUMB_LABEL" default="{product.title}" filter="string" />
 	</fieldset>
 
 	<fieldset name="order" label="COM_DHARMASHOP_CONFIG_ORDER" description="COM_DHARMASHOP_CONFIG_ORDER_DESC">

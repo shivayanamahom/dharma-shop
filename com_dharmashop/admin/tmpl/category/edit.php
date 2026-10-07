@@ -112,10 +112,10 @@ $extraFieldsets = array_filter(['dharmashop_brand', 'dharmashop_badge'], fn (str
             <?php echo HTMLHelper::_('uitab.endTab'); ?>
         <?php endforeach; ?>
 
-        <?php echo HTMLHelper::_('uitab.addTab', 'categoryTab', 'metadata', Text::_('JGLOBAL_FIELDSET_METADATA_OPTIONS')); ?>
+        <?php echo HTMLHelper::_('uitab.addTab', 'categoryTab', 'seo', Text::_('COM_DHARMASHOP_TAB_SEO')); ?>
         <fieldset class="options-form">
-            <legend><?php echo Text::_('JGLOBAL_FIELDSET_METADATA_OPTIONS'); ?></legend>
-            <?php echo $this->form->renderFieldset('metadata'); ?>
+            <legend><?php echo Text::_('COM_DHARMASHOP_TAB_SEO'); ?></legend>
+            <?php echo $this->form->renderFieldset('seo'); ?>
         </fieldset>
         <?php echo HTMLHelper::_('uitab.endTab'); ?>
 
