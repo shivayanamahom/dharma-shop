@@ -14,6 +14,7 @@ namespace Dharma\Component\DharmaShop\Administrator\Model;
 
 use Dharma\Component\DharmaShop\Administrator\Image\ImageCleaner;
 use Dharma\Component\DharmaShop\Administrator\Order\InheritHints;
+use Dharma\Component\DharmaShop\Administrator\Pricing\Discount;
 use Dharma\Component\DharmaShop\Administrator\Service\ShopServices;
 use Dharma\Component\DharmaShop\Administrator\Support\CategoryTypes;
 use Joomla\CMS\Component\ComponentHelper;
@@ -50,7 +51,7 @@ class ProductModel extends AdminModel
     ];
 
     /** Поля формы, которые относятся к варианту, а не к карточке. */
-    private const VARIANT_FIELDS = ['sku', 'weight', 'length', 'width', 'height', 'price', 'sale_price', 'sale_start', 'sale_end'];
+    private const VARIANT_FIELDS = ['sku', 'weight', 'length', 'width', 'height', 'price', 'discount', 'discount_start', 'discount_end'];
 
     public function getTable($name = 'Product', $prefix = 'Administrator', $options = []): Table
     {
@@ -110,7 +111,7 @@ class ProductModel extends AdminModel
         $item->extra_catids = [];
         $item->brand_id = 0;
         $item->badge_ids = [];
-        $item->sku = $item->price = $item->sale_price = $item->sale_start = $item->sale_end = null;
+        $item->sku = $item->price = $item->discount = $item->discount_start = $item->discount_end = null;
         $item->stock_qty = 0;
         $item->gallery = [];
         $item->weight = $item->length = $item->width = $item->height = null;
@@ -128,6 +129,8 @@ class ProductModel extends AdminModel
                     $item->$field = $variant->$field;
                 }
 
+                // Скидка в форме — одной строкой: «500» или «10%».
+                $item->discount = Discount::format($variant->discount, $variant->discount_percent);
                 $item->stock_qty = $shop->stock()->getQty((int) $variant->id);
             }
         }
@@ -146,6 +149,16 @@ class ProductModel extends AdminModel
         $shop = $this->shop();
         $userId = (int) Factory::getApplication()->getIdentity()->id;
         $isNew = empty($data['id']);
+
+        // Скидка и цена проверяются до записи карточки, чтобы ошибка не оставила «полусохранённый» товар.
+        try {
+            $price = trim((string) ($data['price'] ?? ''));
+            Discount::assertValid(Discount::parse($data['discount'] ?? null), $price === '' ? null : (float) str_replace(',', '.', $price));
+        } catch (\InvalidArgumentException $e) {
+            $this->setError(Text::_($e->getMessage()));
+
+            return false;
+        }
 
         try {
             $shop->variants()->assertSkuAvailable((int) ($data['id'] ?? 0), trim((string) ($data['sku'] ?? '')) ?: null);

@@ -13,6 +13,7 @@ declare(strict_types=1);
 \defined('_JEXEC') or die;
 
 use Joomla\CMS\Button\PublishedButton;
+use Dharma\Component\DharmaShop\Administrator\Pricing\Discount;
 use Joomla\CMS\Factory;
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
@@ -157,8 +158,17 @@ $catLink = function (object $entry) use ($user): string {
                                         <?php endif; ?>
                                     </td>
                                     <td class="d-none d-md-table-cell text-end">
+                                        <?php
+                                        // Скидка действует, если итоговая цена ниже обычной: старая цена зачёркнута, новая, размер скидки.
+                                        $hasDiscount = (int) $item->variants_count === 1 && $item->price_final !== null && $item->price_regular !== null
+                                            && (float) $item->price_final < (float) $item->price_regular && $item->discount !== null;
+                                        ?>
                                         <?php if ($item->price_min === null) : ?>
                                             <span class="text-body-secondary"><?php echo Text::_('COM_DHARMASHOP_PRICE_ON_REQUEST'); ?></span>
+                                        <?php elseif ($hasDiscount) : ?>
+                                            <div class="text-body-secondary small"><del><?php echo $money->format($item->price_regular); ?></del></div>
+                                            <div class="fw-bold"><?php echo $money->format($item->price_final); ?></div>
+                                            <span class="badge bg-danger"><?php echo $this->escape('−' . ((int) $item->discount_percent === 1 ? Discount::format($item->discount, 1) : $money->format($item->discount))); ?></span>
                                         <?php elseif ($item->price_max !== null && (float) $item->price_max > (float) $item->price_min) : ?>
                                             <?php echo Text::sprintf('COM_DHARMASHOP_PRICE_FROM', $money->format($item->price_min)); ?>
                                         <?php else : ?>

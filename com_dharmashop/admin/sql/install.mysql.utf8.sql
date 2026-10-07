@@ -76,13 +76,14 @@ CREATE TABLE IF NOT EXISTS `#__dharmashop_variant_prices` (
   `variant_id` int unsigned NOT NULL,
   `price_list_id` int unsigned NOT NULL,
   `price` decimal(15,2) NULL,
-  `sale_price` decimal(15,2) NULL,
-  `sale_start` datetime NULL,
-  `sale_end` datetime NULL,
+  `discount` decimal(15,2) NULL,
+  `discount_percent` tinyint unsigned NOT NULL DEFAULT 0,
+  `discount_start` datetime NULL,
+  `discount_end` datetime NULL,
   `price_final` decimal(15,2) NULL,
   PRIMARY KEY (`variant_id`, `price_list_id`),
-  KEY `idx_sale_start` (`sale_start`),
-  KEY `idx_sale_end` (`sale_end`),
+  KEY `idx_discount_start` (`discount_start`),
+  KEY `idx_discount_end` (`discount_end`),
   KEY `idx_list_final` (`price_list_id`, `price_final`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

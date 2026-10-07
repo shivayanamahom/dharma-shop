@@ -21,8 +21,8 @@ use Joomla\Database\DatabaseInterface;
 \defined('_JEXEC') or die;
 
 /**
- * Пересчёт эффективной цены у вариантов, у которых акция началась или закончилась: price_final → цена товара → индекс витрины.
- * Вызывается командой «Пересчитать акционные цены» и задачей планировщика. Одним набором запросов, без перебора товаров.
+ * Пересчёт эффективной цены у вариантов, у которых скидка началась или закончилась: price_final → цена товара → индекс витрины.
+ * Вызывается командой «Пересчитать скидки по датам» и задачей планировщика. Одним набором запросов, без перебора товаров.
  */
 final class SaleScheduler
 {
@@ -30,8 +30,9 @@ final class SaleScheduler
     private static function finalExpr(string $suffix): string
     {
         return 'CASE WHEN vp.price IS NULL THEN NULL '
-            . 'WHEN vp.sale_price IS NOT NULL AND vp.sale_price < vp.price AND (vp.sale_start IS NULL OR vp.sale_start <= :ns' . $suffix . ') '
-            . 'AND (vp.sale_end IS NULL OR vp.sale_end >= :ne' . $suffix . ') THEN vp.sale_price ELSE vp.price END';
+            . 'WHEN vp.discount IS NOT NULL AND vp.discount > 0 AND (vp.discount_start IS NULL OR vp.discount_start <= :ns' . $suffix . ') '
+            . 'AND (vp.discount_end IS NULL OR vp.discount_end >= :ne' . $suffix . ') '
+            . 'THEN GREATEST(0, ROUND(IF(vp.discount_percent = 1, vp.price * (1 - vp.discount / 100), vp.price - vp.discount), 2)) ELSE vp.price END';
     }
 
     /** @return array<string, array{0: string}> */

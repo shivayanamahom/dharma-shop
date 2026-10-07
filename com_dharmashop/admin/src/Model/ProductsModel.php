@@ -65,10 +65,12 @@ class ProductsModel extends ListModel
         ]))
             ->select($db->quoteName('c.title', 'category_title'))
             ->select($db->quoteName('v.sku', 'sku'))
+            ->select($db->quoteName(['vp.price', 'vp.price_final', 'vp.discount', 'vp.discount_percent'], ['price_regular', 'price_final', 'discount', 'discount_percent']))
             ->select($db->quoteName('uc.name', 'editor'))
             ->from($db->quoteName('#__dharmashop_products', 'a'))
             ->join('LEFT', $db->quoteName('#__categories', 'c') . ' ON c.id = a.catid')
             ->join('LEFT', $db->quoteName('#__dharmashop_variants', 'v') . ' ON v.product_id = a.id AND v.is_default = 1')
+            ->join('LEFT', $db->quoteName('#__dharmashop_variant_prices', 'vp') . ' ON vp.variant_id = v.id AND vp.price_list_id = 1')
             ->join('LEFT', $db->quoteName('#__users', 'uc') . ' ON uc.id = a.checked_out');
 
         $published = $this->getState('filter.published');

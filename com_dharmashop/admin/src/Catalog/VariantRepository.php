@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace Dharma\Component\DharmaShop\Administrator\Catalog;
 
+use Dharma\Component\DharmaShop\Administrator\Pricing\Discount;
 use Dharma\Component\DharmaShop\Administrator\Pricing\PriceResolver;
 use Dharma\Component\DharmaShop\Administrator\Support\Sql;
 use Joomla\CMS\Date\Date;
@@ -37,7 +38,7 @@ final class VariantRepository
     {
         $priceList = $this->priceListId;
         $query = $this->db->createQuery()
-            ->select('v.*, vp.price, vp.sale_price, vp.sale_start, vp.sale_end, vp.price_final')
+            ->select('v.*, vp.price, vp.discount, vp.discount_percent, vp.discount_start, vp.discount_end, vp.price_final')
             ->from($this->db->quoteName('#__dharmashop_variants', 'v'))
             ->join('LEFT', '#__dharmashop_variant_prices AS vp ON vp.variant_id = v.id AND vp.price_list_id = :pl')
             ->where('v.product_id = :p')
@@ -51,7 +52,7 @@ final class VariantRepository
     /**
      * Создаёт или обновляет вариант по умолчанию и его цену.
      *
-     * @param   array  $data  sku, stock_tracked, backorder, weight, length, width, height, price, sale_price, sale_start, sale_end (UTC)
+     * @param   array  $data  sku, stock_tracked, backorder, weight, length, width, height, price, discount («500» или «10%»), discount_start, discount_end (UTC)
      *
      * @return  int  id варианта
      *
@@ -86,22 +87,24 @@ final class VariantRepository
         }
 
         $price = self::nullableNumber($data['price'] ?? null);
-        $sale = self::nullableNumber($data['sale_price'] ?? null);
-        $start = $data['sale_start'] ?: null;
-        $end = $data['sale_end'] ?: null;
-        $final = $this->prices->effective($price, $sale, $start, $end, $now);
+        $discount = Discount::parse($data['discount'] ?? null);
+        Discount::assertValid($discount, $price);
+        $start = ($data['discount_start'] ?? null) ?: null;
+        $end = ($data['discount_end'] ?? null) ?: null;
+        $final = $this->prices->effective($price, $discount['value'] ?? null, $discount['percent'] ?? false, $start, $end, $now);
 
-        $sql = 'INSERT INTO #__dharmashop_variant_prices (variant_id, price_list_id, price, sale_price, sale_start, sale_end, price_final) '
-            . 'VALUES (:v, :pl, :p, :s, :ss, :se, :f) '
-            . 'ON DUPLICATE KEY UPDATE price = VALUES(price), sale_price = VALUES(sale_price), sale_start = VALUES(sale_start), '
-            . 'sale_end = VALUES(sale_end), price_final = VALUES(price_final)';
+        $sql = 'INSERT INTO #__dharmashop_variant_prices (variant_id, price_list_id, price, discount, discount_percent, discount_start, discount_end, price_final) '
+            . 'VALUES (:v, :pl, :p, :d, :dp, :ds, :de, :f) '
+            . 'ON DUPLICATE KEY UPDATE price = VALUES(price), discount = VALUES(discount), discount_percent = VALUES(discount_percent), '
+            . 'discount_start = VALUES(discount_start), discount_end = VALUES(discount_end), price_final = VALUES(price_final)';
         Sql::exec($this->db, $sql, [
             ':v' => [$variantId, ParameterType::INTEGER],
             ':pl' => [$priceList, ParameterType::INTEGER],
             ':p' => [$price],
-            ':s' => [$sale],
-            ':ss' => [$start],
-            ':se' => [$end],
+            ':d' => [$discount['value'] ?? null],
+            ':dp' => [($discount['percent'] ?? false) ? 1 : 0, ParameterType::INTEGER],
+            ':ds' => [$start],
+            ':de' => [$end],
             ':f' => [$final],
         ]);
 

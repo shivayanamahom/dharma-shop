@@ -97,6 +97,8 @@ class HtmlView extends BaseHtmlView
             'product.brand' => ($t = $titleOf((int) ($item->brand_id ?? 0))) !== '' ? $t : $none,
             'product.price' => $effective !== null ? $money->format($effective) : $none,
             'product.price_old' => $effective !== null && $regular !== null && $regular > $effective ? $money->format($regular) : $none,
+            'product.discount' => $effective !== null && $regular !== null && $regular > $effective && (string) $item->discount !== ''
+                ? '−' . (str_ends_with((string) $item->discount, '%') ? (string) $item->discount : $money->format((float) $item->discount)) : $none,
             'product.unit' => $has ? (string) $shop->orderRules()->forProduct($item)['unit'] ?: $none : $none,
             'product.stock' => $has ? Text::_((int) $item->in_stock === 1 ? 'COM_DHARMASHOP_IN_STOCK' : 'COM_DHARMASHOP_OUT_OF_STOCK') : $none,
             'global.sitename' => (string) Factory::getApplication()->get('sitename'),
