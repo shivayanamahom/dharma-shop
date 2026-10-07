@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 \defined('_JEXEC') or die;
 
+use Dharma\Component\DharmaShop\Administrator\Seo\PlaceholderPanel;
 use Dharma\Component\DharmaShop\Administrator\Support\CategoryTypes;
 use Joomla\CMS\Factory;
 use Joomla\CMS\HTML\HTMLHelper;
@@ -29,43 +30,12 @@ $isBadge = $this->extension === CategoryTypes::BADGE;
 $typeLabel = CategoryTypes::all()[$this->extension];
 $extraFieldsets = array_filter(['dharmashop_brand', 'dharmashop_badge'], fn (string $name) => (bool) $this->form->getFieldset($name));
 
-// Справочник шорткодов: штатное окно Joomla (по центру экрана, не зависит от прокрутки); кнопки — в боковой панели и на вкладке SEO.
-Factory::getApplication()->getDocument()->getWebAssetManager()->useScript('joomla.dialog-autocreate');
-$placeholdersButton = '<button type="button" class="btn btn-sm btn-secondary" data-joomla-dialog="'
-    . $this->escape(json_encode(['popupType' => 'inline', 'src' => '#dharma-placeholders', 'textHeader' => Text::_('COM_DHARMASHOP_PH_TITLE'), 'width' => '900px', 'height' => 'fit-content']))
-    . '"><span class="icon-code" aria-hidden="true"></span> ' . Text::_('COM_DHARMASHOP_PH_SHOW') . '</button>';
+$placeholdersButton = PlaceholderPanel::button();
 ?>
 <form action="<?php echo Route::_('index.php?option=com_dharmashop&layout=edit&id=' . (int) $this->item->id . '&extension=' . $this->extension); ?>" method="post" name="adminForm" id="category-form" aria-label="<?php echo Text::_('COM_DHARMASHOP_CATEGORY_FORM_LABEL', true); ?>" class="form-validate">
     <?php echo LayoutHelper::render('joomla.edit.title_alias', $this); ?>
 
-    <template id="dharma-placeholders">
-        <div class="p-3">
-            <div>
-                <p class="text-muted mb-3"><?php echo Text::_('COM_DHARMASHOP_PH_NOTE'); ?></p>
-                <?php foreach ($this->placeholders as $group) : ?>
-                    <table class="table table-bordered align-middle mb-4">
-                        <caption class="caption-top text-center fw-bold fs-5 pb-2"><?php echo $this->escape($group['title']); ?></caption>
-                        <thead>
-                            <tr>
-                                <th scope="col" class="w-50"><?php echo Text::_('COM_DHARMASHOP_PH_NAME'); ?></th>
-                                <th scope="col" class="w-25"><?php echo Text::_('COM_DHARMASHOP_PH_CODE'); ?></th>
-                                <th scope="col" class="w-25"><?php echo Text::_('COM_DHARMASHOP_PH_NOW'); ?></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($group['items'] as $item) : ?>
-                                <tr>
-                                    <td><?php echo $this->escape($item['name']); ?></td>
-                                    <td><code class="user-select-all"><?php echo $this->escape($item['code']); ?></code></td>
-                                    <td class="text-muted"><?php echo $this->escape($item['value']); ?></td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                <?php endforeach; ?>
-            </div>
-        </div>
-    </template>
+    <?php echo PlaceholderPanel::dialog($this->placeholders); ?>
 
     <div class="row">
         <div class="col-lg-9">

@@ -12,6 +12,8 @@ declare(strict_types=1);
 
 namespace Dharma\Component\DharmaShop\Administrator\View\Product;
 
+use Dharma\Component\DharmaShop\Administrator\Seo\PlaceholderCatalog;
+use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Form\Form;
 use Joomla\CMS\Helper\ContentHelper;
@@ -41,6 +43,9 @@ class HtmlView extends BaseHtmlView
      */
     public ?array $fields = null;
 
+    /** Справочник шорткодов с текущими значениями товара. @var array<int, array{title: string, items: array<int, array{code: string, name: string, value: string}>}> */
+    protected array $placeholders = [];
+
     public function display($tpl = null): void
     {
         /** @var \Dharma\Component\DharmaShop\Administrator\Model\ProductModel $model */
@@ -64,9 +69,41 @@ class HtmlView extends BaseHtmlView
             throw new GenericDataException(implode("\n", $errors), 500);
         }
 
+        $this->buildPlaceholders();
         $this->addToolbar();
 
         parent::display($tpl);
+    }
+
+    /** Справочник шорткодов: названия, коды и значения этого товара (у нового — прочерки). */
+    private function buildPlaceholders(): void
+    {
+        $shop = Factory::getApplication()->bootComponent('com_dharmashop')->getServices();
+        $money = $shop->money();
+        $db = Factory::getContainer()->get('DatabaseDriver');
+        $item = $this->item;
+        $id = (int) $item->id;
+        $none = '—';
+        $titleOf = static function (int $catid) use ($db): string {
+            return $catid > 1 ? (string) $db->setQuery('SELECT title FROM #__categories WHERE id = ' . $catid)->loadResult() : '';
+        };
+        $has = $id > 0;
+        $effective = $has && $item->price_min !== null ? (float) $item->price_min : null;
+        $regular = $has && $item->price !== null ? (float) $item->price : null;
+        $values = [
+            'product.title' => $has ? (string) $item->title : $none,
+            'product.sku' => $has && (string) $item->sku !== '' ? (string) $item->sku : $none,
+            'product.category' => ($t = $titleOf((int) ($item->catid ?? 0))) !== '' ? $t : $none,
+            'product.brand' => ($t = $titleOf((int) ($item->brand_id ?? 0))) !== '' ? $t : $none,
+            'product.price' => $effective !== null ? $money->format($effective) : $none,
+            'product.price_old' => $effective !== null && $regular !== null && $regular > $effective ? $money->format($regular) : $none,
+            'product.unit' => $has ? (string) $shop->orderRules()->forProduct($item)['unit'] ?: $none : $none,
+            'product.stock' => $has ? Text::_((int) $item->in_stock === 1 ? 'COM_DHARMASHOP_IN_STOCK' : 'COM_DHARMASHOP_OUT_OF_STOCK') : $none,
+            'global.sitename' => (string) Factory::getApplication()->get('sitename'),
+            'global.currency' => (string) ComponentHelper::getParams('com_dharmashop')->get('currency_symbol', '₽'),
+        ];
+
+        $this->placeholders = PlaceholderCatalog::describe('product', $values);
     }
 
     protected function addToolbar(): void

@@ -12,9 +12,11 @@ declare(strict_types=1);
 
 namespace Dharma\Component\DharmaShop\Administrator\Model;
 
+use Dharma\Component\DharmaShop\Administrator\Image\ImageCleaner;
 use Dharma\Component\DharmaShop\Administrator\Order\InheritHints;
 use Dharma\Component\DharmaShop\Administrator\Service\ShopServices;
 use Dharma\Component\DharmaShop\Administrator\Support\CategoryTypes;
+use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Form\Form;
 use Joomla\CMS\Language\Text;
@@ -110,6 +112,7 @@ class ProductModel extends AdminModel
         $item->badge_ids = [];
         $item->sku = $item->price = $item->sale_price = $item->sale_start = $item->sale_end = null;
         $item->stock_qty = 0;
+        $item->gallery = [];
         $item->weight = $item->length = $item->width = $item->height = null;
 
         if (!empty($item->id)) {
@@ -118,6 +121,7 @@ class ProductModel extends AdminModel
             $item->extra_catids = $taxonomy['extra'];
             $item->brand_id = $taxonomy['brand'];
             $item->badge_ids = $taxonomy['badges'];
+            $item->gallery = $shop->gallery()->load((int) $item->id);
 
             if ($variant = $shop->variants()->getDefault((int) $item->id)) {
                 foreach (self::VARIANT_FIELDS as $field) {
@@ -156,6 +160,7 @@ class ProductModel extends AdminModel
         }
 
         $id = (int) $this->getState($this->getName() . '.id');
+        $removedFiles = [];
         $db->transactionStart();
 
         try {
@@ -178,6 +183,11 @@ class ProductModel extends AdminModel
                 (array) ($data['badge_ids'] ?? [])
             );
 
+            // Галерея: обложка товара — первое изображение. Ключа нет, если вкладка не выводилась (пакетная обработка, консоль).
+            if (array_key_exists('gallery', $data)) {
+                $removedFiles = $shop->gallery()->save($id, (array) $data['gallery']);
+            }
+
             $db->transactionCommit();
         } catch (\Throwable $e) {
             $db->transactionRollback();
@@ -194,7 +204,24 @@ class ProductModel extends AdminModel
             return false;
         }
 
+        // Убранные из галереи файлы удаляются с диска, если они наши и больше нигде не используются (правила — ImageCleaner).
+        $this->deleteFiles($removedFiles);
+
         return true;
+    }
+
+    /** @param string[] $paths */
+    private function deleteFiles(array $paths): void
+    {
+        if (!$paths) {
+            return;
+        }
+
+        $cleaner = new ImageCleaner($this->getDatabase(), JPATH_ROOT, ComponentHelper::getParams('com_dharmashop'));
+
+        foreach (array_unique($paths) as $path) {
+            $cleaner->deleteIfUnused($path);
+        }
     }
 
     public function delete(&$pks): bool
@@ -207,6 +234,7 @@ class ProductModel extends AdminModel
 
         $db = $this->getDatabase();
         $shop = $this->shop();
+        $files = [];
 
         foreach ($ids as $id) {
             $exists = (int) $db->setQuery($db->createQuery()->select('COUNT(*)')->from('#__dharmashop_products')->where('id = ' . $id))->loadResult();
@@ -215,11 +243,15 @@ class ProductModel extends AdminModel
                 continue;
             }
 
+            $files = array_merge($files, $shop->gallery()->deleteForProduct($id));
             $shop->variants()->deleteForProduct($id);
             $shop->indexer()->deleteProduct($id);
             $db->setQuery('DELETE FROM #__dharmashop_search WHERE product_id = ' . $id)->execute();
             $db->setQuery('DELETE FROM #__dharmashop_product_axes WHERE product_id = ' . $id)->execute();
         }
+
+        // Файлы удалённых товаров: только наши и только если на них больше никто не ссылается.
+        $this->deleteFiles($files);
 
         return true;
     }

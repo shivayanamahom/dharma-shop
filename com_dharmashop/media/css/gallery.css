@@ -1,0 +1,148 @@
+/*
+ * Dharma Shop: галерея изображений (несколько файлов). Цвета — от текста темы (currentColor) и цвета ссылок шаблона,
+ * как у одиночного загрузчика; переменных Bootstrap 5.3 в Atum нет.
+ */
+.dharmashop-gallery {
+	--dsg-accent: var(--link-color, #3d8fd1);
+	--dsg-line: color-mix(in srgb, currentColor 30%, transparent);
+	--dsg-fill: color-mix(in srgb, currentColor 5%, transparent);
+}
+
+.dharmashop-gallery__drop {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: .35rem;
+	min-height: 8rem;
+	padding: 1rem;
+	text-align: center;
+	cursor: default;
+	border: 2px dashed var(--dsg-line);
+	border-radius: .6rem;
+	background: var(--dsg-fill);
+	transition: border-color .15s ease, background-color .15s ease, box-shadow .15s ease;
+}
+
+.dharmashop-gallery__drop:focus-visible {
+	border-color: var(--dsg-accent);
+	outline: 0;
+}
+
+.dharmashop-gallery.is-dragover .dharmashop-gallery__drop {
+	border-style: solid;
+	border-color: var(--dsg-accent);
+	background: color-mix(in srgb, var(--dsg-accent) 16%, transparent);
+	box-shadow: 0 0 0 .25rem color-mix(in srgb, var(--dsg-accent) 25%, transparent);
+}
+
+.dharmashop-gallery__icon {
+	color: var(--dsg-accent);
+}
+
+.dharmashop-gallery__title {
+	font-weight: 600;
+}
+
+.dharmashop-gallery__actions {
+	display: inline-flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
+	gap: .15rem .35rem;
+}
+
+.dharmashop-gallery__actions .btn-link {
+	padding: 0;
+}
+
+.dharmashop-gallery__limits {
+	opacity: .65;
+}
+
+.dharmashop-gallery__list {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+	gap: .9rem;
+	margin: 1rem 0 0;
+	padding: 0;
+	list-style: none;
+}
+
+.dharmashop-gallery__item {
+	display: flex;
+	flex-direction: column;
+	gap: .4rem;
+	padding: .5rem;
+	border: 1px solid var(--dsg-line);
+	border-radius: .5rem;
+	background: var(--dsg-fill);
+	cursor: grab;
+}
+
+.dharmashop-gallery__item.is-dragging {
+	opacity: .45;
+	border-style: dashed;
+}
+
+.dharmashop-gallery__frame {
+	position: relative;
+	aspect-ratio: 1 / 1;
+	overflow: hidden;
+	border-radius: .35rem;
+	background: color-mix(in srgb, currentColor 8%, transparent);
+}
+
+.dharmashop-gallery__thumb {
+	display: block;
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+	pointer-events: none;
+}
+
+.dharmashop-gallery__main {
+	display: none;
+	position: absolute;
+	top: .35rem;
+	left: .35rem;
+	padding: .1rem .5rem;
+	font-size: .75rem;
+	font-weight: 600;
+	color: #fff;
+	border-radius: 1rem;
+	background: var(--dsg-accent);
+}
+
+.dharmashop-gallery__item:first-child .dharmashop-gallery__main {
+	display: inline-block;
+}
+
+.dharmashop-gallery__handle {
+	position: absolute;
+	bottom: .3rem;
+	left: .35rem;
+	display: inline-flex;
+	padding: .15rem .3rem;
+	font-size: .85rem;
+	line-height: 1;
+	color: #fff;
+	border-radius: .3rem;
+	background: rgb(0 0 0 / 45%);
+}
+
+.dharmashop-gallery__handle .icon-ellipsis-v + .icon-ellipsis-v {
+	margin-left: -.25em;
+}
+
+.dharmashop-gallery__remove {
+	position: absolute;
+	top: .3rem;
+	right: .3rem;
+	padding: .1rem .4rem;
+	line-height: 1.2;
+}
+
+.dharmashop-gallery.is-busy .dharmashop-gallery__drop {
+	opacity: .7;
+}

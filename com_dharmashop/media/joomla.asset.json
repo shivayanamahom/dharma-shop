@@ -16,6 +16,18 @@
 			"name": "com_dharmashop.uploader",
 			"type": "style",
 			"uri": "com_dharmashop/uploader.css"
+		},
+		{
+			"name": "com_dharmashop.gallery",
+			"type": "script",
+			"uri": "com_dharmashop/gallery.js",
+			"attributes": { "defer": true },
+			"dependencies": ["core"]
+		},
+		{
+			"name": "com_dharmashop.gallery",
+			"type": "style",
+			"uri": "com_dharmashop/gallery.css"
 		}
 	]
 }

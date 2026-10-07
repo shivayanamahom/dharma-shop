@@ -17,8 +17,12 @@
 			<option value="2">JARCHIVED</option>
 			<option value="-2">JTRASHED</option>
 		</field>
-		<field name="introtext" type="textarea" label="COM_DHARMASHOP_FIELD_INTROTEXT_LABEL" description="COM_DHARMASHOP_FIELD_INTROTEXT_DESC" rows="4" filter="safehtml" />
+		<field name="introtext" type="editor" label="COM_DHARMASHOP_FIELD_INTROTEXT_LABEL" description="COM_DHARMASHOP_FIELD_INTROTEXT_DESC" buttons="true" filter="\Joomla\CMS\Component\ComponentHelper::filterText" />
 		<field name="fulltext" type="editor" label="COM_DHARMASHOP_FIELD_FULLTEXT_LABEL" buttons="true" filter="\Joomla\CMS\Component\ComponentHelper::filterText" />
+	</fieldset>
+
+	<fieldset name="media" addfieldprefix="Dharma\Component\DharmaShop\Administrator\Field">
+		<field name="gallery" type="gallery" folder="products" filter="Dharma\Component\DharmaShop\Administrator\Image\ImageUploader::filterGallery" label="COM_DHARMASHOP_GALLERY_LABEL" description="COM_DHARMASHOP_GALLERY_DESC" />
 	</fieldset>
 
 	<fieldset name="price">

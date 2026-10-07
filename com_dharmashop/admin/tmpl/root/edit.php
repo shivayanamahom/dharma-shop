@@ -10,7 +10,7 @@
 
 declare(strict_types=1);
 
-use Joomla\CMS\Factory;
+use Dharma\Component\DharmaShop\Administrator\Seo\PlaceholderPanel;
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
@@ -20,11 +20,7 @@ use Joomla\CMS\Router\Route;
 HTMLHelper::_('behavior.formvalidator');
 HTMLHelper::_('behavior.keepalive');
 
-// Справочник шорткодов — окно Joomla (как у формы категории).
-Factory::getApplication()->getDocument()->getWebAssetManager()->useScript('joomla.dialog-autocreate');
-$placeholdersButton = '<button type="button" class="btn btn-sm btn-secondary" data-joomla-dialog="'
-    . $this->escape(json_encode(['popupType' => 'inline', 'src' => '#dharma-placeholders', 'textHeader' => Text::_('COM_DHARMASHOP_PH_TITLE'), 'width' => '900px', 'height' => 'fit-content']))
-    . '"><span class="icon-code" aria-hidden="true"></span> ' . Text::_('COM_DHARMASHOP_PH_SHOW') . '</button>';
+$placeholdersButton = PlaceholderPanel::button();
 ?>
 <form action="<?php echo Route::_('index.php?option=com_dharmashop&view=root&layout=edit&extension=' . $this->extension); ?>" method="post" name="adminForm" id="root-form" aria-label="<?php echo Text::_('COM_DHARMASHOP_ROOT_FORM_LABEL', true); ?>" class="form-validate">
     <div class="row">
@@ -59,34 +55,7 @@ $placeholdersButton = '<button type="button" class="btn btn-sm btn-secondary" da
         </div>
     </div>
 
-    <template id="dharma-placeholders">
-        <div class="p-3">
-            <div>
-                <p class="text-muted mb-3"><?php echo Text::_('COM_DHARMASHOP_PH_NOTE'); ?></p>
-                <?php foreach ($this->placeholders as $group) : ?>
-                    <table class="table table-bordered align-middle mb-4">
-                        <caption class="caption-top text-center fw-bold fs-5 pb-2"><?php echo $this->escape($group['title']); ?></caption>
-                        <thead>
-                            <tr>
-                                <th scope="col" class="w-50"><?php echo Text::_('COM_DHARMASHOP_PH_NAME'); ?></th>
-                                <th scope="col" class="w-25"><?php echo Text::_('COM_DHARMASHOP_PH_CODE'); ?></th>
-                                <th scope="col" class="w-25"><?php echo Text::_('COM_DHARMASHOP_PH_NOW'); ?></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($group['items'] as $item) : ?>
-                                <tr>
-                                    <td><?php echo $this->escape($item['name']); ?></td>
-                                    <td><code class="user-select-all"><?php echo $this->escape($item['code']); ?></code></td>
-                                    <td class="text-muted"><?php echo $this->escape($item['value']); ?></td>
-                                </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
-                <?php endforeach; ?>
-            </div>
-        </div>
-    </template>
+    <?php echo PlaceholderPanel::dialog($this->placeholders); ?>
 
     <input type="hidden" name="task" value="">
     <input type="hidden" name="extension" value="<?php echo $this->escape($this->extension); ?>">

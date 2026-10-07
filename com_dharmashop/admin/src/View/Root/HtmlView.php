@@ -54,15 +54,7 @@ class HtmlView extends BaseHtmlView
             'global.currency' => (string) ComponentHelper::getParams('com_dharmashop')->get('currency_symbol', '₽'),
         ];
 
-        foreach (PlaceholderCatalog::groups($this->kind, true) as $group) {
-            $items = [];
-
-            foreach ($group['items'] as $code) {
-                $items[] = ['code' => '{' . $code . '}', 'name' => Text::_(PlaceholderCatalog::labelKey($code)), 'value' => $values[$code] ?? $none];
-            }
-
-            $this->placeholders[] = ['title' => Text::_($group['label']), 'items' => $items];
-        }
+        $this->placeholders = PlaceholderCatalog::describe($this->kind, $values, true);
 
         $this->addToolbar();
 

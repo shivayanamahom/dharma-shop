@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 \defined('_JEXEC') or die;
 
+use Dharma\Component\DharmaShop\Administrator\Seo\PlaceholderPanel;
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Layout\LayoutHelper;
@@ -26,6 +27,7 @@ $canAdmin = $this->getCurrentUser()->authorise('core.admin', 'com_dharmashop');
 ?>
 <form action="<?php echo Route::_('index.php?option=com_dharmashop&layout=edit&id=' . (int) $this->item->id); ?>" method="post" name="adminForm" id="product-form" aria-label="<?php echo Text::_('COM_DHARMASHOP_PRODUCT_FORM_LABEL', true); ?>" class="form-validate">
     <?php echo LayoutHelper::render('joomla.edit.title_alias', $this); ?>
+    <?php echo PlaceholderPanel::dialog($this->placeholders); ?>
 
     <div class="row">
         <div class="col-lg-9">
@@ -33,6 +35,11 @@ $canAdmin = $this->getCurrentUser()->authorise('core.admin', 'com_dharmashop');
         <?php echo HTMLHelper::_('uitab.startTabSet', 'productTab', ['active' => 'details', 'recall' => true, 'breakpoint' => 768]); ?>
 
         <?php echo HTMLHelper::_('uitab.addTab', 'productTab', 'details', Text::_('COM_DHARMASHOP_TAB_MAIN')); ?>
+            <fieldset class="options-form mb-3">
+                <legend><?php echo Text::_('COM_DHARMASHOP_TAB_IMAGES'); ?></legend>
+                <p class="text-muted"><?php echo Text::_('COM_DHARMASHOP_GALLERY_DESC'); ?></p>
+                <?php echo $this->form->getInput('gallery'); ?>
+            </fieldset>
             <?php echo $this->form->renderField('introtext'); ?>
             <?php echo $this->form->renderField('fulltext'); ?>
         <?php echo HTMLHelper::_('uitab.endTab'); ?>
@@ -75,14 +82,6 @@ $canAdmin = $this->getCurrentUser()->authorise('core.admin', 'com_dharmashop');
         </fieldset>
         <?php echo HTMLHelper::_('uitab.endTab'); ?>
 
-        <?php echo HTMLHelper::_('uitab.addTab', 'productTab', 'publishing', Text::_('JGLOBAL_FIELDSET_PUBLISHING')); ?>
-        <div class="row">
-            <div class="col-12 col-lg-6">
-                <?php echo LayoutHelper::render('joomla.edit.publishingdata', $this); ?>
-            </div>
-        </div>
-        <?php echo HTMLHelper::_('uitab.endTab'); ?>
-
         <?php echo HTMLHelper::_('uitab.addTab', 'productTab', 'metadata', Text::_('JGLOBAL_FIELDSET_METADATA_OPTIONS')); ?>
         <fieldset class="options-form">
             <legend><?php echo Text::_('JGLOBAL_FIELDSET_METADATA_OPTIONS'); ?></legend>
@@ -100,12 +99,30 @@ $canAdmin = $this->getCurrentUser()->authorise('core.admin', 'com_dharmashop');
         </div>
         </div>
         <div class="col-lg-3">
-                <?php
-                // Боковой блок: категории, бренд и бейджи вместе с состоянием, в нужном порядке (штатный блок сам выводит catid).
-                $this->fields = ['catid', 'extra_catids', 'brand_id', 'badge_ids', ['published', 'state', 'enabled']];
-                echo LayoutHelper::render('joomla.edit.global', $this);
-                $this->fields = null;
-                ?>
+            <?php // Боковая колонка — рамки (fieldset), как в RadicalMart: категории, шорткоды, основное, публикация (внизу). ?>
+            <fieldset class="options-form form-vertical mb-3">
+                <legend><?php echo Text::_('COM_DHARMASHOP_SIDEBAR_CATEGORIES'); ?></legend>
+                <?php foreach (['catid', 'extra_catids', 'brand_id', 'badge_ids'] as $name) : ?>
+                    <?php echo $this->form->renderField($name); ?>
+                <?php endforeach; ?>
+            </fieldset>
+            <fieldset class="options-form form-vertical mb-3">
+                <legend><?php echo Text::_('COM_DHARMASHOP_PH_TITLE'); ?></legend>
+                <p class="text-muted small mb-2"><?php echo Text::_('COM_DHARMASHOP_PH_SIDEBAR_HINT'); ?></p>
+                <?php echo PlaceholderPanel::button(); ?>
+            </fieldset>
+            <fieldset class="options-form form-vertical mb-3">
+                <legend><?php echo Text::_('COM_DHARMASHOP_SIDEBAR_MAIN'); ?></legend>
+                <?php foreach (['id', 'state'] as $name) : ?>
+                    <?php echo $this->form->renderField($name); ?>
+                <?php endforeach; ?>
+            </fieldset>
+            <fieldset class="options-form form-vertical mb-3">
+                <legend><?php echo Text::_('JGLOBAL_FIELDSET_PUBLISHING'); ?></legend>
+                <?php foreach (['created', 'created_by', 'modified', 'modified_by'] as $name) : ?>
+                    <?php echo $this->form->renderField($name); ?>
+                <?php endforeach; ?>
+            </fieldset>
         </div>
     </div>
 

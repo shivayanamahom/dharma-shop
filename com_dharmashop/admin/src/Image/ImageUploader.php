@@ -322,6 +322,43 @@ final class ImageUploader
         return $path . (preg_match('#^\#joomlaImage://local-[a-z0-9_-]+/[^\s<>"\'`]*$#i', $hash) ? $hash : '');
     }
 
+    /**
+     * Фильтр значения поля-галереи (атрибут filter): список элементов {path, alt, title}; пути проходят filterPath,
+     * пустые и повторяющиеся отбрасываются, подписи очищаются от тегов; не больше 100 изображений.
+     *
+     * @return  array<int, array{path: string, alt: string, title: string}>
+     */
+    public static function filterGallery(mixed $value): array
+    {
+        $result = [];
+        $seen = [];
+
+        // Данные формы приходят из Registry: ассоциативные массивы там становятся объектами, поэтому приводим к массивам.
+        $value = is_array($value) || is_object($value) ? (json_decode((string) json_encode($value), true) ?: []) : [];
+
+        foreach ($value as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+
+            $path = trim((string) strstr(self::filterPath($item['path'] ?? '') . '#', '#', true));
+
+            if ($path === '' || isset($seen[$path])) {
+                continue;
+            }
+
+            $seen[$path] = true;
+            $clean = static fn (mixed $text): string => mb_substr(trim(strip_tags((string) $text)), 0, 255);
+            $result[] = ['path' => $path, 'alt' => $clean($item['alt'] ?? ''), 'title' => $clean($item['title'] ?? '')];
+
+            if (count($result) >= 100) {
+                break;
+            }
+        }
+
+        return $result;
+    }
+
     private static function iniBytes(string $value): int
     {
         $value = trim($value);

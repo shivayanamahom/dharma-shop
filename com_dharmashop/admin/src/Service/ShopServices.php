@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace Dharma\Component\DharmaShop\Administrator\Service;
 
+use Dharma\Component\DharmaShop\Administrator\Catalog\GalleryRepository;
 use Dharma\Component\DharmaShop\Administrator\Catalog\Indexer;
 use Dharma\Component\DharmaShop\Administrator\Catalog\ProductRebuilder;
 use Dharma\Component\DharmaShop\Administrator\Catalog\VariantRepository;
@@ -44,6 +45,8 @@ final class ShopServices
     private ?StockService $stock = null;
 
     private ?MoneyFormatter $money = null;
+
+    private ?GalleryRepository $gallery = null;
 
     private ?SaleScheduler $sales = null;
 
@@ -78,6 +81,11 @@ final class ShopServices
     public function stock(): StockService
     {
         return $this->stock ??= new StockService($this->db);
+    }
+
+    public function gallery(): GalleryRepository
+    {
+        return $this->gallery ??= new GalleryRepository($this->db);
     }
 
     public function money(): MoneyFormatter
