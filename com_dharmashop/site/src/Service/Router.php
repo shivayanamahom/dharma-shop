@@ -45,6 +45,19 @@ class Router extends RouterView
         $this->attachRule(new NomenuRules($this));
     }
 
+    /**
+     * У пунктов меню «Бренды» и «Бейджи» в ссылке хранится параметр id корня (0 или 1), но он не ключ вида: без этой правки
+     * Joomla дописывает его в адрес («/proizvoditeli?id=0»). Убираем до построения адреса.
+     */
+    public function build(&$query)
+    {
+        if (in_array($query['view'] ?? '', ['brands', 'badges'], true) && (int) ($query['id'] ?? 0) <= 1) {
+            unset($query['id']);
+        }
+
+        return parent::build($query);
+    }
+
     public function getCategoriesSegment($id, $query): array
     {
         return $this->chain((int) $id, $this->rootKey($query, 'categories'));

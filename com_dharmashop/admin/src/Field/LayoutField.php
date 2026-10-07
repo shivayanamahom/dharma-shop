@@ -30,6 +30,10 @@ class LayoutField extends ListField
         'categories' => 'components/com_dharmashop/tmpl/categories',
         'category_card' => 'layouts/components/dharmashop/category-card',
         'product_card' => 'layouts/components/dharmashop/product-card',
+        'brand' => 'components/com_dharmashop/tmpl/brand',
+        'badge' => 'components/com_dharmashop/tmpl/badge',
+        'brand_product_card' => 'layouts/components/dharmashop/brand-product-card',
+        'badge_product_card' => 'layouts/components/dharmashop/badge-product-card',
         'brands' => 'components/com_dharmashop/tmpl/brands',
         'badges' => 'components/com_dharmashop/tmpl/badges',
         'brand_card' => 'layouts/components/dharmashop/brand-card',
@@ -51,6 +55,11 @@ class LayoutField extends ListField
             $filename = basename($file);
 
             if (!preg_match('/^([A-Za-z0-9_-]+)\.php$/D', $filename, $matches)) {
+                continue;
+            }
+
+            // В папках страниц файлы вида default_items.php — части страницы (loadTemplate), а не самостоятельные макеты.
+            if (str_starts_with($directory, 'components/com_dharmashop/tmpl/') && str_contains($matches[1], '_')) {
                 continue;
             }
 

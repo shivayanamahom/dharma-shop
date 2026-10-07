@@ -154,6 +154,16 @@ class CategoryModel extends AdminModel
             }
         }
 
+        // Выбор макета страницы и карточки в записи берёт файлы своего типа: у бренда и бейджа — свои папки.
+        if ($extension !== CategoryTypes::CATEGORY) {
+            $area = $extension === CategoryTypes::BRAND ? 'brand' : 'badge';
+            $form->setFieldAttribute('category_layout', 'layoutgroup', $area, 'params');
+
+            if ((int) ComponentHelper::getParams('com_dharmashop')->get($area . '_use_category_cards', 1) === 0) {
+                $form->setFieldAttribute('product_card_layout', 'layoutgroup', $area . '_product_card', 'params');
+            }
+        }
+
         if ($extension === CategoryTypes::BRAND) {
             $form->setFieldAttribute('subcategory_show_image', 'label', 'COM_DHARMASHOP_DISPLAY_SUBBRAND_IMAGE', 'params');
             $form->setFieldAttribute('subcategory_show_image', 'description', 'COM_DHARMASHOP_DISPLAY_SUBBRAND_IMAGE_DESC', 'params');

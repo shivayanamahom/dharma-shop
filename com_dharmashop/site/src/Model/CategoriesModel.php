@@ -42,9 +42,13 @@ class CategoriesModel extends BaseDatabaseModel
             $taxonomy = $this->taxonomy();
             $root = $taxonomy->rootParam !== '' ? ComponentHelper::getParams('com_dharmashop')->get($taxonomy->rootParam, []) : [];
             $data = json_decode(json_encode($root), true) ?: [];
-            $this->parent = (object) ($data + ['title' => Text::_($taxonomy->rootTitle), 'description' => '', 'metadesc' => '']);
+            // Название корня: из формы корневой страницы, иначе название пункта меню, иначе языковая строка.
+            $active = Factory::getApplication()->getMenu()->getActive();
+            $menuTitle = $active && $active->component === 'com_dharmashop' ? trim((string) $active->title) : '';
+            $default = $menuTitle !== '' ? $menuTitle : Text::_($taxonomy->rootTitle);
+            $this->parent = (object) ($data + ['title' => $default, 'description' => '', 'metadesc' => '']);
             if (trim((string) $this->parent->title) === '') {
-                $this->parent->title = Text::_($taxonomy->rootTitle);
+                $this->parent->title = $default;
             }
             $this->parent->id = 0;
             $this->parent->parent_id = 0;
