@@ -30,7 +30,7 @@ $modes = ['grid' => 'COM_DHARMASHOP_VIEW_GRID', 'list' => 'COM_DHARMASHOP_VIEW_L
             </div>
         </section>
     <?php endif; ?>
-    <form action="<?php echo $this->escape($this->categoryRoute((int) $this->item->id)); ?>" method="get" class="mb-4" data-dharmashop-listing-controls>escape($this->categoryRoute((int) $this->item->id)); ?>" method="get" class="mb-4" data-dharmashop-listing-controls>
+    <form action="<?php echo $this->escape($this->categoryRoute((int) $this->item->id)); ?>" method="get" class="mb-4" data-dharmashop-listing-controls>
         <div class="d-flex flex-column flex-lg-row align-items-lg-end justify-content-between gap-3">
             <div>
                 <label for="dharmashop-sort" class="form-label"><?php echo Text::_('COM_DHARMASHOP_SORT_LABEL'); ?></label>
