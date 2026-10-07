@@ -50,8 +50,23 @@ $extraFieldsets = array_filter(['dharmashop_brand', 'dharmashop_badge'], fn (str
                 <?php echo $this->form->renderField('description'); ?>
             </div>
             <div class="col-lg-3">
-                <div class="alert alert-secondary py-2">
-                    <?php echo Text::_('COM_DHARMASHOP_CAT_TYPE'); ?>: <strong><?php echo Text::_($typeLabel); ?></strong>
+                <div class="card card-body py-2 mb-3">
+                    <dl class="row mb-0 small">
+                        <dt class="col-5 fw-normal text-body-secondary"><?php echo Text::_('COM_DHARMASHOP_CAT_TYPE'); ?></dt>
+                        <dd class="col-7 mb-1"><strong><?php echo Text::_($typeLabel); ?></strong></dd>
+                        <dt class="col-5 fw-normal text-body-secondary">ID</dt>
+                        <dd class="col-7 mb-1"><strong><?php echo $this->item->id ? (int) $this->item->id : '—'; ?></strong></dd>
+                        <dt class="col-5 fw-normal text-body-secondary"><?php echo Text::_('COM_DHARMASHOP_CAT_HEADING_PRODUCTS'); ?></dt>
+                        <dd class="col-7 mb-0">
+                            <?php if ($this->item->id && $this->counts['total'] > 0) : ?>
+                                <a href="<?php echo Route::_('index.php?option=com_dharmashop&view=products&filter[category_id]=' . (int) $this->item->id . '&filter[published]=*'); ?>" title="<?php echo Text::_('COM_DHARMASHOP_CAT_SHOW_PRODUCTS', true); ?>">
+                                    <strong><?php echo (int) $this->counts['total']; ?></strong></a>
+                                <div class="text-body-secondary"><?php echo Text::sprintf('COM_DHARMASHOP_CAT_PRODUCTS_PUBLISHED', (int) $this->counts['published']); ?></div>
+                            <?php else : ?>
+                                <strong>0</strong>
+                            <?php endif; ?>
+                        </dd>
+                    </dl>
                 </div>
                 <?php
                 $this->fields = $isBadge ? ['published', 'access', 'note'] : ['parent_id', 'published', 'access', 'note'];

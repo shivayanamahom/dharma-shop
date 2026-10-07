@@ -36,6 +36,9 @@ class HtmlView extends BaseHtmlView
 
     protected string $extension = CategoryTypes::CATEGORY;
 
+    /** @var array{total: int, published: int} число товаров записи */
+    protected array $counts = ['total' => 0, 'published' => 0];
+
     /** Список полей для штатных блоков joomla.edit.* (задаётся в шаблоне на время вывода бокового блока). */
     public ?array $fields = null;
 
@@ -56,6 +59,7 @@ class HtmlView extends BaseHtmlView
         $this->item = $item;
         $this->extension = $model->getExtension();
         $this->form = $model->getForm();
+        $this->counts = $model->getProductCounts((int) $item->id);
 
         $this->addToolbar();
 

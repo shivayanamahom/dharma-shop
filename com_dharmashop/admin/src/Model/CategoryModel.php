@@ -227,6 +227,26 @@ class CategoryModel extends AdminModel
         return parent::delete($pks);
     }
 
+    /**
+     * Число товаров, привязанных к записи (по витрине; для категории включая подкатегории).
+     *
+     * @return  array{total: int, published: int}
+     */
+    public function getProductCounts(int $id): array
+    {
+        if ($id <= 0) {
+            return ['total' => 0, 'published' => 0];
+        }
+
+        $db = $this->getDatabase();
+        $row = $db->setQuery(
+            $db->createQuery()->select('COUNT(*) AS total, COALESCE(SUM(state = 1), 0) AS published')
+                ->from('#__dharmashop_product_categories')->where('catid = :id')->bind(':id', $id, ParameterType::INTEGER)
+        )->loadObject();
+
+        return ['total' => (int) ($row->total ?? 0), 'published' => (int) ($row->published ?? 0)];
+    }
+
     /** Перестраивает дерево и пути (кнопка «Перестроить»). */
     public function rebuild(): bool
     {
