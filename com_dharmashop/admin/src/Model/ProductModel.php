@@ -114,6 +114,7 @@ class ProductModel extends AdminModel
         $item->sku = $item->price = $item->discount = $item->discount_start = $item->discount_end = null;
         $item->stock_qty = 0;
         $item->gallery = [];
+        $item->price_result = '';
         $item->weight = $item->length = $item->width = $item->height = null;
 
         if (!empty($item->id)) {
@@ -131,11 +132,28 @@ class ProductModel extends AdminModel
 
                 // Скидка в форме — одной строкой: «500» или «10%».
                 $item->discount = Discount::format($variant->discount, $variant->discount_percent);
+                $item->price_result = $this->priceResult($variant);
                 $item->stock_qty = $shop->stock()->getQty((int) $variant->id);
             }
         }
 
         return $item;
+    }
+
+    /** Итог для поля «Цена со скидкой»: «1 500 ₽ (−500 ₽)»; если скидка не действует по срокам — пояснение. */
+    private function priceResult(object $variant): string
+    {
+        if ($variant->discount === null || (float) $variant->discount <= 0 || $variant->price === null) {
+            return '';
+        }
+
+        $money = $this->shop()->money();
+
+        if ($variant->price_final === null || (float) $variant->price_final >= (float) $variant->price) {
+            return Text::sprintf('COM_DHARMASHOP_DISCOUNT_INACTIVE', $money->format($variant->price));
+        }
+
+        return $money->format($variant->price_final) . ' (−' . $money->format((float) $variant->price - (float) $variant->price_final) . ')';
     }
 
     /**

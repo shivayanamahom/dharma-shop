@@ -30,6 +30,7 @@
 		<field name="sku" type="text" label="COM_DHARMASHOP_FIELD_SKU_LABEL" description="COM_DHARMASHOP_FIELD_SKU_DESC" maxlength="100" />
 		<field name="price" type="number" label="COM_DHARMASHOP_FIELD_PRICE_LABEL" description="COM_DHARMASHOP_FIELD_PRICE_DESC" step="0.01" min="0" hint="COM_DHARMASHOP_FIELD_PRICE_HINT" />
 		<field name="discount" type="text" label="COM_DHARMASHOP_FIELD_DISCOUNT_LABEL" description="COM_DHARMASHOP_FIELD_DISCOUNT_DESC" hint="COM_DHARMASHOP_FIELD_DISCOUNT_HINT" maxlength="12" filter="string" />
+		<field name="price_result" type="text" label="COM_DHARMASHOP_FIELD_PRICE_RESULT_LABEL" description="COM_DHARMASHOP_FIELD_PRICE_RESULT_DESC" class="readonly" readonly="true" filter="unset" showon="discount!:" />
 		<field name="discount_start" type="calendar" label="COM_DHARMASHOP_FIELD_DISCOUNT_START_LABEL" translateformat="true" showtime="true" filter="user_utc" showon="discount!:" />
 		<field name="discount_end" type="calendar" label="COM_DHARMASHOP_FIELD_DISCOUNT_END_LABEL" translateformat="true" showtime="true" filter="user_utc" showon="discount!:" />
 		<field name="stock_qty" type="number" label="COM_DHARMASHOP_FIELD_STOCK_QTY_LABEL" step="0.001" default="0" />
