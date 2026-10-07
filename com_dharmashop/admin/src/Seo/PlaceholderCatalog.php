@@ -30,27 +30,27 @@ final class PlaceholderCatalog
 
         if ($area === 'product') {
             return [
-                ['label' => 'COM_DHARMASHOP_PH_GROUP_PRODUCT', 'items' => ['product.title', 'product.sku', 'product.category', 'product.brand', 'product.price', 'product.price_old', 'product.discount', 'product.unit', 'product.stock']],
-                ['label' => 'COM_DHARMASHOP_PH_GROUP_GLOBAL', 'items' => ['global.sitename', 'global.currency']],
+                ['label' => 'COM_DHARMASHOP_PH_GROUP_PRODUCT', 'items' => ['product.title', 'product.sku', 'product.category', 'product.brand', 'product.price', 'product.price_min', 'product.price_max', 'product.price_old', 'product.discount', 'product.unit', 'product.stock']],
+                ['label' => 'COM_DHARMASHOP_PH_GROUP_GLOBAL', 'items' => ['global.sitename', 'global.currency', 'global.url']],
             ];
         }
 
         if ($root) {
             return [
                 ['label' => 'COM_DHARMASHOP_PH_GROUP_' . strtoupper($area), 'items' => $own],
-                ['label' => 'COM_DHARMASHOP_PH_GROUP_GLOBAL', 'items' => ['global.sitename', 'global.currency']],
+                ['label' => 'COM_DHARMASHOP_PH_GROUP_GLOBAL', 'items' => ['global.sitename', 'global.currency', 'global.url']],
             ];
         }
 
         if ($area === 'category') {
-            $own[] = 'category.parent';
+            array_push($own, 'category.parent', 'category.introtext');
         }
 
         array_push($own, $area . '.price_min', $area . '.price_max', $area . '.count');
 
         return [
             ['label' => 'COM_DHARMASHOP_PH_GROUP_' . strtoupper($area), 'items' => $own],
-            ['label' => 'COM_DHARMASHOP_PH_GROUP_GLOBAL', 'items' => ['global.sitename', 'global.currency']],
+            ['label' => 'COM_DHARMASHOP_PH_GROUP_GLOBAL', 'items' => ['global.sitename', 'global.currency', 'global.url']],
         ];
     }
 

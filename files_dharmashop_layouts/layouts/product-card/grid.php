@@ -8,7 +8,7 @@ use Joomla\CMS\Language\Text;
 $item = $displayData['item'];
 $escape = static fn ($value): string => htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 $image = MediaUrl::absolute((string) ($item->cover ?? ''));
-$intro = trim(strip_tags((string) ($item->introtext ?? '')));
+$intro = trim(strip_tags((string) ($displayData['intro'] ?? $item->introtext ?? '')));
 $price = (string) ($displayData['priceRange'] ?? '');
 ?>
 <article class="card h-100">

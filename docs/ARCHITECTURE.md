@@ -510,6 +510,8 @@ CREATE TABLE `#__dharmashop_field_values` (
 
 **C38:** grid-карточка наполнена минимальной разметкой: обложка/название/интро/цена. Данные берутся из уже загруженной порции, цена — готовая строка MoneyFormatter, запросов в layout нет. Ссылки товара, корзина, list/table и товарная JSON-LD ожидают следующих шагов.
 
+**C39:** `Site\Placeholder\Renderer` применяется к SEO-полям, интро и описанию category/categories, а также к интро товара в grid-карточке. `CategoryValues` предоставляет title/parent/короткий introtext, ленивые count и price_min/max через `CategoriesModel`; `ProductValues` использует уже загруженные title/price_min/max/unit/in_stock без запроса. `global.sitename/currency/url` централизованы в `GlobalValues` и дополняют значения в `PageSeo`. В HTML-режиме сохранённый HTML остаётся разметкой, вставки экранируются; неизвестные коды остаются видимыми. Root count считает весь опубликованный каталог с потолком; root price range пока пуст. SKU, основная категория, бренд и эффективная цена варианта для товара ещё не доступны карточке; подстановки материалов — отдельная задача.
+
 ### 7.4 Модули
 
 `categories`, `search`, `filter` (этап 1), `products` (новые/избранные/популярные), `cart` (этап 2). Фильтр-модуль и вид категории используют один `FilterBuilder`.
