@@ -80,7 +80,7 @@ class HtmlView extends BaseHtmlView
         $variant = $query->exists('sort') || $query->exists('product_view');
         $this->seo = $seo->resolve($taxonomy->area, $this->item, $this->textValues, $ownMenu,
             $this->absoluteRoute((int) $this->item->id) . (!$variant && $this->start ? '?start=' . $this->start : ''),
-            $variant ? 'noindex, follow' : null);
+            $variant ? 'noindex, follow' : null, $this->pagination ? (int) $this->pagination->pagesCurrent : 1);
         // Социальные теги работают; ItemList добавим вместе с содержимым и ссылками карточек.
         $seo->apply($this->seo, $this->getDocument());
         $pastMenu = $menuCategory <= 1;

@@ -9,6 +9,7 @@ use Dharma\Component\DharmaShop\Site\Placeholder\GlobalValues;
 use Dharma\Component\DharmaShop\Site\Support\MediaUrl;
 use Joomla\CMS\Document\HtmlDocument;
 use Joomla\CMS\Factory;
+use Joomla\CMS\Language\Text;
 use Joomla\CMS\Plugin\PluginHelper;
 use Joomla\Event\Event;
 use Joomla\Registry\Registry;
@@ -22,7 +23,7 @@ final class PageSeo
     {
     }
 
-    public function resolve(string $area, object $item, array $values, Registry $menu, string $url, ?string $robots = null): PageMetadata
+    public function resolve(string $area, object $item, array $values, Registry $menu, string $url, ?string $robots = null, int $page = 1): PageMetadata
     {
         $app = Factory::getApplication();
         $defaults = new SeoSettings($this->settings);
@@ -54,9 +55,12 @@ final class PageSeo
         // Явное значение (например, страница-дубль с параметрами) важнее настроек записи, меню и магазина.
         $robots = $robots ?? (string) ($item->metadata->get('robots') ?: $menu->get('robots') ?: $defaults->robots());
 
+        // Страницы постраничной навигации (со второй) получают уникальные заголовок и описание; h1 остаётся прежним.
+        $paged = static fn (string $value): string => $page > 1 && $value !== '' ? $value . ' — ' . Text::sprintf('COM_DHARMASHOP_PAGE_N', $page) : $value;
+
         return new PageMetadata(
-            $part('title', (string) $params->get('meta_title', ''), (string) $menu->get('page_title', '')),
-            $part('description', (string) ($item->metadesc ?? ''), (string) $menu->get('menu-meta_description', '')),
+            $paged($part('title', (string) $params->get('meta_title', ''), (string) $menu->get('page_title', ''))),
+            $paged($part('description', (string) ($item->metadesc ?? ''), (string) $menu->get('menu-meta_description', ''))),
             $robots,
             $part('h1', (string) $params->get('h1', ''), (string) $menu->get('page_heading', '')),
             $part('breadcrumb', (string) $params->get('breadcrumb_title', '')),

@@ -1,7 +1,9 @@
 /**
- * Dharma Shop: список товаров категории. Сортировка, вид и страницы подгружаются без перезагрузки и без смены адреса
+ * Dharma Shop: список товаров категории. Сортировка и вид подгружаются без перезагрузки и без смены адреса
  * (адрес страницы остаётся каноническим — для поисковиков); без JavaScript работают обычные формы и ссылки.
- * Фрагмент приходит с того же адреса страницы с параметрами format=raw, sort, product_view, start.
+ * Фрагмент приходит с того же адреса страницы с параметрами format=raw, sort, product_view.
+ * Страницы пагинации — настоящие адреса (`?start=N`): ссылки открываются обычным переходом, сортировка и вид, выбранные
+ * на странице, добавляются к адресу страницы. Если открыта страница пагинации, смена сортировки или вида тоже идёт обычным переходом.
  */
 (() => {
   'use strict';
@@ -19,8 +21,10 @@
       const data = new FormData(form);
       return { sort: String(data.get('sort') || ''), view: String(data.get('product_view') || '') };
     };
+    const initial = state();
+    const onPaginationPage = () => /[?&](start|limitstart)=/.test(window.location.search);
 
-    const load = (start) => {
+    const load = () => {
       if (controller) controller.abort();
       controller = new AbortController();
       const url = new URL(form.getAttribute('action') || window.location.href, window.location.href);
@@ -29,7 +33,6 @@
       url.searchParams.set('format', 'raw');
       if (current.sort) url.searchParams.set('sort', current.sort);
       if (current.view) url.searchParams.set('product_view', current.view);
-      if (start > 0) url.searchParams.set('start', String(start));
       container.setAttribute('aria-busy', 'true');
       container.classList.add('opacity-50');
 
@@ -56,19 +59,27 @@
     };
 
     form.addEventListener('change', (event) => {
-      if (event.target.matches('[name="sort"], [name="product_view"]')) load(0);
+      if (!event.target.matches('[name="sort"], [name="product_view"]')) return;
+      // На странице пагинации новая сортировка меняет и состав страницы: обычный переход на первую страницу.
+      if (onPaginationPage()) form.submit(); else load();
     });
     form.addEventListener('submit', (event) => {
       event.preventDefault();
-      load(0);
+      if (onPaginationPage()) form.submit(); else load();
     });
-    container.addEventListener('click', (event) => {
-      // Штатная постраничная навигация Joomla: номер страницы берётся из ссылки (limitstart), остальное — из формы.
-      const link = event.target.closest('.pagination a[href]');
-      if (!link || event.ctrlKey || event.metaKey || event.shiftKey || event.button !== 0) return;
+    document.addEventListener('click', (event) => {
+      // Штатная постраничная навигация Joomla: переход на адрес страницы; сортировка и вид из формы добавляются, если они не по умолчанию.
+      const link = event.target.closest('[data-dharmashop-listing] .pagination a[href]');
+      if (!link || link.getAttribute('href') === '#' || event.ctrlKey || event.metaKey || event.shiftKey || event.button !== 0) return;
       event.preventDefault();
-      const params = new URL(link.href, window.location.href).searchParams;
-      load(parseInt(params.get('start') || params.get('limitstart') || '0', 10) || 0);
+      const url = new URL(link.href, window.location.href);
+      const current = state();
+      const fromUrl = new URLSearchParams(window.location.search);
+      url.searchParams.delete('sort');
+      url.searchParams.delete('product_view');
+      if (current.sort && (current.sort !== initial.sort || fromUrl.has('sort'))) url.searchParams.set('sort', current.sort);
+      if (current.view && (current.view !== initial.view || fromUrl.has('product_view'))) url.searchParams.set('product_view', current.view);
+      window.location.assign(url.toString());
     });
   };
 

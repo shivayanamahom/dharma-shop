@@ -17,7 +17,8 @@ $modes = ['grid' => 'COM_DHARMASHOP_VIEW_GRID', 'list' => 'COM_DHARMASHOP_VIEW_L
     <?php if ($this->image !== '') : ?>
         <img class="img-fluid rounded mb-4" src="<?php echo $this->escape($this->image); ?>" alt="<?php echo $this->escape((string) ($this->item->params->get('image_alt') ?: $this->item->title)); ?>" decoding="async">
     <?php endif; ?>
-    <?php if (trim((string) $this->item->params->get('introtext', '')) !== '') : ?>
+    <?php // Тексты и подкатегории — только на первой странице списка: на остальных они дублируют её содержимое (SEO). ?>
+    <?php if ($this->start === 0 && trim((string) $this->item->params->get('introtext', '')) !== '') : ?>
         <div class="mb-4"><?php echo $this->text((string) $this->item->params->get('introtext')); ?></div>
     <?php endif; ?>
     <form action="<?php echo $this->escape($this->categoryRoute((int) $this->item->id)); ?>" method="get" class="mb-4" data-dharmashop-listing-controls>
@@ -52,6 +53,6 @@ $modes = ['grid' => 'COM_DHARMASHOP_VIEW_GRID', 'list' => 'COM_DHARMASHOP_VIEW_L
     <?php endif; ?>
     <?php // Список товаров и ссылки порций: этот же блок отдаёт AJAX-фрагмент (RawView), JavaScript заменяет им содержимое без смены адреса. ?>
     <div data-dharmashop-listing aria-live="polite"><?php echo $this->loadTemplate('items'); ?></div>
-    <?php if (trim((string) $this->item->description) !== '') : ?><div class="mt-4"><?php echo $this->text((string) $this->item->description); ?></div><?php endif; ?>
+    <?php if ($this->start === 0 && trim((string) $this->item->description) !== '') : ?><div class="mt-4"><?php echo $this->text((string) $this->item->description); ?></div><?php endif; ?>
     <?php echo $hooks->render('afterContent'); ?>
 </section>

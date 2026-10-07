@@ -17,10 +17,11 @@ $modes = ['grid' => 'COM_DHARMASHOP_VIEW_GRID', 'list' => 'COM_DHARMASHOP_VIEW_L
     <?php if ($this->image !== '') : ?>
         <img class="img-fluid rounded mb-4" src="<?php echo $this->escape($this->image); ?>" alt="<?php echo $this->escape((string) ($this->item->params->get('image_alt') ?: $this->item->title)); ?>" decoding="async">
     <?php endif; ?>
-    <?php if (trim((string) $this->item->params->get('introtext', '')) !== '') : ?>
+    <?php // Тексты и подкатегории — только на первой странице списка: на остальных они дублируют её содержимое (SEO). ?>
+    <?php if ($this->start === 0 && trim((string) $this->item->params->get('introtext', '')) !== '') : ?>
         <div class="mb-4"><?php echo $this->text((string) $this->item->params->get('introtext')); ?></div>
     <?php endif; ?>
-    <?php if ($this->subcategories) : ?>
+    <?php if ($this->start === 0 && $this->subcategories) : ?>
         <section class="mb-5" aria-labelledby="dharmashop-subcategories-title">
             <h2 id="dharmashop-subcategories-title" class="h4 mb-3"><?php echo Text::_($this->item->id ? 'COM_DHARMASHOP_SUBBRANDS' : 'COM_DHARMASHOP_BRANDS'); ?></h2>
             <div class="<?php echo $this->escape($this->subcategoryGridClasses); ?>">
@@ -62,6 +63,6 @@ $modes = ['grid' => 'COM_DHARMASHOP_VIEW_GRID', 'list' => 'COM_DHARMASHOP_VIEW_L
     <?php endif; ?>
     <?php // Список товаров и ссылки порций: этот же блок отдаёт AJAX-фрагмент (RawView), JavaScript заменяет им содержимое без смены адреса. ?>
     <div data-dharmashop-listing aria-live="polite"><?php echo $this->loadTemplate('items'); ?></div>
-    <?php if (trim((string) $this->item->description) !== '') : ?><div class="mt-4"><?php echo $this->text((string) $this->item->description); ?></div><?php endif; ?>
+    <?php if ($this->start === 0 && trim((string) $this->item->description) !== '') : ?><div class="mt-4"><?php echo $this->text((string) $this->item->description); ?></div><?php endif; ?>
     <?php echo $hooks->render('afterContent'); ?>
 </section>
