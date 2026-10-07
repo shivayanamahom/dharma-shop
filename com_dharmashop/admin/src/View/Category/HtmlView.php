@@ -36,8 +36,8 @@ class HtmlView extends BaseHtmlView
 
     protected string $extension = CategoryTypes::CATEGORY;
 
-    /** @var array{total: int, published: int} число товаров записи */
-    protected array $counts = ['total' => 0, 'published' => 0];
+    /** @var array{total: int, published: int, in_stock: int} число товаров записи */
+    protected array $counts = ['total' => 0, 'published' => 0, 'in_stock' => 0];
 
     /** Список полей для штатных блоков joomla.edit.* (задаётся в шаблоне на время вывода бокового блока). */
     public ?array $fields = null;

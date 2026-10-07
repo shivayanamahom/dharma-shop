@@ -60,30 +60,34 @@ $extraFieldsets = array_filter(['dharmashop_brand', 'dharmashop_badge'], fn (str
                 $afterInfo = ob_get_clean();
                 $this->fields = null;
                 ?>
-                <div class="card mb-3">
-                    <div class="card-header py-2 fw-bold"><?php echo Text::_('COM_DHARMASHOP_CAT_INFO'); ?></div>
-                    <ul class="list-group list-group-flush small">
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <span class="text-body-secondary"><?php echo Text::_('COM_DHARMASHOP_CAT_TYPE'); ?></span>
-                            <strong><?php echo Text::_($typeLabel); ?></strong>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <span class="text-body-secondary">ID</span>
-                            <span class="badge bg-secondary"><?php echo $this->item->id ? (int) $this->item->id : '—'; ?></span>
-                        </li>
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                            <span class="text-body-secondary"><?php echo Text::_('COM_DHARMASHOP_CAT_HEADING_PRODUCTS'); ?></span>
-                            <span class="text-end">
-                                <?php if ($this->item->id && $this->counts['total'] > 0) : ?>
-                                    <a class="btn btn-sm <?php echo $this->counts['published'] > 0 ? 'btn-success' : 'btn-secondary'; ?>" href="<?php echo Route::_('index.php?option=com_dharmashop&view=products&filter[category_id]=' . (int) $this->item->id . '&filter[published]=*'); ?>" title="<?php echo Text::_('COM_DHARMASHOP_CAT_SHOW_PRODUCTS', true); ?>"><?php echo (int) $this->counts['total']; ?></a>
-                                    <span class="d-block text-body-secondary"><?php echo Text::sprintf('COM_DHARMASHOP_CAT_PRODUCTS_PUBLISHED', (int) $this->counts['published']); ?></span>
-                                <?php else : ?>
-                                    <span class="btn btn-sm btn-secondary disabled">0</span>
-                                <?php endif; ?>
-                            </span>
-                        </li>
-                    </ul>
-                </div>
+                <fieldset class="options-form form-vertical mb-3">
+                        <div class="control-group">
+                            <div class="control-label"><label for="cat-type"><?php echo Text::_('COM_DHARMASHOP_CAT_TYPE'); ?></label></div>
+                            <div class="controls"><input type="text" id="cat-type" class="form-control" value="<?php echo $this->escape(Text::_($typeLabel)); ?>" readonly></div>
+                        </div>
+                        <div class="control-group">
+                            <div class="control-label"><label for="cat-id"><?php echo 'ID'; ?></label></div>
+                            <div class="controls"><input type="text" id="cat-id" class="form-control" value="<?php echo $this->item->id ? (int) $this->item->id : '—'; ?>" readonly></div>
+                        </div>
+                </fieldset>
+                <fieldset class="options-form form-vertical mb-3">
+                    <legend><?php echo Text::_('COM_DHARMASHOP_CAT_COUNTS'); ?></legend>
+                        <div class="control-group">
+                            <div class="control-label"><label for="cat-cnt-total"><?php echo Text::_('COM_DHARMASHOP_CAT_COUNT_TOTAL_LABEL'); ?></label></div>
+                            <div class="controls"><input type="text" id="cat-cnt-total" class="form-control" value="<?php echo (int) $this->counts['total']; ?>" readonly></div>
+                        </div>
+                        <div class="control-group">
+                            <div class="control-label"><label for="cat-cnt-published"><?php echo Text::_('COM_DHARMASHOP_CAT_COUNT_PUBLISHED_LABEL'); ?></label></div>
+                            <div class="controls"><input type="text" id="cat-cnt-published" class="form-control" value="<?php echo (int) $this->counts['published']; ?>" readonly></div>
+                        </div>
+                        <div class="control-group">
+                            <div class="control-label"><label for="cat-cnt-stock"><?php echo Text::_('COM_DHARMASHOP_CAT_COUNT_IN_STOCK_LABEL'); ?></label></div>
+                            <div class="controls"><input type="text" id="cat-cnt-stock" class="form-control" value="<?php echo (int) $this->counts['in_stock']; ?>" readonly></div>
+                        </div>
+                    <?php if ($this->item->id && $this->counts['total'] > 0) : ?>
+                        <a class="btn btn-sm btn-primary" href="<?php echo Route::_('index.php?option=com_dharmashop&view=products&filter[category_id]=' . (int) $this->item->id . '&filter[published]=*'); ?>"><?php echo Text::_('COM_DHARMASHOP_CAT_SHOW_PRODUCTS'); ?></a>
+                    <?php endif; ?>
+                </fieldset>
                 <?php echo $afterInfo; ?>
             </div>
         </div>

@@ -125,7 +125,7 @@ class CategoriesModel extends ListModel
         $ids = array_map(static fn ($i) => (int) $i->id, $items);
         $counts = $db->setQuery(
             $db->createQuery()
-                ->select('catid, COUNT(*) AS total, SUM(state = 1) AS published')
+                ->select('catid, SUM(state >= 0) AS total, SUM(state = 1) AS published')
                 ->from($db->quoteName('#__dharmashop_product_categories'))
                 ->whereIn($db->quoteName('catid'), $ids)
                 ->group('catid')
