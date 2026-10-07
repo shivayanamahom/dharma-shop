@@ -98,6 +98,11 @@ class HtmlView extends BaseHtmlView
         $wa = $this->getDocument()->getWebAssetManager();
         $wa->getRegistry()->addExtensionRegistryFile('com_dharmashop');
         $wa->useScript('com_dharmashop.listing');
+
+        if ((int) $settings->get('ajax_pagination', 0) === 1) {
+            $wa->useScript('com_dharmashop.pagination');
+        }
+
         parent::display($tpl);
     }
 

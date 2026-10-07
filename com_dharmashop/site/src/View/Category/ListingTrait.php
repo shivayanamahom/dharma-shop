@@ -125,6 +125,13 @@ trait ListingTrait
             // Фрагмент (format=raw) не должен попадать в ссылки; сортировка и вид сохраняются, только если они пришли в запросе.
             $query = Factory::getApplication()->getInput()->get;
             $pagination->setAdditionalUrlParam('format', null);
+
+            // Ссылки страниц строятся по тому же правилу, что адрес категории (`categoryRoute`): один адрес на страницу.
+            if ($this->taxonomy()->area === 'category' && (int) $this->item->id > 1) {
+                $pagination->setAdditionalUrlParam('view', $this->hasCatalogMenu() ? 'categories' : 'category');
+                $pagination->setAdditionalUrlParam('Itemid', null);
+            }
+
             $pagination->setAdditionalUrlParam('sort', $query->exists('sort') ? $this->ordering : null);
             $pagination->setAdditionalUrlParam('product_view', $query->exists('product_view') ? $this->productView : null);
         }

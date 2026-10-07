@@ -12,6 +12,13 @@
 			"attributes": { "defer": true }
 		},
 		{
+			"name": "com_dharmashop.pagination",
+			"type": "script",
+			"uri": "com_dharmashop/pagination.js",
+			"attributes": { "defer": true },
+			"dependencies": ["com_dharmashop.listing"]
+		},
+		{
 			"name": "com_dharmashop.uploader",
 			"type": "script",
 			"uri": "com_dharmashop/uploader.js",
