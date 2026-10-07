@@ -103,7 +103,7 @@ class HtmlView extends BaseHtmlView
                     ->popupType('inline')
                     ->textHeader(Text::_('COM_DHARMASHOP_BATCH_OPTIONS'))
                     ->url('#joomla-dialog-batch')
-                    ->modalWidth('800px')
+                    ->modalWidth('1200px')
                     ->modalHeight('fit-content')
                     ->listCheck(true);
             }
