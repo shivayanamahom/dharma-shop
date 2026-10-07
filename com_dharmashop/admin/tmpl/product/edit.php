@@ -102,7 +102,7 @@ $canAdmin = $this->getCurrentUser()->authorise('core.admin', 'com_dharmashop');
         <div class="col-lg-3">
                 <?php
                 // Боковой блок: категории, бренд и бейджи вместе с состоянием, в нужном порядке (штатный блок сам выводит catid).
-                $this->fields = ['catid', 'extra_catids', 'brand_id', 'badge_ids', ['published', 'state', 'enabled'], 'featured'];
+                $this->fields = ['catid', 'extra_catids', 'brand_id', 'badge_ids', ['published', 'state', 'enabled']];
                 echo LayoutHelper::render('joomla.edit.global', $this);
                 $this->fields = null;
                 ?>

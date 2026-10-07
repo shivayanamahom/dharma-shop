@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace Dharma\Component\DharmaShop\Administrator\Model;
 
+use Dharma\Component\DharmaShop\Administrator\Support\CategoryTypes;
 use Joomla\CMS\MVC\Model\ListModel;
 use Joomla\Database\ParameterType;
 use Joomla\Database\QueryInterface;
@@ -19,7 +20,9 @@ use Joomla\Database\QueryInterface;
 \defined('_JEXEC') or die;
 
 /**
- * Список товаров в админке: фильтры по состоянию, категории (с подкатегориями), рекомендуемым и наличию; поиск.
+ * Список товаров в админке. Фильтры: состояние, основная категория, дополнительные категории, бренд, бейдж,
+ * «все категории» (с подкатегориями) и наличие. Поиск: по названию, алиасу и артикулу; префиксы id:, title:, alias:, sku:
+ * дают точное совпадение, фраза в кавычках — точное совпадение с названием, алиасом или артикулом.
  */
 class ProductsModel extends ListModel
 {
@@ -27,9 +30,9 @@ class ProductsModel extends ListModel
     {
         if (empty($config['filter_fields'])) {
             $config['filter_fields'] = [
-                'id', 'a.id', 'title', 'a.title', 'state', 'a.state', 'featured', 'a.featured',
-                'created', 'a.created', 'price_min', 'a.price_min', 'category_title', 'category_id', 'published',
-                'in_stock', 'a.in_stock',
+                'id', 'a.id', 'title', 'a.title', 'state', 'a.state', 'created', 'a.created', 'price_min', 'a.price_min',
+                'category_title', 'sku', 'in_stock', 'a.in_stock',
+                'published', 'catid', 'extra_catid', 'brand_id', 'badge_id', 'category_id',
             ];
         }
 
@@ -43,8 +46,8 @@ class ProductsModel extends ListModel
 
     protected function getStoreId($id = ''): string
     {
-        foreach (['filter.search', 'filter.published', 'filter.category_id', 'filter.featured', 'filter.in_stock'] as $key) {
-            $id .= ':' . $this->getState($key);
+        foreach (['search', 'published', 'catid', 'extra_catid', 'brand_id', 'badge_id', 'category_id', 'in_stock'] as $key) {
+            $id .= ':' . $this->getState('filter.' . $key);
         }
 
         return parent::getStoreId($id);
@@ -54,9 +57,10 @@ class ProductsModel extends ListModel
     {
         $db = $this->getDatabase();
         $query = $db->createQuery();
+        $pc = $db->quoteName('#__dharmashop_product_categories');
 
         $query->select($db->quoteName([
-            'a.id', 'a.title', 'a.alias', 'a.catid', 'a.state', 'a.featured', 'a.price_min', 'a.price_max',
+            'a.id', 'a.title', 'a.alias', 'a.catid', 'a.state', 'a.cover', 'a.price_min', 'a.price_max',
             'a.in_stock', 'a.variants_count', 'a.created', 'a.created_by', 'a.checked_out', 'a.checked_out_time',
         ]))
             ->select($db->quoteName('c.title', 'category_title'))
@@ -76,19 +80,29 @@ class ProductsModel extends ListModel
             $query->whereIn($db->quoteName('a.state'), [0, 1]);
         }
 
-        $categoryId = (int) $this->getState('filter.category_id');
-
-        if ($categoryId) {
-            // Через витринный индекс: включает подкатегории и дополнительные категории.
-            $query->where('a.id IN (SELECT pc.product_id FROM ' . $db->quoteName('#__dharmashop_product_categories') . ' AS pc WHERE pc.catid = :catid)')
-                ->bind(':catid', $categoryId, ParameterType::INTEGER);
+        // Основная категория: точное совпадение.
+        if ($catid = (int) $this->getState('filter.catid')) {
+            $query->where($db->quoteName('a.catid') . ' = :catid')->bind(':catid', $catid, ParameterType::INTEGER);
         }
 
-        $featured = $this->getState('filter.featured');
+        // Дополнительные категории: прямая привязка, не основная.
+        if ($extra = (int) $this->getState('filter.extra_catid')) {
+            $query->where('a.id IN (SELECT pc.product_id FROM ' . $pc . ' AS pc WHERE pc.catid = :extra AND pc.direct = 1 AND pc.is_main = 0)')
+                ->bind(':extra', $extra, ParameterType::INTEGER);
+        }
 
-        if (is_numeric($featured)) {
-            $featured = (int) $featured;
-            $query->where($db->quoteName('a.featured') . ' = :featured')->bind(':featured', $featured, ParameterType::INTEGER);
+        // Бренд: через витринный индекс — у вложенных брендов находятся товары дочерних. Бейдж: плоский, прямая привязка.
+        if ($brand = (int) $this->getState('filter.brand_id')) {
+            $query->where('a.id IN (SELECT pc.product_id FROM ' . $pc . ' AS pc WHERE pc.catid = :brand)')->bind(':brand', $brand, ParameterType::INTEGER);
+        }
+
+        if ($badge = (int) $this->getState('filter.badge_id')) {
+            $query->where('a.id IN (SELECT pc.product_id FROM ' . $pc . ' AS pc WHERE pc.catid = :badge AND pc.direct = 1)')->bind(':badge', $badge, ParameterType::INTEGER);
+        }
+
+        // Все категории: через витринный индекс, включая подкатегории и дополнительные.
+        if ($all = (int) $this->getState('filter.category_id')) {
+            $query->where('a.id IN (SELECT pc.product_id FROM ' . $pc . ' AS pc WHERE pc.catid = :allcat)')->bind(':allcat', $all, ParameterType::INTEGER);
         }
 
         $inStock = $this->getState('filter.in_stock');
@@ -98,28 +112,124 @@ class ProductsModel extends ListModel
             $query->where($db->quoteName('a.in_stock') . ' = :instock')->bind(':instock', $inStock, ParameterType::INTEGER);
         }
 
-        $search = trim((string) $this->getState('filter.search'));
-
-        if ($search !== '') {
-            if (stripos($search, 'id:') === 0) {
-                $id = (int) substr($search, 3);
-                $query->where($db->quoteName('a.id') . ' = :id')->bind(':id', $id, ParameterType::INTEGER);
-            } elseif (stripos($search, 'sku:') === 0) {
-                $sku = trim(substr($search, 4)) . '%';
-                $query->where('a.id IN (SELECT sv.product_id FROM ' . $db->quoteName('#__dharmashop_variants') . ' AS sv WHERE sv.sku LIKE :sku)')->bind(':sku', $sku);
-            } else {
-                $like = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $search) . '%';
-                $query->where('(' . $db->quoteName('a.title') . ' LIKE :s1 OR ' . $db->quoteName('a.alias') . ' LIKE :s2)')
-                    ->bind(':s1', $like)->bind(':s2', $like);
-            }
-        }
+        $this->applySearch($query, trim((string) $this->getState('filter.search')));
 
         $orderCol = $this->state->get('list.ordering', 'a.id');
         $orderDirn = strtoupper((string) $this->state->get('list.direction', 'DESC')) === 'ASC' ? 'ASC' : 'DESC';
-        $allowed = ['a.id', 'a.title', 'a.state', 'a.featured', 'a.created', 'a.price_min', 'a.in_stock', 'category_title'];
+        $allowed = ['a.id', 'a.title', 'a.state', 'a.created', 'a.price_min', 'a.in_stock', 'category_title', 'sku'];
         $orderCol = in_array($orderCol, $allowed, true) ? $orderCol : 'a.id';
         $query->order($db->escape($orderCol) . ' ' . $orderDirn);
 
         return $query;
+    }
+
+    private function applySearch(QueryInterface $query, string $search): void
+    {
+        if ($search === '') {
+            return;
+        }
+
+        $db = $this->getDatabase();
+        $variants = $db->quoteName('#__dharmashop_variants');
+
+        // Префиксы: точное совпадение.
+        if (preg_match('/^(id|title|alias|sku):\s*(.*)$/iu', $search, $m)) {
+            $value = trim($m[2]);
+
+            switch (strtolower($m[1])) {
+                case 'id':
+                    $id = (int) $value;
+                    $query->where($db->quoteName('a.id') . ' = :id')->bind(':id', $id, ParameterType::INTEGER);
+                    break;
+                case 'title':
+                    $query->where($db->quoteName('a.title') . ' = :ptitle')->bind(':ptitle', $value);
+                    break;
+                case 'alias':
+                    $query->where($db->quoteName('a.alias') . ' = :palias')->bind(':palias', $value);
+                    break;
+                default:
+                    $query->where('a.id IN (SELECT sv.product_id FROM ' . $variants . ' AS sv WHERE sv.sku = :psku)')->bind(':psku', $value);
+            }
+
+            return;
+        }
+
+        // Фраза в кавычках: точное совпадение с названием, алиасом или артикулом.
+        if (preg_match('/^["«](.+)["»]$/u', $search, $m)) {
+            $phrase = $m[1];
+            $query->where('(' . $db->quoteName('a.title') . ' = :q1 OR ' . $db->quoteName('a.alias') . ' = :q2 OR a.id IN (SELECT sv.product_id FROM ' . $variants . ' AS sv WHERE sv.sku = :q3))')
+                ->bind(':q1', $phrase)->bind(':q2', $phrase)->bind(':q3', $phrase);
+
+            return;
+        }
+
+        // Обычный поиск: вхождение в название, алиас или артикул любого варианта.
+        $like = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $search) . '%';
+        $query->where('(' . $db->quoteName('a.title') . ' LIKE :s1 OR ' . $db->quoteName('a.alias') . ' LIKE :s2 OR a.id IN (SELECT sv.product_id FROM ' . $variants . ' AS sv WHERE sv.sku LIKE :s3))')
+            ->bind(':s1', $like)->bind(':s2', $like)->bind(':s3', $like);
+    }
+
+    /**
+     * К строкам страницы добавляются привязки: основная и дополнительные категории, бренд, бейджи
+     * (одним запросом по id товаров страницы, не по каждому товару).
+     *
+     * @return  object[]
+     */
+    public function getItems()
+    {
+        $items = parent::getItems();
+
+        if (!$items) {
+            return $items;
+        }
+
+        $db = $this->getDatabase();
+        $ids = array_map(static fn (object $item): int => (int) $item->id, $items);
+        $rows = $db->setQuery(
+            $db->createQuery()
+                ->select($db->quoteName(['pc.product_id', 'pc.is_main', 'c.id', 'c.title', 'c.extension', 'c.params']))
+                ->from($db->quoteName('#__dharmashop_product_categories', 'pc'))
+                ->join('INNER', $db->quoteName('#__categories', 'c') . ' ON c.id = pc.catid')
+                ->whereIn($db->quoteName('pc.product_id'), $ids)
+                ->where($db->quoteName('pc.direct') . ' = 1')
+                ->order($db->quoteName('c.lft'))
+        )->loadObjectList();
+
+        foreach ($items as $item) {
+            $item->main = null;
+            $item->extra = [];
+            $item->brand = null;
+            $item->badges = [];
+        }
+
+        $byId = [];
+
+        foreach ($items as $item) {
+            $byId[(int) $item->id] = $item;
+        }
+
+        foreach ($rows as $row) {
+            $item = $byId[(int) $row->product_id] ?? null;
+
+            if ($item === null) {
+                continue;
+            }
+
+            $entry = (object) ['id' => (int) $row->id, 'title' => (string) $row->title, 'extension' => (string) $row->extension];
+
+            if ($row->extension === CategoryTypes::BRAND) {
+                $item->brand ??= $entry;
+            } elseif ($row->extension === CategoryTypes::BADGE) {
+                $params = json_decode((string) $row->params, true) ?: [];
+                $entry->color = preg_match('/^[a-z]{3,12}$/', (string) ($params['badge_color'] ?? '')) ? $params['badge_color'] : 'primary';
+                $item->badges[] = $entry;
+            } elseif ((int) $row->is_main === 1) {
+                $item->main = $entry;
+            } else {
+                $item->extra[] = $entry;
+            }
+        }
+
+        return $items;
     }
 }

@@ -126,7 +126,6 @@ CREATE TABLE `#__dharmashop_products` (
   `introtext`     text NULL,
   `fulltext`      mediumtext NULL,
   `state`         tinyint NOT NULL DEFAULT 0,           -- 1 опубликован, 0 снят, 2 архив, -2 корзина
-  `featured`      tinyint unsigned NOT NULL DEFAULT 0,
   `variants_mode` tinyint unsigned NOT NULL DEFAULT 1,  -- 1 один вариант, 2 несколько
   `unit`          varchar(20) NULL,                     -- правила оформления заказа: NULL = наследовать (C14, §5.16)
   `qty_min`       decimal(12,3) NULL,
@@ -214,7 +213,6 @@ CREATE TABLE `#__dharmashop_product_categories` (
   `sort_order`  int NOT NULL DEFAULT 0,           -- ручной порядок, свой в каждой категории
   `price_sort`  decimal(15,2) NULL,               -- = products.price_min
   `in_stock`    tinyint unsigned NOT NULL,
-  `featured`    tinyint unsigned NOT NULL DEFAULT 0,
   `created`     datetime NOT NULL,
   `title_sort`  varchar(60) NOT NULL,
   PRIMARY KEY (`catid`, `product_id`),
@@ -377,6 +375,10 @@ CREATE TABLE `#__dharmashop_field_values` (
 ### 5.18 Страница корня раздела (реализовано, C17)
 
 `RootController` (`root.edit/apply/save/cancel`), `RootModel` (`FormModel`), вид и шаблон `root`, форма `forms/root.xml` (структура полей как у категории, поэтому `SeoHints`, справочник шорткодов и вкладка SEO работают без изменений). Данные — JSON в параметрах компонента: `root_category`, `root_brand` (`title`, `description`, `metadesc`, `metadata.robots`, `params.{image, image_alt, introtext, meta_title, meta_image, breadcrumb_title, h1}`); сохранение — запись параметров расширения (`#__extensions`) с очисткой кэша, права `core.edit` компонента, токен формы. Пока пусто — действуют названия по умолчанию («Каталог», «Бренды») и шаблоны SEO из настроек. Сайт при выводе корня раздела читает эти параметры. Подстановки на странице корня: `{category.title}` / `{brand.title}` (название раздела), глобальные; цены и счётчики по всему каталогу — позже.
+
+### 5.19 Список товаров в админке (реализовано)
+
+`ProductsModel`: фильтры — состояние, основная категория (`products.catid`), дополнительные категории (прямая привязка, не основная), бренд (через индекс: у вложенных брендов находятся товары дочерних), бейдж, «все категории» (индекс, с подкатегориями), наличие; сортировки — состояние, название, артикул, категория, цена, наличие, дата, ID. Поиск: вхождение в название, алиас, артикул любого варианта; префиксы `id:`, `title:`, `alias:`, `sku:` — точное совпадение; фраза в кавычках — точное совпадение с названием, алиасом или артикулом. Привязки строк страницы (основная и дополнительные категории, бренд, бейджи) подгружаются **одним запросом по id товаров страницы** из `product_categories`. Колонки: состояние, изображение, название (алиас и артикул), категории (основная жирным, дополнительные, бренд, бейджи цветом), цена, наличие, ID. Панель фильтров открыта сразу. Отметки «избранный» в товаре нет (C18): акценты — бейджи.
 
 ## 6. События
 

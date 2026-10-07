@@ -87,8 +87,6 @@ class HtmlView extends BaseHtmlView
             if ($canDo->get('core.edit.state')) {
                 $childBar->publish('products.publish')->listCheck(true);
                 $childBar->unpublish('products.unpublish')->listCheck(true);
-                $childBar->standardButton('featured', 'JFEATURE', 'products.featured')->listCheck(true);
-                $childBar->standardButton('unfeatured', 'JUNFEATURE', 'products.unfeatured')->listCheck(true);
                 $childBar->archive('products.archive')->listCheck(true);
                 $childBar->checkin('products.checkin');
 

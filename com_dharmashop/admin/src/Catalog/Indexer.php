@@ -110,7 +110,7 @@ final class Indexer
 
         $this->db->setQuery(
             'UPDATE #__dharmashop_product_categories pc JOIN #__dharmashop_products p ON p.id = pc.product_id '
-            . 'SET pc.state = p.state, pc.price_sort = p.price_min, pc.in_stock = p.in_stock, pc.featured = p.featured, '
+            . 'SET pc.state = p.state, pc.price_sort = p.price_min, pc.in_stock = p.in_stock, '
             . 'pc.created = p.created, pc.title_sort = LEFT(LOWER(p.title), 60), pc.is_main = IF(pc.catid = p.catid, 1, 0) '
             . 'WHERE pc.product_id IN (' . $in . ')'
         )->execute();
@@ -127,7 +127,7 @@ final class Indexer
 
         $this->db->setQuery(
             'UPDATE #__dharmashop_product_categories pc JOIN #__dharmashop_products p ON p.id = pc.product_id '
-            . 'SET pc.state = p.state, pc.price_sort = p.price_min, pc.in_stock = p.in_stock, pc.featured = p.featured, '
+            . 'SET pc.state = p.state, pc.price_sort = p.price_min, pc.in_stock = p.in_stock, '
             . 'pc.created = p.created, pc.title_sort = LEFT(LOWER(p.title), 60), pc.is_main = IF(pc.catid = p.catid, 1, 0) '
             . 'WHERE p.catid IN (' . $in . ')'
         )->execute();
@@ -251,7 +251,7 @@ final class Indexer
         Sql::exec(
             $this->db,
             'UPDATE #__dharmashop_product_categories pc JOIN #__dharmashop_products p ON p.id = pc.product_id '
-            . 'SET pc.state = p.state, pc.price_sort = p.price_min, pc.in_stock = p.in_stock, pc.featured = p.featured, '
+            . 'SET pc.state = p.state, pc.price_sort = p.price_min, pc.in_stock = p.in_stock, '
             . 'pc.created = p.created, pc.title_sort = LEFT(LOWER(p.title), 60), pc.is_main = IF(pc.catid = p.catid, 1, 0) '
             . 'WHERE pc.product_id BETWEEN :f AND :t',
             [':f' => [$from, ParameterType::INTEGER], ':t' => [$to, ParameterType::INTEGER]]

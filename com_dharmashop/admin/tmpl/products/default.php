@@ -12,13 +12,13 @@ declare(strict_types=1);
 
 \defined('_JEXEC') or die;
 
-use Joomla\CMS\Button\FeaturedButton;
 use Joomla\CMS\Button\PublishedButton;
 use Joomla\CMS\Factory;
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Layout\LayoutHelper;
 use Joomla\CMS\Router\Route;
+use Joomla\CMS\Uri\Uri;
 
 /** @var \Dharma\Component\DharmaShop\Administrator\View\Products\HtmlView $this */
 
@@ -32,12 +32,31 @@ $listOrder = $this->escape((string) $state->get('list.ordering'));
 $listDirn = $this->escape((string) $state->get('list.direction'));
 $shop = Factory::getApplication()->bootComponent('com_dharmashop')->getServices();
 $money = $shop->money();
+
+// Ссылка на запись категории, бренда или бейджа (правка — если есть право); иначе просто название.
+$catLink = function (object $entry) use ($user): string {
+    $title = htmlspecialchars($entry->title, ENT_QUOTES, 'UTF-8');
+
+    if (!$user->authorise('core.edit', $entry->extension . '.category.' . $entry->id)) {
+        return $title;
+    }
+
+    return '<a href="' . Route::_('index.php?option=com_dharmashop&task=category.edit&id=' . $entry->id . '&extension=' . $entry->extension) . '">' . $title . '</a>';
+};
 ?>
 <form action="<?php echo Route::_('index.php?option=com_dharmashop&view=products'); ?>" method="post" name="adminForm" id="adminForm">
     <div class="row">
         <div class="col-md-12">
             <div id="j-main-container" class="j-main-container">
-                <?php echo LayoutHelper::render('joomla.searchtools.default', ['view' => $this]); ?>
+                <?php
+                // Панель фильтров открыта сразу (удобнее для каталога с множеством привязок): штатный макет раскрывает её,
+                // только если есть активные фильтры, поэтому при пустых добавляем служебную отметку (макет больше нигде её не читает).
+                if (empty($this->activeFilters)) {
+                    $this->activeFilters = ['open' => '1'];
+                }
+
+                echo LayoutHelper::render('joomla.searchtools.default', ['view' => $this]);
+                ?>
                 <?php if (empty($this->items)) : ?>
                     <div class="alert alert-info">
                         <span class="icon-info-circle" aria-hidden="true"></span><span class="visually-hidden"><?php echo Text::_('INFO'); ?></span>
@@ -53,26 +72,21 @@ $money = $shop->money();
                         <thead>
                             <tr>
                                 <td class="w-1 text-center"><?php echo HTMLHelper::_('grid.checkall'); ?></td>
-                                <th scope="col" class="w-1 text-center d-none d-md-table-cell">
-                                    <?php echo HTMLHelper::_('searchtools.sort', 'JFEATURED', 'a.featured', $listDirn, $listOrder); ?>
-                                </th>
                                 <th scope="col" class="w-1 text-center">
                                     <?php echo HTMLHelper::_('searchtools.sort', 'JSTATUS', 'a.state', $listDirn, $listOrder); ?>
                                 </th>
+                                <th scope="col" class="w-1 text-center d-none d-md-table-cell"><span class="icon-image" aria-hidden="true"></span><span class="visually-hidden"><?php echo Text::_('COM_DHARMASHOP_HEADING_IMAGE'); ?></span></th>
                                 <th scope="col" style="min-width:100px">
                                     <?php echo HTMLHelper::_('searchtools.sort', 'JGLOBAL_TITLE', 'a.title', $listDirn, $listOrder); ?>
                                 </th>
-                                <th scope="col" class="w-15 d-none d-md-table-cell">
-                                    <?php echo HTMLHelper::_('searchtools.sort', 'JCATEGORY', 'category_title', $listDirn, $listOrder); ?>
+                                <th scope="col" class="w-25 d-none d-md-table-cell">
+                                    <?php echo HTMLHelper::_('searchtools.sort', 'COM_DHARMASHOP_HEADING_CATEGORIES', 'category_title', $listDirn, $listOrder); ?>
                                 </th>
                                 <th scope="col" class="w-10 d-none d-md-table-cell text-end">
                                     <?php echo HTMLHelper::_('searchtools.sort', 'COM_DHARMASHOP_HEADING_PRICE', 'a.price_min', $listDirn, $listOrder); ?>
                                 </th>
                                 <th scope="col" class="w-5 d-none d-md-table-cell text-center">
                                     <?php echo HTMLHelper::_('searchtools.sort', 'COM_DHARMASHOP_HEADING_STOCK', 'a.in_stock', $listDirn, $listOrder); ?>
-                                </th>
-                                <th scope="col" class="w-10 d-none d-lg-table-cell">
-                                    <?php echo HTMLHelper::_('searchtools.sort', 'JDATE', 'a.created', $listDirn, $listOrder); ?>
                                 </th>
                                 <th scope="col" class="w-5 d-none d-md-table-cell">
                                     <?php echo HTMLHelper::_('searchtools.sort', 'JGRID_HEADING_ID', 'a.id', $listDirn, $listOrder); ?>
@@ -85,18 +99,10 @@ $money = $shop->money();
                                 $canCheckin = $user->authorise('core.manage', 'com_checkin') || (int) $item->checked_out === $userId || empty($item->checked_out);
                                 $canEditOwn = $user->authorise('core.edit.own', 'com_dharmashop.product.' . $item->id) && (int) $item->created_by === $userId;
                                 $canChange = $user->authorise('core.edit.state', 'com_dharmashop.product.' . $item->id) && $canCheckin;
+                                $cover = trim((string) strstr(((string) $item->cover) . '#', '#', true));
                                 ?>
                                 <tr class="row<?php echo $i % 2; ?>">
                                     <td class="text-center"><?php echo HTMLHelper::_('grid.id', $i, $item->id, false, 'cid', 'cb', $item->title); ?></td>
-                                    <td class="text-center d-none d-md-table-cell">
-                                        <?php
-                                        echo (new FeaturedButton())->render((int) $item->featured, $i, [
-                                            'task_prefix' => 'products.',
-                                            'disabled' => !$canChange,
-                                            'id' => 'featured-' . $item->id,
-                                        ]);
-                                        ?>
-                                    </td>
                                     <td class="text-center">
                                         <?php
                                         echo (new PublishedButton())->render((int) $item->state, $i, [
@@ -105,6 +111,13 @@ $money = $shop->money();
                                             'id' => 'state-' . $item->id,
                                         ]);
                                         ?>
+                                    </td>
+                                    <td class="text-center d-none d-md-table-cell">
+                                        <?php if ($cover !== '') : ?>
+                                            <img src="<?php echo $this->escape(Uri::root(true) . '/' . ltrim($cover, '/')); ?>" alt="" width="48" height="48" loading="lazy" class="rounded object-fit-cover">
+                                        <?php else : ?>
+                                            <span class="icon-image text-body-secondary" aria-hidden="true"></span>
+                                        <?php endif; ?>
                                     </td>
                                     <th scope="row" class="has-context">
                                         <div class="break-word">
@@ -118,14 +131,31 @@ $money = $shop->money();
                                                 <?php echo $this->escape($item->title); ?>
                                             <?php endif; ?>
                                             <div class="small break-word">
-                                                <?php echo $this->escape($item->alias); ?>
+                                                <?php echo Text::_('JFIELD_ALIAS_LABEL'); ?>: <?php echo $this->escape($item->alias); ?>
                                                 <?php if ($item->sku) : ?>
-                                                    · <?php echo Text::_('COM_DHARMASHOP_SKU'); ?> <?php echo $this->escape($item->sku); ?>
+                                                    <br><?php echo Text::_('COM_DHARMASHOP_SKU'); ?>: <?php echo $this->escape($item->sku); ?>
                                                 <?php endif; ?>
                                             </div>
                                         </div>
                                     </th>
-                                    <td class="small d-none d-md-table-cell"><?php echo $this->escape((string) $item->category_title); ?></td>
+                                    <td class="small d-none d-md-table-cell">
+                                        <?php if ($item->main) : ?>
+                                            <div class="fw-bold"><?php echo $catLink($item->main); ?></div>
+                                        <?php endif; ?>
+                                        <?php if ($item->extra) : ?>
+                                            <div><?php echo implode(', ', array_map($catLink, $item->extra)); ?></div>
+                                        <?php endif; ?>
+                                        <?php if ($item->brand) : ?>
+                                            <div class="text-body-secondary"><?php echo Text::_('COM_DHARMASHOP_LIST_BRAND'); ?>: <?php echo $catLink($item->brand); ?></div>
+                                        <?php endif; ?>
+                                        <?php if ($item->badges) : ?>
+                                            <div class="mt-1">
+                                                <?php foreach ($item->badges as $badge) : ?>
+                                                    <span class="badge bg-<?php echo $this->escape($badge->color); ?>"><?php echo $this->escape($badge->title); ?></span>
+                                                <?php endforeach; ?>
+                                            </div>
+                                        <?php endif; ?>
+                                    </td>
                                     <td class="d-none d-md-table-cell text-end">
                                         <?php if ($item->price_min === null) : ?>
                                             <span class="text-body-secondary"><?php echo Text::_('COM_DHARMASHOP_PRICE_ON_REQUEST'); ?></span>
@@ -142,7 +172,6 @@ $money = $shop->money();
                                             <span class="badge bg-secondary"><?php echo Text::_('COM_DHARMASHOP_OUT_OF_STOCK'); ?></span>
                                         <?php endif; ?>
                                     </td>
-                                    <td class="small d-none d-lg-table-cell"><?php echo HTMLHelper::_('date', $item->created, Text::_('DATE_FORMAT_LC4')); ?></td>
                                     <td class="d-none d-md-table-cell"><?php echo (int) $item->id; ?></td>
                                 </tr>
                             <?php endforeach; ?>

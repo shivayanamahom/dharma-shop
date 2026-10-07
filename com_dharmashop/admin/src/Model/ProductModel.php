@@ -235,35 +235,6 @@ class ProductModel extends AdminModel
         return true;
     }
 
-    /** Отметка «рекомендуемый». */
-    public function featured(array $pks, int $value = 1): bool
-    {
-        $pks = array_filter(array_map('intval', $pks));
-
-        if (!$pks) {
-            return false;
-        }
-
-        $user = Factory::getApplication()->getIdentity();
-
-        foreach ($pks as $i => $pk) {
-            if (!$user->authorise('core.edit.state', 'com_dharmashop.product.' . $pk)) {
-                unset($pks[$i]);
-                Factory::getApplication()->enqueueMessage(Text::_('JLIB_APPLICATION_ERROR_EDITSTATE_NOT_PERMITTED'), 'warning');
-            }
-        }
-
-        if (!$pks) {
-            return false;
-        }
-
-        $db = $this->getDatabase();
-        $db->setQuery('UPDATE #__dharmashop_products SET featured = ' . (int) $value . ' WHERE id IN (' . implode(',', $pks) . ')')->execute();
-        $this->shop()->indexer()->refreshProducts($pks);
-
-        return true;
-    }
-
     // ------------------------------------------------------------------ пакетная обработка
 
     /**
