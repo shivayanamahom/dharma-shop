@@ -50,11 +50,20 @@ $placeholdersButton = PlaceholderPanel::button();
             <?php echo $this->form->renderField('description'); ?>
         <?php echo HTMLHelper::_('uitab.endTab'); ?>
 
-        <?php if (!$isBadge) : ?>
-            <?php echo HTMLHelper::_('uitab.addTab', 'categoryTab', 'display', Text::_('COM_DHARMASHOP_CAT_FIELDSET_DISPLAY')); ?>
-            <?php echo $this->form->renderFieldset('dharmashop_display'); ?>
-            <?php echo HTMLHelper::_('uitab.endTab'); ?>
-        <?php endif; ?>
+        <?php echo HTMLHelper::_('uitab.addTab', 'categoryTab', 'display', Text::_('COM_DHARMASHOP_CAT_FIELDSET_DISPLAY')); ?>
+            <p class="text-muted"><?php echo Text::_('COM_DHARMASHOP_DISPLAY_ENTITY_INHERIT_DESC'); ?></p>
+            <?php if ($this->extension !== CategoryTypes::CATEGORY) : ?>
+                <div class="alert alert-info"><?php echo Text::_('COM_DHARMASHOP_DISPLAY_ENTITY_PENDING_DESC'); ?></div>
+            <?php endif; ?>
+            <?php foreach (['dharmashop_display', 'dharmashop_display_children', 'dharmashop_display_brands', 'dharmashop_display_products'] as $name) : ?>
+                <?php if ($this->form->getFieldset($name)) : ?>
+                    <fieldset class="options-form">
+                        <legend><?php echo Text::_($this->form->getFieldsets('params')[$name]->label); ?></legend>
+                        <?php echo $this->form->renderFieldset($name); ?>
+                    </fieldset>
+                <?php endif; ?>
+            <?php endforeach; ?>
+        <?php echo HTMLHelper::_('uitab.endTab'); ?>
 
         <?php if ($this->extension === CategoryTypes::CATEGORY) : ?>
             <?php echo HTMLHelper::_('uitab.addTab', 'categoryTab', 'order', Text::_('COM_DHARMASHOP_TAB_ORDER')); ?>

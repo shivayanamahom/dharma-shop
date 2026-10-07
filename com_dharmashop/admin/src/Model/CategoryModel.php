@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Dharma\Component\DharmaShop\Administrator\Model;
 
 use Dharma\Component\DharmaShop\Administrator\Image\ImageCleaner;
+use Dharma\Component\DharmaShop\Administrator\Catalog\CategoryPositionRules;
 use Dharma\Component\DharmaShop\Administrator\Order\InheritHints;
 use Dharma\Component\DharmaShop\Administrator\Seo\SeoHints;
 use Dharma\Component\DharmaShop\Administrator\Seo\SeoSettings;
@@ -126,22 +127,46 @@ class CategoryModel extends AdminModel
             $parent = (int) (is_array($data) ? ($data['parent_id'] ?? 0) : ($data->parent_id ?? 0));
             $inherited = $id > 0 ? $rules->forCategory($id, false) : $rules->forCategory($parent > 1 ? $parent : 0);
             InheritHints::apply($form, $rules, $inherited, 'params', 'order_');
+
+            $positionRules = new CategoryPositionRules($this->getDatabase(), (string) ComponentHelper::getParams('com_dharmashop')->get('new_product_position', 'last'));
+            $positionInheritance = $id > 0 ? $positionRules->forCategory($id, false) : $positionRules->forCategory($parent);
+            $positionLabel = Text::_($positionInheritance['value'] === 'first' ? 'COM_DHARMASHOP_ORDER_FIRST' : 'COM_DHARMASHOP_ORDER_LAST');
+            $form->setFieldAttribute(
+                'new_product_position',
+                'description',
+                Text::sprintf('COM_DHARMASHOP_NEW_PRODUCT_POSITION_INHERIT_DESC', $positionLabel, $positionRules->sourceLabel($positionInheritance['source'])),
+                'params'
+            );
         } else {
             // Правила оформления заказа есть только у категорий магазина.
             foreach (['order_qty_min', 'order_qty_step', 'order_qty_max', 'order_unit', 'order_stock_tracked', 'order_backorder'] as $field) {
                 $form->removeField($field, 'params');
             }
+            $form->removeField('new_product_position', 'params');
+            // Дерево обычных категорий не относится к производителям и бейджам.
+            // Настройки списка товаров общие для всех трёх типов.
+            $form->removeField('categories_layout', 'params');
+            $form->removeField('category_card_layout', 'params');
+            foreach (['category_card_intro', 'category_card_count', 'category_card_prices',
+                'categories_columns', 'categories_breakpoints', 'categories_columns_xs', 'categories_columns_sm',
+                'categories_columns_md', 'categories_columns_lg', 'categories_columns_xl', 'categories_columns_xxl'] as $field) {
+                $form->removeField($field, 'params');
+            }
+        }
+
+        if ($extension === CategoryTypes::BRAND) {
+            $form->setFieldAttribute('subcategory_show_image', 'label', 'COM_DHARMASHOP_DISPLAY_SUBBRAND_IMAGE', 'params');
+            $form->setFieldAttribute('subcategory_show_image', 'description', 'COM_DHARMASHOP_DISPLAY_SUBBRAND_IMAGE_DESC', 'params');
         }
 
         // Подсказки SEO: в пустых полях виден шаблон из настроек магазина.
         SeoHints::apply($form, new SeoSettings(ComponentHelper::getParams('com_dharmashop')), $extension === CategoryTypes::BRAND ? 'brand' : ($extension === CategoryTypes::BADGE ? 'badge' : 'category'));
 
         if ($extension === CategoryTypes::BADGE) {
-            // Бейдж — плоский справочник без страницы и настроек списка.
+            // Бейдж — плоский справочник; его товарная страница имеет настройки списка.
             $form->removeField('parent_id');
             $form->removeField('show_in_list', 'params');
-            $form->removeField('list_limit', 'params');
-            $form->removeField('list_ordering', 'params');
+            $form->removeField('subcategory_show_image', 'params');
         }
 
         parent::preprocessForm($form, $data, $group);
@@ -255,7 +280,7 @@ class CategoryModel extends AdminModel
         foreach (array_map('intval', (array) $pks) as $pk) {
             $params = json_decode((string) $db->setQuery($db->createQuery()->select('params')->from('#__categories')->where('id = ' . $pk))->loadResult(), true) ?: [];
 
-            foreach (['image', 'icon'] as $key) {
+            foreach (['image', 'icon', 'meta_image'] as $key) {
                 if (!empty($params[$key])) {
                     $files[] = (string) $params[$key];
                 }

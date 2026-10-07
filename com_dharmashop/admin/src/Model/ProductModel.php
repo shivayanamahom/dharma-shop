@@ -13,10 +13,13 @@ declare(strict_types=1);
 namespace Dharma\Component\DharmaShop\Administrator\Model;
 
 use Dharma\Component\DharmaShop\Administrator\Image\ImageCleaner;
+use Dharma\Component\DharmaShop\Administrator\Catalog\CategoryPositionRules;
 use Dharma\Component\DharmaShop\Administrator\Order\InheritHints;
 use Dharma\Component\DharmaShop\Administrator\Pricing\Discount;
 use Dharma\Component\DharmaShop\Administrator\Service\ShopServices;
 use Dharma\Component\DharmaShop\Administrator\Support\CategoryTypes;
+use Dharma\Component\DharmaShop\Administrator\Seo\SeoHints;
+use Dharma\Component\DharmaShop\Administrator\Seo\SeoSettings;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Form\Form;
@@ -51,7 +54,7 @@ class ProductModel extends AdminModel
     ];
 
     /** Поля формы, которые относятся к варианту, а не к карточке. */
-    private const VARIANT_FIELDS = ['sku', 'weight', 'length', 'width', 'height', 'price', 'discount', 'discount_start', 'discount_end'];
+    private const VARIANT_FIELDS = ['sku', 'weight', 'weight_unit', 'length', 'width', 'height', 'dimension_unit', 'price', 'discount', 'discount_start', 'discount_end'];
 
     public function getTable($name = 'Product', $prefix = 'Administrator', $options = []): Table
     {
@@ -76,6 +79,7 @@ class ProductModel extends AdminModel
         $catid = (int) (is_array($data) ? ($data['catid'] ?? 0) : ($data->catid ?? 0));
         $rules = $this->shop()->orderRules();
         InheritHints::apply($form, $rules, $rules->forCategory($catid), null, '');
+        SeoHints::apply($form, new SeoSettings(ComponentHelper::getParams('com_dharmashop')), 'product');
 
         parent::preprocessForm($form, $data, $group);
     }
@@ -108,14 +112,19 @@ class ProductModel extends AdminModel
         }
 
         $item->metadata = (new Registry($item->metadata ?? ''))->toArray();
+        $item->params = (new Registry($item->params ?? ''))->toArray();
         $item->extra_catids = [];
         $item->brand_id = 0;
         $item->badge_ids = [];
         $item->sku = $item->price = $item->discount = $item->discount_start = $item->discount_end = null;
         $item->stock_qty = 0;
         $item->gallery = [];
+        $item->category_order = [];
         $item->price_result = '';
+        $params = ComponentHelper::getParams('com_dharmashop');
         $item->weight = $item->length = $item->width = $item->height = null;
+        $item->weight_unit = (string) $params->get('shipping_weight_unit', 'кг');
+        $item->dimension_unit = (string) $params->get('shipping_dimension_unit', 'см');
 
         if (!empty($item->id)) {
             $shop = $this->shop();
@@ -124,6 +133,23 @@ class ProductModel extends AdminModel
             $item->brand_id = $taxonomy['brand'];
             $item->badge_ids = $taxonomy['badges'];
             $item->gallery = $shop->gallery()->load((int) $item->id);
+
+            foreach ($this->getDatabase()->setQuery(
+                $this->getDatabase()->createQuery()
+                    ->select('pc.catid, c.title, pc.sort_order')
+                    ->from($this->getDatabase()->quoteName('#__dharmashop_product_categories', 'pc'))
+                    ->join('INNER', $this->getDatabase()->quoteName('#__categories', 'c') . ' ON c.id = pc.catid')
+                    ->where('pc.product_id = ' . (int) $item->id)
+                    ->where('c.extension = ' . $this->getDatabase()->quote('com_dharmashop'))
+                    ->order('c.lft, c.title')
+            )->loadObjectList() as $category) {
+                $item->category_order[(int) $category->catid] = [
+                    'catid' => (int) $category->catid,
+                    'title' => (string) $category->title,
+                    'action' => 'manual',
+                    'sort_order' => (int) $category->sort_order,
+                ];
+            }
 
             if ($variant = $shop->variants()->getDefault((int) $item->id)) {
                 foreach (self::VARIANT_FIELDS as $field) {
@@ -199,9 +225,12 @@ class ProductModel extends AdminModel
             // от них зависит наличие в списках.
             $row = $db->setQuery($db->createQuery()->select('*')->from('#__dharmashop_products')->where('id = ' . $id))->loadAssoc() ?: [];
             $policy = $shop->orderRules()->forProduct($row);
+            $params = ComponentHelper::getParams('com_dharmashop');
             $variantData = array_intersect_key($data, array_flip(self::VARIANT_FIELDS)) + [
                 'stock_tracked' => $policy['stock_tracked'],
                 'backorder' => $policy['backorder'],
+                'weight_unit' => (string) $params->get('shipping_weight_unit', 'кг'),
+                'dimension_unit' => (string) $params->get('shipping_dimension_unit', 'см'),
             ];
             $variantId = $shop->variants()->saveDefault($id, $variantData);
             $shop->stock()->setQty($variantId, (float) str_replace(',', '.', (string) ($data['stock_qty'] ?? 0)), 'manual', $userId);
@@ -211,8 +240,12 @@ class ProductModel extends AdminModel
                 (int) $data['catid'],
                 (array) ($data['extra_catids'] ?? []),
                 (int) ($data['brand_id'] ?? 0),
-                (array) ($data['badge_ids'] ?? [])
+                (array) ($data['badge_ids'] ?? []),
+                (string) $params->get('new_product_position', 'last'),
+                (new CategoryPositionRules($db, (string) $params->get('new_product_position', 'last')))
+                    ->forCategories(array_merge([(int) $data['catid']], array_map('intval', (array) ($data['extra_catids'] ?? []))))
             );
+            $shop->indexer()->setCategoryOrder($id, (array) ($data['category_order'] ?? []));
 
             // Галерея: обложка товара — первое изображение. Ключа нет, если вкладка не выводилась (пакетная обработка, консоль).
             if (array_key_exists('gallery', $data)) {
@@ -258,14 +291,24 @@ class ProductModel extends AdminModel
     public function delete(&$pks): bool
     {
         $ids = array_map('intval', (array) $pks);
+        $db = $this->getDatabase();
+        $files = [];
+
+        // SEO-картинка лежит в params, поэтому запоминаем её до удаления карточек.
+        foreach ($ids as $id) {
+            $json = $db->setQuery($db->createQuery()->select('params')->from('#__dharmashop_products')->where('id = ' . $id))->loadResult();
+            $params = json_decode((string) $json, true) ?: [];
+
+            if (!empty($params['meta_image'])) {
+                $files[] = (string) $params['meta_image'];
+            }
+        }
 
         if (!parent::delete($pks)) {
             return false;
         }
 
-        $db = $this->getDatabase();
         $shop = $this->shop();
-        $files = [];
 
         foreach ($ids as $id) {
             $exists = (int) $db->setQuery($db->createQuery()->select('COUNT(*)')->from('#__dharmashop_products')->where('id = ' . $id))->loadResult();
@@ -375,7 +418,10 @@ class ProductModel extends AdminModel
                 continue;
             }
 
-            $indexer->setCategories($id, (int) $new['main'], $new['extra'], (int) $new['brand'], $new['badges']);
+            $params = ComponentHelper::getParams('com_dharmashop');
+            $position = (string) $params->get('new_product_position', 'last');
+            $categoryPositions = (new CategoryPositionRules($db, $position))->forCategories(array_merge([(int) $new['main']], $new['extra']));
+            $indexer->setCategories($id, (int) $new['main'], $new['extra'], (int) $new['brand'], $new['badges'], $position, $categoryPositions);
         }
 
         return true;

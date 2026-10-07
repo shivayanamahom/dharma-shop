@@ -44,15 +44,33 @@ final class Indexer
      * @param   int    $brandId      бренд (0 — без бренда)
      * @param   int[]  $badgeIds     бейджи
      */
-    public function setCategories(int $productId, int $mainCatid, array $extraCatids = [], int $brandId = 0, array $badgeIds = []): void
+    public function setCategories(
+        int $productId,
+        int $mainCatid,
+        array $extraCatids = [],
+        int $brandId = 0,
+        array $badgeIds = [],
+        string $newProductPosition = 'last',
+        array $categoryPositions = []
+    ): void
     {
+        $previousCategoryIds = $this->categoryIds($productId);
         $direct = array_merge([$mainCatid], $extraCatids, [$brandId], $badgeIds);
         $direct = array_values(array_unique(array_filter(array_map('intval', $direct))));
         $in = implode(',', $direct);
 
+        // Старые прямые привязки временно становятся унаследованными: если они ещё являются
+        // родителями другой назначенной категории, rebuildRange сохранит их ручной порядок.
         Sql::exec(
             $this->db,
-            'DELETE FROM #__dharmashop_product_categories WHERE product_id = :p AND (direct = 0 OR catid NOT IN (' . $in . '))',
+            'UPDATE #__dharmashop_product_categories SET direct = 0, is_main = 0 '
+            . 'WHERE product_id = :p AND direct = 1 AND catid NOT IN (' . $in . ')',
+            [':p' => [$productId, ParameterType::INTEGER]]
+        );
+        Sql::exec(
+            $this->db,
+            'UPDATE #__dharmashop_product_categories SET direct = 1, is_main = IF(catid = ' . $mainCatid . ', 1, 0) '
+            . 'WHERE product_id = :p AND catid IN (' . $in . ')',
             [':p' => [$productId, ParameterType::INTEGER]]
         );
 
@@ -64,6 +82,30 @@ final class Indexer
         );
 
         $this->rebuildRange($productId, $productId);
+
+        // Только новые связи получают стартовую позицию из настроек; при обычном сохранении
+        // уже существующий ручной порядок товара не перезаписывается.
+        if (in_array($newProductPosition, ['first', 'last'], true)) {
+            foreach (array_diff($this->categoryIds($productId), $previousCategoryIds) as $catid) {
+                $position = (string) ($categoryPositions[(int) $catid] ?? $newProductPosition);
+                $position = in_array($position, ['first', 'last'], true) ? $position : $newProductPosition;
+                $this->setCategoryOrder($productId, [(int) $catid => ['action' => $position]]);
+            }
+        }
+    }
+
+    /** @return int[] Категории магазина, в которых индекс уже содержит товар (прямые и унаследованные). */
+    private function categoryIds(int $productId): array
+    {
+        $db = $this->db;
+        $query = $db->createQuery()
+            ->select('pc.catid')
+            ->from($db->quoteName('#__dharmashop_product_categories', 'pc'))
+            ->join('INNER', $db->quoteName('#__categories', 'c') . ' ON c.id = pc.catid')
+            ->where('pc.product_id = :p')->where('c.extension = ' . $db->quote('com_dharmashop'))
+            ->bind(':p', $productId, ParameterType::INTEGER);
+
+        return array_map('intval', $db->setQuery($query)->loadColumn());
     }
 
     /**
@@ -136,22 +178,13 @@ final class Indexer
     /** Пересобирает родительские строки и копии столбцов для товаров с id от $from до $to включительно. */
     public function rebuildRange(int $from, int $to): void
     {
-        $range = [':f' => [$from, ParameterType::INTEGER], ':t' => [$to, ParameterType::INTEGER]];
+        $ids = $this->db->setQuery(
+            Sql::query($this->db, 'SELECT id FROM #__dharmashop_products WHERE id BETWEEN :f AND :t', [
+                ':f' => [$from, ParameterType::INTEGER], ':t' => [$to, ParameterType::INTEGER],
+            ])
+        )->loadColumn();
 
-        Sql::exec($this->db, 'DELETE FROM #__dharmashop_product_categories WHERE direct = 0 AND product_id BETWEEN :f AND :t', $range);
-
-        Sql::exec(
-            $this->db,
-            'INSERT IGNORE INTO #__dharmashop_product_categories (catid, product_id, direct, is_main, state, in_stock, created, title_sort) '
-            . 'SELECT anc.id, pc.product_id, 0, 0, 0, 0, NOW(), \'\' '
-            . 'FROM #__dharmashop_product_categories pc '
-            . 'JOIN #__categories sub ON sub.id = pc.catid '
-            . 'JOIN #__categories anc ON anc.extension = sub.extension AND anc.lft < sub.lft AND anc.rgt > sub.rgt '
-            . 'WHERE pc.direct = 1 AND pc.product_id BETWEEN :f AND :t',
-            $range
-        );
-
-        $this->refreshRange($from, $to);
+        $this->rebuildParentsForProducts(array_map('intval', $ids));
     }
 
     /**
@@ -162,19 +195,82 @@ final class Indexer
     public function rebuildProducts(array $productIds, int $chunk = 500): void
     {
         foreach (array_chunk(array_values(array_unique(array_map('intval', $productIds))), $chunk) as $ids) {
-            $in = implode(',', $ids);
+            $this->rebuildParentsForProducts($ids);
+        }
+    }
 
-            Sql::exec($this->db, 'DELETE FROM #__dharmashop_product_categories WHERE direct = 0 AND product_id IN (' . $in . ')');
-            Sql::exec(
-                $this->db,
+    /** Перестраивает родительские строки, сохраняя ручной порядок каждой ещё актуальной строки. @param int[] $productIds */
+    private function rebuildParentsForProducts(array $productIds): void
+    {
+        $ids = array_values(array_unique(array_filter(array_map('intval', $productIds))));
+
+        if (!$ids) {
+            return;
+        }
+
+        $in = implode(',', $ids);
+        $backup = 'dharma_product_sort_backup';
+        $this->db->setQuery('DROP TEMPORARY TABLE IF EXISTS ' . $backup)->execute();
+        $this->db->setQuery('CREATE TEMPORARY TABLE ' . $backup . ' (catid INT UNSIGNED NOT NULL, product_id INT UNSIGNED NOT NULL, sort_order INT NOT NULL, PRIMARY KEY (catid, product_id)) ENGINE=MEMORY')->execute();
+
+        try {
+            $this->db->setQuery(
+                'INSERT INTO ' . $backup . ' (catid, product_id, sort_order) '
+                . 'SELECT catid, product_id, sort_order FROM #__dharmashop_product_categories '
+                . 'WHERE direct = 0 AND product_id IN (' . $in . ')'
+            )->execute();
+            $this->db->setQuery('DELETE FROM #__dharmashop_product_categories WHERE direct = 0 AND product_id IN (' . $in . ')')->execute();
+            $this->db->setQuery(
                 'INSERT IGNORE INTO #__dharmashop_product_categories (catid, product_id, direct, is_main, state, in_stock, created, title_sort) '
                 . 'SELECT anc.id, pc.product_id, 0, 0, 0, 0, NOW(), \'\' '
                 . 'FROM #__dharmashop_product_categories pc '
                 . 'JOIN #__categories sub ON sub.id = pc.catid '
                 . 'JOIN #__categories anc ON anc.extension = sub.extension AND anc.lft < sub.lft AND anc.rgt > sub.rgt '
                 . 'WHERE pc.direct = 1 AND pc.product_id IN (' . $in . ')'
-            );
+            )->execute();
+            $this->db->setQuery(
+                'UPDATE #__dharmashop_product_categories pc JOIN ' . $backup . ' old_order '
+                . 'ON old_order.catid = pc.catid AND old_order.product_id = pc.product_id '
+                . 'SET pc.sort_order = old_order.sort_order WHERE pc.direct = 0'
+            )->execute();
             $this->refreshProducts($ids);
+        } finally {
+            $this->db->setQuery('DROP TEMPORARY TABLE IF EXISTS ' . $backup)->execute();
+        }
+    }
+
+    /** Сохраняет порядок товара в каждой его категории; catid из запроса проверяется по строкам его индекса. */
+    public function setCategoryOrder(int $productId, array $orders): void
+    {
+        $db = $this->db;
+
+        foreach ($orders as $catid => $row) {
+            $catid = (int) $catid;
+            $row = (array) $row;
+            $action = (string) ($row['action'] ?? 'manual');
+
+            if ($catid <= 0 || !in_array($action, ['first', 'last', 'manual'], true)) {
+                continue;
+            }
+
+            $sortOrder = max(-2147483648, min(2147483647, (int) ($row['sort_order'] ?? 0)));
+
+            if ($action !== 'manual') {
+                $query = $db->createQuery()
+                    ->select($action === 'first' ? 'MIN(pc.sort_order)' : 'MAX(pc.sort_order)')
+                    ->from($db->quoteName('#__dharmashop_product_categories', 'pc'))
+                    ->join('INNER', $db->quoteName('#__categories', 'c') . ' ON c.id = pc.catid')
+                    ->where('pc.catid = :c')->where('c.extension = ' . $db->quote('com_dharmashop'))
+                    ->bind(':c', $catid, ParameterType::INTEGER);
+                $edge = $db->setQuery($query)->loadResult();
+                $sortOrder = $edge === null ? 0 : max(-2147483648, min(2147483647, (int) $edge + ($action === 'first' ? -1 : 1)));
+            }
+
+            Sql::exec($db,
+                'UPDATE #__dharmashop_product_categories pc JOIN #__categories c ON c.id = pc.catid '
+                . 'SET pc.sort_order = :s WHERE pc.product_id = :p AND pc.catid = :c AND c.extension = \'com_dharmashop\'',
+                [':s' => [$sortOrder, ParameterType::INTEGER], ':p' => [$productId, ParameterType::INTEGER], ':c' => [$catid, ParameterType::INTEGER]]
+            );
         }
     }
 

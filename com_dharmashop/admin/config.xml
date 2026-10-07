@@ -20,6 +20,90 @@
 			<option value="new">COM_DHARMASHOP_CAT_ORDERING_NEW</option>
 			<option value="title">COM_DHARMASHOP_CAT_ORDERING_TITLE</option>
 		</field>
+		<field name="new_product_position" type="list" label="COM_DHARMASHOP_CONFIG_NEW_PRODUCT_POSITION" description="COM_DHARMASHOP_CONFIG_NEW_PRODUCT_POSITION_DESC" default="last" validate="options">
+			<option value="first">COM_DHARMASHOP_ORDER_FIRST</option>
+			<option value="last">COM_DHARMASHOP_ORDER_LAST</option>
+		</field>
+	</fieldset>
+
+	<fieldset name="display" label="COM_DHARMASHOP_CONFIG_DISPLAY" description="COM_DHARMASHOP_CONFIG_DISPLAY_DESC">
+        <fieldset name="display_categories" label="COM_DHARMASHOP_DISPLAY_CATEGORIES" addfieldprefix="Dharma\Component\DharmaShop\Administrator\Field">
+            <field name="categories_layout" type="layout" layoutgroup="categories" label="COM_DHARMASHOP_LAYOUT_CATEGORIES" validate="options"></field>
+            <field name="category_card_layout" type="layout" layoutgroup="category_card" label="COM_DHARMASHOP_LAYOUT_CATEGORY_CARD" validate="options"></field>
+            <field name="categories_breakpoints" label="COM_DHARMASHOP_DISPLAY_BREAKPOINTS" type="radio" layout="joomla.form.field.radio.switcher" default="0" filter="integer" description="COM_DHARMASHOP_DISPLAY_BREAKPOINTS_DESC"><option value="0">JNO</option><option value="1">JYES</option></field>
+            <field name="categories_columns" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS" validate="options" default="3" showon="categories_breakpoints:0" description="COM_DHARMASHOP_DISPLAY_COLUMNS_DESC"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+            <field name="categories_columns_xs" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS_XS" validate="options" default="1" showon="categories_breakpoints:1"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+            <field name="categories_columns_sm" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS_SM" validate="options" default="1" showon="categories_breakpoints:1"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+            <field name="categories_columns_md" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS_MD" validate="options" default="2" showon="categories_breakpoints:1"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+            <field name="categories_columns_lg" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS_LG" validate="options" default="3" showon="categories_breakpoints:1"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+            <field name="categories_columns_xl" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS_XL" validate="options" default="3" showon="categories_breakpoints:1"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+            <field name="categories_columns_xxl" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS_XXL" validate="options" default="3" showon="categories_breakpoints:1"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+            <field name="category_card_intro" label="COM_DHARMASHOP_DISPLAY_SHOW_INTRO" type="radio" layout="joomla.form.field.radio.switcher" default="1" filter="integer"><option value="0">JNO</option><option value="1">JYES</option></field>
+            <field name="category_card_count" label="COM_DHARMASHOP_DISPLAY_SHOW_COUNT" type="radio" layout="joomla.form.field.radio.switcher" default="0" filter="integer" description="COM_DHARMASHOP_DISPLAY_SHOW_COUNT_DESC"><option value="0">JNO</option><option value="1">JYES</option></field>
+            <field name="category_card_prices" label="COM_DHARMASHOP_DISPLAY_SHOW_PRICES" type="radio" layout="joomla.form.field.radio.switcher" default="0" filter="integer" description="COM_DHARMASHOP_DISPLAY_SHOW_PRICES_DESC"><option value="0">JNO</option><option value="1">JYES</option></field>
+        </fieldset>
+
+        <fieldset name="display_category" label="COM_DHARMASHOP_DISPLAY_CATEGORY" addfieldprefix="Dharma\Component\DharmaShop\Administrator\Field">
+            <field name="display_category_note" type="note" description="COM_DHARMASHOP_DISPLAY_PRODUCT_CARDS_PENDING" class="alert alert-info" />
+            <field name="category_layout" type="layout" layoutgroup="category" label="COM_DHARMASHOP_LAYOUT_CATEGORY_LABEL" validate="options"></field>
+            <field name="product_card_layout" type="layout" layoutgroup="product_card" label="COM_DHARMASHOP_LAYOUT_CARD_LABEL" default="grid" validate="options"></field>
+            <field name="category_default_view" type="list" label="COM_DHARMASHOP_DISPLAY_DEFAULT_PRODUCT_VIEW" description="COM_DHARMASHOP_DISPLAY_DEFAULT_PRODUCT_VIEW_DESC" default="grid" validate="options">
+                <option value="grid">COM_DHARMASHOP_DISPLAY_VIEW_GRID</option>
+                <option value="list">COM_DHARMASHOP_DISPLAY_VIEW_LIST</option>
+                <option value="table">COM_DHARMASHOP_DISPLAY_VIEW_TABLE</option>
+            </field>
+            <field name="subcategory_show_image" type="radio" label="COM_DHARMASHOP_DISPLAY_SUBCATEGORY_IMAGE" description="COM_DHARMASHOP_DISPLAY_SUBCATEGORY_IMAGE_DESC" layout="joomla.form.field.radio.switcher" default="1" filter="integer"><option value="0">JNO</option><option value="1">JYES</option></field>
+            <field name="category_breakpoints" label="COM_DHARMASHOP_DISPLAY_BREAKPOINTS" type="radio" layout="joomla.form.field.radio.switcher" default="0" filter="integer" description="COM_DHARMASHOP_DISPLAY_BREAKPOINTS_DESC"><option value="0">JNO</option><option value="1">JYES</option></field>
+            <field name="category_columns" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS" validate="options" default="3" showon="category_breakpoints:0" description="COM_DHARMASHOP_DISPLAY_COLUMNS_DESC"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+            <field name="category_columns_xs" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS_XS" validate="options" default="1" showon="category_breakpoints:1"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+            <field name="category_columns_sm" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS_SM" validate="options" default="1" showon="category_breakpoints:1"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+            <field name="category_columns_md" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS_MD" validate="options" default="2" showon="category_breakpoints:1"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+            <field name="category_columns_lg" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS_LG" validate="options" default="3" showon="category_breakpoints:1"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+            <field name="category_columns_xl" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS_XL" validate="options" default="3" showon="category_breakpoints:1"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+            <field name="category_columns_xxl" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS_XXL" validate="options" default="3" showon="category_breakpoints:1"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+            <field name="product_card_intro" label="COM_DHARMASHOP_DISPLAY_SHOW_INTRO" type="radio" layout="joomla.form.field.radio.switcher" default="1" filter="integer"><option value="0">JNO</option><option value="1">JYES</option></field>
+            <field name="category_product_count" label="COM_DHARMASHOP_DISPLAY_SHOW_LIST_COUNT" type="radio" layout="joomla.form.field.radio.switcher" default="0" filter="integer"><option value="0">JNO</option><option value="1">JYES</option></field>
+            <field name="category_price_range" label="COM_DHARMASHOP_DISPLAY_SHOW_LIST_PRICES" type="radio" layout="joomla.form.field.radio.switcher" default="0" filter="integer"><option value="0">JNO</option><option value="1">JYES</option></field>
+        </fieldset>
+
+        <fieldset name="display_brands" label="COM_DHARMASHOP_DISPLAY_BRANDS" addfieldprefix="Dharma\Component\DharmaShop\Administrator\Field">
+            <field name="display_brands_note" type="note" description="COM_DHARMASHOP_DISPLAY_PLANNED_DESC" class="alert alert-info" />
+            <field name="brands_layout" type="layout" layoutgroup="brands" label="COM_DHARMASHOP_LAYOUT_BRANDS" validate="options"></field>
+            <field name="brand_card_layout" type="layout" layoutgroup="brand_card" label="COM_DHARMASHOP_LAYOUT_BRAND_CARD" validate="options"></field>
+            <field name="brands_breakpoints" label="COM_DHARMASHOP_DISPLAY_BREAKPOINTS" type="radio" layout="joomla.form.field.radio.switcher" default="0" filter="integer" description="COM_DHARMASHOP_DISPLAY_BREAKPOINTS_DESC"><option value="0">JNO</option><option value="1">JYES</option></field>
+            <field name="brands_columns" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS" validate="options" default="3" showon="brands_breakpoints:0" description="COM_DHARMASHOP_DISPLAY_COLUMNS_DESC"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+            <field name="brands_columns_xs" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS_XS" validate="options" default="1" showon="brands_breakpoints:1"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+            <field name="brands_columns_sm" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS_SM" validate="options" default="1" showon="brands_breakpoints:1"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+            <field name="brands_columns_md" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS_MD" validate="options" default="2" showon="brands_breakpoints:1"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+            <field name="brands_columns_lg" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS_LG" validate="options" default="3" showon="brands_breakpoints:1"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+            <field name="brands_columns_xl" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS_XL" validate="options" default="3" showon="brands_breakpoints:1"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+            <field name="brands_columns_xxl" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS_XXL" validate="options" default="3" showon="brands_breakpoints:1"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+            <field name="brand_card_intro" label="COM_DHARMASHOP_DISPLAY_SHOW_INTRO" type="radio" layout="joomla.form.field.radio.switcher" default="1" filter="integer"><option value="0">JNO</option><option value="1">JYES</option></field>
+            <field name="brand_card_count" label="COM_DHARMASHOP_DISPLAY_SHOW_COUNT" type="radio" layout="joomla.form.field.radio.switcher" default="0" filter="integer" description="COM_DHARMASHOP_DISPLAY_SHOW_COUNT_DESC"><option value="0">JNO</option><option value="1">JYES</option></field>
+            <field name="brand_card_prices" label="COM_DHARMASHOP_DISPLAY_SHOW_PRICES" type="radio" layout="joomla.form.field.radio.switcher" default="0" filter="integer" description="COM_DHARMASHOP_DISPLAY_SHOW_PRICES_DESC"><option value="0">JNO</option><option value="1">JYES</option></field>
+        </fieldset>
+
+        <fieldset name="display_badges" label="COM_DHARMASHOP_DISPLAY_BADGES" addfieldprefix="Dharma\Component\DharmaShop\Administrator\Field">
+            <field name="display_badges_note" type="note" description="COM_DHARMASHOP_DISPLAY_PLANNED_DESC" class="alert alert-info" />
+            <field name="badges_layout" type="layout" layoutgroup="badges" label="COM_DHARMASHOP_LAYOUT_BADGES" validate="options"></field>
+            <field name="badge_card_layout" type="layout" layoutgroup="badge_card" label="COM_DHARMASHOP_LAYOUT_BADGE_CARD" validate="options"></field>
+            <field name="badges_breakpoints" label="COM_DHARMASHOP_DISPLAY_BREAKPOINTS" type="radio" layout="joomla.form.field.radio.switcher" default="0" filter="integer" description="COM_DHARMASHOP_DISPLAY_BREAKPOINTS_DESC"><option value="0">JNO</option><option value="1">JYES</option></field>
+            <field name="badges_columns" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS" validate="options" default="3" showon="badges_breakpoints:0" description="COM_DHARMASHOP_DISPLAY_COLUMNS_DESC"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+            <field name="badges_columns_xs" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS_XS" validate="options" default="1" showon="badges_breakpoints:1"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+            <field name="badges_columns_sm" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS_SM" validate="options" default="1" showon="badges_breakpoints:1"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+            <field name="badges_columns_md" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS_MD" validate="options" default="2" showon="badges_breakpoints:1"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+            <field name="badges_columns_lg" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS_LG" validate="options" default="3" showon="badges_breakpoints:1"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+            <field name="badges_columns_xl" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS_XL" validate="options" default="3" showon="badges_breakpoints:1"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+            <field name="badges_columns_xxl" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS_XXL" validate="options" default="3" showon="badges_breakpoints:1"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+            <field name="badge_card_intro" label="COM_DHARMASHOP_DISPLAY_SHOW_INTRO" type="radio" layout="joomla.form.field.radio.switcher" default="1" filter="integer"><option value="0">JNO</option><option value="1">JYES</option></field>
+            <field name="badge_card_count" label="COM_DHARMASHOP_DISPLAY_SHOW_COUNT" type="radio" layout="joomla.form.field.radio.switcher" default="0" filter="integer" description="COM_DHARMASHOP_DISPLAY_SHOW_COUNT_DESC"><option value="0">JNO</option><option value="1">JYES</option></field>
+            <field name="badge_card_prices" label="COM_DHARMASHOP_DISPLAY_SHOW_PRICES" type="radio" layout="joomla.form.field.radio.switcher" default="0" filter="integer" description="COM_DHARMASHOP_DISPLAY_SHOW_PRICES_DESC"><option value="0">JNO</option><option value="1">JYES</option></field>
+        </fieldset>
+
+        <fieldset name="display_product" label="COM_DHARMASHOP_DISPLAY_PRODUCT" addfieldprefix="Dharma\Component\DharmaShop\Administrator\Field">
+            <field name="display_product_note" type="note" description="COM_DHARMASHOP_DISPLAY_PLANNED_DESC" class="alert alert-info" />
+            <field name="product_layout" type="layout" layoutgroup="product" label="COM_DHARMASHOP_LAYOUT_PRODUCT_LABEL" validate="options"></field>
+        </fieldset>
 	</fieldset>
 
 	<fieldset name="images" label="COM_DHARMASHOP_CONFIG_IMAGES" description="COM_DHARMASHOP_CONFIG_IMAGES_DESC">
@@ -49,6 +133,9 @@
 			<option value="0">JNO</option>
 			<option value="1">JYES</option>
 		</field>
+        <field name="seo_twitter" type="radio" layout="joomla.form.field.radio.switcher" label="COM_DHARMASHOP_SEO_TWITTER" description="COM_DHARMASHOP_SEO_SOCIAL_DESC" default="1" filter="integer"><option value="0">JNO</option><option value="1">JYES</option></field>
+        <field name="seo_structureddata" type="radio" layout="joomla.form.field.radio.switcher" label="COM_DHARMASHOP_SEO_STRUCTUREDDATA" description="COM_DHARMASHOP_SEO_STRUCTUREDDATA_DESC" default="1" filter="integer"><option value="0">JNO</option><option value="1">JYES</option></field>
+
 		<field name="seo_default_image" type="imageupload" filter="Dharma\Component\DharmaShop\Administrator\Image\ImageUploader::filterPath" folder="seo" label="COM_DHARMASHOP_CONFIG_SEO_DEFAULT_IMAGE" description="COM_DHARMASHOP_CONFIG_SEO_DEFAULT_IMAGE_DESC" />
 		<field name="seo_category_spacer" type="spacer" label="COM_DHARMASHOP_CONFIG_SEO_CATEGORY" class="fw-bold" />
 		<field name="seo_category_title" type="text" label="COM_DHARMASHOP_SEO_TITLE_LABEL" default="{category.title} | {global.sitename}" filter="string" />
@@ -72,11 +159,17 @@
 		<field name="seo_product_breadcrumb" type="text" label="COM_DHARMASHOP_SEO_BREADCRUMB_LABEL" default="{product.title}" filter="string" />
 	</fieldset>
 
-	<fieldset name="order" label="COM_DHARMASHOP_CONFIG_ORDER" description="COM_DHARMASHOP_CONFIG_ORDER_DESC">
+	<fieldset name="order" label="COM_DHARMASHOP_CONFIG_ORDER" description="COM_DHARMASHOP_CONFIG_ORDER_DESC" addfieldprefix="Dharma\Component\DharmaShop\Administrator\Field">
 		<field name="order_qty_min" type="number" label="COM_DHARMASHOP_ORDER_QTY_MIN" description="COM_DHARMASHOP_ORDER_QTY_MIN_DESC" default="1" min="0.001" step="0.001" />
 		<field name="order_qty_step" type="number" label="COM_DHARMASHOP_ORDER_QTY_STEP" description="COM_DHARMASHOP_ORDER_QTY_STEP_DESC" default="1" min="0.001" step="0.001" />
 		<field name="order_qty_max" type="number" label="COM_DHARMASHOP_ORDER_QTY_MAX" description="COM_DHARMASHOP_ORDER_QTY_MAX_DESC" default="0" min="0" step="0.001" />
-		<field name="order_unit" type="text" label="COM_DHARMASHOP_ORDER_UNIT" description="COM_DHARMASHOP_ORDER_UNIT_DESC" default="шт" maxlength="20" />
+		<field name="order_unit" type="unit" label="COM_DHARMASHOP_ORDER_UNIT" description="COM_DHARMASHOP_ORDER_UNIT_DESC" default="шт" />
+		<field name="order_units_custom" type="textarea" label="COM_DHARMASHOP_CONFIG_ORDER_UNITS_CUSTOM" description="COM_DHARMASHOP_CONFIG_ORDER_UNITS_CUSTOM_DESC" rows="8" filter="string" />
+		<field name="shipping_units_spacer" type="spacer" label="COM_DHARMASHOP_CONFIG_SHIPPING_UNITS" class="fw-bold" />
+		<field name="shipping_weight_unit" type="unit" unitgroup="weight" label="COM_DHARMASHOP_FIELD_WEIGHT_UNIT_LABEL" description="COM_DHARMASHOP_CONFIG_SHIPPING_WEIGHT_UNIT_DESC" default="кг" />
+		<field name="shipping_weight_units_custom" type="textarea" label="COM_DHARMASHOP_CONFIG_SHIPPING_WEIGHT_UNITS_CUSTOM" description="COM_DHARMASHOP_CONFIG_SHIPPING_UNITS_CUSTOM_DESC" rows="4" filter="string" />
+		<field name="shipping_dimension_unit" type="unit" unitgroup="dimension" label="COM_DHARMASHOP_FIELD_DIMENSION_UNIT_LABEL" description="COM_DHARMASHOP_CONFIG_SHIPPING_DIMENSION_UNIT_DESC" default="см" />
+		<field name="shipping_dimension_units_custom" type="textarea" label="COM_DHARMASHOP_CONFIG_SHIPPING_DIMENSION_UNITS_CUSTOM" description="COM_DHARMASHOP_CONFIG_SHIPPING_UNITS_CUSTOM_DESC" rows="4" filter="string" />
 		<field name="order_stock_tracked" type="radio" label="COM_DHARMASHOP_ORDER_STOCK_TRACKED" description="COM_DHARMASHOP_ORDER_STOCK_TRACKED_DESC" layout="joomla.form.field.radio.switcher" default="0">
 			<option value="0">JNO</option>
 			<option value="1">JYES</option>

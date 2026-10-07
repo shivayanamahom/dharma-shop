@@ -88,10 +88,23 @@ final class ImageCleaner
         foreach ($this->db->setQuery($query)->loadColumn() as $json) {
             $params = json_decode((string) $json, true) ?: [];
 
-            foreach (['image', 'icon'] as $key) {
+            foreach (['image', 'icon', 'meta_image'] as $key) {
                 if (isset($params[$key]) && $this->normalize((string) $params[$key]) === $path) {
                     return true;
                 }
+            }
+        }
+
+        // SEO-изображения товара лежат в params. Сверяем разобранное значение точно, как у категорий.
+        $query = $this->db->createQuery()
+            ->select('params')->from('#__dharmashop_products')
+            ->where('params LIKE :like')->bind(':like', $like);
+
+        foreach ($this->db->setQuery($query)->loadColumn() as $json) {
+            $params = json_decode((string) $json, true) ?: [];
+
+            if (isset($params['meta_image']) && $this->normalize((string) $params['meta_image']) === $path) {
+                return true;
             }
         }
 

@@ -32,7 +32,7 @@
 			<field name="order_qty_min" type="number" label="COM_DHARMASHOP_ORDER_QTY_MIN" description="COM_DHARMASHOP_ORDER_QTY_MIN_DESC" step="0.001" min="0.001" />
 			<field name="order_qty_step" type="number" label="COM_DHARMASHOP_ORDER_QTY_STEP" description="COM_DHARMASHOP_ORDER_QTY_STEP_DESC" step="0.001" min="0.001" />
 			<field name="order_qty_max" type="number" label="COM_DHARMASHOP_ORDER_QTY_MAX" description="COM_DHARMASHOP_ORDER_QTY_MAX_DESC" step="0.001" min="0" />
-			<field name="order_unit" type="text" label="COM_DHARMASHOP_ORDER_UNIT" description="COM_DHARMASHOP_ORDER_UNIT_DESC" maxlength="20" />
+			<field name="order_unit" type="unit" label="COM_DHARMASHOP_ORDER_UNIT" description="COM_DHARMASHOP_ORDER_UNIT_DESC" />
 		</fieldset>
 		<fieldset name="dharmashop_order_stock">
 			<field name="order_stock_tracked" type="list" label="COM_DHARMASHOP_ORDER_STOCK_TRACKED" description="COM_DHARMASHOP_ORDER_STOCK_TRACKED_DESC" default="" validate="options">
@@ -46,19 +46,65 @@
 				<option value="0">JNO</option>
 			</field>
 		</fieldset>
-		<fieldset name="dharmashop_display" label="COM_DHARMASHOP_CAT_FIELDSET_DISPLAY">
-			<field name="show_in_list" type="radio" label="COM_DHARMASHOP_CAT_SHOW_IN_LIST_LABEL" description="COM_DHARMASHOP_CAT_SHOW_IN_LIST_DESC" layout="joomla.form.field.radio.switcher" default="1">
+		<fieldset name="dharmashop_display" label="COM_DHARMASHOP_DISPLAY_VISIBILITY">
+            <field name="show_in_list" type="radio" label="COM_DHARMASHOP_CAT_SHOW_IN_LIST_LABEL" description="COM_DHARMASHOP_CAT_SHOW_IN_LIST_DESC" layout="joomla.form.field.radio.switcher" default="1">
 				<option value="0">JNO</option>
 				<option value="1">JYES</option>
 			</field>
-			<field name="list_limit" type="number" label="COM_DHARMASHOP_CAT_LIST_LIMIT_LABEL" description="COM_DHARMASHOP_CAT_LIST_LIMIT_DESC" min="0" max="200" step="1" default="0" />
-			<field name="list_ordering" type="list" label="COM_DHARMASHOP_CAT_LIST_ORDERING_LABEL" description="COM_DHARMASHOP_CAT_LIST_ORDERING_DESC" default="" validate="options">
+		</fieldset>
+		<fieldset name="dharmashop_display_children" label="COM_DHARMASHOP_CAT_DISPLAY_CATEGORY_LIST">
+            <field name="categories_layout" type="layout" layoutgroup="categories" label="COM_DHARMASHOP_LAYOUT_CATEGORIES" default="" validate="options"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option></field>
+            <field name="category_card_layout" type="layout" layoutgroup="category_card" label="COM_DHARMASHOP_LAYOUT_CATEGORY_CARD" default="" validate="options"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option></field>
+            <field name="categories_breakpoints" label="COM_DHARMASHOP_DISPLAY_BREAKPOINTS" type="list" default="" validate="options" description="COM_DHARMASHOP_DISPLAY_BREAKPOINTS_DESC"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option><option value="0">JNO</option><option value="1">JYES</option></field>
+            <field name="categories_columns" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS" validate="options" showon="categories_breakpoints:0[OR]categories_breakpoints:" description="COM_DHARMASHOP_DISPLAY_COLUMNS_DESC"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+            <field name="categories_columns_xs" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS_XS" validate="options" showon="categories_breakpoints:1"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+            <field name="categories_columns_sm" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS_SM" validate="options" showon="categories_breakpoints:1"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+            <field name="categories_columns_md" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS_MD" validate="options" showon="categories_breakpoints:1"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+            <field name="categories_columns_lg" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS_LG" validate="options" showon="categories_breakpoints:1"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+            <field name="categories_columns_xl" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS_XL" validate="options" showon="categories_breakpoints:1"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+            <field name="categories_columns_xxl" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS_XXL" validate="options" showon="categories_breakpoints:1"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+            <field name="category_card_intro" label="COM_DHARMASHOP_DISPLAY_SHOW_INTRO" type="list" default="" validate="options"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option><option value="0">JNO</option><option value="1">JYES</option></field>
+            <field name="category_card_count" label="COM_DHARMASHOP_DISPLAY_SHOW_COUNT" type="list" default="" validate="options" description="COM_DHARMASHOP_DISPLAY_SHOW_COUNT_DESC"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option><option value="0">JNO</option><option value="1">JYES</option></field>
+            <field name="category_card_prices" label="COM_DHARMASHOP_DISPLAY_SHOW_PRICES" type="list" default="" validate="options" description="COM_DHARMASHOP_DISPLAY_SHOW_PRICES_DESC"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option><option value="0">JNO</option><option value="1">JYES</option></field>
+		</fieldset>
+		<fieldset name="dharmashop_display_products" label="COM_DHARMASHOP_DISPLAY_PRODUCTS">
+            <field name="category_layout" type="layout" layoutgroup="category" label="COM_DHARMASHOP_DISPLAY_PRODUCT_PAGE_LAYOUT" description="COM_DHARMASHOP_LAYOUT_CATEGORY_DESC" default="" validate="options">
+				<option value="">COM_DHARMASHOP_LAYOUT_INHERIT</option>
+			</field>
+            <field name="product_card_layout" type="layout" layoutgroup="product_card" label="COM_DHARMASHOP_LAYOUT_CARD_LABEL" description="COM_DHARMASHOP_LAYOUT_CARD_DESC" default="" validate="options">
+				<option value="">COM_DHARMASHOP_LAYOUT_INHERIT</option>
+			</field>
+            <field name="category_default_view" type="list" label="COM_DHARMASHOP_DISPLAY_DEFAULT_PRODUCT_VIEW" description="COM_DHARMASHOP_DISPLAY_DEFAULT_PRODUCT_VIEW_DESC" default="" validate="options">
+                <option value="">COM_DHARMASHOP_ORDER_INHERIT</option>
+                <option value="grid">COM_DHARMASHOP_DISPLAY_VIEW_GRID</option>
+                <option value="list">COM_DHARMASHOP_DISPLAY_VIEW_LIST</option>
+                <option value="table">COM_DHARMASHOP_DISPLAY_VIEW_TABLE</option>
+            </field>
+            <field name="subcategory_show_image" type="list" label="COM_DHARMASHOP_DISPLAY_SUBCATEGORY_IMAGE" description="COM_DHARMASHOP_DISPLAY_SUBCATEGORY_IMAGE_DESC" default="" validate="options"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option><option value="0">JNO</option><option value="1">JYES</option></field>
+            <field name="category_breakpoints" label="COM_DHARMASHOP_DISPLAY_BREAKPOINTS" type="list" default="" validate="options" description="COM_DHARMASHOP_DISPLAY_BREAKPOINTS_DESC"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option><option value="0">JNO</option><option value="1">JYES</option></field>
+            <field name="category_columns" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS" validate="options" showon="category_breakpoints:0[OR]category_breakpoints:" description="COM_DHARMASHOP_DISPLAY_COLUMNS_DESC"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+            <field name="category_columns_xs" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS_XS" validate="options" showon="category_breakpoints:1"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+            <field name="category_columns_sm" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS_SM" validate="options" showon="category_breakpoints:1"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+            <field name="category_columns_md" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS_MD" validate="options" showon="category_breakpoints:1"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+            <field name="category_columns_lg" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS_LG" validate="options" showon="category_breakpoints:1"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+            <field name="category_columns_xl" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS_XL" validate="options" showon="category_breakpoints:1"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+            <field name="category_columns_xxl" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS_XXL" validate="options" showon="category_breakpoints:1"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+            <field name="product_card_intro" label="COM_DHARMASHOP_DISPLAY_SHOW_INTRO" type="list" default="" validate="options"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option><option value="0">JNO</option><option value="1">JYES</option></field>
+            <field name="category_product_count" label="COM_DHARMASHOP_DISPLAY_SHOW_LIST_COUNT" type="list" default="" validate="options"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option><option value="0">JNO</option><option value="1">JYES</option></field>
+            <field name="category_price_range" label="COM_DHARMASHOP_DISPLAY_SHOW_LIST_PRICES" type="list" default="" validate="options"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option><option value="0">JNO</option><option value="1">JYES</option></field>
+            <field name="list_limit" type="number" label="COM_DHARMASHOP_CAT_LIST_LIMIT_LABEL" description="COM_DHARMASHOP_CAT_LIST_LIMIT_DESC" min="0" max="200" step="1" default="0" />
+            <field name="list_ordering" type="list" label="COM_DHARMASHOP_CAT_LIST_ORDERING_LABEL" description="COM_DHARMASHOP_CAT_LIST_ORDERING_DESC" default="" validate="options">
 				<option value="">COM_DHARMASHOP_CAT_ORDERING_GLOBAL</option>
 				<option value="order">COM_DHARMASHOP_CAT_ORDERING_ORDER</option>
 				<option value="price_asc">COM_DHARMASHOP_CAT_ORDERING_PRICE_ASC</option>
 				<option value="price_desc">COM_DHARMASHOP_CAT_ORDERING_PRICE_DESC</option>
 				<option value="new">COM_DHARMASHOP_CAT_ORDERING_NEW</option>
 				<option value="title">COM_DHARMASHOP_CAT_ORDERING_TITLE</option>
+			</field>
+            <field name="new_product_position" type="list" label="COM_DHARMASHOP_CONFIG_NEW_PRODUCT_POSITION" description="COM_DHARMASHOP_NEW_PRODUCT_POSITION_INHERIT_DESC" default="" validate="options">
+				<option value="">COM_DHARMASHOP_ORDER_INHERIT</option>
+				<option value="first">COM_DHARMASHOP_ORDER_FIRST</option>
+				<option value="last">COM_DHARMASHOP_ORDER_LAST</option>
 			</field>
 		</fieldset>
 	</fields>

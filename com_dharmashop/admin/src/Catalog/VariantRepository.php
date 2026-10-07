@@ -52,7 +52,7 @@ final class VariantRepository
     /**
      * Создаёт или обновляет вариант по умолчанию и его цену.
      *
-     * @param   array  $data  sku, stock_tracked, backorder, weight, length, width, height, price, discount («500» или «10%»), discount_start, discount_end (UTC)
+     * @param   array  $data  sku, stock_tracked, backorder, weight/weight_unit, length/width/height/dimension_unit, price, discount («500» или «10%»), discount_start, discount_end (UTC)
      *
      * @return  int  id варианта
      *
@@ -71,9 +71,11 @@ final class VariantRepository
             'stock_tracked' => (int) ($data['stock_tracked'] ?? 0),
             'backorder' => (int) ($data['backorder'] ?? 0),
             'weight' => self::nullableNumber($data['weight'] ?? null),
+            'weight_unit' => trim((string) ($data['weight_unit'] ?? 'кг')) ?: 'кг',
             'length' => self::nullableNumber($data['length'] ?? null),
             'width' => self::nullableNumber($data['width'] ?? null),
             'height' => self::nullableNumber($data['height'] ?? null),
+            'dimension_unit' => trim((string) ($data['dimension_unit'] ?? 'см')) ?: 'см',
         ];
 
         if ($existing) {

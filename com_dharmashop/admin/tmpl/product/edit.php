@@ -64,7 +64,7 @@ $canAdmin = $this->getCurrentUser()->authorise('core.admin', 'com_dharmashop');
                 </fieldset>
                 <fieldset class="options-form">
                     <legend><?php echo Text::_('COM_DHARMASHOP_FIELDSET_DIMENSIONS'); ?></legend>
-                    <?php foreach (['weight', 'length', 'width', 'height'] as $name) : ?>
+                    <?php foreach (['weight', 'weight_unit', 'length', 'width', 'height', 'dimension_unit'] as $name) : ?>
                         <?php echo $this->form->renderField($name); ?>
                     <?php endforeach; ?>
                 </fieldset>
@@ -83,10 +83,24 @@ $canAdmin = $this->getCurrentUser()->authorise('core.admin', 'com_dharmashop');
         </fieldset>
         <?php echo HTMLHelper::_('uitab.endTab'); ?>
 
-        <?php echo HTMLHelper::_('uitab.addTab', 'productTab', 'metadata', Text::_('JGLOBAL_FIELDSET_METADATA_OPTIONS')); ?>
+        <?php echo HTMLHelper::_('uitab.addTab', 'productTab', 'display', Text::_('COM_DHARMASHOP_TAB_DISPLAY')); ?>
         <fieldset class="options-form">
-            <legend><?php echo Text::_('JGLOBAL_FIELDSET_METADATA_OPTIONS'); ?></legend>
-            <?php echo LayoutHelper::render('joomla.edit.metadata', $this); ?>
+            <legend><?php echo Text::_('COM_DHARMASHOP_TAB_DISPLAY'); ?></legend>
+            <?php echo $this->form->renderField('product_layout', 'params'); ?>
+        </fieldset>
+        <?php echo HTMLHelper::_('uitab.endTab'); ?>
+
+        <?php echo HTMLHelper::_('uitab.addTab', 'productTab', 'category-order', Text::_('COM_DHARMASHOP_TAB_CATEGORY_ORDER')); ?>
+        <fieldset class="options-form">
+            <legend><?php echo Text::_('COM_DHARMASHOP_TAB_CATEGORY_ORDER'); ?></legend>
+            <?php echo $this->form->renderField('category_order'); ?>
+        </fieldset>
+        <?php echo HTMLHelper::_('uitab.endTab'); ?>
+
+        <?php echo HTMLHelper::_('uitab.addTab', 'productTab', 'seo', Text::_('COM_DHARMASHOP_TAB_SEO')); ?>
+        <fieldset class="options-form">
+            <legend><?php echo Text::_('COM_DHARMASHOP_TAB_SEO'); ?></legend>
+            <?php echo $this->form->renderFieldset('seo'); ?>
         </fieldset>
         <?php echo HTMLHelper::_('uitab.endTab'); ?>
 
