@@ -235,6 +235,39 @@ class ProductModel extends AdminModel
         return true;
     }
 
+    /**
+     * Пересохраняет товары без открытия формы: правила оформления заказа, цена и наличие из вариантов, привязки индекса.
+     *
+     * @param   int[]  $pks  номера товаров
+     *
+     * @return  int  сколько товаров обработано (без тех, на которые нет права правки)
+     */
+    public function resave(array $pks): int
+    {
+        $user = Factory::getApplication()->getIdentity();
+        $shop = $this->shop();
+        $ids = [];
+
+        foreach (array_filter(array_map('intval', $pks)) as $pk) {
+            if ($user->authorise('core.edit', 'com_dharmashop.product.' . $pk) || $user->authorise('core.edit.state', 'com_dharmashop.product.' . $pk)) {
+                $ids[] = $pk;
+            } else {
+                Factory::getApplication()->enqueueMessage(Text::_('JLIB_APPLICATION_ERROR_EDIT_NOT_PERMITTED'), 'warning');
+            }
+        }
+
+        foreach ($ids as $pk) {
+            $shop->orderRules()->materializeRange($pk, $pk);
+            $shop->rebuilder()->rebuild($pk);
+        }
+
+        if ($ids) {
+            $shop->indexer()->rebuildProducts($ids);
+        }
+
+        return count($ids);
+    }
+
     // ------------------------------------------------------------------ пакетная обработка
 
     /**

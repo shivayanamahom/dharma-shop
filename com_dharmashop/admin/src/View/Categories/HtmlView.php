@@ -12,7 +12,6 @@ declare(strict_types=1);
 
 namespace Dharma\Component\DharmaShop\Administrator\View\Categories;
 
-use Dharma\Component\DharmaShop\Administrator\Maintenance\MaintenanceService;
 use Dharma\Component\DharmaShop\Administrator\Support\CategoryTypes;
 use Joomla\CMS\Form\Form;
 use Joomla\CMS\Helper\ContentHelper;
@@ -139,19 +138,6 @@ class HtmlView extends BaseHtmlView
 
         if ($state->get('filter.published') == -2 && $canDo->get('core.delete')) {
             $toolbar->delete('categories.delete', 'JTOOLBAR_EMPTY_TRASH')->message('JGLOBAL_CONFIRM_DELETE')->listCheck(true);
-        }
-
-        if ($canDo->get('core.manage')) {
-            $commands = $toolbar->dropdownButton('commands-group')
-                ->toggleSplit(false)
-                ->text('COM_DHARMASHOP_COMMANDS')
-                ->icon('icon-terminal')
-                ->buttonClass('btn btn-action');
-            $commandsBar = $commands->getChildToolbar();
-
-            foreach (MaintenanceService::COMMANDS as $name => $label) {
-                $commandsBar->standardButton('cmd-' . $name, $label, 'categories.cmd' . ucfirst($name))->icon('icon-terminal')->listCheck(false);
-            }
         }
 
         if ($canDo->get('core.manage')) {

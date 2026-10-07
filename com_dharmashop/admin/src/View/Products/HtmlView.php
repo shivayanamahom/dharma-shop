@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace Dharma\Component\DharmaShop\Administrator\View\Products;
 
+use Dharma\Component\DharmaShop\Administrator\Maintenance\MaintenanceService;
 use Joomla\CMS\Form\Form;
 use Joomla\CMS\Helper\ContentHelper;
 use Joomla\CMS\Language\Text;
@@ -88,6 +89,7 @@ class HtmlView extends BaseHtmlView
                 $childBar->publish('products.publish')->listCheck(true);
                 $childBar->unpublish('products.unpublish')->listCheck(true);
                 $childBar->archive('products.archive')->listCheck(true);
+                $childBar->standardButton('resave', 'COM_DHARMASHOP_RESAVE', 'products.resave')->icon('icon-refresh')->listCheck(true);
                 $childBar->checkin('products.checkin');
 
                 if ((string) $state->get('filter.published') !== '-2') {
@@ -104,6 +106,19 @@ class HtmlView extends BaseHtmlView
                     ->modalWidth('1200px')
                     ->modalHeight('fit-content')
                     ->listCheck(true);
+            }
+        }
+
+        if ($canDo->get('core.manage')) {
+            $commands = $toolbar->dropdownButton('commands-group')
+                ->toggleSplit(false)
+                ->text('COM_DHARMASHOP_COMMANDS')
+                ->icon('icon-terminal')
+                ->buttonClass('btn btn-action');
+            $commandsBar = $commands->getChildToolbar();
+
+            foreach (MaintenanceService::COMMANDS as $name => $label) {
+                $commandsBar->standardButton('cmd-' . $name, $label, 'products.cmd' . ucfirst($name))->icon('icon-terminal')->listCheck(false);
             }
         }
 
