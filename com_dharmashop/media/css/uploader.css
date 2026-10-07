@@ -1,0 +1,46 @@
+/* Dharma Shop: загрузчик изображений. Только то, чего нет в Bootstrap: пунктирная область и подсветка при перетаскивании. */
+.dharmashop-uploader__drop {
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-direction: column;
+	min-height: 9rem;
+	padding: 1rem;
+	text-align: center;
+	cursor: pointer;
+	color: var(--bs-secondary-color);
+	border: 2px dashed var(--bs-border-color);
+	border-radius: var(--bs-border-radius);
+	background: var(--bs-tertiary-bg);
+	transition: border-color .15s, background-color .15s;
+}
+
+.dharmashop-uploader__drop:hover,
+.dharmashop-uploader__drop:focus-visible,
+.dharmashop-uploader.is-dragover .dharmashop-uploader__drop {
+	border-color: var(--bs-primary);
+	background: var(--bs-secondary-bg);
+	outline: 0;
+}
+
+.dharmashop-uploader.is-busy .dharmashop-uploader__drop {
+	cursor: progress;
+	opacity: .7;
+}
+
+.dharmashop-uploader__preview {
+	max-width: 100%;
+	max-height: 14rem;
+	object-fit: contain;
+	border-radius: var(--bs-border-radius-sm);
+}
+
+.dharmashop-uploader__preview[hidden],
+.dharmashop-uploader__hint[hidden] {
+	display: none;
+}
+
+.dharmashop-uploader__path {
+	word-break: break-all;
+}

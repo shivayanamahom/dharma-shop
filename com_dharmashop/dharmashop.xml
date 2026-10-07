@@ -20,6 +20,12 @@
 		</sql>
 	</uninstall>
 
+	<media destination="com_dharmashop" folder="media">
+		<filename>joomla.asset.json</filename>
+		<folder>css</folder>
+		<folder>js</folder>
+	</media>
+
 	<administration>
 		<menu>COM_DHARMASHOP</menu>
 		<submenu>

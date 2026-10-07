@@ -19,11 +19,11 @@
 		<field name="note" type="text" label="JFIELD_NOTE_LABEL" maxlength="255" />
 	</fieldset>
 
-	<fields name="params">
+	<fields name="params" addfieldprefix="Dharma\Component\DharmaShop\Administrator\Field">
 		<fieldset name="dharmashop_media" label="COM_DHARMASHOP_CAT_FIELDSET_MEDIA">
-			<field name="image" type="media" label="COM_DHARMASHOP_CAT_IMAGE_LABEL" description="COM_DHARMASHOP_CAT_IMAGE_DESC" types="images" />
+			<field name="image" type="imageupload" folder="categories" label="COM_DHARMASHOP_CAT_IMAGE_LABEL" description="COM_DHARMASHOP_CAT_IMAGE_DESC" />
 			<field name="image_alt" type="text" label="COM_DHARMASHOP_CAT_IMAGE_ALT_LABEL" />
-			<field name="icon" type="media" label="COM_DHARMASHOP_CAT_ICON_LABEL" description="COM_DHARMASHOP_CAT_ICON_DESC" types="images" />
+			<field name="icon" type="imageupload" folder="icons" label="COM_DHARMASHOP_CAT_ICON_LABEL" description="COM_DHARMASHOP_CAT_ICON_DESC" />
 		</fieldset>
 		<fieldset name="dharmashop_text">
 			<field name="introtext" type="editor" label="COM_DHARMASHOP_CAT_INTROTEXT_LABEL" description="COM_DHARMASHOP_CAT_INTROTEXT_DESC" buttons="true" filter="\Joomla\CMS\Component\ComponentHelper::filterText" />

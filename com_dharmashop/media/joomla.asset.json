@@ -1,0 +1,21 @@
+{
+	"$schema": "https://developer.joomla.org/schemas/json-schema/web_assets.json",
+	"name": "com_dharmashop",
+	"version": "0.1.0",
+	"description": "Dharma Shop: ресурсы интерфейса",
+	"license": "GPL-2.0-or-later",
+	"assets": [
+		{
+			"name": "com_dharmashop.uploader",
+			"type": "script",
+			"uri": "com_dharmashop/uploader.js",
+			"attributes": { "defer": true },
+			"dependencies": ["core"]
+		},
+		{
+			"name": "com_dharmashop.uploader",
+			"type": "style",
+			"uri": "com_dharmashop/uploader.css"
+		}
+	]
+}
