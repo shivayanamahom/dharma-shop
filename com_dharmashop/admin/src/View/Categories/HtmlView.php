@@ -41,6 +41,9 @@ class HtmlView extends BaseHtmlView
 
     public array $activeFilters = [];
 
+    /** Форма окна «Пакетная обработка» (forms/batch_category.xml без блоков, лишних для типа). */
+    public ?Form $batchForm = null;
+
     protected string $extension = CategoryTypes::CATEGORY;
 
     /** @var array<int, int[]> родитель => дочерние записи на странице (для перетаскивания вложенных) */
@@ -60,6 +63,20 @@ class HtmlView extends BaseHtmlView
         if ($errors = $model->getErrors()) {
             throw new GenericDataException(implode("\n", $errors), 500);
         }
+
+        $form = Form::getInstance('com_dharmashop.batch.category.' . $this->extension, JPATH_ADMINISTRATOR . '/components/com_dharmashop/forms/batch_category.xml', ['control' => '']);
+        $form->setFieldAttribute('parent_id', 'extension', $this->extension, 'batch.parent');
+        $form->setFieldAttribute('show_in_list', 'label', $this->extension === CategoryTypes::BRAND ? 'COM_DHARMASHOP_CAT_SHOW_IN_LIST_BRAND_LABEL' : 'COM_DHARMASHOP_CAT_SHOW_IN_LIST_CATEGORY_LABEL', 'batch.display');
+
+        if ($this->extension === CategoryTypes::BADGE) {
+            // Бейдж плоский и без страницы: остаётся только доступ.
+            $form->removeField('parent_id', 'batch.parent');
+            $form->removeField('show_in_list', 'batch.display');
+            $form->removeField('list_ordering', 'batch.products');
+            $form->removeField('list_limit', 'batch.products');
+        }
+
+        $this->batchForm = $form;
 
         foreach ($this->items as $item) {
             $this->ordering[$item->parent_id][] = $item->id;

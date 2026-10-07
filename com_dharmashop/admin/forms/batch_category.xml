@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Окно «Пакетная обработка» категорий, брендов и бейджей (лишние для типа блоки убирает вид). Операция — строка в CategoryModel::$batch_commands. -->
+<form>
+	<fields name="batch">
+		<fields name="access">
+			<fieldset name="access" label="COM_DHARMASHOP_BATCH_BLOCK_ACCESS" description="COM_DHARMASHOP_BATCH_BLOCK_ACCESS_DESC">
+				<field name="assetgroup_id" type="accesslevel" label="COM_DHARMASHOP_BATCH_VALUE_ACCESS">
+					<option value="">COM_DHARMASHOP_BATCH_NOT_CHANGE</option>
+				</field>
+			</fieldset>
+		</fields>
+		<fields name="parent">
+			<fieldset name="parent" label="COM_DHARMASHOP_BATCH_BLOCK_PARENT" description="COM_DHARMASHOP_BATCH_BLOCK_PARENT_DESC">
+				<field name="parent_id" type="category" label="COM_DHARMASHOP_BATCH_VALUE_PARENT" extension="com_dharmashop">
+					<option value="">COM_DHARMASHOP_BATCH_NOT_CHANGE</option>
+					<option value="1">JGLOBAL_ROOT_PARENT</option>
+				</field>
+			</fieldset>
+		</fields>
+		<fields name="display">
+			<fieldset name="display" label="COM_DHARMASHOP_BATCH_BLOCK_DISPLAY" description="COM_DHARMASHOP_BATCH_BLOCK_DISPLAY_DESC">
+				<field name="show_in_list" type="list" label="COM_DHARMASHOP_CAT_SHOW_IN_LIST_LABEL" default="" validate="options">
+					<option value="">COM_DHARMASHOP_BATCH_NOT_CHANGE</option>
+					<option value="yes">COM_DHARMASHOP_SHOW</option>
+					<option value="no">COM_DHARMASHOP_HIDE</option>
+				</field>
+			</fieldset>
+		</fields>
+		<fields name="products">
+			<fieldset name="products" label="COM_DHARMASHOP_BATCH_BLOCK_PRODUCTS" description="COM_DHARMASHOP_BATCH_BLOCK_PRODUCTS_DESC">
+				<field name="list_ordering" type="list" label="COM_DHARMASHOP_CAT_LIST_ORDERING_LABEL" default="" validate="options">
+					<option value="">COM_DHARMASHOP_BATCH_NOT_CHANGE</option>
+					<option value="global">COM_DHARMASHOP_CAT_ORDERING_GLOBAL</option>
+					<option value="order">COM_DHARMASHOP_CAT_ORDERING_ORDER</option>
+					<option value="price_asc">COM_DHARMASHOP_CAT_ORDERING_PRICE_ASC</option>
+					<option value="price_desc">COM_DHARMASHOP_CAT_ORDERING_PRICE_DESC</option>
+					<option value="new">COM_DHARMASHOP_CAT_ORDERING_NEW</option>
+					<option value="title">COM_DHARMASHOP_CAT_ORDERING_TITLE</option>
+				</field>
+				<field name="list_limit" type="list" label="COM_DHARMASHOP_CAT_LIST_LIMIT_LABEL" default="" validate="options">
+					<option value="">COM_DHARMASHOP_BATCH_NOT_CHANGE</option>
+					<option value="global">COM_DHARMASHOP_CAT_ORDERING_GLOBAL</option>
+					<option value="12">12</option>
+					<option value="24">24</option>
+					<option value="36">36</option>
+					<option value="48">48</option>
+					<option value="72">72</option>
+					<option value="96">96</option>
+				</field>
+			</fieldset>
+		</fields>
+	</fields>
+</form>

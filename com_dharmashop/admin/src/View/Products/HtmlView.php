@@ -39,6 +39,9 @@ class HtmlView extends BaseHtmlView
 
     public array $activeFilters = [];
 
+    /** Форма окна «Пакетная обработка» (forms/batch_product.xml). */
+    public ?Form $batchForm = null;
+
     public function display($tpl = null): void
     {
         /** @var \Dharma\Component\DharmaShop\Administrator\Model\ProductsModel $model */
@@ -48,6 +51,7 @@ class HtmlView extends BaseHtmlView
         $this->pagination = $model->getPagination();
         $this->filterForm = $model->getFilterForm();
         $this->activeFilters = $model->getActiveFilters();
+        $this->batchForm = Form::getInstance('com_dharmashop.batch.product', JPATH_ADMINISTRATOR . '/components/com_dharmashop/forms/batch_product.xml', ['control' => '']);
 
         if ($errors = $model->getErrors()) {
             throw new GenericDataException(implode("\n", $errors), 500);

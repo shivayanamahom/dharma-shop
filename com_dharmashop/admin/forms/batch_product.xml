@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Окно «Пакетная обработка» товаров. Блок = fieldset внутри группы batch/<операция>; операция — строка в ProductModel::$batch_commands и метод batch<Имя>. -->
+<form>
+	<fields name="batch">
+		<fields name="category">
+			<fieldset name="category" label="COM_DHARMASHOP_BATCH_BLOCK_CATEGORY" description="COM_DHARMASHOP_BATCH_BLOCK_CATEGORY_DESC">
+				<field name="value" type="category" label="COM_DHARMASHOP_BATCH_VALUE_CATEGORY" extension="com_dharmashop">
+					<option value="">COM_DHARMASHOP_BATCH_CHOOSE</option>
+				</field>
+				<field name="action" type="list" label="COM_DHARMASHOP_BATCH_ACTION" default="skip" validate="options">
+					<option value="skip">COM_DHARMASHOP_BATCH_ACTION_SKIP</option>
+					<option value="set">COM_DHARMASHOP_BATCH_ACTION_MOVE</option>
+				</field>
+			</fieldset>
+		</fields>
+		<fields name="extra_categories">
+			<fieldset name="extra_categories" label="COM_DHARMASHOP_BATCH_BLOCK_EXTRA" description="COM_DHARMASHOP_BATCH_BLOCK_EXTRA_DESC">
+				<field name="value" type="category" label="COM_DHARMASHOP_BATCH_VALUE_CATEGORIES" extension="com_dharmashop" multiple="true" layout="joomla.form.field.list-fancy-select" />
+				<field name="action" type="list" label="COM_DHARMASHOP_BATCH_ACTION" default="skip" validate="options">
+					<option value="skip">COM_DHARMASHOP_BATCH_ACTION_SKIP</option>
+					<option value="add">COM_DHARMASHOP_BATCH_ACTION_ADD</option>
+					<option value="remove">COM_DHARMASHOP_BATCH_ACTION_REMOVE</option>
+					<option value="replace">COM_DHARMASHOP_BATCH_ACTION_REPLACE</option>
+				</field>
+			</fieldset>
+		</fields>
+		<fields name="brand">
+			<fieldset name="brand" label="COM_DHARMASHOP_BATCH_BLOCK_BRAND" description="COM_DHARMASHOP_BATCH_BLOCK_BRAND_DESC">
+				<field name="value" type="category" label="COM_DHARMASHOP_BATCH_VALUE_BRAND" extension="com_dharmashop.brand">
+					<option value="">COM_DHARMASHOP_BATCH_CHOOSE</option>
+				</field>
+				<field name="action" type="list" label="COM_DHARMASHOP_BATCH_ACTION" default="skip" validate="options">
+					<option value="skip">COM_DHARMASHOP_BATCH_ACTION_SKIP</option>
+					<option value="set">COM_DHARMASHOP_BATCH_ACTION_SET</option>
+					<option value="clear">COM_DHARMASHOP_BATCH_ACTION_CLEAR</option>
+				</field>
+			</fieldset>
+		</fields>
+		<fields name="badges">
+			<fieldset name="badges" label="COM_DHARMASHOP_BATCH_BLOCK_BADGES" description="COM_DHARMASHOP_BATCH_BLOCK_BADGES_DESC">
+				<field name="value" type="category" label="COM_DHARMASHOP_BATCH_VALUE_BADGES" extension="com_dharmashop.badge" multiple="true" layout="joomla.form.field.list-fancy-select" />
+				<field name="action" type="list" label="COM_DHARMASHOP_BATCH_ACTION" default="skip" validate="options">
+					<option value="skip">COM_DHARMASHOP_BATCH_ACTION_SKIP</option>
+					<option value="add">COM_DHARMASHOP_BATCH_ACTION_ADD</option>
+					<option value="remove">COM_DHARMASHOP_BATCH_ACTION_REMOVE</option>
+					<option value="replace">COM_DHARMASHOP_BATCH_ACTION_REPLACE</option>
+				</field>
+			</fieldset>
+		</fields>
+	</fields>
+</form>

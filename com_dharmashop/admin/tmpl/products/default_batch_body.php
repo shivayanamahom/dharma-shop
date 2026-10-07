@@ -12,37 +12,32 @@ declare(strict_types=1);
 
 \defined('_JEXEC') or die;
 
-use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 
 /**
- * Окно «Пакетная обработка». Каждое поле — одна операция; заполненные поля применяются ко всем выбранным товарам.
- * Чтобы добавить операцию: поле здесь + строка в ProductModel::$batch_commands + метод batch<Имя> в ProductModel.
+ * Окно «Пакетная обработка»: блоки-карточки строятся из XML-формы вида (batchForm) — заголовок и пояснение из fieldset,
+ * поля значения и «Действие» из его полей. Чтобы добавить блок, достаточно описать его в форме и в модели.
  *
- * @var \Dharma\Component\DharmaShop\Administrator\View\Products\HtmlView $this
+ * @var \Joomla\CMS\MVC\View\HtmlView $this
  */
-
-$operations = [
-    ['category_id', 'COM_DHARMASHOP_BATCH_MOVE_CATEGORY', 'com_dharmashop', 'COM_DHARMASHOP_BATCH_NOT_CHANGE', []],
-    ['extra_category_id', 'COM_DHARMASHOP_BATCH_ADD_CATEGORY', 'com_dharmashop', 'COM_DHARMASHOP_BATCH_NOT_CHANGE', []],
-    ['brand_id', 'COM_DHARMASHOP_BATCH_SET_BRAND', 'com_dharmashop.brand', 'COM_DHARMASHOP_BATCH_NOT_CHANGE', [['-1', 'COM_DHARMASHOP_FIELD_BRAND_NONE']]],
-    ['badge_add_id', 'COM_DHARMASHOP_BATCH_ADD_BADGE', 'com_dharmashop.badge', 'COM_DHARMASHOP_BATCH_NOT_CHANGE', []],
-    ['badge_remove_id', 'COM_DHARMASHOP_BATCH_REMOVE_BADGE', 'com_dharmashop.badge', 'COM_DHARMASHOP_BATCH_NOT_CHANGE', []],
-];
 ?>
 <div class="p-3">
     <p class="text-body-secondary"><?php echo Text::_('COM_DHARMASHOP_BATCH_HINT'); ?></p>
     <div class="row">
-        <?php foreach ($operations as [$name, $label, $extension, $empty, $extraOptions]) : ?>
-            <div class="form-group col-md-6 mb-3">
-                <label id="batch-<?php echo $name; ?>-lbl" for="batch-<?php echo $name; ?>"><?php echo Text::_($label); ?></label>
-                <select name="batch[<?php echo $name; ?>]" class="form-select" id="batch-<?php echo $name; ?>" aria-labelledby="batch-<?php echo $name; ?>-lbl">
-                    <option value=""><?php echo Text::_($empty); ?></option>
-                    <?php foreach ($extraOptions as [$value, $text]) : ?>
-                        <option value="<?php echo $this->escape($value); ?>"><?php echo Text::_($text); ?></option>
-                    <?php endforeach; ?>
-                    <?php echo HTMLHelper::_('select.options', HTMLHelper::_('category.options', $extension)); ?>
-                </select>
+        <?php foreach ($this->batchForm->getFieldsets() as $name => $fieldset) : ?>
+            <?php if (!$this->batchForm->getFieldset($name)) : ?>
+                <?php continue; ?>
+            <?php endif; ?>
+            <div class="col-lg-6 mb-3">
+                <fieldset class="options-form h-100">
+                    <legend><?php echo Text::_($fieldset->label); ?></legend>
+                    <?php if (!empty($fieldset->description)) : ?>
+                        <p class="small text-body-secondary"><?php echo Text::_($fieldset->description); ?></p>
+                    <?php endif; ?>
+                    <div class="form-grid">
+                        <?php echo $this->batchForm->renderFieldset($name); ?>
+                    </div>
+                </fieldset>
             </div>
         <?php endforeach; ?>
     </div>

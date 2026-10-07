@@ -270,6 +270,22 @@ class CategoryModel extends AdminModel
 
     // ------------------------------------------------------------------ пакетная обработка
 
+    /** Разворачивает группы блоков окна (forms/batch_category.xml) в плоский набор команд для AdminModel::batch. */
+    public function batch($commands, $pks, $contexts)
+    {
+        $flat = [];
+
+        foreach ((array) $commands as $key => $value) {
+            if (is_array($value) && in_array($key, ['access', 'parent', 'display', 'products'], true)) {
+                $flat = array_merge($flat, $value);
+            } else {
+                $flat[$key] = $value;
+            }
+        }
+
+        return parent::batch($flat, $pks, $contexts);
+    }
+
     /**
      * Применяет изменение к каждой выбранной записи, на правку которой есть право (ресурс «<тип>.category.<id>»).
      *
