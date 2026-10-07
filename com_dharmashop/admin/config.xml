@@ -23,6 +23,13 @@
 	</fieldset>
 
 	<fieldset name="images" label="COM_DHARMASHOP_CONFIG_IMAGES" description="COM_DHARMASHOP_CONFIG_IMAGES_DESC">
+		<field name="image_base_folder" type="text" label="COM_DHARMASHOP_CONFIG_IMAGE_BASE_FOLDER" description="COM_DHARMASHOP_CONFIG_IMAGE_BASE_FOLDER_DESC" default="dharmashop" maxlength="60" filter="string" hint="dharmashop" />
+		<field name="image_folder_mode" type="list" label="COM_DHARMASHOP_CONFIG_IMAGE_FOLDER_MODE" description="COM_DHARMASHOP_CONFIG_IMAGE_FOLDER_MODE_DESC" default="type_year" validate="options">
+			<option value="type_year">COM_DHARMASHOP_CONFIG_IMAGE_FOLDER_TYPE_YEAR</option>
+			<option value="type_year_month">COM_DHARMASHOP_CONFIG_IMAGE_FOLDER_TYPE_YEAR_MONTH</option>
+			<option value="type">COM_DHARMASHOP_CONFIG_IMAGE_FOLDER_TYPE</option>
+			<option value="flat">COM_DHARMASHOP_CONFIG_IMAGE_FOLDER_FLAT</option>
+		</field>
 		<field name="image_name_mode" type="list" label="COM_DHARMASHOP_CONFIG_IMAGE_NAME_MODE" description="COM_DHARMASHOP_CONFIG_IMAGE_NAME_MODE_DESC" default="random" validate="options">
 			<option value="random">COM_DHARMASHOP_CONFIG_IMAGE_NAME_RANDOM</option>
 			<option value="original_random">COM_DHARMASHOP_CONFIG_IMAGE_NAME_ORIGINAL_RANDOM</option>

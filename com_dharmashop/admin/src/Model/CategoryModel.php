@@ -15,6 +15,7 @@ namespace Dharma\Component\DharmaShop\Administrator\Model;
 use Dharma\Component\DharmaShop\Administrator\Image\ImageCleaner;
 use Dharma\Component\DharmaShop\Administrator\Order\InheritHints;
 use Dharma\Component\DharmaShop\Administrator\Support\CategoryTypes;
+use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Form\Form;
 use Joomla\CMS\Language\Text;
@@ -261,7 +262,7 @@ class CategoryModel extends AdminModel
         }
 
         // После удаления убираем только свои файлы, на которые больше никто не ссылается (правила — ImageCleaner).
-        $cleaner = new ImageCleaner($db, JPATH_ROOT);
+        $cleaner = new ImageCleaner($db, JPATH_ROOT, ComponentHelper::getParams('com_dharmashop'));
 
         foreach (array_unique($files) as $file) {
             $cleaner->deleteIfUnused($file);

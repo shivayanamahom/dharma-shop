@@ -19,7 +19,7 @@ use Joomla\Registry\Registry;
 
 /**
  * Приём загруженного изображения: проверка (расширение, тип содержимого, размер), безопасное имя, сохранение в
- * images/dharmashop/<папка>/<год>/. Допустимые расширения и предел размера берутся из настроек «Медиа» Joomla.
+ * <папка из настроек>/<тип>/<год>/ (по умолчанию images/dharmashop). Допустимые расширения и предел размера берутся из настроек «Медиа» Joomla.
  */
 final class ImageUploader
 {
@@ -42,6 +42,35 @@ final class ImageUploader
      */
     public function __construct(private readonly Registry $mediaParams, private readonly string $root, private readonly ?Registry $shopParams = null)
     {
+    }
+
+    public const DEFAULT_BASE = 'dharmashop';
+
+    /** Корневая папка загрузок внутри images/ по настройке «Папка для изображений» (латиница, цифры, - _ и вложенность через /; пусто — dharmashop). */
+    public static function baseFolder(?Registry $shopParams): string
+    {
+        $parts = [];
+
+        foreach (explode('/', str_replace('\\', '/', strtolower((string) $shopParams?->get('image_base_folder', self::DEFAULT_BASE)))) as $part) {
+            $part = trim(preg_replace('/[^a-z0-9_-]/', '', $part) ?? '', '-_');
+
+            if ($part !== '') {
+                $parts[] = $part;
+            }
+        }
+
+        return 'images/' . ($parts ? implode('/', $parts) : self::DEFAULT_BASE);
+    }
+
+    /** Подпапка внутри корневой по настройке «Структура папок»: тип/год (по умолчанию), тип/год/месяц, тип, одна папка. */
+    private function subFolder(string $folder): string
+    {
+        return match ((string) $this->shopParams?->get('image_folder_mode', 'type_year')) {
+            'type_year_month' => $folder . '/' . date('Y') . '/' . date('m'),
+            'type' => $folder,
+            'flat' => '',
+            default => $folder . '/' . date('Y'),
+        };
     }
 
     /** Имя файла без расширения по настройкам магазина: «оригинальное», «случайное» или «оригинальное + случайный хвост»; перед ним — префикс. */
@@ -143,7 +172,8 @@ final class ImageUploader
         }
 
         $folder = trim(preg_replace('/[^a-z0-9_-]/', '', strtolower($folder)) ?? '', '-_') ?: 'common';
-        $relative = 'images/dharmashop/' . $folder . '/' . date('Y');
+        $sub = $this->subFolder($folder);
+        $relative = self::baseFolder($this->shopParams) . ($sub !== '' ? '/' . $sub : '');
         $directory = rtrim($this->root, '/') . '/' . $relative;
 
         if (!is_dir($directory) && !@mkdir($directory, 0755, true) && !is_dir($directory)) {

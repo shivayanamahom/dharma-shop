@@ -13,34 +13,46 @@ declare(strict_types=1);
 namespace Dharma\Component\DharmaShop\Administrator\Image;
 
 use Joomla\Database\DatabaseInterface;
+use Joomla\Registry\Registry;
 use Joomla\Database\ParameterType;
 
 \defined('_JEXEC') or die;
 
 /**
  * Безопасное удаление файлов изображений при удалении записей. Правила (чтобы не сломать чужое):
- *  - удаляются только файлы внутри images/dharmashop/ (то, что загрузили через наш загрузчик); выбранные с сервера
+ *  - удаляются только файлы внутри папки загрузок (по настройке; images/dharmashop/ тоже, если папку меняли) — то, что загрузили через наш загрузчик; выбранные с сервера
  *    из других папок (например images/sampledata) не трогаются никогда;
  *  - файл не удаляется, если на него ссылается другая запись магазина (категория, бренд, бейдж, фото товара, обложка).
  */
 final class ImageCleaner
 {
-    private const ROOT = 'images/dharmashop/';
+    /** @var string[] папки загрузок с завершающим «/» */
+    private array $roots;
 
-    public function __construct(private readonly DatabaseInterface $db, private readonly string $siteRoot)
+    public function __construct(private readonly DatabaseInterface $db, private readonly string $siteRoot, ?Registry $shopParams = null)
     {
+        $this->roots = array_values(array_unique([
+            ImageUploader::baseFolder($shopParams) . '/',
+            'images/' . ImageUploader::DEFAULT_BASE . '/',
+        ]));
     }
 
     /** Путь внутри нашей папки без выхода за её пределы или null. */
-    public static function normalize(string $path): ?string
+    public function normalize(string $path): ?string
     {
         $path = ltrim(trim((string) strstr($path . '#', '#', true)), '/');
 
-        if (!str_starts_with($path, self::ROOT) || str_contains($path, '..') || str_contains($path, "\0")) {
+        if (str_contains($path, '..') || str_contains($path, "\0")) {
             return null;
         }
 
-        return $path;
+        foreach ($this->roots as $root) {
+            if (str_starts_with($path, $root)) {
+                return $path;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -50,7 +62,7 @@ final class ImageCleaner
      */
     public function deleteIfUnused(string $path): bool
     {
-        $path = self::normalize($path);
+        $path = $this->normalize($path);
 
         if ($path === null || $this->isReferenced($path)) {
             return false;
@@ -77,7 +89,7 @@ final class ImageCleaner
             $params = json_decode((string) $json, true) ?: [];
 
             foreach (['image', 'icon'] as $key) {
-                if (isset($params[$key]) && self::normalize((string) $params[$key]) === $path) {
+                if (isset($params[$key]) && $this->normalize((string) $params[$key]) === $path) {
                     return true;
                 }
             }
