@@ -58,6 +58,21 @@ class Router extends RouterView
         return parent::build($query);
     }
 
+    /**
+     * Под пунктом меню «список категорий» (например, главная) адрес `/smartfony` разбирается как вложенный список категорий,
+     * но у категории всегда должна быть страница с товарами: конкретная категория (id > 1) открывается видом `category`.
+     */
+    public function parse(&$segments)
+    {
+        $vars = parent::parse($segments);
+
+        if (($vars['view'] ?? '') === 'categories' && (int) ($vars['id'] ?? 0) > 1) {
+            $vars['view'] = 'category';
+        }
+
+        return $vars;
+    }
+
     public function getCategoriesSegment($id, $query): array
     {
         return $this->chain((int) $id, $this->rootKey($query, 'categories'));
