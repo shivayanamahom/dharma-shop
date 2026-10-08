@@ -7,6 +7,7 @@
 	"assets": [
 		{
 			"name": "com_dharmashop.settings-search",
+			"version": "ca7d6950f28e",
 			"type": "script",
 			"uri": "com_dharmashop/settings-search.js",
 			"attributes": { "defer": true },

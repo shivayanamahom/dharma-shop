@@ -41,10 +41,10 @@ final class PlaceholderPanel
      *
      * @param   array<int, array{title: string, items: array<int, array{code: string, name: string, value: string}>}>  $groups
      */
-    public static function dialog(array $groups, string $note = 'COM_DHARMASHOP_PH_NOTE'): string
+    public static function dialog(array $groups): string
     {
         $e = static fn (string $v): string => htmlspecialchars($v, ENT_QUOTES, 'UTF-8');
-        $html = '<template id="' . self::DIALOG_ID . '"><div class="p-3"><div><p class="text-muted mb-3">' . $e(Text::_($note)) . '</p>';
+        $html = '<template id="' . self::DIALOG_ID . '"><div class="p-3"><div><p class="text-muted mb-3">' . $e(Text::_('COM_DHARMASHOP_PH_NOTE')) . '</p>';
 
         foreach ($groups as $group) {
             $html .= '<table class="table table-bordered align-middle mb-4"><caption class="caption-top text-center fw-bold fs-5 pb-2">' . $e($group['title']) . '</caption>'

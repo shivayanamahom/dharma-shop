@@ -17,6 +17,26 @@
         if (!widget || !tabs || widget.dataset.ready) return;
         await customElements.whenDefined('joomla-tab');
         widget.dataset.ready = '1';
+
+        // Только SEO магазина: справочник рядом с полями; настройки и showon остаются теми же DOM-узлами.
+        const seoGrid = tabs.querySelector('#fieldset-seo > .form-grid');
+        const shortcodes = seoGrid?.querySelector(':scope > [data-dharma-seo-shortcodes]');
+        if (seoGrid && shortcodes) {
+            const fields = document.createElement('div');
+            fields.className = 'col-12 col-xl-8';
+            const fieldGrid = document.createElement('div');
+            fieldGrid.className = 'form-grid';
+            Array.from(seoGrid.children).forEach((child) => {
+                if (child !== shortcodes) fieldGrid.append(child);
+            });
+            fields.append(fieldGrid);
+            const reference = document.createElement('div');
+            reference.className = 'col-12 col-xl-4';
+            reference.append(shortcodes);
+            seoGrid.classList.remove('form-grid');
+            seoGrid.classList.add('row', 'g-4', 'align-items-start');
+            seoGrid.append(fields, reference);
+        }
         tabs.before(widget);
         widget.hidden = false;
 
