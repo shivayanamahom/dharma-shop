@@ -14,6 +14,10 @@
         <folder>services</folder>
         <folder>tmpl</folder>
     </files>
+    <media folder="media" destination="plg_dharmashopshipping_pickup">
+        <folder>js</folder>
+        <filename>joomla.asset.json</filename>
+    </media>
     <languages folder="language">
         <language tag="ru-RU">ru-RU/plg_dharmashopshipping_pickup.ini</language>
         <language tag="ru-RU">ru-RU/plg_dharmashopshipping_pickup.sys.ini</language>

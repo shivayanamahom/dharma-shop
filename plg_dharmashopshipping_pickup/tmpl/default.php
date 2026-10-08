@@ -5,7 +5,7 @@
  *
  * @var  array  $displayData  method (Method), quote (Quote), selected (bool), id (int), errors (array), info (строки describe),
  *                            points (пункты: key, name, address, rows, map_url — ссылка общей карты с центром на пункте), point_selected (ключ выбранного пункта),
- *                            map_url (ссылка карты выбранного пункта или ''),
+ *                            map_url (ссылка карты выбранного пункта или ''), map (mode: js|iframe|none, ratio, config — JSON для скрипта карты),
  *                            image_url, price_text, total_text, free_text (строки)
  *
  * Правила для всех типов доставки (docs/SHIPPING.md): радиокнопка `shipping_method` с data-shipping-radio, data-price-text, data-total-text;
@@ -77,9 +77,18 @@ $priceText = $quote->free ? $displayData['free_text'] : $displayData['price_text
             <?php endif; ?>
         </div>
     <?php endforeach; ?>
-    <?php if ($displayData['map_url'] !== '' || array_filter(array_column($points, 'map_url'))) : ?>
+    <?php $map = (array) $displayData['map']; $ratio = 'ratio-' . preg_replace('/[^0-9x]/', '', (string) $map['ratio']); ?>
+    <?php if ($map['mode'] === 'js') : ?>
+        <?php // Яндекс Карты по ключу API: карту строит скрипт плагина по data-config. ?>
+        <div class="mt-2 ms-3<?php echo $selected ? '' : ' d-none'; ?>" data-shipping-extra>
+            <div class="ratio <?php echo $esc($ratio); ?> rounded overflow-hidden border">
+                <div class="w-100 h-100" data-pickup-map data-config="<?php echo $esc($map['config']); ?>" role="img" aria-label="<?php echo $esc(Text::sprintf('PLG_DHARMASHOPSHIPPING_PICKUP_MAP_TITLE', $method->title)); ?>"></div>
+            </div>
+        </div>
+    <?php elseif ($map['mode'] === 'iframe' && ($displayData['map_url'] !== '' || array_filter(array_column($points, 'map_url')))) : ?>
+        <?php // Виджет без ключа (Яндекс) или OpenStreetMap: адрес меняется при выборе пункта (data-map-url). ?>
         <div class="mt-2 ms-3<?php echo $selected && $displayData['map_url'] !== '' ? '' : ' d-none'; ?>" data-shipping-extra data-shipping-map-wrap>
-            <div class="ratio ratio-16x9 rounded overflow-hidden border">
+            <div class="ratio <?php echo $esc($ratio); ?> rounded overflow-hidden border">
                 <iframe src="<?php echo $esc($displayData['map_url']); ?>" title="<?php echo $esc(Text::sprintf('PLG_DHARMASHOPSHIPPING_PICKUP_MAP_TITLE', $method->title)); ?>"
                     loading="lazy" referrerpolicy="no-referrer" allowfullscreen data-shipping-map></iframe>
             </div>

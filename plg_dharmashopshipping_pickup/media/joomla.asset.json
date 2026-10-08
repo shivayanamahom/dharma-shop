@@ -1,0 +1,15 @@
+{
+	"$schema": "https://developer.joomla.org/schemas/json-schema/web_assets.json",
+	"name": "plg_dharmashopshipping_pickup",
+	"version": "0.1.0",
+	"description": "Dharma Shop: карта пунктов самовывоза (Яндекс Карты, JavaScript API по ключу)",
+	"license": "GPL-2.0-or-later",
+	"assets": [
+		{
+			"name": "plg_dharmashopshipping_pickup.map",
+			"type": "script",
+			"uri": "plg_dharmashopshipping_pickup/pickup-map.js",
+			"attributes": { "defer": true }
+		}
+	]
+}

@@ -45,6 +45,29 @@ $this->getDocument()->getWebAssetManager()->useScript('keepalive')->useScript('f
                     <?php endforeach; ?>
                 </fieldset>
                 <?php echo HTMLHelper::_('uitab.endTab'); ?>
+                <?php // Вкладка «Настройка карты» — только если тип описывает fieldset `map_<id>` (например, самовывоз). ?>
+                <?php
+                $mapSets = [];
+                foreach (TypeRegistry::current()->all() as $type) {
+                    $fieldsets = $this->form->getFieldsets();
+                    if (isset($fieldsets['map_' . $type->id()])) {
+                        $mapSets[$type->id()] = $fieldsets['map_' . $type->id()];
+                    }
+                }
+                ?>
+                <?php if ($mapSets) : ?>
+                    <?php echo HTMLHelper::_('uitab.addTab', 'shippingTab', 'map', Text::_('COM_DHARMASHOP_SHIPPING_TAB_MAP')); ?>
+                    <?php foreach ($mapSets as $typeId => $fieldset) : ?>
+                        <div data-showon='[{"field":"jform[plugin]","values":["<?php echo $this->escape($typeId); ?>"],"sign":"=","op":""}]'>
+                            <fieldset class="options-form">
+                                <legend><?php echo Text::_($fieldset->label ?: 'COM_DHARMASHOP_SHIPPING_TAB_MAP'); ?></legend>
+                                <?php echo $this->form->renderFieldset('map_' . $typeId); ?>
+                            </fieldset>
+                        </div>
+                    <?php endforeach; ?>
+                    <div class="alert alert-info" data-showon='[{"field":"jform[plugin]","values":<?php echo $this->escape(json_encode(array_map('strval', array_keys($mapSets)))); ?>,"sign":"!=","op":""}]'><?php echo Text::_('COM_DHARMASHOP_SHIPPING_MAP_NONE_FOR_TYPE'); ?></div>
+                    <?php echo HTMLHelper::_('uitab.endTab'); ?>
+                <?php endif; ?>
                 <?php echo HTMLHelper::_('uitab.endTabSet'); ?>
             </div>
         </div>

@@ -8,6 +8,7 @@ use Dharma\Component\DharmaShop\Administrator\Shipping\Method;
 use Dharma\Component\DharmaShop\Administrator\Shipping\Quote;
 use Dharma\Component\DharmaShop\Administrator\Shipping\TypeInterface;
 use Joomla\CMS\Application\ApplicationHelper;
+use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Plugin\PluginHelper;
 
@@ -20,6 +21,14 @@ use Joomla\CMS\Plugin\PluginHelper;
 final class PickupType implements TypeInterface
 {
     private const MAPS = ['none', 'yandex', 'osm'];
+
+    private const MARKER_KINDS = ['Icon', 'DotIcon', 'CircleDotIcon', 'StretchyIcon'];
+
+    private const COLORS = ['blue', 'red', 'green', 'darkGreen', 'darkBlue', 'lightBlue', 'orange', 'darkOrange', 'violet', 'pink', 'yellow', 'brown', 'black', 'gray', 'night'];
+
+    private const OSM_LAYERS = ['mapnik', 'cyclemap', 'transportmap', 'hot'];
+
+    private const RATIOS = ['21x9', '16x9', '4x3', '1x1'];
 
     public function id(): string
     {
@@ -65,6 +74,13 @@ final class PickupType implements TypeInterface
             'max_total' => $money($settings['max_total'] ?? 0, 'MAX_TOTAL'),
             'map' => in_array((string) ($settings['map'] ?? ''), self::MAPS, true) ? (string) $settings['map'] : 'none',
             'zoom' => (string) min(19, max(0, (int) ($settings['zoom'] ?? 0))),
+            'map_ratio' => in_array((string) ($settings['map_ratio'] ?? ''), self::RATIOS, true) ? (string) $settings['map_ratio'] : '16x9',
+            'yandex_apikey' => trim((string) ($settings['yandex_apikey'] ?? '')),
+            'marker_kind' => in_array((string) ($settings['marker_kind'] ?? ''), self::MARKER_KINDS, true) ? (string) $settings['marker_kind'] : 'Icon',
+            'marker_color' => in_array((string) ($settings['marker_color'] ?? ''), self::COLORS, true) ? (string) $settings['marker_color'] : 'blue',
+            'marker_selected_color' => in_array((string) ($settings['marker_selected_color'] ?? ''), self::COLORS, true) ? (string) $settings['marker_selected_color'] : 'red',
+            'osm_layer' => in_array((string) ($settings['osm_layer'] ?? ''), self::OSM_LAYERS, true) ? (string) $settings['osm_layer'] : 'mapnik',
+            'center' => '',
             'points' => $this->normalizePoints((array) ($settings['points'] ?? [])),
         ];
 
@@ -74,6 +90,24 @@ final class PickupType implements TypeInterface
 
         if (!$normalized['points']) {
             throw new \DomainException('PLG_DHARMASHOPSHIPPING_PICKUP_ERROR_POINTS');
+        }
+
+        // Ключ API Яндекса — публичный ключ браузера (виден в коде страницы): только буквы, цифры и дефисы.
+        if ($normalized['yandex_apikey'] !== '' && !preg_match('/^[A-Za-z0-9\-]{8,100}$/D', $normalized['yandex_apikey'])) {
+            throw new \DomainException('PLG_DHARMASHOPSHIPPING_PICKUP_ERROR_APIKEY');
+        }
+
+        // Центр карты (необязателен) — в том же формате, что координаты складов; пусто — по выбранному пункту или по всем пунктам.
+        $centerRaw = trim((string) ($settings['center'] ?? ''));
+
+        if ($centerRaw !== '') {
+            $center = self::parseCoords($centerRaw);
+
+            if ($center === null) {
+                throw new \DomainException('PLG_DHARMASHOPSHIPPING_PICKUP_ERROR_COORDS');
+            }
+
+            $normalized['center'] = $center[0] . ', ' . $center[1];
         }
 
         // Карта общая для способа: нужен хотя бы один пункт с координатами.
@@ -252,6 +286,7 @@ final class PickupType implements TypeInterface
         $displayData['points'] = $points;
         $displayData['point_selected'] = $active;
         $displayData['map_url'] = (string) (array_column($points, 'map_url', 'key')[$active] ?? '');
+        $displayData['map'] = $this->mapDisplay($displayData['method'], $points, $active);
 
         return (static function (string $__path, array $displayData): string {
             ob_start();
@@ -285,6 +320,11 @@ final class PickupType implements TypeInterface
 
         [$lat, $lon] = $located[$activeKey];
 
+        if ($map === 'yandex' && trim((string) ($method->params['yandex_apikey'] ?? '')) !== '') {
+            // С ключом API карту рисует скрипт (mapDisplay), адрес для упрощённого виджета не нужен.
+            return '';
+        }
+
         if ($map === 'yandex') {
             $marks = [];
 
@@ -310,7 +350,62 @@ final class PickupType implements TypeInterface
         $zoom = $zoom ?: 16;
         $delta = 0.01 / (2 ** max(0, $zoom - 14));
         $bbox = ($lon - $delta * 2) . ',' . ($lat - $delta) . ',' . ($lon + $delta * 2) . ',' . ($lat + $delta);
+        $layer = in_array((string) ($method->params['osm_layer'] ?? ''), self::OSM_LAYERS, true) ? (string) $method->params['osm_layer'] : 'mapnik';
 
-        return 'https://www.openstreetmap.org/export/embed.html?bbox=' . rawurlencode($bbox) . '&layer=mapnik&marker=' . rawurlencode($lat . ',' . $lon);
+        return 'https://www.openstreetmap.org/export/embed.html?bbox=' . rawurlencode($bbox) . '&layer=' . $layer . '&marker=' . rawurlencode($lat . ',' . $lon);
+    }
+
+    /**
+     * Описание карты для макета: режим (`js` — карта Яндекса по ключу API, `iframe` — виджет, `none`), пропорции и конфигурация для скрипта.
+     *
+     * @return  array{mode: string, ratio: string, config: string}
+     */
+    private function mapDisplay(Method $method, array $points, string $active): array
+    {
+        $p = $method->params;
+        $kind = (string) ($p['map'] ?? 'none');
+        $ratio = in_array((string) ($p['map_ratio'] ?? ''), self::RATIOS, true) ? (string) $p['map_ratio'] : '16x9';
+        $key = trim((string) ($p['yandex_apikey'] ?? ''));
+
+        if ($kind === 'none') {
+            return ['mode' => 'none', 'ratio' => $ratio, 'config' => ''];
+        }
+
+        if ($kind !== 'yandex' || $key === '') {
+            return ['mode' => 'iframe', 'ratio' => $ratio, 'config' => ''];
+        }
+
+        $located = [];
+
+        foreach ($points as $point) {
+            $parsed = self::parseCoords((string) ($point['coords'] ?? ''));
+
+            if ($parsed !== null) {
+                $located[] = ['key' => (string) $point['key'], 'name' => (string) $point['name'], 'address' => (string) $point['address'], 'coords' => [(float) $parsed[0], (float) $parsed[1]]];
+            }
+        }
+
+        $center = self::parseCoords((string) ($p['center'] ?? ''));
+        $config = [
+            'apikey' => $key,
+            'zoom' => (int) ($p['zoom'] ?? 0),
+            'center' => $center !== null ? [(float) $center[0], (float) $center[1]] : null,
+            'active' => $active,
+            'markerKind' => in_array((string) ($p['marker_kind'] ?? ''), self::MARKER_KINDS, true) ? (string) $p['marker_kind'] : 'Icon',
+            'markerColor' => in_array((string) ($p['marker_color'] ?? ''), self::COLORS, true) ? (string) $p['marker_color'] : 'blue',
+            'selectedColor' => in_array((string) ($p['marker_selected_color'] ?? ''), self::COLORS, true) ? (string) $p['marker_selected_color'] : 'red',
+            'points' => $located,
+        ];
+
+        if (!$located) {
+            return ['mode' => 'none', 'ratio' => $ratio, 'config' => ''];
+        }
+
+        // Скрипт карты подключается только тогда, когда карта действительно нужна.
+        $wa = Factory::getApplication()->getDocument()->getWebAssetManager();
+        $wa->getRegistry()->addRegistryFile('media/plg_dharmashopshipping_pickup/joomla.asset.json');
+        $wa->useScript('plg_dharmashopshipping_pickup.map');
+
+        return ['mode' => 'js', 'ratio' => $ratio, 'config' => (string) json_encode($config, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT)];
     }
 }
