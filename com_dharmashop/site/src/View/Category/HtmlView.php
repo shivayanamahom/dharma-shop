@@ -148,12 +148,27 @@ class HtmlView extends BaseHtmlView
         $app = Factory::getApplication();
         parse_str((string) $app->getInput()->server->getString('QUERY_STRING', ''), $vars);
 
-        if ($app->getInput()->getMethod() !== 'GET' || (!isset($vars['view']) && !isset($vars['option']))) {
+        if ($app->getInput()->getMethod() !== 'GET') {
             return;
         }
 
-        $target = $this->absoluteRoute((int) $this->item->id) . ($this->start ? '?start=' . $this->start : '');
-        $app->redirect($target, 301);
+        if (isset($vars['view']) || isset($vars['option'])) {
+            $target = $this->absoluteRoute((int) $this->item->id) . ($this->start ? '?start=' . $this->start : '');
+            $app->redirect($target, 301);
+
+            return;
+        }
+
+        // Одна страница — один адрес: тот же раздел, открытый через другой пункт меню (`/tovary-kategorii/smartfony` вместо `/smartfony`),
+        // отвечает 301 на основной адрес; параметры запроса (start, sort, product_view, utm) сохраняются.
+        if ((int) $this->item->id > 1 && $app->getInput()->getCmd('format', 'html') === 'html') {
+            $canonical = $this->absoluteRoute((int) $this->item->id);
+            $request = Uri::getInstance();
+
+            if (rtrim($request->getPath(), '/') !== rtrim((string) parse_url($canonical, PHP_URL_PATH), '/')) {
+                $app->redirect($canonical . ($request->getQuery() !== '' ? '?' . $request->getQuery() : ''), 301);
+            }
+        }
     }
 
     /** Тексты категории (интро, описание) с подстановками {category.title}, {category.price_min} и др. */
