@@ -1,7 +1,7 @@
 <?php
 /**
  * Мини-корзина для боковой панели модуля корзины (подгружается фрагментом): карточки позиций (категория, название, артикул,
- * количество «−»/«+», цена за единицу и сумма, удаление), закреплённый внизу блок итога и кнопка перехода в корзину. Стили — media/mod_dharmashop_cart/css/minicart.css
+ * количество «−»/«+», цена за единицу и сумма, удаление), закреплённый внизу блок итога и кнопки «Корзина» и «Оформить заказ» (страницы cart и checkout — разные). Стили — media/mod_dharmashop_cart/css/minicart.css
  * (подключает модуль); что показывать, задают настройки модуля (`$this->mini`). Действия выполняет media/com_dharmashop/js/mini-cart.js
  * (data-атрибуты); без JavaScript панель не открывается, а значок ведёт на страницу корзины. Данные готовит вид, SQL здесь нет.
  */
@@ -11,6 +11,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 
 $cartUrl = Route::_('index.php?option=com_dharmashop&view=cart', false);
+$checkoutUrl = Route::_('index.php?option=com_dharmashop&view=checkout', false);
 $qtyText = static fn (float $qty): string => rtrim(rtrim(number_format($qty, 3, '.', ''), '0'), '.');
 ?>
 <div class="dharmaMiniCart" data-dharmashop-minicart-content>
@@ -69,9 +70,11 @@ $qtyText = static fn (float $qty): string => rtrim(rtrim(number_format($qty, 3, 
             <div class="dharmaMiniCartSum dharmaMiniCartAdjustment"><span><?php echo $this->escape((string) $adjustment['title']); ?></span><span><?php echo $this->escape($this->money->format((string) $adjustment['amount'])); ?></span></div>
         <?php endforeach; ?>
         <div class="dharmaMiniCartSum dharmaMiniCartSumTotal"><span><?php echo Text::_('COM_DHARMASHOP_CART_TOTAL_SHORT'); ?></span><span><?php echo $this->escape($this->totalText((float) $this->totals['total'])); ?></span></div>
-        <?php // Позже здесь же появится кнопка «Оформить» (этап «Заказы»); пока одна кнопка перехода в корзину. ?>
         <div class="dharmaMiniCartActions">
-            <a class="btn btn-primary dharmaMiniCartGo" href="<?php echo $this->escape($cartUrl); ?>"><?php echo Text::_('COM_DHARMASHOP_CART_TITLE'); ?></a>
+            <a class="<?php echo $this->escape($this->mini['cart_class']); ?> dharmaMiniCartGo" href="<?php echo $this->escape($cartUrl); ?>"><?php echo Text::_('COM_DHARMASHOP_CART_TITLE'); ?></a>
+            <?php if ($this->mini['checkout']) : ?>
+                <a class="<?php echo $this->escape($this->mini['checkout_class']); ?> dharmaMiniCartCheckout" href="<?php echo $this->escape($checkoutUrl); ?>"><?php echo Text::_('COM_DHARMASHOP_CHECKOUT'); ?></a>
+            <?php endif; ?>
         </div>
     </div>
 <?php endif; ?>

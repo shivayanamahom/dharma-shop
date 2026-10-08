@@ -55,8 +55,11 @@
 .dharmaMiniCartSumTotal > :first-child { font-size: 0.875rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
 .dharmaMiniCartSumTotal > :last-child { font-size: 1.25rem; font-weight: 700; text-align: right; }
 .dharmaMiniCartActions { display: flex; gap: 0.75rem; }
-.dharmaMiniCartActions .btn { flex: 1 1 0; padding: 0.75rem 1rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
-.dharmaMiniCartGo { border-color: var(--dharma-minicart-accent); background: var(--dharma-minicart-accent); color: var(--dharma-minicart-accent-text); }
-.dharmaMiniCartGo:hover, .dharmaMiniCartGo:focus-visible { border-color: var(--dharma-minicart-accent); background: var(--dharma-minicart-accent); color: var(--dharma-minicart-accent-text); filter: brightness(0.92); }
+.dharmaMiniCartActions .btn { flex: 1 1 0; padding: 0.75rem 0.5rem; display: inline-flex; align-items: center; justify-content: center; text-align: center; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+/* Кнопки: классы задаются в настройках модуля; цвета Bootstrap-кнопок берём из акцента панели. */
+.dharmaMiniCartActions .btn-primary { --bs-btn-color: var(--dharma-minicart-accent-text); --bs-btn-bg: var(--dharma-minicart-accent); --bs-btn-border-color: var(--dharma-minicart-accent); --bs-btn-hover-color: var(--dharma-minicart-accent-text); --bs-btn-hover-bg: var(--dharma-minicart-accent); --bs-btn-hover-border-color: var(--dharma-minicart-accent); background-color: var(--dharma-minicart-accent); border-color: var(--dharma-minicart-accent); color: var(--dharma-minicart-accent-text); }
+.dharmaMiniCartActions .btn-primary:hover, .dharmaMiniCartActions .btn-primary:focus-visible { filter: brightness(0.92); }
+.dharmaMiniCartActions .btn-outline-primary { --bs-btn-color: var(--dharma-minicart-accent); --bs-btn-border-color: var(--dharma-minicart-accent); --bs-btn-hover-color: var(--dharma-minicart-accent-text); --bs-btn-hover-bg: var(--dharma-minicart-accent); --bs-btn-hover-border-color: var(--dharma-minicart-accent); border-color: var(--dharma-minicart-accent); color: var(--dharma-minicart-accent); }
+.dharmaMiniCartActions .btn-outline-primary:hover, .dharmaMiniCartActions .btn-outline-primary:focus-visible { background-color: var(--dharma-minicart-accent); color: var(--dharma-minicart-accent-text); }
 
 @media (prefers-reduced-motion: reduce) { .dharmaMiniCartPanel * { transition: none !important; } }

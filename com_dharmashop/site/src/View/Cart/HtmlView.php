@@ -26,8 +26,8 @@ class HtmlView extends BaseHtmlView
     public MoneyFormatter $money;
     public string $catalogUrl = '';
     public string $actionUrl = '';
-    /** @var array<string, bool> что показывать в строке мини-корзины (задаёт модуль корзины) */
-    public array $mini = ['image' => true, 'category' => true, 'sku' => false, 'unit' => true];
+    /** @var array<string, bool|string> что показывать в мини-корзине и классы кнопок (задаёт модуль корзины) */
+    public array $mini = ['image' => true, 'category' => true, 'sku' => false, 'unit' => true, 'checkout' => true, 'cart_class' => 'btn btn-outline-primary', 'checkout_class' => 'btn btn-primary'];
 
     /** Итог для вывода: при включённой замене нулевой цены строки без цены дописываются к сумме («19 940 ₽ + Цена по запросу»). */
     public function totalText(float $amount): string

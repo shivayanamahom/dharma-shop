@@ -53,11 +53,7 @@ class Dispatcher extends AbstractModuleDispatcher
                 $wa->useStyle('mod_dharmashop_cart.minicart');
             }
             $document->addScriptOptions('com_dharmashop.minicart', [
-                'fragmentUrl' => Route::_('index.php?option=com_dharmashop&view=cart&layout=mini&format=raw'
-                    . '&mc_image=' . (int) $data['params']->get('show_image', 1)
-                    . '&mc_category=' . (int) $data['params']->get('show_category', 1)
-                    . '&mc_sku=' . (int) $data['params']->get('show_sku', 0)
-                    . '&mc_unit=' . (int) $data['params']->get('show_unit_price', 1), false),
+                'fragmentUrl' => Route::_('index.php?option=com_dharmashop&view=cart&layout=mini&format=raw&mid=' . (int) $this->module->id, false),
                 'updateUrl' => Route::_('index.php?option=com_dharmashop&task=cart.update&format=json', false),
                 'removeUrl' => Route::_('index.php?option=com_dharmashop&task=cart.remove&format=json', false),
                 'error' => Text::_('COM_DHARMASHOP_CART_ERROR_GENERIC'),
