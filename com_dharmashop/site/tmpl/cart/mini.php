@@ -29,15 +29,8 @@ $qtyText = static fn (float $qty): string => rtrim(rtrim(number_format($qty, 3, 
             $showImage = $this->mini['image'] && $line->image !== '';
             $unit = (string) $line->unit;
             // Скидка: обычная цена единицы выше итоговой (скидку и её срок считает магазин при сохранении цен; закончилась — цены равны).
-            $discount = '';
-
-            if ($this->mini['discount'] && $line->error === '' && $line->base_price !== null && $line->unit_price !== null
-                && $line->unit_price > 0 && $line->base_price > $line->unit_price) {
-                $saved = $line->base_price - $line->unit_price;
-                $discount = $this->discountAmount
-                    ? '−' . $this->money->format((string) $saved)
-                    : '−' . rtrim(rtrim(number_format($saved / $line->base_price * 100, 2, ',', "\u{00A0}"), '0'), ',') . '%';
-            }
+            $discount = $this->mini['discount'] && $line->error === '' && $line->base_price !== null && $line->unit_price !== null
+                && $line->unit_price > 0 && $line->base_price > $line->unit_price;
             ?>
             <li class="dharmaMiniCartLine<?php echo $line->error !== '' ? ' dharmaMiniCartLineError' : ''; ?>" data-line="<?php echo (int) $line->id; ?>">
                 <?php if ($showImage) : ?>
@@ -61,8 +54,8 @@ $qtyText = static fn (float $qty): string => rtrim(rtrim(number_format($qty, 3, 
                         </div>
                         <?php if ($line->error === '') : ?>
                             <div class="dharmaMiniCartPrices">
-                                <?php if ($discount !== '') : ?>
-                                    <span class="dharmaMiniCartOldPrice"><s><?php echo $this->escape($this->money->format((string) $line->base_price)); ?></s> <span class="dharmaMiniCartDiscount"><?php echo $this->escape($discount); ?></span></span>
+                                <?php if ($discount) : ?>
+                                    <span class="dharmaMiniCartOldPrice"><s><?php echo $this->escape($this->money->format((string) $line->base_price)); ?></s></span>
                                 <?php endif; ?>
                                 <?php if ($this->mini['unit'] && $line->unit_price !== null && !($this->money->replacesZero() && $line->unit_price === 0.0)) : ?>
                                     <span class="dharmaMiniCartUnitPrice"><?php echo $this->escape($this->money->price((string) $line->unit_price)); ?><?php echo $unit !== '' ? ' / ' . $this->escape($unit) : ''; ?></span>
