@@ -7,6 +7,7 @@ use Dharma\Component\DharmaShop\Administrator\Pricing\MoneyFormatter;
 use Dharma\Component\DharmaShop\Site\Support\CartSession;
 use Dharma\Component\DharmaShop\Site\Support\MediaUrl;
 use Joomla\CMS\Component\ComponentHelper;
+use Joomla\CMS\Document\HtmlDocument;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
@@ -54,8 +55,11 @@ class HtmlView extends BaseHtmlView
 
         $this->catalogUrl = Route::_('index.php?option=com_dharmashop&view=categories', false);
         $this->actionUrl = Route::_('index.php?option=com_dharmashop&task=cart.update', false);
-        $this->getDocument()->setTitle(Text::_('COM_DHARMASHOP_CART_TITLE'));
-        $this->getDocument()->setMetaData('robots', 'noindex, nofollow');
+
+        if ($this->getDocument() instanceof HtmlDocument) {
+            $this->getDocument()->setTitle(Text::_('COM_DHARMASHOP_CART_TITLE'));
+            $this->getDocument()->setMetaData('robots', 'noindex, nofollow');
+        }
 
         parent::display($tpl);
     }

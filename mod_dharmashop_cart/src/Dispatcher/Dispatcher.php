@@ -6,6 +6,7 @@ namespace Dharma\Module\DharmaShopCart\Site\Dispatcher;
 use Dharma\Component\DharmaShop\Site\Support\CartSession;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Dispatcher\AbstractModuleDispatcher;
+use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 
 \defined('_JEXEC') or die;
@@ -36,6 +37,22 @@ class Dispatcher extends AbstractModuleDispatcher
         $data['count'] = (int) $summary['count'];
         $data['total'] = $services->money()->format((string) $summary['subtotal']);
         $data['cartUrl'] = Route::_('index.php?option=com_dharmashop&view=cart', false);
+        $data['offcanvas'] = $data['params']->get('click_action', 'link') === 'offcanvas';
+        $data['openOnAdd'] = (int) $data['params']->get('open_on_add', 1) === 1;
+
+        if ($data['offcanvas']) {
+            // Боковая панель: скрипт Bootstrap offcanvas и мини-корзина; подключается только в этом режиме.
+            $document = $app->getDocument();
+            $wa = $document->getWebAssetManager();
+            $wa->getRegistry()->addExtensionRegistryFile('com_dharmashop');
+            $wa->useScript('bootstrap.offcanvas')->useScript('com_dharmashop.mini-cart');
+            $document->addScriptOptions('com_dharmashop.minicart', [
+                'fragmentUrl' => Route::_('index.php?option=com_dharmashop&view=cart&layout=mini&format=raw', false),
+                'updateUrl' => Route::_('index.php?option=com_dharmashop&task=cart.update&format=json', false),
+                'removeUrl' => Route::_('index.php?option=com_dharmashop&task=cart.remove&format=json', false),
+                'error' => Text::_('COM_DHARMASHOP_CART_ERROR_GENERIC'),
+            ]);
+        }
 
         return $data;
     }
