@@ -1,0 +1,33 @@
+{
+	"$schema": "https://developer.joomla.org/schemas/json-schema/web_assets.json",
+	"name": "dharmashop-swiper",
+	"version": "14.3.0",
+	"description": "Swiper (MIT): слайдер для галереи товара Dharma Shop",
+	"license": "MIT",
+	"assets": [
+		{
+			"name": "dharmashop.swiper",
+			"type": "script",
+			"uri": "plg_system_dharmashopswiper/swiper-bundle.min.js",
+			"attributes": { "defer": true },
+			"package": "dharmashop-swiper",
+			"version": "14.3.0"
+		},
+		{
+			"name": "dharmashop.swiper",
+			"type": "style",
+			"uri": "plg_system_dharmashopswiper/swiper-bundle.min.css",
+			"package": "dharmashop-swiper",
+			"version": "14.3.0"
+		},
+		{
+			"name": "dharmashop.swiper",
+			"type": "preset",
+			"uri": "",
+			"dependencies": [
+				"dharmashop.swiper#script",
+				"dharmashop.swiper#style"
+			]
+		}
+	]
+}

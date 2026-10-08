@@ -27,6 +27,12 @@ $heading = $page?->h1 ?? (string) ($this->item->title ?? '');
     <?php endif; ?>
     <?php echo $hooks->render('afterTitle'); ?>
     <?php echo $hooks->render('beforeContent'); ?>
+    <div class="row g-4">
+        <div class="col-lg-6 dharmaProductGallery">
+            <?php // Галерея — отдельный макет (product-gallery): правится независимо от страницы. ?>
+            <?php echo (new FileLayout('components.dharmashop.product-gallery.default', null, ['component' => 'none', 'client' => 0]))->render($this->gallery); ?>
+        </div>
+        <div class="col-lg-6 dharmaProductInfo">
     <?php if ($this->price !== '') : ?>
         <div class="mb-4">
             <div class="h2 fw-bold"><?php echo $this->escape($this->price); ?></div>
@@ -46,8 +52,10 @@ $heading = $page?->h1 ?? (string) ($this->item->title ?? '');
             <?php endif; ?>
         </div>
     <?php endif; ?>
-    <?php // Остальные части карточки товара (галерея, параметры, корзина) подключаются отдельными макетами. ?>
+    <?php // Остальные части карточки товара (параметры, корзина) подключаются отдельными макетами. ?>
     <?php echo (new FileLayout('components.dharmashop.fields.default', null, ['component' => 'none', 'client' => 0]))->render(['fields' => $this->item->fields ?? [], 'context' => 'page']); ?>
+        </div>
+    </div>
     <?php echo $hooks->render('afterContent'); ?>
 </section>
 </div>

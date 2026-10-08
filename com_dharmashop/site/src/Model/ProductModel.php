@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Dharma\Component\DharmaShop\Site\Model;
 
+use Dharma\Component\DharmaShop\Site\Support\MediaUrl;
 use Dharma\Component\DharmaShop\Site\Support\SaleCountdown;
 use Dharma\Component\DharmaShop\Site\Support\ProductFields;
 use Joomla\CMS\Factory;
@@ -67,6 +68,23 @@ class ProductModel extends BaseDatabaseModel
             $item->discount_amount = number_format((float) $price->price - (float) $price->price_final, 2, '.', '');
             $item->discount_percent = (1 - (float) $price->price_final / (float) $price->price) * 100;
             $item->sale_end_timestamp = SaleCountdown::endTimestamp($price->discount_start, $price->discount_end, true);
+        }
+
+        // Галерея: изображения товара по порядку (без вариантов); при их отсутствии — обложка.
+        $item->gallery = [];
+
+        foreach ($db->setQuery(
+            $db->createQuery()->select($db->quoteName(['path', 'alt', 'title']))->from($db->quoteName('#__dharmashop_field_media'))
+                ->where('product_id = :gallery')->where('field_id = 0')->where('variant_id IS NULL')
+                ->bind(':gallery', $id, ParameterType::INTEGER)->order('ordering')
+        )->loadObjectList() as $row) {
+            if ($url = MediaUrl::absolute((string) $row->path)) {
+                $item->gallery[] = (object) ['url' => $url, 'alt' => (string) ($row->alt ?: $item->title), 'title' => (string) ($row->title ?: $item->title)];
+            }
+        }
+
+        if (!$item->gallery && ($url = MediaUrl::absolute((string) $item->cover))) {
+            $item->gallery[] = (object) ['url' => $url, 'alt' => (string) ($item->cover_alt ?: $item->title), 'title' => (string) $item->title];
         }
 
         ProductFields::attach($db, [$item], 'page');

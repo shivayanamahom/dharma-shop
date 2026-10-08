@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="plugin" group="system" method="upgrade">
+    <name>PLG_SYSTEM_DHARMASHOPSWIPER</name>
+    <author>Dharma</author>
+    <creationDate>2026-10</creationDate>
+    <copyright>(C) 2026 Dharma</copyright>
+    <license>GNU General Public License version 2 or later</license>
+    <version>0.1.0</version>
+    <description>PLG_SYSTEM_DHARMASHOPSWIPER_DESCRIPTION</description>
+    <namespace path="src">Dharma\Plugin\System\DharmaShopSwiper</namespace>
+    <files>
+        <folder plugin="dharmashopswiper">services</folder>
+        <folder>src</folder>
+    </files>
+    <media folder="media" destination="plg_system_dharmashopswiper">
+        <folder>css</folder>
+        <folder>js</folder>
+        <filename>joomla.asset.json</filename>
+        <filename>LICENSE-swiper.txt</filename>
+    </media>
+    <languages>
+        <language tag="ru-RU">language/ru-RU/plg_system_dharmashopswiper.ini</language>
+        <language tag="ru-RU">language/ru-RU/plg_system_dharmashopswiper.sys.ini</language>
+        <language tag="en-GB">language/en-GB/plg_system_dharmashopswiper.ini</language>
+        <language tag="en-GB">language/en-GB/plg_system_dharmashopswiper.sys.ini</language>
+    </languages>
+</extension>

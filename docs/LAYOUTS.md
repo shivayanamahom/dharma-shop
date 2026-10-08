@@ -214,3 +214,7 @@ C61: editor исключён из данных card в EntityFields до зап�
 - Дополнительные классы-крючки: `dharmaCardList`, `dharmaCardRow`, `dharmaCardThumb`, `dharmaCardTitle`, `dharmaCardPriceCell`, `dharmaCardActionsCell`, `dharmaProductsTable`.
 - Копии `brand-product-card` / `badge-product-card` приведены к актуальным макетам (раньше отставали: без ссылок на страницу товара).
 
+## Галерея товара (2026-10-08, C63)
+
+Страница товара (`tmpl/product/default.php`) — две колонки: слева галерея (`.dharmaProductGallery`), справа цена и характеристики (`.dharmaProductInfo`). Галерея — отдельный макет `product-gallery/default.php` (папка `layouts/components/dharmashop/product-gallery`): главный слайдер Swiper (`.dharmaGalleryMain`) и полоса миниатюр (`.dharmaGalleryThumbs`), либо карусель Bootstrap; при включённом лайтбоксе фото обёрнуты ссылками `data-fancybox="dharmaGallery-<id>"`. displayData: `images` (url, alt, title), `type`, `thumbs`, `lightbox`, `loop`, `id`. Скрипт `product-gallery.js` создаёт Swiper (миниатюры связаны с главным слайдером) и вызывает `Fancybox.bind`, если Fancybox подключён. Классы-крючки: `dharmaGallery`, `dharmaGalleryMain`, `dharmaGalleryThumbs`, `dharmaProductGallery`, `dharmaProductInfo`.
+

@@ -30,6 +30,8 @@ class HtmlView extends BaseHtmlView
     public string $discountLabel = '';
     public bool $showDiscount = false;
     public bool $showSaleCountdown = false;
+    /** @var array<string, mixed> параметры макета галереи: type, thumbs, lightbox, loop, id */
+    public array $gallery = [];
 
     public function display($tpl = null): void
     {
@@ -66,11 +68,54 @@ class HtmlView extends BaseHtmlView
             ? $layout : 'default';
         $this->setLayout($layout);
 
+        $this->prepareGallery();
+
         if ($this->showSaleCountdown) {
             $this->getDocument()->getWebAssetManager()->getRegistry()->addExtensionRegistryFile('com_dharmashop');
             $this->getDocument()->getWebAssetManager()->useScript('com_dharmashop.sale-countdown');
         }
 
         parent::display($tpl);
+    }
+
+    /**
+     * Галерея: Swiper (плагин «Dharma Shop Swiper» включён и выбран в настройках) или карусель Bootstrap; лайтбокс — Fancybox
+     * через плагин с набором `wtfancybox`, если он есть. Скрипты подключаются только при необходимости.
+     */
+    private function prepareGallery(): void
+    {
+        $wa = $this->getDocument()->getWebAssetManager();
+        $registry = $wa->getRegistry();
+        $registry->addExtensionRegistryFile('com_dharmashop');
+        $type = $this->params->get('product_gallery_type', 'swiper') === 'bootstrap' ? 'bootstrap' : 'swiper';
+
+        if ($type === 'swiper' && !$registry->exists('preset', 'dharmashop.swiper')) {
+            $type = 'bootstrap';
+        }
+
+        $lightbox = $this->params->get('product_gallery_lightbox', 'none') === 'fancybox' && $registry->exists('preset', 'wtfancybox');
+
+        if (count($this->item->gallery) > 0) {
+            if ($type === 'swiper') {
+                $wa->usePreset('dharmashop.swiper');
+            } else {
+                $wa->useScript('bootstrap.carousel');
+            }
+
+            if ($lightbox) {
+                $wa->usePreset('wtfancybox');
+            }
+
+            $wa->useScript('com_dharmashop.product-gallery');
+        }
+
+        $this->gallery = [
+            'id' => (int) $this->item->id,
+            'type' => $type,
+            'thumbs' => $this->params->get('product_gallery_thumbs', 'bottom') === 'none' ? 'none' : 'bottom',
+            'lightbox' => $lightbox,
+            'loop' => (int) $this->params->get('product_gallery_loop', 0) === 1,
+            'images' => $this->item->gallery,
+        ];
     }
 }
