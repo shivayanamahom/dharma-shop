@@ -12,6 +12,8 @@ use Joomla\CMS\Router\Route;
 use Dharma\Component\DharmaShop\Administrator\Pricing\MoneyFormatter;
 use Dharma\Component\DharmaShop\Administrator\Order\CheckoutFields;
 use Dharma\Component\DharmaShop\Site\Support\CartSession;
+use Dharma\Component\DharmaShop\Site\Support\CheckoutPrefill;
+use Joomla\Database\DatabaseInterface;
 
 \defined('_JEXEC') or die;
 
@@ -95,6 +97,10 @@ class HtmlView extends BaseHtmlView
         if (isset($pending['user_id']) && (int) $pending['user_id'] !== $userId) {
             $this->values = []; $this->errors = [];
             $app->setUserState('com_dharmashop.checkout.values',null);
+        }
+        // Вошедшему пользователю подставляем всё, что о нём известно (поля, введённые при ошибке, не перезаписываются).
+        if ($userId > 0 && !$this->values) {
+            $this->values = CheckoutPrefill::forUser(Factory::getContainer()->get(DatabaseInterface::class), $identity, $this->contacts);
         }
         if ($cart && !$this->receipt && !$this->loginRequired) {
             if (empty($pending['key']) || !empty($pending['used']) || (int) ($pending['cart_id'] ?? 0) !== (int) $cart->id || (int) ($pending['user_id'] ?? -1) !== $userId) {
