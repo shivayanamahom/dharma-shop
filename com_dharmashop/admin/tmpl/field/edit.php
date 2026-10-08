@@ -27,6 +27,7 @@ $this->getDocument()->getWebAssetManager()->useScript('keepalive')->useScript('f
                     <?php echo $this->form->renderField('load_' . $context, 'params'); ?>
                     <?php if ($context === 'card') { echo $this->form->renderField('load_card_editor_disabled', 'params'); } ?>
                     <?php echo $this->form->renderField($context === 'card' ? 'in_card' : 'in_page'); ?>
+                    <?php if ($context === 'page') { echo $this->form->renderField('show_intro', 'params'); } ?>
                     <?php if ($context === 'card') { echo $this->form->renderField('in_card_editor_disabled'); } ?>
                     <?php echo $this->form->renderField('format_' . $context, 'params'); ?>
                     <?php if ($context === 'card') { echo $this->form->renderField('format_card_editor_disabled', 'params'); } ?>
