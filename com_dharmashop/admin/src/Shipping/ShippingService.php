@@ -97,9 +97,34 @@ final class ShippingService
             throw new ShippingInputException(Text::_('COM_DHARMASHOP_SHIPPING_FIELDS_ERROR'), $result['errors']);
         }
 
-        $rows = array_merge($option['type']->describe($option['method'], $option['quote']), $result['rows']);
+        $quote = isset($result['quote']) && $result['quote'] instanceof Quote ? $result['quote'] : $option['quote'];
 
-        return new Selection($option['method'], $option['quote'], $result['data'], self::cleanRows($rows));
+        // Цена, зависящая от данных покупателя, должна быть рассчитана к моменту заказа.
+        if ($quote->pending || !is_finite($quote->price) || $quote->price < 0) {
+            throw new ShippingInputException(Text::_('COM_DHARMASHOP_SHIPPING_PENDING_ORDER'), $result['errors']);
+        }
+
+        $rows = array_merge($option['type']->describe($option['method'], $quote), $result['rows']);
+
+        return new Selection($option['method'], $quote, $result['data'], self::cleanRows($rows));
+    }
+
+    /**
+     * Динамический запрос типа (подсказки адреса, расчёт по адресу) для способа, доступного для этой корзины.
+     *
+     * @param   array<string, mixed>  $input
+     *
+     * @return  array<string, mixed>
+     */
+    public function ajax(int $methodId, Context $context, string $action, array $input): array
+    {
+        $options = $this->options($context);
+
+        if (!isset($options[$methodId])) {
+            return ['ok' => false, 'error' => Text::_('COM_DHARMASHOP_SHIPPING_UNAVAILABLE')];
+        }
+
+        return $options[$methodId]['type']->ajax($options[$methodId]['method'], $context, $action, $input);
     }
 
     /**

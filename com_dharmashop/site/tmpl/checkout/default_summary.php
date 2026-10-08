@@ -43,7 +43,7 @@ $qtyText = static fn (float $qty): string => rtrim(rtrim(number_format($qty, 3, 
                         <div class="d-flex justify-content-between gap-3"><span><?php echo $this->escape($adjustment['title']); ?></span><span class="text-end"><?php echo $this->escape($this->money->format((string) $adjustment['amount'])); ?></span></div>
                     <?php endforeach; ?>
                     <?php if ($this->shippingOptions) : ?>
-                        <div class="d-flex justify-content-between gap-3"><span><?php echo Text::_('COM_DHARMASHOP_CHECKOUT_SHIPPING_ROW'); ?></span><span class="text-end" data-checkout-shipping-price><?php echo $this->escape($this->shippingPrice > 0 ? $this->money->format((string) $this->shippingPrice) : Text::_('COM_DHARMASHOP_SHIPPING_FREE')); ?></span></div>
+                        <div class="d-flex justify-content-between gap-3"><span><?php echo Text::_('COM_DHARMASHOP_CHECKOUT_SHIPPING_ROW'); ?></span><span class="text-end" data-checkout-shipping-price><?php echo $this->escape($this->shippingPending ? Text::_('COM_DHARMASHOP_SHIPPING_PENDING') : ($this->shippingPrice > 0 ? $this->money->format((string) $this->shippingPrice) : Text::_('COM_DHARMASHOP_SHIPPING_FREE'))); ?></span></div>
                     <?php endif; ?>
                 </div>
             <?php endif; ?>

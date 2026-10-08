@@ -39,11 +39,22 @@ interface TypeInterface
      *
      * @param   array<string, mixed>  $input  значения из `shipping[<id>]` (строки, уже из POST)
      *
-     * @return  array{data: array<string, mixed>, rows: array<int, array{label: string, value: string}>, errors: array<string, string>}
+     * @return  array{data: array<string, mixed>, rows: array<int, array{label: string, value: string}>, errors: array<string, string>, quote?: Quote}
      *          data — машинные значения для снимка; rows — те же сведения для показа (подпись и значение, обычный текст);
-     *          errors — [ключ поля => языковой ключ сообщения]
+     *          errors — [ключ поля => языковой ключ сообщения]; quote — необязательный итоговый расчёт по введённым данным
+     *          (заменяет предварительный: так считается цена, зависящая от адреса); только по серверным данным
      */
     public function validateInput(Method $method, Context $context, array $input): array;
+
+    /**
+     * Динамический запрос типа с оформления (подсказки адреса, расчёт цены по адресу): `shipping.ajax` ядра передаёт сюда действие и данные.
+     * Ответ — массив для JSON (`ok`, остальное — на усмотрение типа); неизвестное действие — `['ok' => false, 'error' => <текст>]`.
+     *
+     * @param   array<string, mixed>  $input  данные запроса (строки)
+     *
+     * @return  array<string, mixed>
+     */
+    public function ajax(Method $method, Context $context, string $action, array $input): array;
 
     /**
      * HTML варианта способа на странице оформления. Плагин выводит свой макет (его можно переопределить в шаблоне).

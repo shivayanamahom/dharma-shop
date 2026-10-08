@@ -120,6 +120,8 @@
         });
     };
     shippingRadios.forEach((radio) => radio.addEventListener('change', syncShipping));
+    // Способ пересчитал цену по данным покупателя (например, курьер по адресу): тексты уже в data-атрибутах радио.
+    document.addEventListener('dharmashop:shipping-quote', syncShipping);
     form.addEventListener('input', (event) => { if (event.target.closest?.('[data-shipping-extra]')) syncShipping(); });
     form.addEventListener('change', (event) => { if (event.target.closest?.('[data-shipping-extra]')) syncShipping(); });
     syncShipping();

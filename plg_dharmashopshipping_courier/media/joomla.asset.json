@@ -1,0 +1,16 @@
+{
+	"$schema": "https://developer.joomla.org/schemas/json-schema/web_assets.json",
+	"name": "plg_dharmashopshipping_courier",
+	"version": "0.1.0",
+	"description": "Dharma Shop: курьер — подсказки адреса, расчёт по расстоянию, карта (Яндекс Карты, JavaScript API 3)",
+	"license": "GPL-2.0-or-later",
+	"assets": [
+		{
+			"name": "plg_dharmashopshipping_courier.courier",
+			"version": "b3b29afaeb1c",
+			"type": "script",
+			"uri": "plg_dharmashopshipping_courier/courier.js",
+			"attributes": { "defer": true }
+		}
+	]
+}

@@ -40,6 +40,8 @@ class HtmlView extends BaseHtmlView
     public array $shippingOptions = [];
     public int $shippingSelected = 0;
     public float $shippingPrice = 0.0;
+    /** Цена выбранного способа ещё не рассчитана (зависит от адреса). */
+    public bool $shippingPending = false;
     /** Способы доставки включены, но для этой корзины ни один не подходит: заказ оформить нельзя. */
     public bool $shippingBlocked = false;
 
@@ -105,13 +107,14 @@ class HtmlView extends BaseHtmlView
             $quote = $option['quote'];
 
             if ($id === $this->shippingSelected) {
-                $this->shippingPrice = $quote->price;
+                $this->shippingPrice = $quote->pending ? 0.0 : $quote->price;
+                $this->shippingPending = $quote->pending;
             }
 
             $this->shippingOptions[$id] = [
                 'title' => $option['method']->title,
                 'term' => $quote->term,
-                'price_text' => $quote->free ? $free : $this->money->format((string) $quote->price),
+                'price_text' => $quote->pending ? Text::_('COM_DHARMASHOP_SHIPPING_PENDING') : ($quote->free ? $free : $this->money->format((string) $quote->price)),
                 'info' => $option['info'],
                 'html' => $option['type']->render([
                     'method' => $option['method'],
@@ -122,8 +125,10 @@ class HtmlView extends BaseHtmlView
                     'info' => $option['info'],
                     'image_url' => $option['method']->image !== '' ? ImageUrl::resolve($option['method']->image, 'shipping.option') : '',
                     'errors' => $id === $this->shippingSelected ? (array) ($state['errors'] ?? []) : [],
-                    'price_text' => $this->money->format((string) $quote->price),
-                    'total_text' => $this->totalText(round((float) $this->totals['total'] + $quote->price, 2)),
+                    'price_text' => $quote->pending ? Text::_('COM_DHARMASHOP_SHIPPING_PENDING') : $this->money->format((string) $quote->price),
+                    'total_text' => $this->totalText(round((float) $this->totals['total'] + ($quote->pending ? 0.0 : $quote->price), 2)),
+                    'pending' => $quote->pending,
+                    'ajax_url' => Route::_('index.php?option=com_dharmashop&task=shipping.ajax&format=json', false),
                     'free_text' => $free,
                 ]),
             ];

@@ -278,6 +278,11 @@ final class PickupType implements TypeInterface
         return ['data' => [], 'rows' => [], 'errors' => ['point' => 'PLG_DHARMASHOPSHIPPING_PICKUP_POINT_REQUIRED']];
     }
 
+    public function ajax(Method $method, Context $context, string $action, array $input): array
+    {
+        return ['ok' => false, 'error' => 'Unknown action'];
+    }
+
     public function render(array $displayData): string
     {
         $path = PluginHelper::getLayoutPath('dharmashopshipping', 'pickup', 'default');

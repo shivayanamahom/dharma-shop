@@ -3,7 +3,7 @@
     <field name="term" type="text" label="PLG_DHARMASHOPSHIPPING_COURIER_TERM" description="PLG_DHARMASHOPSHIPPING_COURIER_TERM_DESC" showon=".plugin:courier" maxlength="100" filter="string" />
     <field name="note" type="textarea" label="PLG_DHARMASHOPSHIPPING_COURIER_NOTE" description="PLG_DHARMASHOPSHIPPING_COURIER_NOTE_DESC" showon=".plugin:courier" rows="2" maxlength="500" filter="string" default="Курьер позвонит вам перед доставкой." />
     <field name="fields" type="subform" label="PLG_DHARMASHOPSHIPPING_COURIER_FIELDS" description="PLG_DHARMASHOPSHIPPING_COURIER_FIELDS_DESC" showon=".plugin:courier" multiple="true" min="0" max="20" buttons="add,remove,move"
-        default='{"fields0":{"label":"Город","type":"text","required":"1","width":"half","placeholder":"","options":""},"fields1":{"label":"Улица и дом","type":"text","required":"1","width":"half","placeholder":"","options":""},"fields2":{"label":"Квартира","type":"text","required":"0","width":"half","placeholder":"","options":""},"fields3":{"label":"Подъезд","type":"text","required":"0","width":"half","placeholder":"","options":""},"fields4":{"label":"Этаж","type":"text","required":"0","width":"half","placeholder":"","options":""},"fields5":{"label":"Домофон","type":"text","required":"0","width":"half","placeholder":"","options":""},"fields6":{"label":"Комментарий курьеру","type":"textarea","required":"0","width":"full","placeholder":"Как позвонить, куда подойти","options":""}}'>
+        default='{"fields0":{"label":"Город","type":"text","required":"1","width":"half","role":"city","placeholder":"","options":""},"fields1":{"label":"Улица и дом","type":"text","required":"1","width":"half","role":"address","placeholder":"","options":""},"fields2":{"label":"Квартира","type":"text","required":"0","width":"half","role":"none","placeholder":"","options":""},"fields3":{"label":"Подъезд","type":"text","required":"0","width":"half","role":"none","placeholder":"","options":""},"fields4":{"label":"Этаж","type":"text","required":"0","width":"half","role":"none","placeholder":"","options":""},"fields5":{"label":"Домофон","type":"text","required":"0","width":"half","role":"none","placeholder":"","options":""},"fields6":{"label":"Комментарий курьеру","type":"textarea","required":"0","width":"full","role":"none","placeholder":"Как позвонить, куда подойти","options":""}}'>
         <form>
             <field name="label" type="text" label="PLG_DHARMASHOPSHIPPING_COURIER_FIELD_LABEL" required="true" maxlength="100" filter="string" />
             <field name="type" type="list" label="PLG_DHARMASHOPSHIPPING_COURIER_FIELD_TYPE" default="text" filter="cmd" validate="options">
@@ -11,6 +11,11 @@
                 <option value="textarea">PLG_DHARMASHOPSHIPPING_COURIER_TYPE_TEXTAREA</option>
                 <option value="tel">PLG_DHARMASHOPSHIPPING_COURIER_TYPE_TEL</option>
                 <option value="select">PLG_DHARMASHOPSHIPPING_COURIER_TYPE_SELECT</option>
+            </field>
+            <field name="role" type="list" label="PLG_DHARMASHOPSHIPPING_COURIER_FIELD_ROLE" description="PLG_DHARMASHOPSHIPPING_COURIER_FIELD_ROLE_DESC" default="none" filter="cmd" validate="options">
+                <option value="none">PLG_DHARMASHOPSHIPPING_COURIER_ROLE_NONE</option>
+                <option value="city">PLG_DHARMASHOPSHIPPING_COURIER_ROLE_CITY</option>
+                <option value="address">PLG_DHARMASHOPSHIPPING_COURIER_ROLE_ADDRESS</option>
             </field>
             <field name="required" type="radio" layout="joomla.form.field.radio.switcher" label="PLG_DHARMASHOPSHIPPING_COURIER_FIELD_REQUIRED" default="0" filter="integer">
                 <option value="0">JNO</option>
@@ -25,8 +30,59 @@
         </form>
     </field>
 </fieldset><fieldset name="price_courier" label="PLG_DHARMASHOPSHIPPING_COURIER_PRICE_SETTINGS">
-    <field name="price" type="text" label="PLG_DHARMASHOPSHIPPING_COURIER_PRICE" description="PLG_DHARMASHOPSHIPPING_COURIER_PRICE_DESC" showon=".plugin:courier" default="300" filter="string" />
+    <field name="price_mode" type="list" label="PLG_DHARMASHOPSHIPPING_COURIER_PRICE_MODE" description="PLG_DHARMASHOPSHIPPING_COURIER_PRICE_MODE_DESC" showon=".plugin:courier" default="fixed" filter="cmd" validate="options">
+        <option value="fixed">PLG_DHARMASHOPSHIPPING_COURIER_PRICE_MODE_FIXED</option>
+        <option value="distance">PLG_DHARMASHOPSHIPPING_COURIER_PRICE_MODE_DISTANCE</option>
+    </field>
+    <field name="price" type="text" label="PLG_DHARMASHOPSHIPPING_COURIER_PRICE" description="PLG_DHARMASHOPSHIPPING_COURIER_PRICE_DESC" showon=".plugin:courier[AND]price_mode:fixed" default="300" filter="string" />
+    <field name="km_base_price" type="text" label="PLG_DHARMASHOPSHIPPING_COURIER_KM_BASE" description="PLG_DHARMASHOPSHIPPING_COURIER_KM_BASE_DESC" showon=".plugin:courier[AND]price_mode:distance" default="100" filter="string" />
+    <field name="km_included" type="text" label="PLG_DHARMASHOPSHIPPING_COURIER_KM_INCLUDED" description="PLG_DHARMASHOPSHIPPING_COURIER_KM_INCLUDED_DESC" showon=".plugin:courier[AND]price_mode:distance" default="0" filter="string" />
+    <field name="km_price" type="text" label="PLG_DHARMASHOPSHIPPING_COURIER_KM_PRICE" description="PLG_DHARMASHOPSHIPPING_COURIER_KM_PRICE_DESC" showon=".plugin:courier[AND]price_mode:distance" default="20" filter="string" />
+    <field name="km_max_price" type="text" label="PLG_DHARMASHOPSHIPPING_COURIER_KM_MAX_PRICE" description="PLG_DHARMASHOPSHIPPING_COURIER_KM_MAX_PRICE_DESC" showon=".plugin:courier[AND]price_mode:distance" default="0" filter="string" />
+    <field name="km_max_distance" type="text" label="PLG_DHARMASHOPSHIPPING_COURIER_KM_MAX_DISTANCE" description="PLG_DHARMASHOPSHIPPING_COURIER_KM_MAX_DISTANCE_DESC" showon=".plugin:courier[AND]price_mode:distance" default="0" filter="string" />
+    <field name="km_road_factor" type="text" label="PLG_DHARMASHOPSHIPPING_COURIER_KM_ROAD_FACTOR" description="PLG_DHARMASHOPSHIPPING_COURIER_KM_ROAD_FACTOR_DESC" showon=".plugin:courier[AND]price_mode:distance" default="1.3" filter="string" />
+    <field name="km_round" type="list" label="PLG_DHARMASHOPSHIPPING_COURIER_KM_ROUND" description="PLG_DHARMASHOPSHIPPING_COURIER_KM_ROUND_DESC" showon=".plugin:courier[AND]price_mode:distance" default="10" filter="cmd" validate="options">
+        <option value="0">PLG_DHARMASHOPSHIPPING_COURIER_KM_ROUND_NONE</option>
+        <option value="1">PLG_DHARMASHOPSHIPPING_COURIER_KM_ROUND_1</option>
+        <option value="5">PLG_DHARMASHOPSHIPPING_COURIER_KM_ROUND_5</option>
+        <option value="10">PLG_DHARMASHOPSHIPPING_COURIER_KM_ROUND_10</option>
+        <option value="50">PLG_DHARMASHOPSHIPPING_COURIER_KM_ROUND_50</option>
+        <option value="100">PLG_DHARMASHOPSHIPPING_COURIER_KM_ROUND_100</option>
+    </field>
     <field name="free_from" type="text" label="PLG_DHARMASHOPSHIPPING_COURIER_FREE_FROM" description="PLG_DHARMASHOPSHIPPING_COURIER_FREE_FROM_DESC" showon=".plugin:courier" default="0" filter="string" />
     <field name="min_total" type="text" label="PLG_DHARMASHOPSHIPPING_COURIER_MIN_TOTAL" description="PLG_DHARMASHOPSHIPPING_COURIER_MIN_TOTAL_DESC" showon=".plugin:courier" default="0" filter="string" />
     <field name="max_total" type="text" label="PLG_DHARMASHOPSHIPPING_COURIER_MAX_TOTAL" description="PLG_DHARMASHOPSHIPPING_COURIER_MAX_TOTAL_DESC" showon=".plugin:courier" default="0" filter="string" />
+    <field name="warehouses" type="subform" label="PLG_DHARMASHOPSHIPPING_COURIER_WAREHOUSES" description="PLG_DHARMASHOPSHIPPING_COURIER_WAREHOUSES_DESC" showon=".plugin:courier[AND]price_mode:distance" multiple="true" min="0" max="50" buttons="add,remove,move">
+        <form>
+            <field name="name" type="text" label="PLG_DHARMASHOPSHIPPING_COURIER_WAREHOUSE_NAME" required="true" maxlength="150" filter="string" />
+            <field name="address" type="textarea" label="PLG_DHARMASHOPSHIPPING_COURIER_WAREHOUSE_ADDRESS" rows="2" maxlength="500" filter="string" />
+            <field name="coords" type="text" label="PLG_DHARMASHOPSHIPPING_COURIER_WAREHOUSE_COORDS" description="PLG_DHARMASHOPSHIPPING_COURIER_WAREHOUSE_COORDS_DESC" required="true" hint="[55.753994, 37.622093]" maxlength="60" filter="string" />
+        </form>
+    </field>
+</fieldset><fieldset name="map_courier" label="PLG_DHARMASHOPSHIPPING_COURIER_MAP_SETTINGS">
+    <field name="yandex_apikey" type="text" label="PLG_DHARMASHOPSHIPPING_COURIER_YANDEX_APIKEY" description="PLG_DHARMASHOPSHIPPING_COURIER_YANDEX_APIKEY_DESC" showon=".plugin:courier" maxlength="100" autocomplete="off" filter="string" />
+    <field name="suggest" type="radio" layout="joomla.form.field.radio.switcher" label="PLG_DHARMASHOPSHIPPING_COURIER_SUGGEST" description="PLG_DHARMASHOPSHIPPING_COURIER_SUGGEST_DESC" showon=".plugin:courier" default="1" filter="integer">
+        <option value="0">JNO</option>
+        <option value="1">JYES</option>
+    </field>
+    <field name="map" type="list" label="PLG_DHARMASHOPSHIPPING_COURIER_MAP" description="PLG_DHARMASHOPSHIPPING_COURIER_MAP_DESC" showon=".plugin:courier" default="none" filter="cmd" validate="options">
+        <option value="none">PLG_DHARMASHOPSHIPPING_COURIER_MAP_NONE</option>
+        <option value="yandex">PLG_DHARMASHOPSHIPPING_COURIER_MAP_YANDEX</option>
+    </field>
+    <field name="marker_kind" type="list" label="PLG_DHARMASHOPSHIPPING_COURIER_MARKER_KIND" description="PLG_DHARMASHOPSHIPPING_COURIER_MARKER_KIND_DESC" showon=".plugin:courier[AND]map:yandex" default="pin" filter="string" validate="options">
+        <option value="pin">PLG_DHARMASHOPSHIPPING_COURIER_MARKER_ICON</option>
+        <option value="dot">PLG_DHARMASHOPSHIPPING_COURIER_MARKER_DOT</option>
+        <option value="circle">PLG_DHARMASHOPSHIPPING_COURIER_MARKER_CIRCLE</option>
+        <option value="label">PLG_DHARMASHOPSHIPPING_COURIER_MARKER_LABEL</option>
+    </field>
+    <field name="marker_color" type="list" label="PLG_DHARMASHOPSHIPPING_COURIER_MARKER_COLOR" description="PLG_DHARMASHOPSHIPPING_COURIER_MARKER_COLOR_DESC" showon=".plugin:courier[AND]map:yandex" default="blue" filter="string" validate="options"><option value="blue">PLG_DHARMASHOPSHIPPING_COURIER_COLOR_BLUE</option><option value="red">PLG_DHARMASHOPSHIPPING_COURIER_COLOR_RED</option><option value="green">PLG_DHARMASHOPSHIPPING_COURIER_COLOR_GREEN</option><option value="darkGreen">PLG_DHARMASHOPSHIPPING_COURIER_COLOR_DARKGREEN</option><option value="darkBlue">PLG_DHARMASHOPSHIPPING_COURIER_COLOR_DARKBLUE</option><option value="lightBlue">PLG_DHARMASHOPSHIPPING_COURIER_COLOR_LIGHTBLUE</option><option value="orange">PLG_DHARMASHOPSHIPPING_COURIER_COLOR_ORANGE</option><option value="darkOrange">PLG_DHARMASHOPSHIPPING_COURIER_COLOR_DARKORANGE</option><option value="violet">PLG_DHARMASHOPSHIPPING_COURIER_COLOR_VIOLET</option><option value="pink">PLG_DHARMASHOPSHIPPING_COURIER_COLOR_PINK</option><option value="yellow">PLG_DHARMASHOPSHIPPING_COURIER_COLOR_YELLOW</option><option value="brown">PLG_DHARMASHOPSHIPPING_COURIER_COLOR_BROWN</option><option value="black">PLG_DHARMASHOPSHIPPING_COURIER_COLOR_BLACK</option><option value="gray">PLG_DHARMASHOPSHIPPING_COURIER_COLOR_GRAY</option><option value="night">PLG_DHARMASHOPSHIPPING_COURIER_COLOR_NIGHT</option></field>
+    <field name="marker_nearest_color" type="list" label="PLG_DHARMASHOPSHIPPING_COURIER_MARKER_NEAREST_COLOR" description="PLG_DHARMASHOPSHIPPING_COURIER_MARKER_NEAREST_COLOR_DESC" showon=".plugin:courier[AND]map:yandex" default="green" filter="string" validate="options"><option value="blue">PLG_DHARMASHOPSHIPPING_COURIER_COLOR_BLUE</option><option value="red">PLG_DHARMASHOPSHIPPING_COURIER_COLOR_RED</option><option value="green">PLG_DHARMASHOPSHIPPING_COURIER_COLOR_GREEN</option><option value="darkGreen">PLG_DHARMASHOPSHIPPING_COURIER_COLOR_DARKGREEN</option><option value="darkBlue">PLG_DHARMASHOPSHIPPING_COURIER_COLOR_DARKBLUE</option><option value="lightBlue">PLG_DHARMASHOPSHIPPING_COURIER_COLOR_LIGHTBLUE</option><option value="orange">PLG_DHARMASHOPSHIPPING_COURIER_COLOR_ORANGE</option><option value="darkOrange">PLG_DHARMASHOPSHIPPING_COURIER_COLOR_DARKORANGE</option><option value="violet">PLG_DHARMASHOPSHIPPING_COURIER_COLOR_VIOLET</option><option value="pink">PLG_DHARMASHOPSHIPPING_COURIER_COLOR_PINK</option><option value="yellow">PLG_DHARMASHOPSHIPPING_COURIER_COLOR_YELLOW</option><option value="brown">PLG_DHARMASHOPSHIPPING_COURIER_COLOR_BROWN</option><option value="black">PLG_DHARMASHOPSHIPPING_COURIER_COLOR_BLACK</option><option value="gray">PLG_DHARMASHOPSHIPPING_COURIER_COLOR_GRAY</option><option value="night">PLG_DHARMASHOPSHIPPING_COURIER_COLOR_NIGHT</option></field>
+    <field name="marker_address_color" type="list" label="PLG_DHARMASHOPSHIPPING_COURIER_MARKER_ADDRESS_COLOR" description="PLG_DHARMASHOPSHIPPING_COURIER_MARKER_ADDRESS_COLOR_DESC" showon=".plugin:courier[AND]map:yandex" default="red" filter="string" validate="options"><option value="blue">PLG_DHARMASHOPSHIPPING_COURIER_COLOR_BLUE</option><option value="red">PLG_DHARMASHOPSHIPPING_COURIER_COLOR_RED</option><option value="green">PLG_DHARMASHOPSHIPPING_COURIER_COLOR_GREEN</option><option value="darkGreen">PLG_DHARMASHOPSHIPPING_COURIER_COLOR_DARKGREEN</option><option value="darkBlue">PLG_DHARMASHOPSHIPPING_COURIER_COLOR_DARKBLUE</option><option value="lightBlue">PLG_DHARMASHOPSHIPPING_COURIER_COLOR_LIGHTBLUE</option><option value="orange">PLG_DHARMASHOPSHIPPING_COURIER_COLOR_ORANGE</option><option value="darkOrange">PLG_DHARMASHOPSHIPPING_COURIER_COLOR_DARKORANGE</option><option value="violet">PLG_DHARMASHOPSHIPPING_COURIER_COLOR_VIOLET</option><option value="pink">PLG_DHARMASHOPSHIPPING_COURIER_COLOR_PINK</option><option value="yellow">PLG_DHARMASHOPSHIPPING_COURIER_COLOR_YELLOW</option><option value="brown">PLG_DHARMASHOPSHIPPING_COURIER_COLOR_BROWN</option><option value="black">PLG_DHARMASHOPSHIPPING_COURIER_COLOR_BLACK</option><option value="gray">PLG_DHARMASHOPSHIPPING_COURIER_COLOR_GRAY</option><option value="night">PLG_DHARMASHOPSHIPPING_COURIER_COLOR_NIGHT</option></field>
+    <field name="zoom" type="number" label="PLG_DHARMASHOPSHIPPING_COURIER_ZOOM" description="PLG_DHARMASHOPSHIPPING_COURIER_ZOOM_DESC" showon=".plugin:courier[AND]map:yandex" default="0" min="0" max="19" filter="integer" />
+    <field name="map_ratio" type="list" label="PLG_DHARMASHOPSHIPPING_COURIER_RATIO" description="PLG_DHARMASHOPSHIPPING_COURIER_RATIO_DESC" showon=".plugin:courier[AND]map:yandex" default="16x9" filter="cmd" validate="options">
+        <option value="21x9">PLG_DHARMASHOPSHIPPING_COURIER_RATIO_21X9</option>
+        <option value="16x9">PLG_DHARMASHOPSHIPPING_COURIER_RATIO_16X9</option>
+        <option value="4x3">PLG_DHARMASHOPSHIPPING_COURIER_RATIO_4X3</option>
+        <option value="1x1">PLG_DHARMASHOPSHIPPING_COURIER_RATIO_1X1</option>
+    </field>
 </fieldset></fields></fields></form>
