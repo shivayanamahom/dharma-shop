@@ -26,16 +26,22 @@ $heading = $page?->h1 ?? (string) ($this->item->title ?? '');
     <?php endif; ?>
     <?php echo $hooks->render('afterTitle'); ?>
     <?php echo $hooks->render('beforeContent'); ?>
-    <div class="row g-4">
-        <div class="col-lg-6 dharmaProductGallery">
+    <div class="row g-4 align-items-start">
+        <div class="col-12 col-md-6 col-xl-4 dharmaProductGallery">
             <?php // Галерея — отдельный файл рядом с default.php (default_gallery.php): правится независимо, виден в «Шаблоны → Переопределения». ?>
             <?php echo $this->loadTemplate('gallery'); ?>
         </div>
-        <div class="col-lg-6 dharmaProductInfo">
-            <?php // Цена, наличие, артикул и кнопки — отдельный переопределяемый блок default_buy.php. ?>
-            <?php echo $this->loadTemplate('buy'); ?>
+        <div class="col-12 col-md-6 col-xl-5 dharmaProductInfo">
+            <?php if (trim((string) ($this->item->introtext ?? '')) !== '') : ?>
+                <?php // HTML краткого описания очищается фильтром формы товара при сохранении. ?>
+                <div class="mb-4 dharmaIntro"><?php echo $this->item->introtext; ?></div>
+            <?php endif; ?>
             <?php // Характеристики подключаются отдельным макетом. ?>
             <?php echo (new FileLayout('components.dharmashop.fields.default', null, ['component' => 'none', 'client' => 0]))->render(['fields' => $this->item->fields ?? [], 'context' => 'page']); ?>
+        </div>
+        <div class="col-12 col-xl-3 dharmaProductPurchase">
+            <?php // Цена, наличие, артикул и кнопки — отдельный переопределяемый блок default_buy.php. ?>
+            <?php echo $this->loadTemplate('buy'); ?>
         </div>
     </div>
     <?php echo $hooks->render('afterContent'); ?>
