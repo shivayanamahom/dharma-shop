@@ -1,6 +1,6 @@
 /**
  * Dharma Shop: способ «Курьер» на странице оформления.
- *  - подсказки адреса (серверный геокодер через `shipping.ajax`, поле с ролью «адрес» — [data-courier-address]);
+ *  - подсказки адреса (серверный геокодер через `shipping.ajax`, поле «Улица» — [data-courier-street]); выбор подсказки заполняет улицу, дом и город;
  *  - расчёт цены по адресу (расстояние от ближайшего склада): обновляет цену способа и итог, строки боковой панели и событием
  *    `dharmashop:shipping-quote` сообщает об этом оформлению;
  *  - карта (Яндекс Карты, JavaScript API 3): склады и точка доставки, ближайший склад выделяется, между ними линия.
@@ -173,11 +173,12 @@
         const option = root.closest('[data-shipping-option]');
         const radio = option?.querySelector('[data-shipping-radio]');
         const city = root.querySelector('[data-courier-city]');
-        const address = root.querySelector('[data-courier-address]');
+        const street = root.querySelector('[data-courier-street]');
+        const house = root.querySelector('[data-courier-house]');
         const list = root.querySelector('[data-courier-suggest]');
         const status = root.querySelector('[data-courier-status]');
         const priceNode = option?.querySelector('[data-shipping-option-price]');
-        if (!radio || !address) return;
+        if (!radio || !street) return;
 
         const initial = { price: radio.dataset.priceText || '', total: radio.dataset.totalText || '' };
         let timer = null;
@@ -206,7 +207,7 @@
 
         const reset = (message, error) => {
             setPrice(initial.price, initial.total, false);
-            delete address.dataset.summaryRows;
+            delete (house || street).dataset.summaryRows;
             root.querySelector('[data-courier-map]')?._courierMap?.reset();
             say(message || '', !!error);
             announce();
@@ -214,16 +215,20 @@
 
         const calculate = async () => {
             if (root.dataset.distance !== '1') return;
-            const addressValue = address.value.trim();
-            if (addressValue.length < 3) { reset('', false); return; }
+            const cityValue = city ? city.value.trim() : '';
+            const streetValue = street.value.trim();
+            const houseValue = house ? house.value.trim() : '';
+            // Город, улица и дом нужны для расчёта; пока что-то не заполнено, цена остаётся «по адресу».
+            if (!cityValue || streetValue.length < 3 || !houseValue) { reset('', false); return; }
             const mine = ++sequence;
             say(status?.dataset.progress || '…');
             try {
-                const result = await post(root, 'quote', { city: city ? city.value.trim() : '', address: addressValue });
+                const result = await post(root, 'quote', { city: cityValue, street: streetValue, house: houseValue });
                 if (mine !== sequence) return;
                 if (!result.ok) { reset(result.error || '', true); return; }
                 setPrice(result.price_text, result.total_text, result.free);
-                address.dataset.summaryRows = JSON.stringify(result.rows || []);
+                // Строки расчёта (расстояние, склад) идут в боковой панели после последнего базового поля — дома.
+                (house || street).dataset.summaryRows = JSON.stringify(result.rows || []);
                 say((result.rows || []).map((row) => row.label + ': ' + row.value).join(' · '), false);
                 root.querySelector('[data-courier-map]')?._courierMap?.show(result);
                 announce();
@@ -235,23 +240,24 @@
         const hide = () => { if (list) { list.classList.add('d-none'); list.replaceChildren(); } };
 
         const choose = (item) => {
-            address.value = item.address || item.label;
+            street.value = item.street || item.label;
+            if (house && item.house) house.value = item.house;
             if (city && item.city && !city.value.trim()) city.value = item.city;
             hide();
             // Событие input нужно оформлению (боковая панель), но подсказки по нему повторно запрашивать не надо.
             silent = true;
-            address.dispatchEvent(new Event('input', { bubbles: true }));
+            [street, house, city].forEach((field) => field?.dispatchEvent(new Event('input', { bubbles: true })));
             silent = false;
             calculate();
         };
 
         const suggest = async () => {
             if (!list || root.dataset.suggest !== '1') return;
-            const text = address.value.trim();
+            const text = street.value.trim();
             if (text.length < 3) { hide(); return; }
             try {
                 const result = await post(root, 'suggest', { text, city: city ? city.value.trim() : '' });
-                if (address.value.trim() !== text) return;
+                if (street.value.trim() !== text) return;
                 hide();
                 if (!result.ok || !Array.isArray(result.items) || !result.items.length) return;
                 result.items.forEach((item) => {
@@ -267,18 +273,17 @@
             } catch (error) { hide(); }
         };
 
-        address.addEventListener('input', () => {
+        street.addEventListener('input', () => {
             if (silent) return;
             window.clearTimeout(timer);
             timer = window.setTimeout(suggest, 350);
         });
-        address.addEventListener('change', calculate);
-        address.addEventListener('blur', () => window.setTimeout(hide, 150));
-        address.addEventListener('keydown', (event) => { if (event.key === 'Escape') hide(); });
-        city?.addEventListener('change', calculate);
+        street.addEventListener('blur', () => window.setTimeout(hide, 150));
+        street.addEventListener('keydown', (event) => { if (event.key === 'Escape') hide(); });
+        [street, house, city].forEach((field) => field?.addEventListener('change', calculate));
         // Расчёт по уже введённому адресу — только когда способ выбран (скрытые способы не тратят запросы геокодера).
-        radio.addEventListener('change', () => { if (radio.checked && address.value.trim()) calculate(); });
-        if (address.value.trim() && radio.checked) calculate();
+        radio.addEventListener('change', () => { if (radio.checked && street.value.trim()) calculate(); });
+        if (street.value.trim() && radio.checked) calculate();
     };
 
     const boot = () => {

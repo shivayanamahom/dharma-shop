@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<form><fields name="params"><fields name="courier"><fieldset name="type_courier" label="PLG_DHARMASHOPSHIPPING_COURIER_SETTINGS">
+<form addfieldprefix="Dharma\Component\DharmaShop\Administrator\Field"><fields name="params"><fields name="courier"><fieldset name="type_courier" label="PLG_DHARMASHOPSHIPPING_COURIER_SETTINGS">
     <field name="term" type="text" label="PLG_DHARMASHOPSHIPPING_COURIER_TERM" description="PLG_DHARMASHOPSHIPPING_COURIER_TERM_DESC" showon=".plugin:courier" maxlength="100" filter="string" />
     <field name="note" type="textarea" label="PLG_DHARMASHOPSHIPPING_COURIER_NOTE" description="PLG_DHARMASHOPSHIPPING_COURIER_NOTE_DESC" showon=".plugin:courier" rows="2" maxlength="500" filter="string" default="Курьер позвонит вам перед доставкой." />
+    <field name="base_note" type="note" label="PLG_DHARMASHOPSHIPPING_COURIER_BASE_NOTE" description="PLG_DHARMASHOPSHIPPING_COURIER_BASE_NOTE_DESC" class="alert alert-info" showon=".plugin:courier" />
     <field name="fields" type="subform" label="PLG_DHARMASHOPSHIPPING_COURIER_FIELDS" description="PLG_DHARMASHOPSHIPPING_COURIER_FIELDS_DESC" showon=".plugin:courier" multiple="true" min="0" max="20" buttons="add,remove,move"
-        default='{"fields0":{"label":"Город","type":"text","required":"1","width":"half","role":"city","placeholder":"","options":""},"fields1":{"label":"Улица и дом","type":"text","required":"1","width":"half","role":"address","placeholder":"","options":""},"fields2":{"label":"Квартира","type":"text","required":"0","width":"half","role":"none","placeholder":"","options":""},"fields3":{"label":"Подъезд","type":"text","required":"0","width":"half","role":"none","placeholder":"","options":""},"fields4":{"label":"Этаж","type":"text","required":"0","width":"half","role":"none","placeholder":"","options":""},"fields5":{"label":"Домофон","type":"text","required":"0","width":"half","role":"none","placeholder":"","options":""},"fields6":{"label":"Комментарий курьеру","type":"textarea","required":"0","width":"full","role":"none","placeholder":"Как позвонить, куда подойти","options":""}}'>
+        default='{"fields0":{"label":"Квартира","type":"text","required":"0","width":"half","placeholder":"","options":""},"fields1":{"label":"Подъезд","type":"text","required":"0","width":"half","placeholder":"","options":""},"fields2":{"label":"Этаж","type":"text","required":"0","width":"half","placeholder":"","options":""},"fields3":{"label":"Домофон","type":"text","required":"0","width":"half","placeholder":"","options":""},"fields4":{"label":"Комментарий курьеру","type":"textarea","required":"0","width":"full","placeholder":"Как позвонить, куда подойти","options":""}}'>
         <form>
             <field name="label" type="text" label="PLG_DHARMASHOPSHIPPING_COURIER_FIELD_LABEL" required="true" maxlength="100" filter="string" />
             <field name="type" type="list" label="PLG_DHARMASHOPSHIPPING_COURIER_FIELD_TYPE" default="text" filter="cmd" validate="options">
@@ -11,11 +12,6 @@
                 <option value="textarea">PLG_DHARMASHOPSHIPPING_COURIER_TYPE_TEXTAREA</option>
                 <option value="tel">PLG_DHARMASHOPSHIPPING_COURIER_TYPE_TEL</option>
                 <option value="select">PLG_DHARMASHOPSHIPPING_COURIER_TYPE_SELECT</option>
-            </field>
-            <field name="role" type="list" label="PLG_DHARMASHOPSHIPPING_COURIER_FIELD_ROLE" description="PLG_DHARMASHOPSHIPPING_COURIER_FIELD_ROLE_DESC" default="none" filter="cmd" validate="options">
-                <option value="none">PLG_DHARMASHOPSHIPPING_COURIER_ROLE_NONE</option>
-                <option value="city">PLG_DHARMASHOPSHIPPING_COURIER_ROLE_CITY</option>
-                <option value="address">PLG_DHARMASHOPSHIPPING_COURIER_ROLE_ADDRESS</option>
             </field>
             <field name="required" type="radio" layout="joomla.form.field.radio.switcher" label="PLG_DHARMASHOPSHIPPING_COURIER_FIELD_REQUIRED" default="0" filter="integer">
                 <option value="0">JNO</option>
@@ -52,13 +48,8 @@
     <field name="free_from" type="text" label="PLG_DHARMASHOPSHIPPING_COURIER_FREE_FROM" description="PLG_DHARMASHOPSHIPPING_COURIER_FREE_FROM_DESC" showon=".plugin:courier" default="0" filter="string" />
     <field name="min_total" type="text" label="PLG_DHARMASHOPSHIPPING_COURIER_MIN_TOTAL" description="PLG_DHARMASHOPSHIPPING_COURIER_MIN_TOTAL_DESC" showon=".plugin:courier" default="0" filter="string" />
     <field name="max_total" type="text" label="PLG_DHARMASHOPSHIPPING_COURIER_MAX_TOTAL" description="PLG_DHARMASHOPSHIPPING_COURIER_MAX_TOTAL_DESC" showon=".plugin:courier" default="0" filter="string" />
-    <field name="warehouses" type="subform" label="PLG_DHARMASHOPSHIPPING_COURIER_WAREHOUSES" description="PLG_DHARMASHOPSHIPPING_COURIER_WAREHOUSES_DESC" showon=".plugin:courier[AND]price_mode:distance" multiple="true" min="0" max="50" buttons="add,remove,move">
-        <form>
-            <field name="name" type="text" label="PLG_DHARMASHOPSHIPPING_COURIER_WAREHOUSE_NAME" required="true" maxlength="150" filter="string" />
-            <field name="address" type="textarea" label="PLG_DHARMASHOPSHIPPING_COURIER_WAREHOUSE_ADDRESS" rows="2" maxlength="500" filter="string" />
-            <field name="coords" type="text" label="PLG_DHARMASHOPSHIPPING_COURIER_WAREHOUSE_COORDS" description="PLG_DHARMASHOPSHIPPING_COURIER_WAREHOUSE_COORDS_DESC" required="true" hint="[55.753994, 37.622093]" maxlength="60" filter="string" />
-        </form>
-    </field>
+</fieldset><fieldset name="warehouses_courier" label="PLG_DHARMASHOPSHIPPING_COURIER_WAREHOUSES_LEGEND">
+    <field name="warehouses" type="warehouseselect" multiple="true" label="PLG_DHARMASHOPSHIPPING_COURIER_WAREHOUSES" description="PLG_DHARMASHOPSHIPPING_COURIER_WAREHOUSES_DESC" showon=".plugin:courier" class="form-select" size="8" filter="int_array" />
 </fieldset><fieldset name="map_courier" label="PLG_DHARMASHOPSHIPPING_COURIER_MAP_SETTINGS">
     <field name="yandex_apikey" type="text" label="PLG_DHARMASHOPSHIPPING_COURIER_YANDEX_APIKEY" description="PLG_DHARMASHOPSHIPPING_COURIER_YANDEX_APIKEY_DESC" showon=".plugin:courier" maxlength="100" autocomplete="off" filter="string" />
     <field name="suggest" type="radio" layout="joomla.form.field.radio.switcher" label="PLG_DHARMASHOPSHIPPING_COURIER_SUGGEST" description="PLG_DHARMASHOPSHIPPING_COURIER_SUGGEST_DESC" showon=".plugin:courier" default="1" filter="integer">

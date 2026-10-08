@@ -27,7 +27,7 @@ final class Geocoder
     /**
      * @param   array{0: float, 1: float}|null  $near  [широта, долгота] центра предпочтительной области (склады): влияет на порядок, не ограничивает
      *
-     * @return  array<int, array{text: string, address: string, city: string, coords: array{0: float, 1: float}, precision: string}>
+     * @return  array<int, array{text: string, address: string, city: string, street: string, house: string, coords: array{0: float, 1: float}, precision: string}>
      *
      * @throws  \RuntimeException  ошибка сервиса (ключ, лимит, сеть)
      */
@@ -95,6 +95,8 @@ final class Geocoder
 
             $components = (array) ($meta['Address']['Components'] ?? []);
             $city = '';
+            $street = '';
+            $house = '';
             $parts = [];
 
             foreach ($components as $component) {
@@ -105,6 +107,7 @@ final class Geocoder
                     $city = $name;
                 } elseif (in_array($kind, ['street', 'house'], true)) {
                     $parts[] = $name;
+                    ${$kind} = $name;
                 }
             }
 
@@ -114,6 +117,8 @@ final class Geocoder
                 // Адрес без страны/региона/города для подстановки в поле «Адрес», если город вводится отдельно.
                 'address' => $parts ? implode(', ', $parts) : $formatted,
                 'city' => $city,
+                'street' => $street,
+                'house' => $house,
                 'coords' => [(float) $pos[1], (float) $pos[0]],
                 'precision' => (string) ($meta['precision'] ?? 'other'),
             ];

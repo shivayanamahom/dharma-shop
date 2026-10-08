@@ -19,8 +19,9 @@ use Joomla\CMS\Plugin\PluginHelper;
 /**
  * Курьер: доставка до двери. Цена — фиксированная либо по расстоянию: базовая цена + цена за километр от ближайшего склада
  * до адреса покупателя (адрес определяет серверный геокодер Яндекса; расстояние — по прямой с дорожным коэффициентом).
- * «Бесплатно от суммы заказа» и пределы суммы заказа действуют в обоих режимах. Поля покупателя — конструктор; у поля можно задать
- * роль в расчёте (город, адрес): по ним определяется точка доставки и работают подсказки адреса.
+ * «Бесплатно от суммы заказа» и пределы суммы заказа действуют в обоих режимах. Склады отправки — из справочника «Склады».
+ * Поля «Город», «Улица», «Дом» есть всегда (их нельзя изменить): по ним определяется точка доставки и работают подсказки адреса;
+ * конструктор добавляет остальные поля (квартира, подъезд, этаж, комментарий и т. п.).
  */
 final class CourierType implements TypeInterface
 {
@@ -29,7 +30,8 @@ final class CourierType implements TypeInterface
 
     private const FIELD_TYPES = ['text', 'textarea', 'tel', 'select'];
 
-    private const ROLES = ['none', 'city', 'address'];
+    /** Ключи неизменяемых полей курьера: город, улица, дом. */
+    private const BASE_KEYS = ['city', 'street', 'house'];
 
     private const MARKER_KINDS = ['pin', 'dot', 'circle', 'label'];
 
@@ -86,7 +88,7 @@ final class CourierType implements TypeInterface
         $normalized = [
             'term' => mb_substr(trim(strip_tags((string) ($settings['term'] ?? ''))), 0, 100),
             'note' => mb_substr(trim(strip_tags((string) ($settings['note'] ?? ''))), 0, 500),
-            'fields' => $this->normalizeFields((array) ($settings['fields'] ?? []), $mode),
+            'fields' => $this->normalizeFields((array) ($settings['fields'] ?? [])),
             'price_mode' => $mode,
             'price' => $number($settings['price'] ?? 0, 'PRICE'),
             'km_base_price' => $number($settings['km_base_price'] ?? 0, 'KM_BASE'),
@@ -99,7 +101,7 @@ final class CourierType implements TypeInterface
             'free_from' => $number($settings['free_from'] ?? 0, 'FREE_FROM'),
             'min_total' => $number($settings['min_total'] ?? 0, 'MIN_TOTAL'),
             'max_total' => $number($settings['max_total'] ?? 0, 'MAX_TOTAL'),
-            'warehouses' => $this->normalizeWarehouses((array) ($settings['warehouses'] ?? [])),
+            'warehouses' => array_values(array_unique(array_filter(array_map('intval', (array) ($settings['warehouses'] ?? [])), static fn (int $id): bool => $id > 0))),
             'yandex_apikey' => $key,
             'suggest' => (int) ($settings['suggest'] ?? 1) === 1 ? '1' : '0',
             'map' => in_array((string) ($settings['map'] ?? ''), ['none', 'yandex'], true) ? (string) $settings['map'] : 'none',
@@ -116,12 +118,8 @@ final class CourierType implements TypeInterface
         }
 
         if ($mode === 'distance') {
-            // Расчёт по расстоянию: нужен адрес (поле с ролью «Адрес»), хотя бы один склад с координатами и ключ геокодера.
-            if (!array_filter($normalized['fields'], static fn (array $field): bool => $field['role'] === 'address')) {
-                throw new \DomainException('PLG_DHARMASHOPSHIPPING_COURIER_ERROR_ROLE_ADDRESS');
-            }
-
-            if (!$normalized['warehouses']) {
+            // Расчёт по расстоянию: нужен хотя бы один склад отправки с координатами (справочник «Склады») и ключ геокодера.
+            if (!$this->hasCoords($normalized['warehouses'])) {
                 throw new \DomainException('PLG_DHARMASHOPSHIPPING_COURIER_ERROR_WAREHOUSES');
             }
 
@@ -133,12 +131,11 @@ final class CourierType implements TypeInterface
         return $normalized;
     }
 
-    /** Поля покупателя: ключ из подписи (латиница, уникальный); роль в расчёте — не более одного города и одного адреса; роль делает поле обязательным. */
-    private function normalizeFields(array $rows, string $mode): array
+    /** Дополнительные поля покупателя (город, улица и дом есть всегда): ключ из подписи (латиница, уникальный, не совпадает с неизменяемыми). */
+    private function normalizeFields(array $rows): array
     {
         $fields = [];
-        $used = [];
-        $roles = [];
+        $used = array_fill_keys(self::BASE_KEYS, true);
 
         foreach ($rows as $row) {
             $row = (array) $row;
@@ -149,20 +146,6 @@ final class CourierType implements TypeInterface
             }
 
             $type = in_array((string) ($row['type'] ?? ''), self::FIELD_TYPES, true) ? (string) $row['type'] : 'text';
-            $role = in_array((string) ($row['role'] ?? ''), self::ROLES, true) ? (string) $row['role'] : 'none';
-
-            if ($role !== 'none') {
-                if (isset($roles[$role])) {
-                    throw new \DomainException('PLG_DHARMASHOPSHIPPING_COURIER_ERROR_ROLE_TWICE');
-                }
-
-                if ($type === 'select' || $type === 'tel') {
-                    throw new \DomainException('PLG_DHARMASHOPSHIPPING_COURIER_ERROR_ROLE_TYPE');
-                }
-
-                $roles[$role] = true;
-            }
-
             $key = substr(str_replace('-', '_', ApplicationHelper::stringURLSafe($label)) ?: 'field', 0, 40);
             $base = $key;
 
@@ -193,8 +176,7 @@ final class CourierType implements TypeInterface
                 'key' => $key,
                 'label' => $label,
                 'type' => $type,
-                'role' => $role,
-                'required' => $role !== 'none' && $mode === 'distance' ? 1 : ((int) ($row['required'] ?? 0) === 1 ? 1 : 0),
+                'required' => (int) ($row['required'] ?? 0) === 1 ? 1 : 0,
                 'width' => (string) ($row['width'] ?? 'full') === 'half' ? 'half' : 'full',
                 'placeholder' => mb_substr(trim(strip_tags((string) ($row['placeholder'] ?? ''))), 0, 100),
                 // Строкой (по варианту в строке), как вводится в форме: массив в поле формы ломает вывод textarea.
@@ -203,65 +185,6 @@ final class CourierType implements TypeInterface
         }
 
         return $fields;
-    }
-
-    /** Склады отправки: название и координаты в формате Яндекса обязательны, адрес — справочно. */
-    private function normalizeWarehouses(array $rows): array
-    {
-        $warehouses = [];
-        $used = [];
-
-        foreach ($rows as $row) {
-            $row = (array) $row;
-            $name = mb_substr(trim(strip_tags((string) ($row['name'] ?? ''))), 0, 150);
-            $coordsRaw = trim((string) ($row['coords'] ?? ''));
-
-            if ($name === '' && $coordsRaw === '') {
-                continue;
-            }
-
-            $coords = self::parseCoords($coordsRaw);
-
-            if ($name === '' || $coords === null) {
-                throw new \DomainException('PLG_DHARMASHOPSHIPPING_COURIER_ERROR_WAREHOUSE');
-            }
-
-            $key = substr(str_replace('-', '_', ApplicationHelper::stringURLSafe($name)) ?: 'warehouse', 0, 40);
-            $base = $key;
-
-            for ($n = 2; isset($used[$key]); $n++) {
-                $key = $base . '_' . $n;
-            }
-
-            $used[$key] = true;
-            $warehouses[] = ['key' => $key, 'name' => $name, 'address' => mb_substr(trim(strip_tags((string) ($row['address'] ?? ''))), 0, 500), 'coords' => $coords[0] . ', ' . $coords[1]];
-        }
-
-        return $warehouses;
-    }
-
-    /**
-     * Координаты в виде Яндекса «[55.753994, 37.622093]» (широта, долгота); допустимы запись без скобок, разделители запятая/точка с запятой/пробел
-     * и десятичная запятая. Возвращает [широта, долгота] строками или null.
-     *
-     * @return  array{0: string, 1: string}|null
-     */
-    public static function parseCoords(string $value): ?array
-    {
-        $value = trim(str_replace(['[', ']', '(', ')'], ' ', $value));
-
-        if (!preg_match('/^(-?\d+(?:[.,]\d+)?)\s*[;,\s]\s*(-?\d+(?:[.,]\d+)?)$/D', $value, $m)) {
-            return null;
-        }
-
-        $lat = (float) str_replace(',', '.', $m[1]);
-        $lon = (float) str_replace(',', '.', $m[2]);
-
-        if (abs($lat) > 90 || abs($lon) > 180) {
-            return null;
-        }
-
-        return [rtrim(rtrim(number_format($lat, 6, '.', ''), '0'), '.'), rtrim(rtrim(number_format($lon, 6, '.', ''), '0'), '.')];
     }
 
     // ---------------------------------------------------------------- расчёт
@@ -306,9 +229,30 @@ final class CourierType implements TypeInterface
         $data = [];
         $rows = [];
         $errors = [];
-        $values = [];
 
-        foreach ($this->fieldsOf($method) as $field) {
+        // Город, улица и дом — всегда, обязательные; остальные поля — из конструктора.
+        $base = [
+            'city' => ['label' => Text::_('PLG_DHARMASHOPSHIPPING_COURIER_BASE_CITY'), 'limit' => 255],
+            'street' => ['label' => Text::_('PLG_DHARMASHOPSHIPPING_COURIER_BASE_STREET'), 'limit' => 255],
+            'house' => ['label' => Text::_('PLG_DHARMASHOPSHIPPING_COURIER_BASE_HOUSE'), 'limit' => 20],
+        ];
+
+        foreach ($base as $key => $def) {
+            $raw = trim((string) preg_replace('/\s+/u', ' ', strip_tags((string) ($input[$key] ?? ''))));
+
+            if ($raw === '') {
+                $errors[$key] = 'PLG_DHARMASHOPSHIPPING_COURIER_FIELD_REQUIRED_ERROR';
+            } elseif (mb_strlen($raw) > $def['limit']) {
+                $errors[$key] = 'PLG_DHARMASHOPSHIPPING_COURIER_FIELD_LONG';
+            } elseif ($key === 'house' && !preg_match('/^[0-9A-Za-zА-Яа-яЁё\/\-.,\s]{1,20}$/u', $raw)) {
+                $errors[$key] = 'PLG_DHARMASHOPSHIPPING_COURIER_FIELD_INVALID';
+            } else {
+                $data[$key] = $raw;
+                $rows[] = ['label' => $def['label'], 'value' => $raw];
+            }
+        }
+
+        foreach ($this->extraFields($method) as $field) {
             $key = (string) $field['key'];
             $raw = trim((string) preg_replace('/[ \t]+/u', ' ', strip_tags((string) ($input[$key] ?? ''))));
             $raw = (string) preg_replace('/\R{3,}/u', "\n\n", $raw);
@@ -331,7 +275,6 @@ final class CourierType implements TypeInterface
                 $errors[$key] = 'PLG_DHARMASHOPSHIPPING_COURIER_FIELD_INVALID';
             } else {
                 $data[$key] = $raw;
-                $values[(string) $field['role']] = $raw;
                 $rows[] = ['label' => (string) $field['label'], 'value' => $raw];
             }
         }
@@ -339,10 +282,8 @@ final class CourierType implements TypeInterface
         $result = ['data' => $data, 'rows' => $rows, 'errors' => $errors];
 
         if (!$errors && $this->isDistance($method)) {
-            $addressKey = (string) ($this->roleKey($method, 'address') ?? '');
-
             try {
-                $calc = $this->calculate($method, $context, (string) ($values['city'] ?? ''), (string) ($values['address'] ?? ''));
+                $calc = $this->calculate($method, $context, (string) $data['city'], (string) $data['street'], (string) $data['house']);
                 $result['quote'] = $calc['quote'];
                 $result['data']['distance_km'] = $calc['distance'];
                 $result['data']['warehouse'] = $calc['warehouse']['key'];
@@ -350,7 +291,7 @@ final class CourierType implements TypeInterface
                 $result['rows'][] = ['label' => Text::_('PLG_DHARMASHOPSHIPPING_COURIER_ROW_DISTANCE'), 'value' => Text::sprintf('PLG_DHARMASHOPSHIPPING_COURIER_DISTANCE_VALUE', $this->km($calc['distance']))];
                 $result['rows'][] = ['label' => Text::_('PLG_DHARMASHOPSHIPPING_COURIER_ROW_WAREHOUSE'), 'value' => $calc['warehouse']['name']];
             } catch (\DomainException $error) {
-                $result['errors'][$addressKey !== '' ? $addressKey : 'address'] = $error->getMessage();
+                $result['errors']['street'] = $error->getMessage();
             }
         }
 
@@ -364,7 +305,7 @@ final class CourierType implements TypeInterface
      *
      * @throws  \DomainException  адрес не распознан, слишком далеко, сервис недоступен — сообщение (языковой ключ) показывается покупателю
      */
-    private function calculate(Method $method, Context $context, string $city, string $address): array
+    private function calculate(Method $method, Context $context, string $city, string $street, string $house): array
     {
         $p = $method->params;
         $warehouses = $this->warehousesOf($method);
@@ -374,7 +315,7 @@ final class CourierType implements TypeInterface
             throw new \DomainException('PLG_DHARMASHOPSHIPPING_COURIER_ERROR_NOT_CONFIGURED');
         }
 
-        $query = trim($city !== '' ? $city . ', ' . $address : $address);
+        $query = trim($city . ', ' . $street . ' ' . $house, ', ');
         $found = null;
 
         try {
@@ -421,15 +362,17 @@ final class CourierType implements TypeInterface
 
     public function ajax(Method $method, Context $context, string $action, array $input): array
     {
-        if (!$this->isDistance($method) && $action !== 'suggest') {
-            return ['ok' => false, 'error' => Text::_('PLG_DHARMASHOPSHIPPING_COURIER_ERROR_NOT_CONFIGURED')];
+        if ($action !== 'suggest' && $action !== 'quote') {
+            return ['ok' => false, 'error' => 'Unknown action'];
         }
 
         $key = $this->apiKey($method);
 
-        if ($key === '') {
+        if ($key === '' || !$this->warehousesOf($method)) {
             return ['ok' => false, 'error' => Text::_('PLG_DHARMASHOPSHIPPING_COURIER_ERROR_NOT_CONFIGURED')];
         }
+
+        $city = trim(strip_tags((string) ($input['city'] ?? '')));
 
         if ($action === 'suggest') {
             if ((string) ($method->params['suggest'] ?? '1') !== '1') {
@@ -437,18 +380,16 @@ final class CourierType implements TypeInterface
             }
 
             $text = trim(strip_tags((string) ($input['text'] ?? '')));
-            $city = trim(strip_tags((string) ($input['city'] ?? '')));
 
             if (mb_strlen($text) < 3 || mb_strlen($text) > 200) {
                 return ['ok' => true, 'items' => []];
             }
 
             try {
-                $warehouses = $this->warehousesOf($method);
                 $items = [];
 
-                foreach ($this->geocoder($key)->search($city !== '' ? $city . ', ' . $text : $text, 6, $warehouses[0]['coords'] ?? null) as $item) {
-                    $items[] = ['label' => $item['text'], 'address' => $item['address'], 'city' => $item['city']];
+                foreach ($this->geocoder($key)->search($city !== '' ? $city . ', ' . $text : $text, 6, $this->warehousesOf($method)[0]['coords']) as $item) {
+                    $items[] = ['label' => $item['text'], 'city' => $item['city'], 'street' => $item['street'], 'house' => $item['house']];
                 }
 
                 return ['ok' => true, 'items' => $items];
@@ -457,40 +398,40 @@ final class CourierType implements TypeInterface
             }
         }
 
-        if ($action === 'quote') {
-            $city = trim(strip_tags((string) ($input['city'] ?? '')));
-            $address = trim(strip_tags((string) ($input['address'] ?? '')));
-
-            if ($address === '' || mb_strlen($address) > 255 || mb_strlen($city) > 255) {
-                return ['ok' => false, 'error' => Text::_('PLG_DHARMASHOPSHIPPING_COURIER_ERROR_ADDRESS')];
-            }
-
-            try {
-                $calc = $this->calculate($method, $context, $city, $address);
-            } catch (\DomainException $error) {
-                return ['ok' => false, 'error' => Text::_($error->getMessage())];
-            }
-
-            $money = Factory::getApplication()->bootComponent('com_dharmashop')->getServices()->money();
-            $quote = $calc['quote'];
-
-            return [
-                'ok' => true,
-                'price' => $quote->price,
-                'free' => $quote->free,
-                'price_text' => $quote->free ? Text::_('COM_DHARMASHOP_SHIPPING_FREE') : $money->format((string) $quote->price),
-                'total_text' => $money->price((string) round($context->total + $quote->price, 2)),
-                'distance_km' => $calc['distance'],
-                'warehouse' => ['key' => $calc['warehouse']['key'], 'name' => $calc['warehouse']['name'], 'address' => $calc['warehouse']['address']],
-                'to' => $calc['to'],
-                'rows' => [
-                    ['label' => Text::_('PLG_DHARMASHOPSHIPPING_COURIER_ROW_DISTANCE'), 'value' => Text::sprintf('PLG_DHARMASHOPSHIPPING_COURIER_DISTANCE_VALUE', $this->km($calc['distance']))],
-                    ['label' => Text::_('PLG_DHARMASHOPSHIPPING_COURIER_ROW_WAREHOUSE'), 'value' => $calc['warehouse']['name']],
-                ],
-            ];
+        if (!$this->isDistance($method)) {
+            return ['ok' => false, 'error' => Text::_('PLG_DHARMASHOPSHIPPING_COURIER_ERROR_NOT_CONFIGURED')];
         }
 
-        return ['ok' => false, 'error' => 'Unknown action'];
+        $street = trim(strip_tags((string) ($input['street'] ?? '')));
+        $house = trim(strip_tags((string) ($input['house'] ?? '')));
+
+        if ($city === '' || $street === '' || $house === '' || mb_strlen($city) > 255 || mb_strlen($street) > 255 || mb_strlen($house) > 20) {
+            return ['ok' => false, 'error' => Text::_('PLG_DHARMASHOPSHIPPING_COURIER_ERROR_ADDRESS')];
+        }
+
+        try {
+            $calc = $this->calculate($method, $context, $city, $street, $house);
+        } catch (\DomainException $error) {
+            return ['ok' => false, 'error' => Text::_($error->getMessage())];
+        }
+
+        $money = Factory::getApplication()->bootComponent('com_dharmashop')->getServices()->money();
+        $quote = $calc['quote'];
+
+        return [
+            'ok' => true,
+            'price' => $quote->price,
+            'free' => $quote->free,
+            'price_text' => $quote->free ? Text::_('COM_DHARMASHOP_SHIPPING_FREE') : $money->format((string) $quote->price),
+            'total_text' => $money->price((string) round($context->total + $quote->price, 2)),
+            'distance_km' => $calc['distance'],
+            'warehouse' => ['key' => $calc['warehouse']['key'], 'name' => $calc['warehouse']['name'], 'address' => $calc['warehouse']['address']],
+            'to' => $calc['to'],
+            'rows' => [
+                ['label' => Text::_('PLG_DHARMASHOPSHIPPING_COURIER_ROW_DISTANCE'), 'value' => Text::sprintf('PLG_DHARMASHOPSHIPPING_COURIER_DISTANCE_VALUE', $this->km($calc['distance']))],
+                ['label' => Text::_('PLG_DHARMASHOPSHIPPING_COURIER_ROW_WAREHOUSE'), 'value' => $calc['warehouse']['name']],
+            ],
+        ];
     }
 
     // ---------------------------------------------------------------- вывод
@@ -500,12 +441,17 @@ final class CourierType implements TypeInterface
         $method = $displayData['method'];
         $p = $method->params;
         $path = PluginHelper::getLayoutPath('dharmashopshipping', 'courier', 'default');
-        $displayData['fields'] = $this->fieldsOf($method);
+        $displayData['base_fields'] = [
+            ['key' => 'city', 'label' => Text::_('PLG_DHARMASHOPSHIPPING_COURIER_BASE_CITY'), 'col' => 'col-md-4'],
+            ['key' => 'street', 'label' => Text::_('PLG_DHARMASHOPSHIPPING_COURIER_BASE_STREET'), 'col' => 'col-md-5'],
+            ['key' => 'house', 'label' => Text::_('PLG_DHARMASHOPSHIPPING_COURIER_BASE_HOUSE'), 'col' => 'col-md-3'],
+        ];
+        $displayData['fields'] = $this->extraFields($method);
         $displayData['distance_mode'] = $this->isDistance($method);
-        $displayData['suggest'] = $this->isDistance($method) && (string) ($p['suggest'] ?? '1') === '1' && $this->apiKey($method) !== '';
+        $displayData['suggest'] = (string) ($p['suggest'] ?? '1') === '1' && $this->apiKey($method) !== '' && $this->warehousesOf($method) !== [];
         $displayData['map'] = $this->mapDisplay($method);
 
-        if ($displayData['distance_mode'] || $displayData['map']['mode'] !== 'none') {
+        if ($displayData['distance_mode'] || $displayData['suggest'] || $displayData['map']['mode'] !== 'none') {
             $wa = Factory::getApplication()->getDocument()->getWebAssetManager();
             $wa->getRegistry()->addRegistryFile('media/plg_dharmashopshipping_courier/joomla.asset.json');
             $wa->useScript('plg_dharmashopshipping_courier.courier');
@@ -537,18 +483,13 @@ final class CourierType implements TypeInterface
             'warehouseColor' => in_array((string) ($p['marker_color'] ?? ''), self::COLORS, true) ? (string) $p['marker_color'] : 'blue',
             'nearestColor' => in_array((string) ($p['marker_nearest_color'] ?? ''), self::COLORS, true) ? (string) $p['marker_nearest_color'] : 'green',
             'addressColor' => in_array((string) ($p['marker_address_color'] ?? ''), self::COLORS, true) ? (string) $p['marker_address_color'] : 'red',
-            'warehouses' => array_map(static fn (array $w): array => ['key' => $w['key'], 'name' => $w['name'], 'address' => $w['address'], 'coords' => $w['coords']], $warehouses),
+            'warehouses' => array_map(static fn (array $w): array => ['key' => $w['key'], 'name' => $w['name'], 'address' => $w['address'], 'coords' => $w['coords'][0] . ', ' . $w['coords'][1]], $warehouses),
         ];
 
         return ['mode' => 'js', 'ratio' => $ratio, 'config' => (string) json_encode($config, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT)];
     }
 
     // ---------------------------------------------------------------- вспомогательное
-
-    private function geocoder(string $key): object
-    {
-        return self::$geocoderFactory !== null ? (self::$geocoderFactory)($key) : new Geocoder($key);
-    }
 
     private function isDistance(Method $method): bool
     {
@@ -560,31 +501,38 @@ final class CourierType implements TypeInterface
         return trim((string) ($method->params['yandex_apikey'] ?? ''));
     }
 
-    /** @return array<int, array{key: string, name: string, address: string, coords: array{0: float, 1: float}}> */
+    /**
+     * Склады отправки — опубликованные склады из справочника с координатами (`params.warehouses`).
+     *
+     * @return array<int, array{key: string, name: string, address: string, coords: array{0: float, 1: float}}>
+     */
     private function warehousesOf(Method $method): array
     {
+        $services = Factory::getApplication()->bootComponent('com_dharmashop')->getServices();
         $list = [];
 
-        foreach ((array) ($method->params['warehouses'] ?? []) as $row) {
-            $coords = is_array($row) ? self::parseCoords((string) ($row['coords'] ?? '')) : null;
+        foreach ($services->warehouses()->byIds(array_map('intval', (array) ($method->params['warehouses'] ?? []))) as $warehouse) {
+            $coords = $warehouse->coords();
 
             if ($coords !== null) {
-                $list[] = ['key' => (string) $row['key'], 'name' => (string) $row['name'], 'address' => (string) ($row['address'] ?? ''), 'coords' => [(float) $coords[0], (float) $coords[1]]];
+                $list[] = ['key' => (string) $warehouse->id, 'name' => $warehouse->title, 'address' => $warehouse->address, 'coords' => $coords];
             }
         }
 
         return $list;
     }
 
-    private function roleKey(Method $method, string $role): ?string
+    /** Есть ли среди выбранных складов хотя бы один с координатами — по справочнику, независимо от публикации (проверка при сохранении). */
+    private function hasCoords(array $ids): bool
     {
-        foreach ($this->fieldsOf($method) as $field) {
-            if ($field['role'] === $role) {
-                return (string) $field['key'];
-            }
+        if (!$ids) {
+            return false;
         }
 
-        return null;
+        $db = Factory::getContainer()->get('DatabaseDriver');
+        $query = $db->createQuery()->select('COUNT(*)')->from($db->quoteName('#__dharmashop_warehouses'))->whereIn('id', $ids)->where('lat IS NOT NULL AND lon IS NOT NULL');
+
+        return (int) $db->setQuery($query)->loadResult() > 0;
     }
 
     private function km(float $km): string
@@ -592,25 +540,19 @@ final class CourierType implements TypeInterface
         return rtrim(rtrim(number_format($km, 1, ',', ' '), '0'), ',');
     }
 
-    /** Определения полей способа; если настройки ещё не сохранялись — город и адрес с ролями. */
-    private function fieldsOf(Method $method): array
+    private function geocoder(string $key): object
     {
-        if (isset($method->params['fields']) && is_array($method->params['fields'])) {
-            return array_map(static function (array $field): array {
-                $options = $field['options'] ?? [];
-                $field['options'] = array_values(array_filter(is_array($options) ? $options : (preg_split('/\R/u', (string) $options) ?: []), static fn ($option): bool => trim((string) $option) !== ''));
-                $field['role'] = (string) ($field['role'] ?? 'none');
+        return self::$geocoderFactory !== null ? (self::$geocoderFactory)($key) : new Geocoder($key);
+    }
 
-                return $field;
-            }, array_values(array_filter($method->params['fields'], 'is_array')));
-        }
+    /** Дополнительные поля из конструктора (город, улица и дом выводятся всегда отдельно). */
+    private function extraFields(Method $method): array
+    {
+        return array_map(static function (array $field): array {
+            $options = $field['options'] ?? [];
+            $field['options'] = array_values(array_filter(is_array($options) ? $options : (preg_split('/\R/u', (string) $options) ?: []), static fn ($option): bool => trim((string) $option) !== ''));
 
-        $line = static fn (string $key, string $label, string $type, string $role, int $required, string $width): array
-            => ['key' => $key, 'label' => $label, 'type' => $type, 'role' => $role, 'required' => $required, 'width' => $width, 'placeholder' => '', 'options' => []];
-
-        return [
-            $line('gorod', Text::_('PLG_DHARMASHOPSHIPPING_COURIER_DEFAULT_CITY'), 'text', 'city', 1, 'half'),
-            $line('ulitsa_i_dom', Text::_('PLG_DHARMASHOPSHIPPING_COURIER_DEFAULT_STREET'), 'text', 'address', 1, 'half'),
-        ];
+            return $field;
+        }, array_values(array_filter((array) ($method->params['fields'] ?? []), 'is_array')));
     }
 }
