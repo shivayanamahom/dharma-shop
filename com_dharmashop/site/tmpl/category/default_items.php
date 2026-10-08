@@ -4,7 +4,7 @@
 use Joomla\CMS\Language\Text;
 ?>
     <?php if (!$this->items) : ?>
-        <p class="text-body-secondary"><?php echo Text::_('COM_DHARMASHOP_NO_PRODUCTS'); ?></p>
+        <p class="text-body-secondary"><?php echo Text::_($this->searchQuery !== '' ? 'COM_DHARMASHOP_SEARCH_EMPTY' : 'COM_DHARMASHOP_NO_PRODUCTS'); ?></p>
     <?php elseif ($this->productView === 'table') : ?>
         <div class="table-responsive">
             <table class="table table-hover align-middle dharmaProductsTable">

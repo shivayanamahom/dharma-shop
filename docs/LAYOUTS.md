@@ -256,7 +256,7 @@ C74: результат вынесен в `site/tmpl/checkoutcomplete/default.ph
 ## Поиск (модуль `mod_dharmashop_search`, страница «Поиск»)
 
 - **Модуль:** `tmpl/default.php` (форма, `<template data-dharmashop-search-template="item|category|all|message">` для разметки подсказок — переопределяется в `templates/<шаблон>/html/mod_dharmashop_search/`), `media/mod_dharmashop_search/{js/search.js,css/search.css}`. Крючки: `dharmaSearchModule`, атрибуты `data-dharmashop-search`, `-search-input`, `-search-results`, `data-field` (title, image, sku, category, price, stock, count, label, message). Переменные CSS: `--dharma-search-results-min`, `--dharma-search-results-max-height`.
-- **Страница результатов** (`tmpl/search/default.php`, `default_items.php`): контейнер `dharmaSearch`, форма `dharmaSearchForm`; по умолчанию результаты выводит страница каталога (`dharmaSearchNote` — строка «найдено» над списком). Подробно — `docs/SEARCH.md`.
+- **Страница результатов** (`tmpl/search/default.php`, `default_items.php`): контейнер `dharmaSearch`, форма `dharmaSearchForm`; по умолчанию результаты выводит страница каталога как обычный отфильтрованный список (без отдельной строки «найдено»; пустой результат — «Ничего не найдено…»). Подробно — `docs/SEARCH.md`.
 
 ## Пункт меню «Товар» (C68)
 

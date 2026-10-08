@@ -38,13 +38,6 @@ $icons = [
             </div>
         </section>
     <?php endif; ?>
- <?php // Поиск по каталогу (параметр q): строка с числом найденного и ссылкой «Сбросить». ?>
-    <?php if ($this->searchQuery !== '') : ?>
-        <div class="d-flex flex-wrap align-items-center gap-3 mb-4 dharmaSearchNote" role="status">
-            <span><?php echo $this->escape(Text::sprintf('COM_DHARMASHOP_SEARCH_FOUND', $this->searchQuery, $this->total)); ?></span>
-            <a class="btn btn-sm btn-outline-secondary" href="<?php echo $this->escape($this->categoryRoute((int) $this->item->id)); ?>"><?php echo Text::_('COM_DHARMASHOP_SEARCH_RESET'); ?></a>
-        </div>
-    <?php endif; ?>
     <form action="<?php echo $this->escape($this->categoryRoute((int) $this->item->id)); ?>" method="get" class="mb-4" data-dharmashop-listing-controls>
         <?php if ($this->searchQuery !== '') : ?><input type="hidden" name="filter[search]" value="<?php echo $this->escape($this->searchQuery); ?>"><?php endif; ?>
         <div class="d-flex flex-column flex-lg-row align-items-lg-end justify-content-between gap-3">

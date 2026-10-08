@@ -43,7 +43,6 @@ $modes = ['grid' => 'COM_DHARMASHOP_VIEW_GRID', 'list' => 'COM_DHARMASHOP_VIEW_L
     <?php if ($this->query === '') : ?>
         <p class="text-body-secondary"><?php echo Text::_('COM_DHARMASHOP_SEARCH_ENTER'); ?></p>
     <?php else : ?>
-        <p class="text-body-secondary mb-3"><?php echo $this->escape(Text::sprintf('COM_DHARMASHOP_SEARCH_FOUND', $this->query, $this->total)); ?></p>
         <?php echo $this->loadTemplate('items'); ?>
     <?php endif; ?>
 </section>
