@@ -22,6 +22,7 @@ final class ImageContexts
         'badge.header' => [1200, 600],
         'cart.module' => [144, 144],
         'cart.page' => [192, 192],
+        'cart.toast' => [128, 128],
         'search.module' => [112, 112],
         'search.grid' => [600, 600],
         'search.list' => [320, 320],

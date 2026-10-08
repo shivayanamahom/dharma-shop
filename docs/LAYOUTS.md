@@ -4,7 +4,7 @@
 
 Макеты получают URL через `Administrator\Image\ImageUrl::resolve($path, $context)`. Плагин `dharmashop/imageresize` подбирает размеры из настроек магазина; без него используется оригинал. Стили и данные снимков заказа не меняются. Полный реестр и инструкция расширения — [IMAGE_RESIZE.md](IMAGE_RESIZE.md).
 
-Общая точка `product-card/default.php` передаёт `imageContext`: `product.category.grid/list/table`, на странице поиска — `search.grid/list/table`. Бренды/бейджи используют те же товарные контексты. Вызывающий модуль может явно передать `module.products.grid/list/table` (зарезервированы для будущего модуля). Большая галерея, миниатюры и ссылка лайтбокса — `product.main`, `product.thumb`, `product.lightbox`; картинка раздела и карточка раздела — `category/brand/badge.header` и `.card`. Остальные: `cart.page`, `cart.module`, `search.module`, `field.option`, `admin.product`, `admin.category`, `email.product`, `email.logo`.
+Общая точка `product-card/default.php` передаёт `imageContext`: `product.category.grid/list/table`, на странице поиска — `search.grid/list/table`. Бренды/бейджи используют те же товарные контексты. Вызывающий модуль может явно передать `module.products.grid/list/table` (зарезервированы для будущего модуля). Большая галерея, миниатюры и ссылка лайтбокса — `product.main`, `product.thumb`, `product.lightbox`; картинка раздела и карточка раздела — `category/brand/badge.header` и `.card`. Остальные: `cart.page`, `cart.module`, `cart.toast`, `search.module`, `field.option`, `admin.product`, `admin.category`, `email.product`, `email.logo`.
 
 Переопределения шаблона должны сохранять вызов `ImageUrl::resolve`; HTML-адрес экранировать. Нулевая сторона — авто, две нулевые — оригинал. Настройки не меняют размеры CSS-блоков, только получаемый файл.
 
@@ -273,3 +273,11 @@ C74: результат вынесен в `site/tmpl/checkoutcomplete/default.ph
 ## Пункт меню «Товар» (C68)
 
 `tmpl/product/default.xml` — тип пункта «Один товар» (поле `modal_product`: окно выбора `view=products&layout=modal`, `tmpl/products/modal.php` в админке). Страница, открытая через такой пункт, берёт заголовок/описание/роботы из пункта меню, а крошки — только его цепочку.
+
+## Уведомление о добавлении в корзину (2026-10-08)
+
+Отдельный макет `files_dharmashop_layouts/layouts/cart/toast.php` устанавливается в `layouts/components/dharmashop/cart/toast.php`. Переопределение: `templates/<шаблон>/html/layouts/components/dharmashop/cart/toast.php`. Данные: `product` (`product_id`, `title`, `sku`, `variant_title`, `cover`, `qty` — добавленная порция после обработки плагинами, `unit` — итоговая единица), `cartUrl`, `seconds`. Фото через `ImageUrl::resolve(..., 'cart.toast')`, 64 × 64 в разметке; заголовок — ссылка на товар, далее артикул/количество и ссылка в корзину.
+
+В настройках «Корзина → Уведомление о добавлении» выбираются `cart_notification_type` (`toast` / `none`, по умолчанию toast) и `cart_notification_seconds` (0–300, по умолчанию 5; 0 — вручную). `cart-toast.js` подключается только для toast; отдельный Bootstrap Toast, без собственного CSS. Макет включает оболочку `toast-container` справа сверху; нативный `popover="manual"` помещает её над боковой корзиной (без Popover API — обычное позиционирование Bootstrap). Новое добавление заменяет предыдущий тост; hover/focus приостанавливает автозакрытие, кнопка закрывает вручную. Сохраните `data-dharmashop-cart-toast-host`, `data-dharmashop-cart-toast` и `data-bs-dismiss="toast"` в переопределении. Автооткрытие мини-корзины остаётся отдельной настройкой модуля.
+
+Если размеры изображений уже сохранены, новый контекст добавляется строкой «Корзина — уведомление о добавлении» во вкладке «Изображения». Удалённые/отсутствующие строки автоматически не восстанавливаются; без строки остаётся исходный URL, как у других контекстов.

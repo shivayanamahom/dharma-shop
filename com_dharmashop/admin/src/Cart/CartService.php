@@ -100,7 +100,7 @@ final class CartService
      *
      * @param   array<string, mixed>  $params  дополнительные параметры строки (например, срок аренды); строки с разными параметрами раздельны
      *
-     * @return  array{ok: bool, error?: string, item_id?: int}
+     * @return  array{ok: bool, error?: string, item_id?: int, qty?: float, added?: array}
      */
     public function add(object $cart, int $productId, ?int $variantId, float $qty, array $params = []): array
     {
@@ -147,7 +147,12 @@ final class CartService
         $this->touch((int) $cart->id);
         $this->dispatch('onDharmaShopCartAfterAdd', ['cart' => $cart, 'variant' => $variant, 'qty' => $total, 'item_id' => $itemId]);
 
-        return ['ok' => true, 'item_id' => $itemId, 'qty' => $total];
+        return ['ok' => true, 'item_id' => $itemId, 'qty' => $total, 'added' => [
+            'product_id' => (int) $variant['product_id'], 'title' => (string) $variant['title'],
+            'sku' => (string) $variant['sku'], 'variant_title' => (string) $variant['variant_title'],
+            'cover' => (string) $variant['cover'], 'qty' => $qty,
+            'unit' => (string) $this->rules->forProduct($variant)['unit'],
+        ]];
     }
 
     /**
@@ -409,7 +414,7 @@ final class CartService
     {
         $query = $this->db->createQuery()
             ->select(['v.id', 'v.product_id', 'v.sku', 'v.state AS variant_state', 'v.stock_tracked', 'v.backorder', 'v.stock_total', 'v.in_stock',
-                'p.title', 'p.catid', 'p.state AS product_state', 'p.unit', 'p.qty_min', 'p.qty_step', 'p.qty_max', 'vp.price_final'])
+                'p.title', 'p.cover', 'v.title AS variant_title', 'p.catid', 'p.state AS product_state', 'p.unit', 'p.qty_min', 'p.qty_step', 'p.qty_max', 'vp.price_final'])
             ->from($this->db->quoteName('#__dharmashop_variants', 'v'))
             ->join('INNER', $this->db->quoteName('#__dharmashop_products', 'p') . ' ON p.id = v.product_id')
             ->join('LEFT', $this->db->quoteName('#__dharmashop_variant_prices', 'vp') . ' ON vp.variant_id = v.id AND vp.price_list_id = 1')

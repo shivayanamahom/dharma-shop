@@ -8,6 +8,8 @@ use Dharma\Component\DharmaShop\Administrator\Pricing\MoneyFormatter;
 use Dharma\Component\DharmaShop\Site\Support\CartSession;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Language\Text;
+use Joomla\CMS\Layout\FileLayout;
+use Joomla\CMS\Log\Log;
 use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\Router\Route;
 use Joomla\CMS\Session\Session;
@@ -16,7 +18,7 @@ use Joomla\CMS\Session\Session;
 
 /**
  * Действия с корзиной: add, update, remove, clear. Метод POST и токен формы обязательны. Запрос AJAX (format=json или заголовок
- * X-Requested-With) получает JSON {success, message, cart}, обычная форма — перенаправление на страницу корзины с сообщением.
+ * X-Requested-With) получает JSON {success, message, cart, notification}, обычная форма — перенаправление на страницу корзины с сообщением.
  * В режиме каталога корзины нет: все действия отклоняются.
  */
 class CartController extends BaseController
@@ -159,13 +161,31 @@ class CartController extends BaseController
             $products = $session->service()->productQuantities($cart);
         }
 
-        $money = new MoneyFormatter(ComponentHelper::getParams('com_dharmashop'));
+        $settings = ComponentHelper::getParams('com_dharmashop');
+        $notification = null;
+
+        // Только успешное добавление: обновление количества и ошибки не создают тост.
+        if ($ok && isset($result['added']) && $settings->get('cart_notification_type', 'toast') === 'toast') {
+            try {
+                $notification = ['type' => 'toast', 'html' => (new FileLayout('components.dharmashop.cart.toast', null,
+                    ['component' => 'none', 'client' => 0]))->render([
+                        'product' => $result['added'], 'cartUrl' => $cartUrl,
+                        'seconds' => max(0, min(300, (int) $settings->get('cart_notification_seconds', 5))),
+                    ])];
+            } catch (\Throwable $error) {
+                // Ошибка переопределённого макета не должна превращать уже выполненное добавление в ошибку покупки.
+                Log::add('Cart toast: ' . get_class($error), Log::WARNING, 'com_dharmashop');
+            }
+        }
+
+        $money = new MoneyFormatter($settings);
         $this->app->setHeader('Content-Type', 'application/json; charset=utf-8', true);
         $this->app->setHeader('Cache-Control', 'no-store', true);
         $this->app->sendHeaders();
         echo json_encode([
             'success' => $ok,
             'message' => $message,
+            'notification' => $notification,
             'cart' => $summary + ['subtotalText' => (int) $summary['count'] > 0 ? $money->price((string) $summary['subtotal']) : $money->format((string) $summary['subtotal']), 'url' => $cartUrl, 'products' => (object) $products],
         ], JSON_UNESCAPED_UNICODE);
         $this->app->close();

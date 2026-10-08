@@ -42,9 +42,19 @@
 		},
 		{
 			"name": "com_dharmashop.cart",
+			"version": "e7eca6f5f8f9",
+			"dependencies": ["core"],
 			"type": "script",
 			"uri": "com_dharmashop/cart.js",
 			"attributes": { "defer": true }
+		},
+		{
+			"name": "com_dharmashop.cart-toast",
+			"version": "fa0f72fb0193",
+			"type": "script",
+			"uri": "com_dharmashop/cart-toast.js",
+			"attributes": { "defer": true },
+			"dependencies": ["com_dharmashop.cart", "bootstrap.toast"]
 		},
 		{
 			"name": "com_dharmashop.card-slider",

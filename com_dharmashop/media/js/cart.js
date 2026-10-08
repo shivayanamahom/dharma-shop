@@ -6,7 +6,7 @@
  * stepper — после добавления кнопка заменяется виджетом (убрать / число / «+») внутри [data-dharmashop-cart-control].
  *
  * Запросы — POST с токеном на cart.add / cart.update / cart.remove (JSON). Ответ содержит сводку корзины и карту товаров в корзине
- * (cart.products: id товара → {item, qty}); после каждого ответа шлётся событие `dharmashop:cart-updated` (detail = cart), по нему
+ * (cart.products: id товара → {item, qty}); после каждого ответа шлётся событие `dharmashop:cart-updated` (detail = cart + source + notification), по нему
  * обновляются значки модуля ([data-dharmashop-cart-count], [data-dharmashop-cart-total]) и все виджеты на странице — в том числе
  * после действий в мини-корзине.
  */
@@ -97,7 +97,7 @@
       indicators(data.cart);
       sync(data.cart.products);
       // source: «add» — добавлена позиция (боковая панель модуля может открыться), «change» — изменено количество или позиция удалена.
-      document.dispatchEvent(new CustomEvent('dharmashop:cart-updated', { detail: Object.assign({}, data.cart, { source }) }));
+      document.dispatchEvent(new CustomEvent('dharmashop:cart-updated', { detail: Object.assign({}, data.cart, { source: data.success ? source : 'error', notification: data.success ? data.notification : null }) }));
     }
     if (!data.success) showError(anchor, data.message || text('COM_DHARMASHOP_CART_ERROR_GENERIC', 'Error'));
   };

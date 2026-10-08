@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Dharma\Component\DharmaShop\Site\Support;
 
+use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Document\HtmlDocument;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
@@ -20,6 +21,9 @@ final class CartAssets
         $wa = $document->getWebAssetManager();
         $wa->getRegistry()->addExtensionRegistryFile('com_dharmashop');
         $wa->useScript('com_dharmashop.cart');
+        if (ComponentHelper::getParams('com_dharmashop')->get('cart_notification_type', 'toast') === 'toast') {
+            $wa->useScript('com_dharmashop.cart-toast');
+        }
         $document->addScriptOptions('com_dharmashop.cart', [
             'url' => Route::_('index.php?option=com_dharmashop&task=cart.add&format=json', false),
             'updateUrl' => Route::_('index.php?option=com_dharmashop&task=cart.update&format=json', false),
