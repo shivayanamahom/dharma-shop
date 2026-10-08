@@ -48,6 +48,7 @@ class FilesuploadField extends FormField
         }
         $maxMb = round($storage->maxBytes(true) / 1048576, 2);
         return '<div id="' . $attr($this->id) . '" class="dharmashop-gallery" data-kind="files" data-name="' . $attr($this->name) . '" data-field-id="' . $fieldId
+            . '" data-entity-id="' . (int) $this->form->getValue('id', null, 0)
             . '" data-url="index.php?option=com_dharmashop&amp;task=media.uploadFile&amp;format=json" data-select-url="index.php?option=com_dharmashop&amp;task=media.selectFile&amp;format=json"'
             . ' data-root="' . $attr(Uri::root()) . '" data-token="' . $attr(Session::getFormToken()) . '" data-max-count="' . (int) $settings['files_max_count']
             . '" data-max-bytes="' . $storage->maxBytes(true) . '" data-accept="' . $attr($settings['files_extensions'])

@@ -4,6 +4,7 @@ namespace Dharma\Component\DharmaShop\Administrator\Fields;
 
 use Dharma\Component\DharmaShop\Administrator\Image\ImageUploader;
 use Joomla\CMS\Component\ComponentHelper;
+use Joomla\CMS\Filter\OutputFilter;
 
 \defined('_JEXEC') or die;
 
@@ -140,7 +141,7 @@ final class FileStorage
         return ['bytes'=>(int) $bytes, 'mime'=>$mime];
     }
 
-    public function store(array $upload): array
+    public function store(array $upload, array $owner): array
     {
         if (in_array((int) ($upload['error'] ?? UPLOAD_ERR_NO_FILE), [UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE], true)) {
             throw new \InvalidArgumentException('PLG_DHARMASHOPFIELD_BASIC_FILES_SIZE_INVALID');
@@ -152,23 +153,41 @@ final class FileStorage
         $extension = strtolower(pathinfo($original, PATHINFO_EXTENSION));
         $metadata = $this->validate($upload['tmp_name'], $extension, true);
         $filename = $this->filename($original);
-        $random = bin2hex(random_bytes(8));
         $base = 'images/dharmashop/files';
-        $directory = $base . '/' . $this->fieldId . '/' . date('Y') . '/' . substr($random, 0, 2) . '/' . substr($random, 2, 2);
-        $parentDirectory = $directory;
-        $directory .= '/' . $random;
+        if (!in_array($owner['target'] ?? '', ['product', 'category'], true)) { throw new \InvalidArgumentException('COM_DHARMASHOP_UPLOAD_ERROR_STORE'); }
+        $slug = static function (string $value, string $fallback): string {
+            $value = OutputFilter::stringURLSafe($value);
+            $value = preg_replace('/[^\pL\pN_-]+/u', '-', $value) ?? '';
+            return trim(mb_strcut($value, 0, 80, 'UTF-8'), '-_') ?: $fallback;
+        };
+        $kind = $owner['target'] === 'product' ? 'products' : 'categories';
+        $entity = $slug((string) ($owner['alias'] ?? ''), $owner['target']) . '-' . (max(0, (int) ($owner['id'] ?? 0)) ?: 'new');
+        $field = $slug((string) ($owner['field_alias'] ?? ''), 'field') . '-' . $this->fieldId;
+        $parentDirectory = $base . '/' . $kind . '/' . $entity . '/' . $field;
         // Never follow symlinks while creating the managed storage tree.
         $current = $this->root;
         foreach (explode('/', $parentDirectory) as $part) {
             $current .= '/' . $part;
             if (is_link($current) || (!is_dir($current) && !mkdir($current, 0755) && !is_dir($current))) { throw new \RuntimeException('COM_DHARMASHOP_UPLOAD_ERROR_STORE'); }
         }
-        if (!mkdir($this->root . '/' . $directory, 0755)) { throw new \RuntimeException('COM_DHARMASHOP_UPLOAD_ERROR_STORE'); }
         $guard = $this->root . '/' . $base . '/.htaccess';
         if (!is_file($guard)) {
             $rules = "Options -ExecCGI -Indexes\nSetHandler none\n<IfModule mod_headers.c>\nHeader set X-Content-Type-Options nosniff\n</IfModule>\n<FilesMatch \"\\.(php[0-9]?|phtml|phar|cgi|pl|py|sh|html?|svg)$\">\nRequire all denied\n</FilesMatch>\n";
             if (file_put_contents($guard, $rules, LOCK_EX) === false) { throw new \RuntimeException('COM_DHARMASHOP_UPLOAD_ERROR_STORE'); }
         }
+        // Numeric upload directories keep original basenames and avoid overwriting equal names.
+        // Empty directories are retained so a deleted URL is not reused for another document.
+        $sequence = 1;
+        foreach (new \DirectoryIterator($this->root . '/' . $parentDirectory) as $entry) {
+            if (preg_match('/^[1-9][0-9]{0,8}$/D', $entry->getFilename())) { $sequence = max($sequence, (int) $entry->getFilename() + 1); }
+        }
+        $directory = '';
+        for ($attempt = 0; $attempt < 100; $attempt++, $sequence++) {
+            $candidate = $parentDirectory . '/' . $sequence;
+            if (@mkdir($this->root . '/' . $candidate, 0755)) { $directory = $candidate; break; }
+            if (!file_exists($this->root . '/' . $candidate) && !is_link($this->root . '/' . $candidate)) { throw new \RuntimeException('COM_DHARMASHOP_UPLOAD_ERROR_STORE'); }
+        }
+        if ($directory === '') { throw new \RuntimeException('COM_DHARMASHOP_UPLOAD_ERROR_STORE'); }
         $path = $directory . '/' . $filename;
         if (!move_uploaded_file($upload['tmp_name'], $this->root . '/' . $path)) { throw new \RuntimeException('COM_DHARMASHOP_UPLOAD_ERROR_STORE'); }
         return ['path'=>$path, 'filename'=>$filename] + $metadata;

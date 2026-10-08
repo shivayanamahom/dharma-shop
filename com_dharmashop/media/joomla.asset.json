@@ -109,7 +109,7 @@
 		},
 		{
 			"name": "com_dharmashop.gallery",
-			"version": "e54ce6a8ae63",
+			"version": "8616a401af95",
 			"type": "script",
 			"uri": "com_dharmashop/gallery.js",
 			"attributes": { "defer": true },

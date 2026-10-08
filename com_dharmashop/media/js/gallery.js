@@ -97,7 +97,12 @@
 
 			const data = new FormData();
 			data.append('file', file);
-			if (isFiles) { data.append('field_id', root.dataset.fieldId); } else { data.append('folder', root.dataset.folder); }
+			if (isFiles) {
+				data.append('field_id', root.dataset.fieldId);
+				data.append('entity_id', root.dataset.entityId || '0');
+				const title = root.closest('form')?.querySelector('[name="jform[title]"]');
+				data.append('entity_title', title ? title.value : '');
+			} else { data.append('folder', root.dataset.folder); }
 			data.append(root.dataset.token, '1');
 
 			const xhr = new XMLHttpRequest();

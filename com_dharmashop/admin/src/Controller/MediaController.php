@@ -52,17 +52,35 @@ class MediaController extends BaseController
             $fieldId = $this->input->post->getInt('field_id');
             $db = Factory::getContainer()->get(DatabaseInterface::class);
             $levels = array_map('intval', $user->getAuthorisedViewLevels()) ?: [0];
-            $query = $db->createQuery()->select('f.params')->from($db->quoteName('#__dharmashop_fields','f'))
+            $query = $db->createQuery()->select($db->quoteName(['f.params', 'f.target', 'f.alias']))->from($db->quoteName('#__dharmashop_fields','f'))
                 ->join('LEFT', $db->quoteName('#__dharmashop_fieldgroups','g') . ' ON g.id = f.group_id')
                 ->where('f.id = ' . $fieldId)->where('f.state = 1')->where('f.level = 1')
                 ->where('f.type = ' . $db->quote('files'))->where('f.store = ' . $db->quote('media'))
                 ->where('f.access IN (' . implode(',', $levels) . ')')
                 ->where('(f.group_id = 0 OR (g.state = 1 AND g.target = f.target))');
-            $params = $db->setQuery($query)->loadResult();
-            if ($params === null) { throw new \RuntimeException('JLIB_APPLICATION_ERROR_ACCESS_FORBIDDEN'); }
-            $storage = new FileStorage(JPATH_ROOT, $fieldId, FileStorage::settings((new Registry($params))->toArray()));
+            $definition = $db->setQuery($query)->loadObject();
+            if (!$definition || !in_array($definition->target, ['product', 'category'], true)) { throw new \RuntimeException('JLIB_APPLICATION_ERROR_ACCESS_FORBIDDEN'); }
+            $storage = new FileStorage(JPATH_ROOT, $fieldId, FileStorage::settings((new Registry($definition->params))->toArray()));
             $file = $this->input->files->get('file', [], 'raw');
-            echo new JsonResponse($upload ? $storage->store(is_array($file) ? $file : []) : $storage->inspect(rawurldecode($this->input->post->getString('path'))));
+            if ($upload) {
+                $entityId = max(0, $this->input->post->getInt('entity_id'));
+                $entityAlias = $this->input->post->getString('entity_title');
+                if ($entityId > 0) {
+                    $table = $definition->target === 'product' ? '#__dharmashop_products' : '#__categories';
+                    $entityQuery = $db->createQuery()->select($db->quoteName(['alias', 'title']))
+                        ->from($db->quoteName($table))->where('id = ' . $entityId);
+                    if ($definition->target === 'category') { $entityQuery->where('extension = ' . $db->quote('com_dharmashop')); }
+                    $entity = $db->setQuery($entityQuery)->loadObject();
+                    if (!$entity) { throw new \RuntimeException('JLIB_APPLICATION_ERROR_ACCESS_FORBIDDEN'); }
+                    $entityAlias = (string) ($entity->alias ?: $entity->title);
+                }
+                $result = $storage->store(is_array($file) ? $file : [], [
+                    'target'=>$definition->target, 'id'=>$entityId, 'alias'=>$entityAlias, 'field_alias'=>$definition->alias,
+                ]);
+            } else {
+                $result = $storage->inspect(rawurldecode($this->input->post->getString('path')));
+            }
+            echo new JsonResponse($result);
         } catch (\RuntimeException|\InvalidArgumentException $error) {
             echo new JsonResponse(null, Text::_($error->getMessage()), true);
         } catch (\Throwable $error) {
