@@ -137,7 +137,7 @@ trait NativeValue
             'text' => (string) ($settings['text_default'] ?? ''),
             'checkbox' => ($settings['checkbox_mode'] ?? 'single') === 'single'
                 ? (string) ($settings['checkbox_default'] ?? '')
-                : (isset($options[(int) ($settings['checkbox_default_option_id'] ?? 0)]) ? [(int) $settings['checkbox_default_option_id']] : []),
+                : (isset($options[(int) ($settings['checkbox_default_option_id'] ?? 0)]) ? [(string) (int) $settings['checkbox_default_option_id']] : []),
             'range' => ['from' => '', 'to' => ''],
             default => '',
         };
@@ -152,7 +152,8 @@ trait NativeValue
         }
         if ($this->store() === 'option') {
             $ids = array_values(array_filter(array_map(static fn (object $row): int => (int) $row->option_id, $rows)));
-            return $this->id() === 'checkbox' || (int) ($field->settings['list_multiple'] ?? 0) === 1 ? $ids : ($ids[0] ?? '');
+            // Штатные макеты checkboxes и list сравнивают значение с option строго, как строки: числа дали бы «ничего не выбрано».
+            return $this->id() === 'checkbox' || (int) ($field->settings['list_multiple'] ?? 0) === 1 ? array_map('strval', $ids) : (isset($ids[0]) ? (string) $ids[0] : '');
         }
         return $this->store() === 'number' ? ($rows[0]->num ?? '') : ($rows[0]->str ?? '');
     }
