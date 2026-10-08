@@ -366,6 +366,29 @@ CREATE TABLE IF NOT EXISTS `#__dharmashop_status_transitions` (
   PRIMARY KEY (`from_status_id`, `to_status_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS `#__dharmashop_warehouses` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `title` varchar(255) NOT NULL,
+  `alias` varchar(190) NOT NULL,
+  `image` varchar(500) NOT NULL DEFAULT '',
+  `address` text NULL,
+  `phone` varchar(100) NOT NULL DEFAULT '',
+  `email` varchar(190) NOT NULL DEFAULT '',
+  `hours` text NULL,
+  `info` text NULL,
+  `ready_term` varchar(100) NOT NULL DEFAULT '',
+  `lat` decimal(9,6) NULL,
+  `lon` decimal(9,6) NULL,
+  `state` tinyint NOT NULL DEFAULT 1,
+  `access` int unsigned NOT NULL DEFAULT 1,
+  `ordering` int NOT NULL DEFAULT 0,
+  `checked_out` int unsigned NULL,
+  `checked_out_time` datetime NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_alias` (`alias`),
+  KEY `idx_state_ordering` (`state`, `ordering`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS `#__dharmashop_shipping_methods` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `title` varchar(255) NOT NULL,

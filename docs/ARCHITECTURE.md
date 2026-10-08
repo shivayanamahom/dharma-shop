@@ -377,6 +377,15 @@ C71/C73: checkout — отдельный вид и тип меню; части d
 
 Реализация доставки (C80): `Administrator\Shipping\*` (контракт `TypeInterface`, реестр, `ShippingService`), раздел админки `shippings`, типы — плагины `plg_dharmashopshipping_standard` и `plg_dharmashopshipping_pickup`; снимок выбора — `orders.shipping_data` (JSON: `type`, `title`, `price`, `free`, `term`, `rows`, `data`), цена — строка `order_adjustments` типа `shipping`. Правила для плагинов — `docs/SHIPPING.md`; оплата повторяет схему.
 
+### 5.10а Склады (C81)
+
+```
+#__dharmashop_warehouses  id, title, alias UNIQUE, image, address, phone, email, hours, info, ready_term, lat, lon (decimal(9,6) NULL),
+                          state, access, ordering, checked_out*; KEY (state, ordering)
+```
+
+Справочник складов для способов доставки и других частей магазина: `ShopServices::warehouses()`, `docs/WAREHOUSES.md`.
+
 ### 5.11 Служебное
 
 `#__dharmashop_external_ids`: `entity`, `source`, `external_id`, `id`; `UNIQUE (entity, source, external_id)` — соответствие внешних идентификаторов (перенос, 1С, YML).

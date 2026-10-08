@@ -29,6 +29,7 @@ use Dharma\Component\DharmaShop\Administrator\Pricing\PriceResolver;
 use Dharma\Component\DharmaShop\Administrator\Pricing\SaleScheduler;
 use Dharma\Component\DharmaShop\Administrator\Shipping\ShippingService;
 use Dharma\Component\DharmaShop\Administrator\Stock\StockService;
+use Dharma\Component\DharmaShop\Administrator\Warehouse\WarehouseService;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\Database\DatabaseInterface;
 
@@ -69,9 +70,15 @@ final class ShopServices
     private ?NotificationService $notifications = null;
     private ?OrderStatusService $orderStatuses = null;
     private ?ShippingService $shipping = null;
+    private ?WarehouseService $warehouses = null;
 
     public function __construct(private readonly DatabaseInterface $db)
     {
+    }
+
+    public function warehouses(): WarehouseService
+    {
+        return $this->warehouses ??= new WarehouseService($this->db);
     }
 
     public function shipping(): ShippingService
