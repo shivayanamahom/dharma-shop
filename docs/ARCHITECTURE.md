@@ -89,7 +89,8 @@ plg_system_dharmashop/            слияние корзины при вход�
 plg_system_dharmashopmenu/        раздел «Dharma Shop» в боковом меню админки после «Компонентов» (onPreprocessMenuItems), без записей в БД
 plg_task_dharmashop/              задачи планировщика: старт/конец скидок, очистка корзин, переиндексация
 plg_dharmashop_imageresize/       C79: размеры по контекстам, производные Joomla Image/GD, кеш с двумя уровнями хеша
-plg_dharmashopshipping_standard/  стандартная доставка: цена, бесплатно от суммы, конструктор полей покупателя (C80)
+plg_dharmashopshipping_standard/  доставка (обычная): цена, бесплатно от суммы, конструктор полей покупателя (C80)
+plg_dharmashopshipping_courier/   курьер: доставка до двери, поля адреса, цена и «бесплатно от суммы» (C80)
 plg_dharmashopshipping_pickup/    самовывоз: пункт выдачи, контакты, часы работы, карта (C80)
 plg_dharmashoppayment_offline/    «при получении / по счёту» (без онлайн-платежа)
 mod_dharmashop_*/                 модули

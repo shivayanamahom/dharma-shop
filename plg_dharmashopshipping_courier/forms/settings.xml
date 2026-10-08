@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form><fields name="params"><fieldset name="type_courier" label="PLG_DHARMASHOPSHIPPING_COURIER_SETTINGS">
+    <field name="price" type="text" label="PLG_DHARMASHOPSHIPPING_COURIER_PRICE" description="PLG_DHARMASHOPSHIPPING_COURIER_PRICE_DESC" showon=".plugin:courier" default="300" filter="string" />
+    <field name="free_from" type="text" label="PLG_DHARMASHOPSHIPPING_COURIER_FREE_FROM" description="PLG_DHARMASHOPSHIPPING_COURIER_FREE_FROM_DESC" showon=".plugin:courier" default="0" filter="string" />
+    <field name="min_total" type="text" label="PLG_DHARMASHOPSHIPPING_COURIER_MIN_TOTAL" description="PLG_DHARMASHOPSHIPPING_COURIER_MIN_TOTAL_DESC" showon=".plugin:courier" default="0" filter="string" />
+    <field name="max_total" type="text" label="PLG_DHARMASHOPSHIPPING_COURIER_MAX_TOTAL" description="PLG_DHARMASHOPSHIPPING_COURIER_MAX_TOTAL_DESC" showon=".plugin:courier" default="0" filter="string" />
+    <field name="term" type="text" label="PLG_DHARMASHOPSHIPPING_COURIER_TERM" description="PLG_DHARMASHOPSHIPPING_COURIER_TERM_DESC" showon=".plugin:courier" maxlength="100" filter="string" />
+    <field name="note" type="textarea" label="PLG_DHARMASHOPSHIPPING_COURIER_NOTE" description="PLG_DHARMASHOPSHIPPING_COURIER_NOTE_DESC" showon=".plugin:courier" rows="2" maxlength="500" filter="string" default="Курьер позвонит вам перед доставкой." />
+    <field name="fields" type="subform" label="PLG_DHARMASHOPSHIPPING_COURIER_FIELDS" description="PLG_DHARMASHOPSHIPPING_COURIER_FIELDS_DESC" showon=".plugin:courier" multiple="true" min="0" max="20" buttons="add,remove,move"
+        default='{"fields0":{"label":"Город","type":"text","required":"1","width":"half","placeholder":"","options":""},"fields1":{"label":"Улица и дом","type":"text","required":"1","width":"half","placeholder":"","options":""},"fields2":{"label":"Квартира","type":"text","required":"0","width":"half","placeholder":"","options":""},"fields3":{"label":"Подъезд","type":"text","required":"0","width":"half","placeholder":"","options":""},"fields4":{"label":"Этаж","type":"text","required":"0","width":"half","placeholder":"","options":""},"fields5":{"label":"Домофон","type":"text","required":"0","width":"half","placeholder":"","options":""},"fields6":{"label":"Комментарий курьеру","type":"textarea","required":"0","width":"full","placeholder":"Как позвонить, куда подойти","options":""}}'>
+        <form>
+            <field name="label" type="text" label="PLG_DHARMASHOPSHIPPING_COURIER_FIELD_LABEL" required="true" maxlength="100" filter="string" />
+            <field name="type" type="list" label="PLG_DHARMASHOPSHIPPING_COURIER_FIELD_TYPE" default="text" filter="cmd" validate="options">
+                <option value="text">PLG_DHARMASHOPSHIPPING_COURIER_TYPE_TEXT</option>
+                <option value="textarea">PLG_DHARMASHOPSHIPPING_COURIER_TYPE_TEXTAREA</option>
+                <option value="tel">PLG_DHARMASHOPSHIPPING_COURIER_TYPE_TEL</option>
+                <option value="select">PLG_DHARMASHOPSHIPPING_COURIER_TYPE_SELECT</option>
+            </field>
+            <field name="required" type="radio" layout="joomla.form.field.radio.switcher" label="PLG_DHARMASHOPSHIPPING_COURIER_FIELD_REQUIRED" default="0" filter="integer">
+                <option value="0">JNO</option>
+                <option value="1">JYES</option>
+            </field>
+            <field name="width" type="list" label="PLG_DHARMASHOPSHIPPING_COURIER_FIELD_WIDTH" default="full" filter="cmd" validate="options">
+                <option value="full">PLG_DHARMASHOPSHIPPING_COURIER_WIDTH_FULL</option>
+                <option value="half">PLG_DHARMASHOPSHIPPING_COURIER_WIDTH_HALF</option>
+            </field>
+            <field name="placeholder" type="text" label="PLG_DHARMASHOPSHIPPING_COURIER_FIELD_PLACEHOLDER" maxlength="100" filter="string" />
+            <field name="options" type="textarea" label="PLG_DHARMASHOPSHIPPING_COURIER_FIELD_OPTIONS" description="PLG_DHARMASHOPSHIPPING_COURIER_FIELD_OPTIONS_DESC" rows="3" showon="type:select" filter="string" />
+        </form>
+    </field>
+</fieldset></fields></form>
