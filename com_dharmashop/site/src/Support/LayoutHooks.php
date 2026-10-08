@@ -27,6 +27,23 @@ final class LayoutHooks
             'afterTitle' => 'onDharmaShopProductAfterTitle',
             'beforeContent' => 'onDharmaShopProductBeforeContent',
             'afterContent' => 'onDharmaShopProductAfterContent',
+            'beforeGallery' => 'onDharmaShopProductBeforeGallery',
+            'afterGallery' => 'onDharmaShopProductAfterGallery',
+            'beforeIntro' => 'onDharmaShopProductBeforeIntro',
+            'afterIntro' => 'onDharmaShopProductAfterIntro',
+            'beforeIntroFields' => 'onDharmaShopProductBeforeIntroFields',
+            'afterIntroFields' => 'onDharmaShopProductAfterIntroFields',
+            'beforeBuy' => 'onDharmaShopProductBeforeBuy',
+            'afterBuy' => 'onDharmaShopProductAfterBuy',
+            'beforePrice' => 'onDharmaShopProductBeforePrice',
+            'afterPrice' => 'onDharmaShopProductAfterPrice',
+            'beforeActions' => 'onDharmaShopProductBeforeActions',
+            'afterActions' => 'onDharmaShopProductAfterActions',
+            'beforeTabs' => 'onDharmaShopProductBeforeTabs',
+            'afterTabs' => 'onDharmaShopProductAfterTabs',
+            'beforeDescription' => 'onDharmaShopProductBeforeDescription',
+            'afterDescription' => 'onDharmaShopProductAfterDescription',
+            'tabs' => 'onDharmaShopProductTabs',
         ],
     ];
 
@@ -43,7 +60,7 @@ final class LayoutHooks
         }
     }
 
-    public function render(string $position): string
+    public function render(string $position, array $data = []): string
     {
         $name = self::EVENTS[$this->entity][$position] ?? null;
         if ($name === null) {
@@ -63,6 +80,7 @@ final class LayoutHooks
             'items' => $this->items,
             'params' => clone $this->params,
             'page' => $this->page,
+            'data' => $data,
         ]);
         $app->getDispatcher()->dispatch($name, $event);
 

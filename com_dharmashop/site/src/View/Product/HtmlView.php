@@ -13,6 +13,7 @@ use Dharma\Component\DharmaShop\Site\Seo\ProductMetadata;
 use Dharma\Component\DharmaShop\Administrator\Image\ImageUrl;
 use Dharma\Component\DharmaShop\Site\Support\CartAssets;
 use Dharma\Component\DharmaShop\Site\Support\CartSession;
+use Dharma\Component\DharmaShop\Site\Support\LayoutHooks;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Layout\FileLayout;
@@ -128,6 +129,12 @@ class HtmlView extends BaseHtmlView
     {
         return (new Renderer())->renderHtml($html, ProductValues::build($this->item, new MoneyFormatter($this->params))
             + GlobalValues::build($this->params));
+    }
+
+    /** Точки расширения товара, доступные также из отдельных шаблонов и переопределений. */
+    public function renderHook(string $position, array $data = []): string
+    {
+        return (new LayoutHooks('product', 'product', $this->item, $this->params, [], $this->seo))->render($position, $data);
     }
 
     /** Группировка уже загруженных значений без запросов; порядок задаёт EntityFields. */

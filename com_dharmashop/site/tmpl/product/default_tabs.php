@@ -10,19 +10,23 @@ use Joomla\CMS\Layout\FileLayout;
 
 $description = trim((string) ($this->item->fulltext ?? ''));
 $groups = $this->fieldGroups;
-if ($description === '' && !$groups) {
+$tabset = 'dharmaProductTabs-' . (int) $this->item->id;
+$active = $description !== '' ? $tabset . '-description' : ($groups ? $tabset . '-group-' . array_key_first($groups) : '');
+// Инициализация UITab нужна до события: плагин добавляет панели штатным uitab.addTab.
+$tabStart = HTMLHelper::_('uitab.startTabSet', $tabset, ['active' => $active, 'breakpoint' => 768]);
+$extraTabs = $this->renderHook('tabs', ['tabset' => $tabset]);
+if ($description === '' && !$groups && trim($extraTabs) === '') {
     return;
 }
-
-$tabset = 'dharmaProductTabs-' . (int) $this->item->id;
-$active = $description !== '' ? $tabset . '-description' : $tabset . '-group-' . array_key_first($groups);
 $fieldsLayout = new FileLayout('components.dharmashop.fields.default', null, ['component' => 'none', 'client' => 0]);
 ?>
 <div class="mt-5 dharmaProductDetails">
-    <?php echo HTMLHelper::_('uitab.startTabSet', $tabset, ['active' => $active, 'breakpoint' => 768]); ?>
+    <?php echo $tabStart; ?>
     <?php if ($description !== '') : ?>
         <?php echo HTMLHelper::_('uitab.addTab', $tabset, $tabset . '-description', Text::_('COM_DHARMASHOP_PRODUCT_DESCRIPTION')); ?>
+        <?php echo $this->renderHook('beforeDescription'); ?>
         <div class="dharmaFulltext"><?php echo $this->text($description); ?></div>
+        <?php echo $this->renderHook('afterDescription'); ?>
         <?php echo HTMLHelper::_('uitab.endTab'); ?>
     <?php endif; ?>
     <?php foreach ($groups as $id => $group) : ?>
@@ -36,5 +40,6 @@ $fieldsLayout = new FileLayout('components.dharmashop.fields.default', null, ['c
         </div>
         <?php echo HTMLHelper::_('uitab.endTab'); ?>
     <?php endforeach; ?>
+    <?php echo $extraTabs; ?>
     <?php echo HTMLHelper::_('uitab.endTabSet'); ?>
 </div>

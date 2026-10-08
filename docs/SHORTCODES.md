@@ -108,10 +108,19 @@
 | `onDharmaShopCategoryAfterTitle` | **есть (C31)** | После заголовка страницы категории. |
 | `onDharmaShopCategoryBeforeContent` | **есть (C31)** | Перед содержимым категории: изображение, интро, список и полное описание. |
 | `onDharmaShopCategoryAfterContent` | **есть (C31)** | После всего содержимого категории, например для связанных товаров. |
-| `onDharmaShopProductBeforeTitle` | **подготовлено (C31)** | До заголовка товара; вызов расставлен в заготовке `tmpl/product/default.php`, ждёт публичного вида/данных товара. |
-| `onDharmaShopProductAfterTitle` | **подготовлено (C31)** | После заголовка товара. |
-| `onDharmaShopProductBeforeContent` | **подготовлено (C31)** | Перед основным содержимым товара. |
-| `onDharmaShopProductAfterContent` | **подготовлено (C31)** | После основного содержимого товара. |
+| `onDharmaShopProductBeforeTitle` | **есть** | До заголовка товара, в том числе при скрытом h1. |
+| `onDharmaShopProductAfterTitle` | **есть** | После заголовка товара. |
+| `onDharmaShopProductBeforeContent` | **есть** | Перед основным содержимым товара. |
+| `onDharmaShopProductAfterContent` | **есть** | После основного содержимого товара. |
+| `onDharmaShopProductBeforeGallery` / `onDharmaShopProductAfterGallery` | **есть (2026-10-08)** | Внутри колонки галереи, до/после её шаблона. |
+| `onDharmaShopProductBeforeIntro` / `onDharmaShopProductAfterIntro` | **есть (2026-10-08)** | Внутри средней колонки, до/после краткого описания и выбранных характеристик. |
+| `onDharmaShopProductBeforeIntroFields` / `onDharmaShopProductAfterIntroFields` | **есть (2026-10-08)** | В default_intro.php, до/после выбранных характеристик, в том числе при пустом наборе. |
+| `onDharmaShopProductBeforeBuy` / `onDharmaShopProductAfterBuy` | **есть (2026-10-08)** | В правой колонке, до/после всей карточки покупки. |
+| `onDharmaShopProductBeforePrice` / `onDharmaShopProductAfterPrice` | **есть (2026-10-08)** | В card-body покупки, до/после цены со скидкой/таймером; также при скрытой цене. |
+| `onDharmaShopProductBeforeActions` / `onDharmaShopProductAfterActions` | **есть (2026-10-08)** | В card-body покупки, до/после блока действий; также в режиме каталога. |
+| `onDharmaShopProductBeforeTabs` / `onDharmaShopProductAfterTabs` | **есть (2026-10-08)** | На всю ширину под тремя колонками, до/после набора вкладок; также если он пуст. |
+| `onDharmaShopProductBeforeDescription` / `onDharmaShopProductAfterDescription` | **есть (2026-10-08)** | Внутри существующей вкладки «Описание», до/после fulltext. |
+| `onDharmaShopProductTabs` | **есть (2026-10-08)** | Дополнительные панели после стандартных вкладок. `data.tabset` — ID уже инициализированного UITab. Работает и при отсутствии описания/групп. |
 | `onDharmaShopSettingsPrepareForm`, `AdminToolsCollect` | план | вкладки настроек и панель инструментов от плагинов |
 | `onDharmaShopOrderRulesResolve` | **предложено** | итоговые правила оформления (количество, единица, учёт остатков) для товара: плагин может переопределить результат `Order\OrderRules` (C14), например, для оптовых групп |
 | `onDharmaShopSeoPlaceholders` | **предложено** | плагин добавляет свои подстановки в `Placeholder\Renderer` (значения по области и имени) |
@@ -123,15 +132,16 @@
 
 - `entity`: `category` / `product`.
 - `view`: `categories` / `category` / `product`; `categories` — список дочерних категорий, `category` — будущий список товаров выбранной категории.
-- `position`: `beforeTitle` / `afterTitle` / `beforeContent` / `afterContent`.
+- `position`: четыре общие позиции `beforeTitle` / `afterTitle` / `beforeContent` / `afterContent`; у товара также `before/afterGallery`, `before/afterIntro`, `before/afterIntroFields`, `before/afterBuy`, `before/afterPrice`, `before/afterActions`, `before/afterTabs`, `before/afterDescription`, `tabs` (регистр как в LayoutHooks).
 - `item`: текущая проверенная моделью категория/товар; на корне списка категорий — виртуальная запись `id=0` из `root_category`, а не запись БД.
 - `items`: записи текущего списка в порядке вывода; на отдельном товаре пустой массив.
 - `params`: копия разрешённых параметров отображения (меню/категория/родители/магазин).
 - `page`: готовый `PageMetadata` или `null` в будущих видах до подключения SEO.
+- `data`: дополнительные данные позиции, по умолчанию `[]`. У ProductTabs — `tabset` (string); прежние аргументы и обработчики сохраняются.
 
 Обработчик добавляет HTML через `$event->addResult($html)`. Обычный `return $html` диспетчер в результат не собирает. Прямой `echo` нарушает расположение блока; использовать только результат события. Строки объединяются без дополнительной обёртки и экранирования в порядке обработчиков Joomla; HTML, Bootstrap-классы и экранирование данных формирует сам плагин. Пустая строка/отсутствие результата ничего не выводит. Заменять аргументы события нельзя; контекст записи используется для чтения и построения своего блока, не для сохранения данных.
 
-Точки вокруг заголовка вызываются даже при скрытом h1. Точки контента охватывают всё содержимое страницы после заголовка. События не вызываются внутри каждой карточки списка. Только сайт/HTML/com_dharmashop, без запросов БД в механизме вызова. В заготовках `category`/`product` вызовы активируются только после передачи реальной проверенной записи `item` будущим видом; сейчас эти виды не реализованы.
+Точки вокруг заголовка вызываются даже при скрытом h1. Точки контента охватывают всё содержимое страницы после заголовка. События не вызываются внутри каждой карточки списка. Только сайт/HTML/com_dharmashop, без запросов БД в механизме вызова. На категории и товаре вызовы используют реальную проверенную запись `item`. `Product\HtmlView::renderHook($position, $data = [])` доступен частичным шаблонам и переопределениям; общая категория продолжает пользоваться LayoutHooks напрямую.
 
 Пример методов плагина `CMSPlugin implements SubscriberInterface`:
 
@@ -155,6 +165,35 @@ public function afterCategory(LayoutRenderEvent $event): void
 ```
 
 Это пример подключения, демонстрационный плагин не создавался. Для работающего сейчас списка подкатегорий фильтровать по `view=categories`.
+
+### Добавление вкладки плагином товара
+
+Методы плагина группы `dharmashop` (`CMSPlugin implements SubscriberInterface`):
+
+```php
+use Dharma\Component\DharmaShop\Site\Event\LayoutRenderEvent;
+use Joomla\CMS\HTML\HTMLHelper;
+
+public static function getSubscribedEvents(): array
+{
+    return ['onDharmaShopProductTabs' => 'productTabs'];
+}
+
+public function productTabs(LayoutRenderEvent $event): void
+{
+    $tabset = $event->getArgument('data')['tabset'];
+    // Уникальный суффикс своего плагина; название из языкового файла экранировать
+    // для innerHTML компонента Joomla, как в product/default_tabs.php.
+    $html = HTMLHelper::_('uitab.addTab', $tabset, $tabset . '-myplugin-info', 'Информация');
+    $html .= '<div class="p-3">Дополнительный блок магазина.</div>';
+    $html .= HTMLHelper::_('uitab.endTab');
+    $event->addResult($html);
+}
+```
+
+Плагин добавляет только панели, не открывает/закрывает весь UITab. Встроенные описание и группы идут первыми, затем панели плагинов в порядке Joomla. Если встроенных вкладок нет, компонент Joomla активирует первую панель плагина. Событие вызывается один раз: его HTML собирается после инициализации UITab и вставляется после стандартных панелей; при полностью пустом результате весь блок не выводится. Инициализация подключает штатные ресурсы UITab даже на пустом наборе. Before/AfterTabs — обычные блоки вне набора, Before/AfterDescription — внутри существующего описания.
+
+Для добавления блока, например под покупкой, подписаться на `onDharmaShopProductAfterBuy` и передать HTML через `addResult`. Переопределения должны сохранять вызовы renderHook в нужных местах; удаление вызова удаляет соответствующую точку расширения. Пример — документация, плагин не установлен.
 
 ## 4. Где в коде
 
