@@ -84,9 +84,14 @@
             name.textContent = point.name;
             text.append(name);
             if (point.address && (addressMode === 'all' || (addressMode === 'active' && selected))) {
+                // Адрес совсем мелким шрифтом: три вложенных размера small (класс Bootstrap, тег small, тег small) — около 0,67 от основного.
                 const address = document.createElement('div');
                 address.className = 'small text-body-secondary mt-1';
-                address.textContent = point.address;
+                const inner = document.createElement('small');
+                const innermost = document.createElement('small');
+                innermost.textContent = point.address;
+                inner.append(innermost);
+                address.append(inner);
                 text.append(address);
             }
             label.append(dot, text);
