@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace Dharma\Component\DharmaShop\Administrator\Service;
 
+use Dharma\Component\DharmaShop\Administrator\Cart\CartService;
 use Dharma\Component\DharmaShop\Administrator\Catalog\GalleryRepository;
 use Dharma\Component\DharmaShop\Administrator\Catalog\Indexer;
 use Dharma\Component\DharmaShop\Administrator\Catalog\ProductRebuilder;
@@ -56,6 +57,8 @@ final class ShopServices
     private ?ImageWebpMigration $imageWebpMigration = null;
 
     private ?OrderRules $orderRules = null;
+
+    private ?CartService $cart = null;
 
     public function __construct(private readonly DatabaseInterface $db)
     {
@@ -109,6 +112,11 @@ final class ShopServices
     public function imageWebpMigration(): ImageWebpMigration
     {
         return $this->imageWebpMigration ??= new ImageWebpMigration($this->db, JPATH_ROOT);
+    }
+
+    public function cart(): CartService
+    {
+        return $this->cart ??= new CartService($this->db, $this->orderRules());
     }
 
     public function orderRules(): OrderRules

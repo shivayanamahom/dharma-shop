@@ -7,6 +7,7 @@ use Dharma\Component\DharmaShop\Administrator\Pricing\MoneyFormatter;
 use Dharma\Component\DharmaShop\Site\Placeholder\ProductValues;
 use Dharma\Component\DharmaShop\Site\Seo\PageMetadata;
 use Dharma\Component\DharmaShop\Site\Seo\PageSeo;
+use Dharma\Component\DharmaShop\Site\Support\CartAssets;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Layout\FileLayout;
@@ -69,6 +70,11 @@ class HtmlView extends BaseHtmlView
         $this->setLayout($layout);
 
         $this->prepareGallery();
+
+        // Корзина: в режиме каталога на страницу ничего не подключается.
+        if ((int) $this->params->get('catalog_mode', 0) !== 1) {
+            CartAssets::use($this->getDocument());
+        }
 
         if ($this->showSaleCountdown) {
             $this->getDocument()->getWebAssetManager()->getRegistry()->addExtensionRegistryFile('com_dharmashop');

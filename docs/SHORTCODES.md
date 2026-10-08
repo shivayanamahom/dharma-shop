@@ -84,7 +84,11 @@
 | `onDharmaShopListingQuery`, `ProductPrepare`, `ProductDisplay`, `PriceResolve`, `StockChange`, `IndexRebuild` | план | витрина и индекс |
 | `onDharmaShopFieldTypesCollect` (группа `dharmashopfield`) | **есть (C53/C59)** | Аргумент `registry: Administrator\Fields\TypeRegistry`; провайдер добавляет `TypeInterface` через `register()`. Для ввода/проверки значений также реализует `ValueTypeInterface` (`input/defaultValue/decode/encode`), без новых событий и SQL в провайдере. Дубликаты ID запрещены, после dispatch реестр закрыт. |
 | Остальные события полей из ARCHITECTURE §6.2 | план, этап 2 | Ввод/значения/фильтрация/вывод ещё не подключены. |
-| `onDharmaShopCart…`, `Checkout…`, `Shipping…`, `Payment…`, `Order…`, `Notify…` | план, этап 5 | корзина, заказ |
+| `onDharmaShopCartBeforeAdd` | **есть (C65)** | Группа `dharmashop`; Joomla Event, аргументы `cart`, `variant` (массив), `qty`, `params`, `error`. Плагин может изменить `qty` и `params` или задать `error` (языковой ключ) — позиция отклоняется. |
+| `onDharmaShopCartAfterAdd` | **есть (C65)** | После добавления: `cart`, `variant`, `qty` (итоговое количество строки), `item_id`. |
+| `onDharmaShopCartItemValidate` | **есть (C65)** | При чтении строк корзины: `cart`, `line` (объект строки), `error`; задайте `error`, чтобы строка стала недоступной и не вошла в итоги. |
+| `onDharmaShopCartTotals` | **есть (C65)** | `cart`, `lines`, `subtotal`, `adjustments`; плагин дополняет `adjustments` строками `['title' => …, 'amount' => …]` (скидка — отрицательная сумма). |
+| `Checkout…`, `Shipping…`, `Payment…`, `Order…`, `Notify…` | план, этап 5 | оформление, доставка, оплата, заказ |
 | `onDharmaShopMetadataReady` | **есть (C28/C29)** | Группа `dharmashop`; событие Joomla Event с `page` (readonly `Site\Seo\PageMetadata`), `document` (`HtmlDocument`), `settings` (`Registry` настроек магазина), `content` (readonly `Site\Seo\CollectionMetadata` или `null`). `content`: название списка, упорядоченные `items` с `name`/абсолютным `url`, тип элемента (на категории `CollectionPage`). После применения базовых тегов, до рендера страницы; только сайт/HTML. Социальный плагин использует `page`, плагин Schema.org — также `content`, без запросов каталога. |
 | `onDharmaShopCategoryBeforeTitle` | **есть (C31)** | До заголовка страницы категории; общий для `categories` и будущего `category`, различать по `view`. |
 | `onDharmaShopCategoryAfterTitle` | **есть (C31)** | После заголовка страницы категории. |

@@ -39,6 +39,7 @@ class Router extends RouterView
         $this->registerView($badges);
         $this->registerView((new RouterViewConfiguration('badge'))->setKey('id')->setParent($badges));
         $this->registerView((new RouterViewConfiguration('product'))->setKey('id'));
+        $this->registerView(new RouterViewConfiguration('cart'));
         parent::__construct($app, $menu);
         $this->attachRule(new MenuRules($this));
         $this->attachRule(new StandardRules($this));

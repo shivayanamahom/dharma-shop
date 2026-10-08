@@ -8,6 +8,7 @@ use Dharma\Component\DharmaShop\Site\Placeholder\CategoryValues;
 use Dharma\Component\DharmaShop\Site\Placeholder\GlobalValues;
 use Dharma\Component\DharmaShop\Site\Placeholder\Renderer;
 use Dharma\Component\DharmaShop\Site\Seo\PageSeo;
+use Dharma\Component\DharmaShop\Site\Support\CartAssets;
 use Dharma\Component\DharmaShop\Site\Support\Grid;
 use Dharma\Component\DharmaShop\Site\Support\MediaUrl;
 use Joomla\CMS\Component\ComponentHelper;
@@ -115,7 +116,7 @@ class HtmlView extends BaseHtmlView
 
         // Режим каталога (настройки магазина): без корзины — ни виджета количества, ни кнопки, ни их скриптов.
         if (!$this->catalogMode) {
-            $wa->useScript('com_dharmashop.cart');
+            CartAssets::use($this->getDocument());
 
             // Кнопки «−»/«+» виджета количества: скрипт только если виджет включён в карточках.
             if ((int) $this->params->get('product_card_qty', 0) === 1) {
