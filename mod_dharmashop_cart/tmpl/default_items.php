@@ -10,6 +10,8 @@
  */
 \defined('_JEXEC') or die;
 
+use Dharma\Component\DharmaShop\Administrator\Image\ImageUrl;
+
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 
@@ -37,7 +39,7 @@ $qtyText = static fn (float $qty): string => rtrim(rtrim(number_format($qty, 3, 
             ?>
             <li class="dharmaMiniCartLine<?php echo $line->error !== '' ? ' dharmaMiniCartLineError' : ''; ?>" data-line="<?php echo (int) $line->id; ?>">
                 <?php if ($showImage) : ?>
-                    <a class="dharmaMiniCartImage" href="<?php echo $this->escape($line->url); ?>" tabindex="-1" aria-hidden="true"><img src="<?php echo $this->escape($line->image); ?>" width="72" height="72" alt="" loading="lazy" decoding="async"></a>
+                    <a class="dharmaMiniCartImage" href="<?php echo $this->escape($line->url); ?>" tabindex="-1" aria-hidden="true"><img src="<?php echo $this->escape(ImageUrl::resolve($line->image, 'cart.module')); ?>" width="72" height="72" alt="" loading="lazy" decoding="async"></a>
                 <?php endif; ?>
                 <div class="dharmaMiniCartInfo">
                     <?php if ($this->mini['category'] && (string) $line->category_title !== '') : ?>

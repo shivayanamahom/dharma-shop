@@ -1,6 +1,8 @@
 <?php
 /** Страница списка товаров; разметка товара находится в отдельном JLayout. */
 \defined('_JEXEC') or die;
+
+use Dharma\Component\DharmaShop\Administrator\Image\ImageUrl;
 use Dharma\Component\DharmaShop\Site\Support\LayoutHooks;
 use Joomla\CMS\Language\Text;
 
@@ -22,7 +24,7 @@ $icons = [
     <?php echo $hooks->render('afterTitle'); ?>
     <?php echo $hooks->render('beforeContent'); ?>
     <?php if ($this->image !== '') : ?>
-        <img class="img-fluid rounded mb-4" src="<?php echo $this->escape($this->image); ?>" alt="<?php echo $this->escape((string) ($this->item->params->get('image_alt') ?: $this->item->title)); ?>" decoding="async">
+        <img class="img-fluid rounded mb-4" src="<?php echo $this->escape(ImageUrl::resolve($this->image, 'category.header')); ?>" alt="<?php echo $this->escape((string) ($this->item->params->get('image_alt') ?: $this->item->title)); ?>" decoding="async">
     <?php endif; ?>
     <?php // Полное описание — только на первой странице списка: на остальных оно дублирует её содержимое (SEO); интро остаётся. ?>
     <?php if (trim((string) $this->item->params->get('introtext', '')) !== '') : ?>

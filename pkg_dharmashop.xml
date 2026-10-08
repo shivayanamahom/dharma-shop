@@ -14,6 +14,7 @@
 		<file type="component" id="com_dharmashop">com_dharmashop.zip</file>
 		<file type="plugin" id="basic" group="dharmashopfield">plg_dharmashopfield_basic.zip</file>
 		<file type="plugin" id="email" group="dharmashopnotify">plg_dharmashopnotify_email.zip</file>
+		<file type="plugin" id="imageresize" group="dharmashop">plg_dharmashop_imageresize.zip</file>
 		<file type="plugin" id="social" group="dharmashop">plg_dharmashop_social.zip</file>
 		<file type="plugin" id="structureddata" group="dharmashop">plg_dharmashop_structureddata.zip</file>
 		<file type="plugin" id="dharmashopswiper" group="system">plg_system_dharmashopswiper.zip</file>

@@ -1,6 +1,8 @@
 <?php
 /** Независимая карточка категории. Только Bootstrap; данные SEO страницы не изменяет. */
 \defined('_JEXEC') or die;
+
+use Dharma\Component\DharmaShop\Administrator\Image\ImageUrl;
 use Dharma\Component\DharmaShop\Site\Support\MediaUrl;
 use Joomla\CMS\Language\Text;
 
@@ -16,7 +18,7 @@ $intro = trim(strip_tags((string) $item->params->get('introtext', '')));
 <article class="card h-100">
     <?php if ($image !== '') : ?>
         <a class="ratio ratio-4x3 overflow-hidden rounded-top" href="<?php echo $escape($displayData['url']); ?>" tabindex="-1" aria-hidden="true">
-            <img class="w-100 h-100 object-fit-cover" src="<?php echo $escape($image); ?>" alt="<?php echo $escape($item->params->get('image_alt') ?: $item->title); ?>" loading="lazy" decoding="async">
+            <img class="w-100 h-100 object-fit-cover" src="<?php echo $escape(ImageUrl::resolve($image, 'category.card')); ?>" alt="<?php echo $escape($item->params->get('image_alt') ?: $item->title); ?>" loading="lazy" decoding="async">
         </a>
     <?php endif; ?>
     <div class="card-body">

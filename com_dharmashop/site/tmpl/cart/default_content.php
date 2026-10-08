@@ -6,6 +6,8 @@
  */
 \defined('_JEXEC') or die;
 
+use Dharma\Component\DharmaShop\Administrator\Image\ImageUrl;
+
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
@@ -35,7 +37,7 @@ $qtyText = static fn (float $qty): string => rtrim(rtrim(number_format($qty, 3, 
                     <div class="card shadow-sm mb-3 position-relative dharmaCartLine" data-line="<?php echo (int) $line->id; ?>">
                         <div class="card-body d-flex gap-3">
                             <?php if ($line->image !== '') : ?>
-                                <a class="flex-shrink-0 align-self-start" href="<?php echo $this->escape($line->url); ?>" tabindex="-1" aria-hidden="true"><img class="rounded border object-fit-contain bg-white" src="<?php echo $this->escape($line->image); ?>" width="96" height="96" alt="" loading="lazy" decoding="async"></a>
+                                <a class="flex-shrink-0 align-self-start" href="<?php echo $this->escape($line->url); ?>" tabindex="-1" aria-hidden="true"><img class="rounded border object-fit-contain bg-white" src="<?php echo $this->escape(ImageUrl::resolve($line->image, 'cart.page')); ?>" width="96" height="96" alt="" loading="lazy" decoding="async"></a>
                             <?php endif; ?>
                             <div class="flex-grow-1 min-w-0 pe-5">
                                 <?php if ((string) $line->category_title !== '') : ?><div class="small text-body-secondary"><?php echo $this->escape($line->category_title); ?></div><?php endif; ?>

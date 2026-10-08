@@ -1,6 +1,8 @@
 <?php
 \defined('_JEXEC') or die;
 
+use Dharma\Component\DharmaShop\Administrator\Image\ImageUrl;
+
 use Joomla\CMS\Filter\InputFilter;
 
 $field = $displayData['field'];
@@ -21,7 +23,7 @@ $text = static fn (object $value): string => !empty($value->html)
             <?php $label = trim(strip_tags((string) $value->text)); if (!empty($value->html)) { $label = html_entity_decode($label, ENT_QUOTES | ENT_HTML5, 'UTF-8'); } ?>
             <span class="d-inline-flex align-items-center gap-1">
                 <?php if ($value->image !== '') : ?>
-                    <img class="rounded object-fit-contain" src="<?php echo $escape($value->image); ?>" width="48" height="48" alt="<?php echo $format === 'image' ? $escape($label) : ''; ?>" title="<?php echo $escape($label); ?>" loading="lazy" decoding="async">
+                    <img class="rounded object-fit-contain" src="<?php echo $escape(ImageUrl::resolve($value->image, 'field.option')); ?>" width="48" height="48" alt="<?php echo $format === 'image' ? $escape($label) : ''; ?>" title="<?php echo $escape($label); ?>" loading="lazy" decoding="async">
                 <?php endif; ?>
                 <?php if ($format === 'image_title' || $value->image === '') : ?>
                     <span><?php echo $escape($label); ?></span>

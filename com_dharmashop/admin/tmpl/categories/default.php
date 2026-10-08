@@ -160,7 +160,7 @@ $ordering = $this->ordering;
                                     <td class="text-center"><?php echo HTMLHelper::_('jgrid.published', $item->published, $i, 'categories.', $canChange); ?></td>
                                     <td class="text-center d-none d-md-table-cell">
                                         <?php if ($image !== '') : ?>
-                                            <img src="<?php echo $this->escape('/' . ltrim($image, '/')); ?>" alt="" width="48" height="48" loading="lazy" style="object-fit:cover">
+                                            <img src="<?php echo $this->escape(\Dharma\Component\DharmaShop\Administrator\Image\ImageUrl::resolve($image, 'admin.category')); ?>" alt="" width="48" height="48" loading="lazy" style="object-fit:cover">
                                         <?php endif; ?>
                                     </td>
                                     <th scope="row">

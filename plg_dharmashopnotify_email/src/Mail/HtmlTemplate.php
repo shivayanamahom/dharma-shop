@@ -99,9 +99,9 @@ final class HtmlTemplate extends MailTemplate
         $site = realpath(JPATH_ROOT);
         $file = realpath(JPATH_ROOT . '/' . substr($path, strlen($prefix)));
         if ($site === false || $file === false || !str_starts_with($file, $site . DIRECTORY_SEPARATOR)
-            || !is_file($file) || !is_readable($file) || filesize($file) > 5 * 1024 * 1024) return $url;
+            || !is_file($file) || !is_readable($file) || filesize($file) > 256 * 1024) return $url;
         $size = (int) filesize($file);
-        if ($this->embeddedBytes + $size > 10 * 1024 * 1024) return $url;
+        if ($this->embeddedBytes + $size > 2 * 1024 * 1024) return $url;
         $mime = mime_content_type($file);
         $types = ['image/png'=>'png', 'image/jpeg'=>'jpg', 'image/gif'=>'gif', 'image/webp'=>'webp'];
         if (!isset($types[$mime])) return $url;

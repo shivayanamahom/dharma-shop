@@ -1,5 +1,13 @@
 # Макеты Dharma Shop
 
+## Контексты изображений C79
+
+Макеты получают URL через `Administrator\Image\ImageUrl::resolve($path, $context)`. Плагин `dharmashop/imageresize` подбирает размеры из настроек магазина; без него используется оригинал. Стили и данные снимков заказа не меняются. Полный реестр и инструкция расширения — [IMAGE_RESIZE.md](IMAGE_RESIZE.md).
+
+Общая точка `product-card/default.php` передаёт `imageContext`: `product.category.grid/list/table`, на странице поиска — `search.grid/list/table`. Бренды/бейджи используют те же товарные контексты. Вызывающий модуль может явно передать `module.products.grid/list/table` (зарезервированы для будущего модуля). Большая галерея, миниатюры и ссылка лайтбокса — `product.main`, `product.thumb`, `product.lightbox`; картинка раздела и карточка раздела — `category/brand/badge.header` и `.card`. Остальные: `cart.page`, `cart.module`, `search.module`, `field.option`, `admin.product`, `admin.category`, `email.product`, `email.logo`.
+
+Переопределения шаблона должны сохранять вызов `ImageUrl::resolve`; HTML-адрес экранировать. Нулевая сторона — авто, две нулевые — оригинал. Настройки не меняют размеры CSS-блоков, только получаемый файл.
+
 Здесь описаны папки PHP-макетов сайта и то, какие из них выбираются в админке. Варианты не перечисляются вручную: имя каждого файла `.php` в папке слота автоматически появляется в соответствующем выпадающем списке. Например, файл `default.php` отображается как `default.php`, а в настройке хранится `default`.
 
 ## Правила

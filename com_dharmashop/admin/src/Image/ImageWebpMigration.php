@@ -22,12 +22,13 @@ use Joomla\Database\ParameterType;
 /** Пошагово конвертирует ранее загруженные растровые файлы и обновляет все ссылки Dharma Shop. */
 final class ImageWebpMigration
 {
-    private const QUALITY = 82;
+    private readonly int $quality;
 
     private const CHUNK = 10;
 
     public function __construct(private readonly DatabaseInterface $db, private readonly string $root)
     {
+        $this->quality = ImageQuality::resolve();
     }
 
     /**
@@ -286,7 +287,7 @@ final class ImageWebpMigration
         try {
             $image = new Image($realFile);
 
-            if (!$image->toFile($temporary, IMAGETYPE_WEBP, ['quality' => self::QUALITY])) {
+            if (!$image->toFile($temporary, IMAGETYPE_WEBP, ['quality' => $this->quality])) {
                 $cache[$valid] = false;
 
                 return [$storedPath, false, true];

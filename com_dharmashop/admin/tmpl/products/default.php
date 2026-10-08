@@ -115,7 +115,7 @@ $catLink = function (object $entry) use ($user): string {
                                     </td>
                                     <td class="text-center d-none d-md-table-cell">
                                         <?php if ($cover !== '') : ?>
-                                            <img src="<?php echo $this->escape(Uri::root(true) . '/' . ltrim($cover, '/')); ?>" alt="" width="48" height="48" loading="lazy" class="rounded object-fit-cover">
+                                            <img src="<?php echo $this->escape(\Dharma\Component\DharmaShop\Administrator\Image\ImageUrl::resolve($cover, 'admin.product')); ?>" alt="" width="48" height="48" loading="lazy" class="rounded object-fit-cover">
                                         <?php else : ?>
                                             <span class="icon-image text-body-secondary" aria-hidden="true"></span>
                                         <?php endif; ?>

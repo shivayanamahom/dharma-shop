@@ -2,9 +2,12 @@
 /** Общая часть карточек товара: область изображения (фото или карусель Bootstrap) с бейджами и обратным отсчётом акции. Параметры displayData: mediaRounded = top|start, mediaRatio (1x1, 4x3…). */
 \defined('_JEXEC') or die;
 
+use Dharma\Component\DharmaShop\Administrator\Image\ImageUrl;
+
 use Joomla\CMS\Language\Text;
 
 $item = $displayData['item'];
+$imageContext = (string) ($displayData['imageContext'] ?? 'product.category.grid');
 $escape = static fn ($value): string => htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 $discount = (float) ($displayData['discountPercent'] ?? 0);
 $percentText = $discount > 0 && round($discount, 2) === 0.0
@@ -32,7 +35,7 @@ $ratio = preg_replace('/[^0-9x]/', '', (string) ($displayData['mediaRatio'] ?? '
                         <div class="swiper-slide">
                             <a class="d-block text-reset" href="<?php echo $escape($productUrl); ?>" aria-label="<?php echo $escape($item->title); ?>">
                                 <div class="ratio ratio-<?php echo $ratio; ?> bg-body-tertiary">
-                                    <img class="w-100 h-100 object-fit-cover" src="<?php echo $escape($image->url); ?>" alt="<?php echo $escape($image->alt); ?>"<?php echo $n === 0 ? '' : ' loading="lazy"'; ?> decoding="async">
+                                    <img class="w-100 h-100 object-fit-cover" src="<?php echo $escape(ImageUrl::resolve($image->url, $imageContext)); ?>" alt="<?php echo $escape($image->alt); ?>"<?php echo $n === 0 ? '' : ' loading="lazy"'; ?> decoding="async">
                                 </div>
                             </a>
                         </div>
@@ -56,7 +59,7 @@ $ratio = preg_replace('/[^0-9x]/', '', (string) ($displayData['mediaRatio'] ?? '
                         <div class="carousel-item<?php echo $n === 0 ? ' active' : ''; ?>">
                             <a class="d-block text-reset" href="<?php echo $escape($productUrl); ?>" aria-label="<?php echo $escape($item->title); ?>">
                                 <div class="ratio ratio-<?php echo $ratio; ?> bg-body-tertiary">
-                                    <img class="w-100 h-100 object-fit-cover" src="<?php echo $escape($image->url); ?>" alt="<?php echo $escape($image->alt); ?>"<?php echo $n === 0 ? '' : ' loading="lazy"'; ?> decoding="async">
+                                    <img class="w-100 h-100 object-fit-cover" src="<?php echo $escape(ImageUrl::resolve($image->url, $imageContext)); ?>" alt="<?php echo $escape($image->alt); ?>"<?php echo $n === 0 ? '' : ' loading="lazy"'; ?> decoding="async">
                                 </div>
                             </a>
                         </div>
@@ -73,7 +76,7 @@ $ratio = preg_replace('/[^0-9x]/', '', (string) ($displayData['mediaRatio'] ?? '
             <div class="ratio ratio-<?php echo $ratio; ?> overflow-hidden <?php echo $rounded; ?> bg-body-tertiary">
                 <?php if ($images) : ?>
                     <a class="d-block w-100 h-100 text-reset" href="<?php echo $escape($productUrl); ?>" aria-label="<?php echo $escape($item->title); ?>">
-                        <img class="w-100 h-100 object-fit-cover" src="<?php echo $escape($images[0]->url); ?>" alt="<?php echo $escape($images[0]->alt); ?>" loading="lazy" decoding="async">
+                        <img class="w-100 h-100 object-fit-cover" src="<?php echo $escape(ImageUrl::resolve($images[0]->url, $imageContext)); ?>" alt="<?php echo $escape($images[0]->alt); ?>" loading="lazy" decoding="async">
                     </a>
                 <?php endif; ?>
             </div>

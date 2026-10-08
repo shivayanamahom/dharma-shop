@@ -54,9 +54,6 @@ final class ImageUploader
     /** Предел площади изображения (пикселей): защита от «бомб» распаковки при последующей обработке. */
     private const MAX_PIXELS = 80000000;
 
-    /** Качество новых WebP-файлов; используется штатный Image API Joomla поверх GD. */
-    private const WEBP_QUALITY = 82;
-
     /** Корневая папка загрузок внутри images/ по настройке «Папка для изображений» (латиница, цифры, - _ и вложенность через /; пусто — dharmashop). */
     public static function baseFolder(?Registry $shopParams): string
     {
@@ -208,7 +205,7 @@ final class ImageUploader
                 && (int) $this->shopParams?->get('image_convert_webp', 0) === 1
                 && in_array($mime, ['image/jpeg', 'image/png', 'image/avif'], true)
             ) {
-                $convertedFile = self::toWebp($file['tmp_name'], $width, $height);
+                $convertedFile = self::toWebp($file['tmp_name'], $width, $height, ImageQuality::resolve($this->shopParams));
                 $storedExtension = 'webp';
             }
 
@@ -249,7 +246,7 @@ final class ImageUploader
     }
 
     /** Конвертирует поддерживаемые Joomla растровые форматы через штатный Image API и проверяет результат. */
-    private static function toWebp(string $source, int $width, int $height): string
+    private static function toWebp(string $source, int $width, int $height, int $quality): string
     {
         if (!extension_loaded('gd') || !function_exists('imagewebp')) {
             throw new \RuntimeException('COM_DHARMASHOP_UPLOAD_ERROR_WEBP');
@@ -266,7 +263,7 @@ final class ImageUploader
         try {
             $image = new Image($source);
 
-            if (!$image->toFile($temporary, IMAGETYPE_WEBP, ['quality' => self::WEBP_QUALITY])) {
+            if (!$image->toFile($temporary, IMAGETYPE_WEBP, ['quality' => $quality])) {
                 throw new \RuntimeException('COM_DHARMASHOP_UPLOAD_ERROR_WEBP');
             }
 

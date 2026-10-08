@@ -87,6 +87,7 @@ com_dharmashop/
   media/                          joomla.asset.json, административный uploader.css, минимум js; фронтенд — классы Bootstrap без своего CSS
 plg_system_dharmashop/            слияние корзины при входе, хуки жизненного цикла
 plg_task_dharmashop/              задачи планировщика: старт/конец скидок, очистка корзин, переиндексация
+plg_dharmashop_imageresize/       C79: размеры по контекстам, производные Joomla Image/GD, кеш с двумя уровнями хеша
 plg_dharmashopshipping_standard/  фиксированная цена, бесплатно от суммы, самовывоз
 plg_dharmashoppayment_offline/    «при получении / по счёту» (без онлайн-платежа)
 mod_dharmashop_*/                 модули
@@ -406,6 +407,8 @@ C71/C73: checkout — отдельный вид и тип меню; части d
 
 ### 5.15 Загрузчик изображений (реализовано на этапе 1, C13)
 
+**Производные C79:** загрузчик и миграция WebP сохраняют прежнее назначение. Общий `ImageUrl::resolve` вызывает плагин размеров; настройки контекстов в отдельном дочернем fieldset вкладки «Изображения». Формат auto следует `image_convert_webp`, явный формат строки имеет приоритет, email ограничен JPEG/PNG. Размер 0 — авто, обе стороны 0 — оригинал. Кеш `images/dharmashop/cache/resized/v1/<контекст>/<aa>/<bb>/<хеш-источника>-<хеш-варианта>.<формат>`, создаётся лениво; ключ учитывает mtime/длину исходника и пресет. Нет изменения оригиналов, SQL каталога по картинкам, загрузки внешних файлов или автоматического удаления кеша. Подробности/контексты/ограничения — IMAGE_RESIZE.md.
+
 Поле формы `imageupload` (`Field\ImageuploadField`, атрибут `folder` — подпапка): область для перетаскивания файла или выбора по клику, предпросмотр, «Убрать», прогресс. Скрипт — `media/com_dharmashop/js/uploader.js` (стили `css/uploader.css`), активы описаны в `media/com_dharmashop/joomla.asset.json`, подключаются через Web Asset Manager.
 
 Загрузка: `POST index.php?option=com_dharmashop&task=media.upload&format=json` (`MediaController::upload`) с токеном формы; права — `core.create` или `core.edit` компонента. `Image\ImageUploader` проверяет: код загрузки и размер (меньший из настроек «Медиа» Joomla и PHP), расширение из списка настроек «Медиа» (только известные картинки), **тип содержимого** (`finfo`, у растровых ещё `getimagesize`), у SVG — запрет скриптов, `on*=`, `javascript:`, `foreignObject`, `ENTITY`. Имя файла — латиница (`OutputFilter::stringURLSafe`), при совпадении `-2`, `-3`…; подпапка очищается от всего, кроме `a–z 0–9 _ -` (обход каталогов невозможен). Файл сохраняется в `images/dharmashop/<папка>/<год>/`; ответ — JSON `{success, data: {path, width, height}}`. Значение поля — путь относительно сайта (без служебного хвоста, как у штатного Media). Настройка `image_convert_webp` по умолчанию выключена; при включении новые JPEG/PNG и поддерживаемые GD форматы AVIF записываются через `Joomla\CMS\Image\Image` как WebP качества 82 с проверкой MIME и размеров результата. SVG остаётся векторным, GIF сохраняет анимацию, BMP не декодируется этим API и остаётся без изменений. Ранее загруженные изображения обрабатываются отдельной командой `ImageWebpMigration`: ссылки в `products.cover`/`params`, `categories.params`, `field_media.path` и параметрах компонента меняются порциями; исходники сохраняются.
@@ -465,7 +468,7 @@ C71/C73: checkout — отдельный вид и тип меню; части d
 
 ## 6. События
 
-Уточнение C77: HtmlTemplate встраивает локальный логотип письма через PHPMailer addEmbeddedImage (MIME inline/CID), включая HTML-подстановку SHOP_LOGO. PNG/JPEG/GIF/WebP до 5 МБ; проверка host/port, базового пути и realpath внутри JPATH_ROOT. Внешние URL не скачиваются, значения настройки и текстовой подстановки сохраняются.
+Уточнение C77/C79: HtmlTemplate встраивает локальные изображения письма через PHPMailer addEmbeddedImage (MIME inline/CID), включая SHOP_LOGO. Сначала ImageUrl получает производные email.product/email.logo (JPEG/PNG); вложения ограничены 256 КиБ на файл и 2 МиБ суммарно. Тяжёлый резервный оригинал не прикрепляется. Проверяются host/port, базовый путь и realpath внутри JPATH_ROOT. Внешние URL не скачиваются.
 
 Имена свои, префикс `onDharmaShop`. Каждое — типизированный класс события, аргументы читаются геттерами, изменяемое — через сеттеры. Подписчики — `SubscriberInterface`. Группа плагинов загружается по назначению (`PluginHelper::importPlugin`).
 
@@ -473,6 +476,7 @@ C71/C73: checkout — отдельный вид и тип меню; части d
 
 | Событие | Когда | Что можно менять |
 |---|---|---|
+| `onDharmaShopImagePrepare` | C79: перед выводом изображения через `Administrator\Image\ImageUrl::resolve`; сайт/админка/email | Joomla Event, `request: ImageRequest` (source/context readonly, url изменяемый), `settings: Registry` (копия). Плагин dharmashop/imageresize создаёт производную без SQL каталога; нет обработчика — исходный URL. |
 | `onDharmaShopProductBeforeSave` / `AfterSave` | сохранение товара вместе с вариантами и полями (форма и CLI) | данные; отмена с ошибкой |
 | `onDharmaShopProductBeforeDelete` / `AfterDelete` | удаление | отмена |
 | `onDharmaShopVariantBeforeSave` / `AfterSave` | сохранение варианта | данные; отмена |

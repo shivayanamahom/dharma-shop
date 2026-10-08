@@ -12,6 +12,8 @@ use Joomla\CMS\Uri\Uri;
 use Joomla\Registry\Registry;
 \defined('_JEXEC') or die;
 
+use Dharma\Component\DharmaShop\Administrator\Image\ImageUrl;
+
 /** Снимок заказа с необязательной обложкой/ссылкой; без HTML из данных покупателя. */
 final class MessageData
 {
@@ -31,7 +33,7 @@ final class MessageData
             $total = $item['total'] === null ? $money->zeroText() : $money->price($item['total']);
             $productId = (int) ($item['available_product_id'] ?? 0);
             $url = $productId > 0 ? $root . '/index.php?option=com_dharmashop&view=product&id=' . $productId : '';
-            $image = $productId > 0 ? $this->imageUrl((string) ($item['cover'] ?? ''), $root) : '';
+            $image = $productId > 0 ? ImageUrl::resolve((string) ($item['cover'] ?? ''), 'email.product') : '';
             $items[] = ['title'=>$title, 'sku'=>$item['sku'], 'qty'=>$qty, 'price'=>$price, 'total'=>$total, 'url'=>$url, 'image'=>$image];
             $plainItems[] = $title . ($item['sku'] !== '' ? ' [' . $item['sku'] . ']' : '') . "\n" . $qty . ' × ' . $price . ' = ' . $total;
             if ($item['price'] === null || ($money->replacesZero() && (float) $item['price'] === 0.0)) $unknown = true;
@@ -56,7 +58,7 @@ final class MessageData
         if (!MailHelper::isEmailAddress($shopEmail)) $shopEmail = '';
         $shopPhone = trim((string) $settings->get('shop_phone', ''));
         $shopAddress = trim((string) $settings->get('shop_address', ''));
-        $logo = $this->imageUrl((string) $settings->get('shop_logo', ''), $root);
+        $logo = ImageUrl::resolve((string) $settings->get('shop_logo', ''), 'email.logo');
         $showItems = $audience === 'admin' || (int) $settings->get('notify_customer_items', 1) === 1;
         $showContacts = $audience === 'admin' || (int) $settings->get('notify_customer_contacts', 1) === 1;
         $labels = [];
@@ -98,12 +100,4 @@ final class MessageData
         return ['plain'=>$plain, 'html'=>$html, 'unsafe'=>$unsafe];
     }
 
-    private function imageUrl(string $value, string $root): string
-    {
-        $value = trim(HTMLHelper::_('cleanImageURL', $value)->url);
-        if ($value === '' || str_contains($value, '\\') || preg_match('/[\x00-\x20]/', $value)) return '';
-        $url = preg_match('~^https?://~i', $value) ? $value : $root . '/' . ltrim($value, '/');
-        if (str_starts_with($value, '//') || (!preg_match('~^https?://~i', $value) && preg_match('~^[^/]*:~', $value))) return '';
-        return filter_var($url, FILTER_VALIDATE_URL) && in_array(strtolower((string) parse_url($url, PHP_URL_SCHEME)), ['http','https'], true) ? $url : '';
-    }
 }

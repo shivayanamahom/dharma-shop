@@ -85,6 +85,7 @@
 | `onDharmaShopProductPrepareForm` | план | форма товара собирается в `ProductModel::preprocessForm` |
 | `onDharmaShopListingQuery`, `ProductPrepare`, `ProductDisplay`, `PriceResolve`, `StockChange`, `IndexRebuild` | план | витрина и индекс |
 | `onDharmaShopFieldTypesCollect` (группа `dharmashopfield`) | **есть (C53/C59)** | Аргумент `registry: Administrator\Fields\TypeRegistry`; провайдер добавляет `TypeInterface` через `register()`. Для ввода/проверки значений также реализует `ValueTypeInterface` (`input/defaultValue/decode/encode`), без новых событий и SQL в провайдере. Дубликаты ID запрещены, после dispatch реестр закрыт. |
+| `onDharmaShopImagePrepare` (группа `dharmashop`) | **есть (C79)** | Перед выводом URL: Joomla Event, `request: Administrator\Image\ImageRequest` (readonly source/context, изменяемый url), `settings: Registry`. Плагин размеров меняет request.url на кешированную производную. Без плагина остаётся безопасный абсолютный URL оригинала. Контексты/добавление: IMAGE_RESIZE.md. |
 | Остальные события полей из ARCHITECTURE §6.2 | план, этап 2 | Ввод/значения/фильтрация/вывод ещё не подключены. |
 | `onDharmaShopCartBeforeAdd` | **есть (C65)** | Группа `dharmashop`; Joomla Event, аргументы `cart`, `variant` (массив), `qty`, `params`, `error`. Плагин может изменить `qty` и `params` или задать `error` (языковой ключ) — позиция отклоняется. |
 | `onDharmaShopCartAfterAdd` | **есть (C65)** | После добавления: `cart`, `variant`, `qty` (итоговое количество строки), `item_id`. |

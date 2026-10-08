@@ -7,6 +7,8 @@
  */
 \defined('_JEXEC') or die;
 
+use Dharma\Component\DharmaShop\Administrator\Image\ImageUrl;
+
 use Joomla\CMS\Layout\FileLayout;
 
 $item = $displayData['item'];
@@ -25,7 +27,7 @@ $valueLayout = new FileLayout('components.dharmashop.fields.value', null, ['comp
         <div class="d-flex gap-3">
         <a class="flex-shrink-0 dharmaCardThumb" href="<?php echo $escape($productUrl); ?>" tabindex="-1" aria-hidden="true">
             <?php if ($images) : ?>
-                <img class="rounded object-fit-cover" src="<?php echo $escape($images[0]->url); ?>" width="56" height="56" alt="" loading="lazy" decoding="async">
+                <img class="rounded object-fit-cover" src="<?php echo $escape(ImageUrl::resolve($images[0]->url, (string) ($displayData['imageContext'] ?? 'product.category.table'))); ?>" width="56" height="56" alt="" loading="lazy" decoding="async">
             <?php else : ?>
                 <span class="d-block rounded bg-body-tertiary p-4"></span>
             <?php endif; ?>

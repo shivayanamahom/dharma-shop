@@ -63,7 +63,7 @@ class SearchController extends BaseController
                     'id' => (int) $product->id,
                     'title' => (string) $product->title,
                     'url' => Route::_('index.php?option=com_dharmashop&view=product&id=' . (int) $product->id . '&catid=' . (int) $product->catid, false),
-                    'image' => MediaUrl::absolute((string) $product->cover),
+                    'image' => \Dharma\Component\DharmaShop\Administrator\Image\ImageUrl::resolve((string) $product->cover, 'search.module'),
                     'category' => (string) ($product->category_title ?? ''),
                     'sku' => (string) ($skus[(int) $product->id] ?? ''),
                     'price' => $money->range($product->price_min, $product->price_max),
