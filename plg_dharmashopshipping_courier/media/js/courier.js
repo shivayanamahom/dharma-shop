@@ -1,7 +1,8 @@
 /**
  * Dharma Shop: способ «Курьер» на странице оформления.
- *  - подсказки при вводе города, улицы и дома: в браузере через JavaScript API 3 (ymaps3.suggest), при отказе — через сервер (`shipping.ajax`:
- *    «Геосаджест» Яндекса или геокодер); выбор подсказки заполняет город, улицу и дом;
+ *  - одна строка адреса с подсказками (города, улицы, дома): в браузере через JavaScript API 3 (ymaps3.suggest), при отказе — через сервер
+ *    (`shipping.ajax`); выбор подсказки или введённая строка (серверный разбор `parse`) заполняет город, улицу и дом; точка на карте
+ *    (обратное геокодирование `reverse`) делает то же;
  *  - расчёт цены по адресу (расстояние от ближайшего склада): обновляет цену способа и итог, строки боковой панели и событием
  *    `dharmashop:shipping-quote` сообщает об этом оформлению;
  *  - карта (Яндекс Карты, JavaScript API 3): склады и точка доставки, ближайший склад выделяется, между ними линия.
@@ -145,6 +146,17 @@
                 });
             };
 
+            // Клик по карте ставит точку доставки: оформление определяет адрес по координатам и считает цену.
+            const { YMapListener } = ymaps3;
+            map.addChild(new YMapListener({
+                layer: 'any',
+                onClick: (object, event) => {
+                    const coordinates = event?.coordinates;
+                    if (!Array.isArray(coordinates)) return;
+                    el.dispatchEvent(new CustomEvent('courier:pick', { bubbles: true, detail: { lat: coordinates[1], lon: coordinates[0] } }));
+                },
+            }));
+
             el._courierMap = {
                 // Ответ расчёта: ближайший склад выделяется, ставится метка адреса, между ними линия, карта вмещает оба.
                 show: (result) => {
@@ -160,6 +172,12 @@
                     line = new YMapFeature({ geometry: { type: 'LineString', coordinates: [lonLat(target.point), lonLat(result.to)] }, style: { stroke: [{ color: COLORS[config.addressColor] || COLORS.red, width: 3, opacity: 0.8 }] } });
                     map.addChild(line);
                     fit([target.point, result.to]);
+                    // Маршрут по дорогам (ymaps3.route): если сервис доступен ключу, прямая линия заменяется дорожной; иначе остаётся прямая.
+                    const mine = line;
+                    ymaps3.route({ points: [lonLat(target.point), lonLat(result.to)], type: 'driving', bounds: true })
+                        .then((routes) => routes[0]?.toRoute())
+                        .then((route) => { if (route && line === mine && route.geometry?.coordinates?.length > 1) line.update({ geometry: route.geometry }); })
+                        .catch(() => {});
                 },
                 reset: () => { clear(); if (!config.zoom && warehouses.length > 1) fit(warehouses.map((warehouse) => warehouse.point)); },
             };
@@ -173,15 +191,17 @@
         root.dataset.courierReady = '1';
         const option = root.closest('[data-shipping-option]');
         const radio = option?.querySelector('[data-shipping-radio]');
+        const search = root.querySelector('[data-courier-search]');
+        const list = root.querySelector('[data-courier-suggest]');
         const city = root.querySelector('[data-courier-city]');
         const street = root.querySelector('[data-courier-street]');
         const house = root.querySelector('[data-courier-house]');
         const status = root.querySelector('[data-courier-status]');
         const priceNode = option?.querySelector('[data-shipping-option-price]');
-        if (!radio || !street) return;
+        if (!radio || !street || !house || !city) return;
 
         const initial = { price: radio.dataset.priceText || '', total: radio.dataset.totalText || '' };
-        const timers = {};
+        let timer = null;
         let sequence = 0;
         let silent = false;
 
@@ -207,17 +227,27 @@
 
         const reset = (message, error) => {
             setPrice(initial.price, initial.total, false);
-            delete (house || street).dataset.summaryRows;
+            delete house.dataset.summaryRows;
             root.querySelector('[data-courier-map]')?._courierMap?.reset();
             say(message || '', !!error);
             announce();
         };
 
+        // Строка адреса собирается из города, улицы и дома (после выбора подсказки, точки на карте или правки полей).
+        const composeLine = () => [street.value.trim(), house.value.trim(), city.value.trim()].filter(Boolean).join(', ');
+
+        const notify = () => {
+            // Событие input нужно оформлению (боковая панель); подсказки по нему повторно не запрашиваем.
+            silent = true;
+            [street, house, city].forEach((field) => field.dispatchEvent(new Event('input', { bubbles: true })));
+            silent = false;
+        };
+
         const calculate = async () => {
             if (root.dataset.distance !== '1') return;
-            const cityValue = city ? city.value.trim() : '';
+            const cityValue = city.value.trim();
             const streetValue = street.value.trim();
-            const houseValue = house ? house.value.trim() : '';
+            const houseValue = house.value.trim();
             // Город, улица и дом нужны для расчёта; пока что-то не заполнено, цена остаётся «по адресу».
             if (!cityValue || streetValue.length < 3 || !houseValue) { reset('', false); return; }
             const mine = ++sequence;
@@ -228,7 +258,7 @@
                 if (!result.ok) { reset(result.error || '', true); return; }
                 setPrice(result.price_text, result.total_text, result.free);
                 // Строки расчёта (расстояние, склад) идут в боковой панели после последнего базового поля — дома.
-                (house || street).dataset.summaryRows = JSON.stringify(result.rows || []);
+                house.dataset.summaryRows = JSON.stringify(result.rows || []);
                 say((result.rows || []).map((row) => row.label + ': ' + row.value).join(' · '), false);
                 root.querySelector('[data-courier-map]')?._courierMap?.show(result);
                 announce();
@@ -237,50 +267,28 @@
             }
         };
 
-        // Подсказки у каждого из трёх полей: город, улица, дом. Выбор подставляет всё, что известно о выбранном адресе.
-        const fieldKinds = [['city', city], ['street', street], ['house', house]].filter(([, field]) => field);
-        const lists = new Map(fieldKinds.map(([kind]) => [kind, root.querySelector('[data-courier-suggest="' + kind + '"]')]));
-        const hide = (kind) => {
-            (kind ? [kind] : Array.from(lists.keys())).forEach((name) => { const list = lists.get(name); if (list) { list.classList.add('d-none'); list.replaceChildren(); } });
+        // Подставляет город, улицу и дом (и строку поиска), затем считает цену.
+        const apply = (parts, keepFocus = false) => {
+            if (parts.city !== undefined) city.value = parts.city || '';
+            if (parts.street !== undefined) street.value = parts.street || '';
+            if (parts.house !== undefined) house.value = parts.house || '';
+            if (search) search.value = composeLine() + (keepFocus ? ', ' : '');
+            notify();
+            if (!keepFocus) calculate();
         };
 
-        const choose = (kind, item) => {
-            if (kind === 'city') {
-                city.value = item.city || item.label;
-            } else {
-                if (item.street) street.value = item.street;
-                else if (kind === 'street') street.value = item.label;
-                if (house && item.house) house.value = item.house;
-                if (city && item.city && !city.value.trim()) city.value = item.city;
-            }
-            hide();
-            // Событие input нужно оформлению (боковая панель), но подсказки по нему повторно запрашивать не надо.
-            silent = true;
-            [street, house, city].forEach((field) => field?.dispatchEvent(new Event('input', { bubbles: true })));
-            silent = false;
-            calculate();
-        };
+        const hide = () => { if (list) { list.classList.add('d-none'); list.replaceChildren(); } };
 
-        // Подсказки в браузере: JavaScript API 3 — ymaps3.suggest (нужен ключ с доступом к «API Геосаджеста»; ключ ставится через getDefaultConfig().setApikeys).
-        // Любая ошибка (сервис не разрешён ключу, сеть) — запасной путь через сервер.
+        // ---- подсказки в одной строке: города, улицы, дома (ymaps3.suggest; при ошибке — сервер)
         const near = (root.dataset.near || '').split(',').map(Number);
-        const clientSuggest = async (kind, text) => {
+        const clientSuggest = async (text) => {
             await loadMaps(root.dataset.apikey);
             const maps = window.ymaps3;
             maps.getDefaultConfig().setApikeys({ suggest: root.dataset.apikey, search: root.dataset.apikey });
-            const cityValue = city ? city.value.trim() : '';
-            const streetValue = street ? street.value.trim() : '';
-            const request = {
-                city: { text, types: ['locality'] },
-                house: { text: [cityValue, (streetValue + ' ' + text).trim()].filter(Boolean).join(', '), types: ['house'] },
-                street: { text: [cityValue, text].filter(Boolean).join(', '), types: ['street', 'house'] },
-            }[kind];
-            const options = { ...request, limit: 7, highlight: false };
+            const options = { text, types: ['locality', 'street', 'house'], limit: 7, highlight: false };
             if (near.length === 2 && near.every(Number.isFinite)) { options.center = [near[1], near[0]]; options.span = [3, 2]; }
             const found = await maps.suggest(options);
-            const seen = new Set();
-            const items = [];
-            found.forEach((row) => {
+            return found.map((row) => {
                 const parts = { city: '', street: '', house: '' };
                 (row.address?.component || []).forEach((component) => {
                     const kinds = (component.kind || []).map((value) => String(value).toUpperCase());
@@ -290,58 +298,84 @@
                 });
                 const title = row.title?.text || '';
                 const subtitle = row.subtitle?.text || '';
-                if (kind === 'city') {
-                    const name = parts.city || title;
-                    if (!name || seen.has(name + '|' + subtitle)) return;
-                    seen.add(name + '|' + subtitle);
-                    items.push({ label: name + (subtitle ? ', ' + subtitle : ''), city: name, street: '', house: '' });
-                } else {
-                    items.push({ label: title + (subtitle ? ', ' + subtitle : ''), city: parts.city, street: parts.street, house: parts.house });
-                }
+                return { label: title + (subtitle ? ', ' + subtitle : ''), city: parts.city || (row.tags || []).includes('locality') ? (parts.city || title) : parts.city, street: parts.street, house: parts.house };
             });
-            return items;
         };
 
-        const suggest = async (kind, field) => {
-            const list = lists.get(kind);
-            if (!list || root.dataset.suggest !== '1') return;
-            const text = field.value.trim();
-            // Город — от двух символов, улица — от трёх; дом — можно без текста: список домов выбранной улицы.
-            if (kind === 'house' ? (!street.value.trim() || !city.value.trim()) : text.length < (kind === 'city' ? 2 : 3)) { hide(kind); return; }
+        const suggest = async () => {
+            if (!search || !list || root.dataset.suggest !== '1') return;
+            const text = search.value.trim();
+            if (text.length < 3) { hide(); return; }
             try {
-                let result;
+                let items = null;
                 if (root.dataset.apikey) {
-                    try { result = { ok: true, items: await clientSuggest(kind, text) }; } catch (error) { result = null; }
+                    try { items = await clientSuggest(text); } catch (error) { items = null; }
                 }
-                if (!result) result = await post(root, 'suggest', { kind, text, city: city ? city.value.trim() : '', street: street ? street.value.trim() : '' });
-                if (field.value.trim() !== text) return;
-                hide(kind);
-                if (!result.ok || !Array.isArray(result.items) || !result.items.length) return;
-                result.items.forEach((item) => {
+                if (items === null) {
+                    const result = await post(root, 'suggest', { kind: 'any', text, city: '', street: '' });
+                    items = result.ok ? result.items : [];
+                }
+                if (search.value.trim() !== text) return;
+                hide();
+                if (!items.length) return;
+                items.forEach((item) => {
                     const button = document.createElement('button');
                     button.type = 'button';
                     button.className = 'list-group-item list-group-item-action small text-start';
                     button.setAttribute('role', 'option');
                     button.textContent = item.label;
-                    button.addEventListener('mousedown', (event) => { event.preventDefault(); choose(kind, item); });
+                    button.addEventListener('mousedown', (event) => { event.preventDefault(); hide(); apply({ city: item.city, street: item.street, house: item.house }, !item.house); if (!item.house) search.focus(); });
                     list.append(button);
                 });
                 list.classList.remove('d-none');
-            } catch (error) { hide(kind); }
+            } catch (error) { hide(); }
         };
 
-        fieldKinds.forEach(([kind, field]) => {
-            field.addEventListener('input', () => {
-                if (silent) return;
-                window.clearTimeout(timers[kind]);
-                timers[kind] = window.setTimeout(() => suggest(kind, field), 350);
+        // Строка введена целиком без выбора подсказки: сервер разбирает её на город, улицу и дом.
+        const parseLine = async () => {
+            const text = search.value.trim();
+            if (text.length < 5 || text === composeLine()) return;
+            try {
+                const result = await post(root, 'parse', { text });
+                if (!result.ok) { say(result.error || '', true); return; }
+                apply({ city: result.city, street: result.street, house: result.house });
+            } catch (error) { say('', true); }
+        };
+
+        // Точка на карте: сервер определяет ближайший дом, поля заполняются, цена считается.
+        const pick = async (lat, lon) => {
+            try {
+                say(status?.dataset.progress || '…');
+                const result = await post(root, 'reverse', { lat: String(lat), lon: String(lon) });
+                if (!result.ok) { reset(result.error || '', true); return; }
+                apply({ city: result.city, street: result.street, house: result.house });
+            } catch (error) { reset('', true); }
+        };
+        root.addEventListener('courier:pick', (event) => pick(event.detail.lat, event.detail.lon));
+
+        if (search) {
+            search.value = composeLine();
+            search.addEventListener('input', () => {
+                // Текст изменён вручную: прежний адрес больше не действует, пока подсказка или разбор не определят новый.
+                if (search.value.trim() !== composeLine() && (city.value || street.value || house.value)) {
+                    [city, street, house].forEach((field) => { field.value = ''; });
+                    reset('', false);
+                }
+                window.clearTimeout(timer);
+                timer = window.setTimeout(suggest, 350);
             });
-            field.addEventListener('blur', () => window.setTimeout(() => hide(kind), 150));
-            field.addEventListener('keydown', (event) => { if (event.key === 'Escape') hide(kind); });
-            field.addEventListener('change', calculate);
+            search.addEventListener('blur', () => window.setTimeout(() => { hide(); parseLine(); }, 150));
+            search.addEventListener('keydown', (event) => {
+                if (event.key === 'Escape') hide();
+                if (event.key === 'Enter') { event.preventDefault(); hide(); parseLine(); }
+            });
+        }
+
+        // Города, улицы и дома можно поправить вручную: строка и цена обновляются.
+        [city, street, house].forEach((field) => {
+            field.addEventListener('change', () => { if (search) search.value = composeLine(); calculate(); });
         });
-        // Поле «Дом»: при входе в него — список домов выбранной улицы (чтобы выбрать существующий).
-        house?.addEventListener('focus', () => suggest('house', house));
+
         // Расчёт по уже введённому адресу — только когда способ выбран (скрытые способы не тратят запросы геокодера).
         radio.addEventListener('change', () => { if (radio.checked && street.value.trim()) calculate(); });
         if (street.value.trim() && radio.checked) calculate();

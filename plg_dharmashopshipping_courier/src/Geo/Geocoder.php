@@ -74,6 +74,44 @@ final class Geocoder
         return $result;
     }
 
+    /**
+     * Адрес по точке на карте (обратное геокодирование): ближайший дом, иначе улица.
+     *
+     * @return  array{text: string, address: string, city: string, street: string, house: string, coords: array{0: float, 1: float}, precision: string, kind: string}|null
+     *
+     * @throws  \RuntimeException  ошибка сервиса
+     */
+    public function reverse(float $lat, float $lon): ?array
+    {
+        if ($this->apiKey === '' || abs($lat) > 90 || abs($lon) > 180) {
+            return null;
+        }
+
+        $params = ['apikey' => $this->apiKey, 'geocode' => round($lon, 6) . ',' . round($lat, 6), 'kind' => 'house', 'format' => 'json', 'results' => 1, 'lang' => 'ru_RU'];
+        $id = md5(json_encode($params) ?: '');
+        $cache = $this->cache();
+        $cached = $cache->get($id);
+
+        if (is_string($cached) && $cached !== '') {
+            $decoded = json_decode($cached, true);
+
+            if (is_array($decoded)) {
+                return $decoded[0] ?? null;
+            }
+        }
+
+        $response = HttpFactory::getHttp(['timeout' => 6])->get(self::URL . '?' . http_build_query($params), ['Referer' => rtrim(Uri::root(), '/') . '/'], 6);
+
+        if ($response->getStatusCode() !== 200) {
+            throw new \RuntimeException('Yandex geocoder HTTP ' . $response->getStatusCode());
+        }
+
+        $result = $this->parse((string) $response->getBody());
+        $cache->store(json_encode($result, JSON_UNESCAPED_UNICODE) ?: '[]', $id);
+
+        return $result[0] ?? null;
+    }
+
     /** @return array<int, array<string, mixed>> */
     private function parse(string $body): array
     {

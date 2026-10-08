@@ -11,7 +11,7 @@
  *
  * Правила для всех типов доставки (docs/SHIPPING.md): радиокнопка `shipping_method` с data-shipping-radio, data-price-text, data-total-text;
  * поля покупателя — `shipping[<id>][<ключ>]` в блоке data-shipping-extra, у каждого data-summary-label. Город, улица и дом — всегда:
- * [data-courier-city], [data-courier-street] и [data-courier-house] (у каждого свой список подсказок [data-courier-suggest=<ключ>]); контейнер [data-courier]
+ * [data-courier-city], [data-courier-street] и [data-courier-house]; одна строка адреса с подсказками — [data-courier-search] и список [data-courier-suggest]; контейнер [data-courier]
  * (data-ajax-url, data-method-id, data-suggest, data-distance, data-apikey — публичный ключ для подсказок в браузере, data-near — «широта,долгота» центра складов), статус расчёта — [data-courier-status], карта — [data-courier-map].
  * Скрипт плагина обновляет цену способа (data-shipping-option-price, data-price-text/-total-text радио) и событием
  * dharmashop:shipping-quote сообщает об этом оформлению.
@@ -29,6 +29,14 @@ $values = (array) ($displayData['values'] ?? []);
 $fields = (array) ($displayData['fields'] ?? []);
 $map = (array) ($displayData['map'] ?? ['mode' => 'none']);
 $esc = static fn ($value): string => htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
+// Подсказки или расчёт по расстоянию: адрес вводится одной строкой, город, улица и дом хранятся в скрытых полях.
+$single = (bool) ($displayData['suggest'] || $displayData['distance_mode']);
+$addressError = '';
+foreach (['city', 'street', 'house'] as $baseKey) {
+    if ($addressError === '' && isset($errors[$baseKey])) {
+        $addressError = (string) $errors[$baseKey];
+    }
+}
 $priceText = $quote->pending ? $displayData['price_text'] : ($quote->free ? $displayData['free_text'] : $displayData['price_text']);
 ?>
 <div class="border rounded p-3 dharmaShippingOption" data-shipping-option>
@@ -56,18 +64,33 @@ $priceText = $quote->pending ? $displayData['price_text'] : ($quote->free ? $dis
         data-ajax-url="<?php echo $esc($displayData['ajax_url'] ?? ''); ?>" data-method-id="<?php echo $id; ?>"
         data-suggest="<?php echo $displayData['suggest'] ? '1' : '0'; ?>" data-distance="<?php echo $displayData['distance_mode'] ? '1' : '0'; ?>"
         data-apikey="<?php echo $esc($displayData['suggest_key'] ?? ''); ?>" data-near="<?php echo $esc($displayData['suggest_near'] ?? ''); ?>">
+        <?php if ($single) : ?>
+            <?php // Одна строка адреса: подсказка (или точка на карте) определяет город, улицу и дом (скрытые поля ниже) и запускает расчёт. ?>
+            <div class="position-relative mb-2">
+                <label class="form-label small mb-1" for="dharma-shipping-<?php echo $id; ?>-search"><?php echo $esc(Text::_('PLG_DHARMASHOPSHIPPING_COURIER_SEARCH_LABEL')); ?> <span class="text-danger" aria-hidden="true">*</span></label>
+                <input class="form-control<?php echo $addressError !== '' ? ' is-invalid' : ''; ?>" type="text" id="dharma-shipping-<?php echo $id; ?>-search" data-courier-search maxlength="255" autocomplete="off"
+                    placeholder="<?php echo $esc(Text::_('PLG_DHARMASHOPSHIPPING_COURIER_SEARCH_PLACEHOLDER')); ?>">
+                <?php if ($addressError !== '') : ?><div class="invalid-feedback d-block"><?php echo $esc(Text::_($addressError)); ?></div><?php endif; ?>
+                <div class="list-group position-absolute start-0 end-0 mx-0 shadow-sm z-3 d-none" data-courier-suggest role="listbox" aria-label="<?php echo $esc(Text::_('PLG_DHARMASHOPSHIPPING_COURIER_SUGGEST_LABEL')); ?>"></div>
+                <?php if ($map['mode'] === 'js') : ?><div class="form-text"><?php echo $esc(Text::_('PLG_DHARMASHOPSHIPPING_COURIER_MAP_HINT')); ?></div><?php endif; ?>
+            </div>
+        <?php endif; ?>
         <div class="row g-2">
-            <?php // Город, улица, дом — неизменяемые обязательные поля: по ним определяется точка доставки. ?>
+            <?php // Город, улица, дом — неизменяемые обязательные поля: по ним определяется точка доставки. С подсказками они скрыты (заполняются строкой адреса), без них — обычные поля. ?>
             <?php foreach ((array) $displayData['base_fields'] as $base) :
                 $key = (string) $base['key'];
                 $fieldId = 'dharma-shipping-' . $id . '-' . $key;
                 $invalid = isset($errors[$key]);
+                if ($single) : ?>
+                    <input type="hidden" id="<?php echo $esc($fieldId); ?>" name="shipping[<?php echo $id; ?>][<?php echo $esc($key); ?>]" value="<?php echo $esc((string) ($values[$key] ?? '')); ?>"
+                        data-courier-<?php echo $esc($key); ?><?php echo $key === 'house' ? ' data-summary-label="' . $esc($base['label']) . '"' : ''; ?>>
+                    <?php continue;
+                endif;
                 ?>
                 <div class="<?php echo $esc($base['col']); ?> position-relative">
                     <label class="form-label small mb-1" for="<?php echo $esc($fieldId); ?>"><?php echo $esc($base['label']); ?> <span class="text-danger" aria-hidden="true">*</span></label>
                     <input class="form-control<?php echo $invalid ? ' is-invalid' : ''; ?>" type="text" id="<?php echo $esc($fieldId); ?>" name="shipping[<?php echo $id; ?>][<?php echo $esc($key); ?>]"
                         value="<?php echo $esc((string) ($values[$key] ?? '')); ?>" maxlength="<?php echo $key === 'house' ? 20 : 255; ?>" data-summary-label="<?php echo $esc($base['label']); ?>" data-courier-<?php echo $esc($key); ?> autocomplete="off">
-                    <div class="list-group position-absolute start-0 end-0 mx-2 shadow-sm z-3 d-none" data-courier-suggest="<?php echo $esc($key); ?>" role="listbox" aria-label="<?php echo $esc(Text::_('PLG_DHARMASHOPSHIPPING_COURIER_SUGGEST_LABEL')); ?>"></div>
                     <?php if ($invalid) : ?><div class="invalid-feedback d-block"><?php echo $esc(Text::_($errors[$key])); ?></div><?php endif; ?>
                 </div>
             <?php endforeach; ?>

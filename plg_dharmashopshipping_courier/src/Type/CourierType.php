@@ -9,6 +9,7 @@ use Dharma\Component\DharmaShop\Administrator\Shipping\Quote;
 use Dharma\Component\DharmaShop\Administrator\Shipping\TypeInterface;
 use Dharma\Plugin\DharmaShopShipping\Courier\Geo\Distance;
 use Dharma\Plugin\DharmaShopShipping\Courier\Geo\Geocoder;
+use Dharma\Plugin\DharmaShopShipping\Courier\Geo\Router;
 use Dharma\Plugin\DharmaShopShipping\Courier\Geo\Suggest;
 use Joomla\CMS\Application\ApplicationHelper;
 use Joomla\CMS\Factory;
@@ -31,6 +32,9 @@ final class CourierType implements TypeInterface
 
     /** Подмена клиента подсказок для автоматических проверок (в работе всегда null). */
     public static ?\Closure $suggestFactory = null;
+
+    /** Подмена клиента расстояний по дорогам для автоматических проверок (в работе всегда null). */
+    public static ?\Closure $routerFactory = null;
 
     private const FIELD_TYPES = ['text', 'textarea', 'tel', 'select'];
 
@@ -89,6 +93,12 @@ final class CourierType implements TypeInterface
             throw new \DomainException('PLG_DHARMASHOPSHIPPING_COURIER_ERROR_APIKEY');
         }
 
+        $routerKey = trim((string) ($settings['router_apikey'] ?? ''));
+
+        if ($routerKey !== '' && !preg_match('/^[A-Za-z0-9\-]{8,100}$/D', $routerKey)) {
+            throw new \DomainException('PLG_DHARMASHOPSHIPPING_COURIER_ERROR_APIKEY');
+        }
+
         $normalized = [
             'term' => mb_substr(trim(strip_tags((string) ($settings['term'] ?? ''))), 0, 100),
             'note' => mb_substr(trim(strip_tags((string) ($settings['note'] ?? ''))), 0, 500),
@@ -101,6 +111,8 @@ final class CourierType implements TypeInterface
             'km_max_price' => $number($settings['km_max_price'] ?? 0, 'KM_MAX_PRICE'),
             'km_max_distance' => $number($settings['km_max_distance'] ?? 0, 'KM_MAX_DISTANCE', 100000.0),
             'km_road_factor' => $factor > 0 ? $factor : 1.3,
+            'distance_method' => (string) ($settings['distance_method'] ?? 'straight') === 'road' ? 'road' : 'straight',
+            'router_apikey' => trim((string) ($settings['router_apikey'] ?? '')),
             'km_round' => in_array((string) ($settings['km_round'] ?? ''), ['0', '1', '5', '10', '50', '100'], true) ? (string) $settings['km_round'] : '10',
             'free_from' => $number($settings['free_from'] ?? 0, 'FREE_FROM'),
             'min_total' => $number($settings['min_total'] ?? 0, 'MIN_TOTAL'),
@@ -304,7 +316,7 @@ final class CourierType implements TypeInterface
                 $result['data']['distance_km'] = $calc['distance'];
                 $result['data']['warehouse'] = $calc['warehouse']['key'];
                 $result['data']['to'] = $calc['to'];
-                $result['rows'][] = ['label' => Text::_('PLG_DHARMASHOPSHIPPING_COURIER_ROW_DISTANCE'), 'value' => Text::sprintf('PLG_DHARMASHOPSHIPPING_COURIER_DISTANCE_VALUE', $this->km($calc['distance']))];
+                $result['rows'][] = ['label' => Text::_('PLG_DHARMASHOPSHIPPING_COURIER_ROW_DISTANCE'), 'value' => Text::sprintf($calc['road'] ? 'PLG_DHARMASHOPSHIPPING_COURIER_DISTANCE_ROAD' : 'PLG_DHARMASHOPSHIPPING_COURIER_DISTANCE_VALUE', $this->km($calc['distance']))];
                 $result['rows'][] = ['label' => Text::_('PLG_DHARMASHOPSHIPPING_COURIER_ROW_WAREHOUSE'), 'value' => $calc['warehouse']['name']];
             } catch (\DomainException $error) {
                 $result['errors'][$error->getMessage() === 'PLG_DHARMASHOPSHIPPING_COURIER_ERROR_HOUSE' ? 'house' : 'street'] = $error->getMessage();
@@ -317,7 +329,7 @@ final class CourierType implements TypeInterface
     /**
      * Расчёт по расстоянию: адрес → координаты (серверный геокодер) → ближайший склад → расстояние → цена.
      *
-     * @return  array{quote: Quote, distance: float, warehouse: array<string, mixed>, to: array{0: float, 1: float}}
+     * @return  array{quote: Quote, distance: float, warehouse: array<string, mixed>, to: array{0: float, 1: float}, road: bool}
      *
      * @throws  \DomainException  адрес не распознан, слишком далеко, сервис недоступен — сообщение (языковой ключ) показывается покупателю
      */
@@ -333,8 +345,7 @@ final class CourierType implements TypeInterface
 
         $found = $this->locate($method, $city, $street, $house);
 
-        $nearest = Distance::nearest($warehouses, $found['coords'][0], $found['coords'][1]);
-        $distance = round($nearest['km'] * (float) ($p['km_road_factor'] ?? 1.3), 1);
+        [$distance, $index, $road] = $this->measure($method, $warehouses, $found['coords']);
         $maxDistance = (float) ($p['km_max_distance'] ?? 0);
 
         if ($maxDistance > 0 && $distance > $maxDistance) {
@@ -353,9 +364,49 @@ final class CourierType implements TypeInterface
         return [
             'quote' => new Quote($free ? 0.0 : round($price, 2), (string) ($p['term'] ?? ''), (string) ($p['note'] ?? ''), $free),
             'distance' => $distance,
-            'warehouse' => $warehouses[$nearest['index']],
+            'warehouse' => $warehouses[$index],
             'to' => $found['coords'],
+            'road' => $road,
         ];
+    }
+
+    /**
+     * Расстояние до адреса и склад отправки. «По дорогам» — Матрица расстояний Яндекса (ближайший по дороге склад); если сервис недоступен
+     * ключу, считается по прямой с дорожным коэффициентом. «По прямой» — ближайший по прямой склад, расстояние умножается на коэффициент.
+     *
+     * @param   array<int, array{coords: array{0: float, 1: float}}>  $warehouses
+     * @param   array{0: float, 1: float}                              $to
+     *
+     * @return  array{0: float, 1: int, 2: bool}  [км, индекс склада, посчитано по дорогам]
+     */
+    private function measure(Method $method, array $warehouses, array $to): array
+    {
+        $p = $method->params;
+
+        if ((string) ($p['distance_method'] ?? 'straight') === 'road') {
+            $key = trim((string) ($p['router_apikey'] ?? '')) ?: $this->apiKey($method);
+
+            try {
+                $router = self::$routerFactory !== null ? (self::$routerFactory)($key) : new Router($key);
+                $best = null;
+
+                foreach ($router->kilometers(array_map(static fn (array $w): array => $w['coords'], $warehouses), $to) as $i => $km) {
+                    if ($km !== null && ($best === null || $km < $best[0])) {
+                        $best = [(float) $km, (int) $i];
+                    }
+                }
+
+                if ($best !== null) {
+                    return [$best[0], $best[1], true];
+                }
+            } catch (\RuntimeException) {
+                // Сервис маршрутов недоступен ключу: считаем по прямой.
+            }
+        }
+
+        $nearest = Distance::nearest($warehouses, $to[0], $to[1]);
+
+        return [round($nearest['km'] * (float) ($p['km_road_factor'] ?? 1.3), 1), $nearest['index'], false];
     }
 
     /**
@@ -409,7 +460,7 @@ final class CourierType implements TypeInterface
 
     public function ajax(Method $method, Context $context, string $action, array $input): array
     {
-        if ($action !== 'suggest' && $action !== 'quote') {
+        if (!in_array($action, ['suggest', 'quote', 'parse', 'reverse'], true)) {
             return ['ok' => false, 'error' => 'Unknown action'];
         }
 
@@ -420,6 +471,10 @@ final class CourierType implements TypeInterface
         }
 
         $city = trim(strip_tags((string) ($input['city'] ?? '')));
+
+        if ($action === 'parse' || $action === 'reverse') {
+            return $this->resolveAddress($method, $key, $action, $input);
+        }
 
         if ($action === 'suggest') {
             // Подсказки работают при любом режиме цены (нужен только ключ); склады — лишь смещение результатов.
@@ -456,9 +511,63 @@ final class CourierType implements TypeInterface
             'warehouse' => ['key' => $calc['warehouse']['key'], 'name' => $calc['warehouse']['name'], 'address' => $calc['warehouse']['address']],
             'to' => $calc['to'],
             'rows' => [
-                ['label' => Text::_('PLG_DHARMASHOPSHIPPING_COURIER_ROW_DISTANCE'), 'value' => Text::sprintf('PLG_DHARMASHOPSHIPPING_COURIER_DISTANCE_VALUE', $this->km($calc['distance']))],
+                ['label' => Text::_('PLG_DHARMASHOPSHIPPING_COURIER_ROW_DISTANCE'), 'value' => Text::sprintf($calc['road'] ? 'PLG_DHARMASHOPSHIPPING_COURIER_DISTANCE_ROAD' : 'PLG_DHARMASHOPSHIPPING_COURIER_DISTANCE_VALUE', $this->km($calc['distance']))],
                 ['label' => Text::_('PLG_DHARMASHOPSHIPPING_COURIER_ROW_WAREHOUSE'), 'value' => $calc['warehouse']['name']],
             ],
+        ];
+    }
+
+    /**
+     * Разбор адреса в город, улицу и дом: `parse` — по введённой строке (геокодер), `reverse` — по точке на карте (обратное геокодирование).
+     *
+     * @return array<string, mixed>
+     */
+    private function resolveAddress(Method $method, string $key, string $action, array $input): array
+    {
+        try {
+            if ($action === 'reverse') {
+                $lat = filter_var($input['lat'] ?? null, FILTER_VALIDATE_FLOAT);
+                $lon = filter_var($input['lon'] ?? null, FILTER_VALIDATE_FLOAT);
+
+                if ($lat === false || $lon === false) {
+                    return ['ok' => false, 'error' => Text::_('PLG_DHARMASHOPSHIPPING_COURIER_ERROR_ADDRESS')];
+                }
+
+                $item = $this->geocoder($key)->reverse((float) $lat, (float) $lon);
+            } else {
+                $text = trim(strip_tags((string) ($input['text'] ?? '')));
+
+                if ($text === '' || mb_strlen($text) > 255) {
+                    return ['ok' => false, 'error' => Text::_('PLG_DHARMASHOPSHIPPING_COURIER_ERROR_ADDRESS')];
+                }
+
+                $item = null;
+
+                foreach ($this->geocoder($key)->search($text, 5, $this->center($this->warehousesOf($method))) as $candidate) {
+                    if ($candidate['city'] !== '' && in_array($candidate['kind'], ['house', 'street'], true)) {
+                        $item = $candidate;
+
+                        if ($candidate['kind'] === 'house' && in_array($candidate['precision'], ['exact', 'number'], true)) {
+                            break;
+                        }
+                    }
+                }
+            }
+        } catch (\RuntimeException) {
+            return ['ok' => false, 'error' => Text::_('PLG_DHARMASHOPSHIPPING_COURIER_ERROR_GEOCODER')];
+        }
+
+        if ($item === null || ($item['city'] ?? '') === '') {
+            return ['ok' => false, 'error' => Text::_('PLG_DHARMASHOPSHIPPING_COURIER_ERROR_ADDRESS')];
+        }
+
+        return [
+            'ok' => true,
+            'city' => $item['city'],
+            'street' => $item['street'],
+            'house' => $item['house'],
+            'label' => trim(($item['street'] !== '' ? $item['street'] : '') . ($item['house'] !== '' ? ', ' . $item['house'] : '') . ', ' . $item['city'], ', '),
+            'to' => $item['coords'],
         ];
     }
 
@@ -473,15 +582,16 @@ final class CourierType implements TypeInterface
             return ['ok' => true, 'items' => []];
         }
 
-        $kind = in_array($kind, ['city', 'street', 'house'], true) ? $kind : 'street';
+        $kind = in_array($kind, ['any', 'city', 'street', 'house'], true) ? $kind : 'street';
         [$query, $types] = match ($kind) {
+            'any' => [$text, 'locality,street,house'],
             'city' => [$text, 'locality'],
             'house' => [trim($city . ', ' . $street . ' ' . $text, ', '), 'house'],
             default => [trim($city !== '' ? $city . ', ' . $text : $text), 'street,house'],
         };
 
-        // Улица — от трёх символов, номер дома — от одного.
-        if ($kind === 'street' && mb_strlen($text) < 3) {
+        // Общая строка и улица — от трёх символов.
+        if (($kind === 'street' || $kind === 'any') && mb_strlen($text) < 3) {
             return ['ok' => true, 'items' => []];
         }
 

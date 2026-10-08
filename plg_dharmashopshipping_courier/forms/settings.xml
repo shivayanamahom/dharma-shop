@@ -36,7 +36,11 @@
     <field name="km_price" type="text" label="PLG_DHARMASHOPSHIPPING_COURIER_KM_PRICE" description="PLG_DHARMASHOPSHIPPING_COURIER_KM_PRICE_DESC" showon=".plugin:courier[AND]price_mode:distance" default="20" filter="string" />
     <field name="km_max_price" type="text" label="PLG_DHARMASHOPSHIPPING_COURIER_KM_MAX_PRICE" description="PLG_DHARMASHOPSHIPPING_COURIER_KM_MAX_PRICE_DESC" showon=".plugin:courier[AND]price_mode:distance" default="0" filter="string" />
     <field name="km_max_distance" type="text" label="PLG_DHARMASHOPSHIPPING_COURIER_KM_MAX_DISTANCE" description="PLG_DHARMASHOPSHIPPING_COURIER_KM_MAX_DISTANCE_DESC" showon=".plugin:courier[AND]price_mode:distance" default="0" filter="string" />
-    <field name="km_road_factor" type="text" label="PLG_DHARMASHOPSHIPPING_COURIER_KM_ROAD_FACTOR" description="PLG_DHARMASHOPSHIPPING_COURIER_KM_ROAD_FACTOR_DESC" showon=".plugin:courier[AND]price_mode:distance" default="1.3" filter="string" />
+    <field name="km_road_factor" type="text" label="PLG_DHARMASHOPSHIPPING_COURIER_KM_ROAD_FACTOR" description="PLG_DHARMASHOPSHIPPING_COURIER_KM_ROAD_FACTOR_DESC" showon=".plugin:courier[AND]price_mode:distance[AND]distance_method:straight" default="1.3" filter="string" />
+    <field name="distance_method" type="list" label="PLG_DHARMASHOPSHIPPING_COURIER_DISTANCE_METHOD" description="PLG_DHARMASHOPSHIPPING_COURIER_DISTANCE_METHOD_DESC" showon=".plugin:courier[AND]price_mode:distance" default="straight" filter="cmd" validate="options">
+        <option value="straight">PLG_DHARMASHOPSHIPPING_COURIER_DISTANCE_METHOD_STRAIGHT</option>
+        <option value="road">PLG_DHARMASHOPSHIPPING_COURIER_DISTANCE_METHOD_ROAD</option>
+    </field>
     <field name="km_round" type="list" label="PLG_DHARMASHOPSHIPPING_COURIER_KM_ROUND" description="PLG_DHARMASHOPSHIPPING_COURIER_KM_ROUND_DESC" showon=".plugin:courier[AND]price_mode:distance" default="10" filter="cmd" validate="options">
         <option value="0">PLG_DHARMASHOPSHIPPING_COURIER_KM_ROUND_NONE</option>
         <option value="1">PLG_DHARMASHOPSHIPPING_COURIER_KM_ROUND_1</option>
@@ -52,6 +56,7 @@
     <field name="warehouses" type="warehouseselect" multiple="true" label="PLG_DHARMASHOPSHIPPING_COURIER_WAREHOUSES" description="PLG_DHARMASHOPSHIPPING_COURIER_WAREHOUSES_DESC" showon=".plugin:courier" class="form-select" size="8" filter="int_array" />
 </fieldset><fieldset name="map_courier" label="PLG_DHARMASHOPSHIPPING_COURIER_MAP_SETTINGS">
     <field name="yandex_apikey" type="text" label="PLG_DHARMASHOPSHIPPING_COURIER_YANDEX_APIKEY" description="PLG_DHARMASHOPSHIPPING_COURIER_YANDEX_APIKEY_DESC" showon=".plugin:courier" maxlength="100" autocomplete="off" filter="string" />
+    <field name="router_apikey" type="text" label="PLG_DHARMASHOPSHIPPING_COURIER_ROUTER_APIKEY" description="PLG_DHARMASHOPSHIPPING_COURIER_ROUTER_APIKEY_DESC" showon=".plugin:courier[AND]price_mode:distance[AND]distance_method:road" maxlength="100" autocomplete="off" filter="string" />
     <field name="suggest" type="radio" layout="joomla.form.field.radio.switcher" label="PLG_DHARMASHOPSHIPPING_COURIER_SUGGEST" description="PLG_DHARMASHOPSHIPPING_COURIER_SUGGEST_DESC" showon=".plugin:courier" default="1" filter="integer">
         <option value="0">JNO</option>
         <option value="1">JYES</option>
