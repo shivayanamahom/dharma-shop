@@ -28,8 +28,8 @@ final class EntityFields
 
         $levels = array_map('intval', Factory::getApplication()->getIdentity()->getAuthorisedViewLevels()) ?: [0];
         $query = $db->createQuery()->select($db->quoteName([
-            'f.id', 'f.alias', 'f.title', 'f.type', 'f.unit', 'f.in_card', 'f.in_page', 'f.params', 'f.all_categories',
-        ]))->from($db->quoteName('#__dharmashop_fields', 'f'))
+            'f.id', 'f.alias', 'f.title', 'f.type', 'f.unit', 'f.in_card', 'f.in_page', 'f.params', 'f.all_categories', 'f.group_id',
+        ]))->select($db->quoteName('g.title', 'group_title'))->from($db->quoteName('#__dharmashop_fields', 'f'))
             ->join('LEFT', $db->quoteName('#__dharmashop_fieldgroups', 'g') . ' ON g.id = f.group_id')
             ->where('f.target = ' . $db->quote($target))->where('f.state = 1')->where('f.level = 1')
             ->where('f.access IN (' . implode(',', $levels) . ')')->where('(f.group_id = 0 OR (g.state = 1 AND g.target = f.target))')
@@ -111,6 +111,7 @@ final class EntityFields
                 $format = (string) $field->settings->get('format_' . $context, 'comma');
                 $item->fields[$field->alias] = (object) [
                     'id' => $fieldId, 'alias' => $field->alias, 'title' => $field->title, 'type' => $field->type,
+                    'group_id' => (int) $field->group_id, 'group_title' => (string) ($field->group_title ?? ''),
                     'show' => (int) $field->{'in_' . $context} === 1,
                     'format' => in_array($format, ['comma', 'list', 'image', 'image_title'], true) ? $format : 'comma',
                     'values' => $values[$id][$fieldId],

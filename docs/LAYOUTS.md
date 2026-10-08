@@ -236,6 +236,14 @@ C61: editor исключён из данных card в EntityFields до зап�
 
 **Управление слайдерами Swiper (карточки и страница товара).** Стрелки и полоски — разметка и классы Bootstrap, а не стили Swiper: `carousel-control-prev/next` (белая стрелка Bootstrap, `w-auto px-2`) и `carousel-indicators` (белые полоски, активная — класс `active`). Классы пагинации Swiper переименованы в скрипте (`modifierClass`, `bulletClass`, `clickableClass`), поэтому стили Swiper на них не действуют, а своего CSS у компонента нет: вид не зависит от шаблона, достаточно Bootstrap 5. До запуска слайдера элементы скрыты (`d-none`); скрипты `card-slider.js` и `product-gallery.js` убирают его и передают элементы Swiper (`navigation.prevEl/nextEl`, `pagination.el`, `renderBullet`). Миниатюры страницы товара используют только базовые стили Swiper (раскладка слайдов).
 
+## Вкладки страницы товара
+
+Под тремя колонками `product/default.php` подключает `$this->loadTemplate('tabs')`: файл `tmpl/product/default_tabs.php`, переопределение `templates/<шаблон>/html/com_dharmashop/product/default_tabs.php`. Первая вкладка «Описание» выводит непустой `item->fulltext` через `$this->text()` в `.dharmaFulltext`. Затем — по вкладке на каждую группу с видимыми заполненными полями страницы (`in_page`, `load_page`); поля без группы идут в «Характеристики». Пустые/скрытые группы и пустое описание не создают вкладку, при отсутствии содержимого весь блок отсутствует. Начальная вкладка — первая доступная, без recall.
+
+`Product\HtmlView::$fieldGroups` содержит `group_id => ['title' => string, 'fields' => array<alias, object>]`, порядок сохраняется из `EntityFields`. Загрузчик добавляет `group_id/group_title` в существующий запрос с уже имеющимся JOIN, без дополнительных SQL. Группы показывают общий переопределяемый макет `fields/default`, форматы значений сохраняются. Верхний блок кратких характеристик остаётся на своём месте.
+
+Штатный `HTMLHelper::_('uitab.*')` подключает ресурсы `webcomponent.joomla-tab`: вкладки при ширине >768 px, аккордион при ширине <=768 px. Нового JS/CSS нет. Постоянные классы: `.dharmaProductDetails`, `.dharmaFulltext`, `.dharmaProductFieldGroup[data-group]`; ID набора/вкладок содержат ID товара и группы. Названия групп экранируются с учётом innerHTML внутри компонента Joomla и выводятся обычным текстом.
+
 ## Покупка в карточке и на странице товара (C66)
 
 `default_buy.php` оформлен штатной Bootstrap `card shadow-sm`: в `card-header` наличие и артикул выше цены, в `card-body` компактная цена (`fs-4`), скидка/таймер и покупка. На странице товара общий макет actions получает `stackActions=true`: количество компактно отдельной строкой, кнопка на всю ширину (Bootstrap primary); режим stepper сохраняет прежний виджет/обработчики. Без этого флага карточки каталога/таблица используют прежнюю горизонтальную раскладку. Собственного CSS нет. Класс цены — `dharmaProductPrice`.

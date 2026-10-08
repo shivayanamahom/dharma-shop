@@ -41,6 +41,8 @@ class HtmlView extends BaseHtmlView
     /** @var array<string, mixed> данные блока покупки (макет product-card-parts/actions): cartMode, inCartQty и др. */
     public array $buy = [];
     public string $stepperTemplate = '';
+    /** @var array<int, array{title: string, fields: array<string, object>}> Непустые группы видимых характеристик. */
+    public array $fieldGroups = [];
     /** Страница открыта через пункт меню этого товара (крошки уже содержат его). */
     private bool $menuOwnsPage = false;
 
@@ -107,6 +109,7 @@ class HtmlView extends BaseHtmlView
         $this->setLayout($layout);
 
         $this->prepareGallery();
+        $this->prepareFieldGroups();
         $this->prepareBreadcrumbs();
 
         // Корзина: в режиме каталога на страницу ничего не подключается.
@@ -125,6 +128,22 @@ class HtmlView extends BaseHtmlView
     {
         return (new Renderer())->renderHtml($html, ProductValues::build($this->item, new MoneyFormatter($this->params))
             + GlobalValues::build($this->params));
+    }
+
+    /** Группировка уже загруженных значений без запросов; порядок задаёт EntityFields. */
+    private function prepareFieldGroups(): void
+    {
+        $this->fieldGroups = [];
+
+        foreach ($this->item->fields ?? [] as $alias => $field) {
+            if (empty($field->show) || empty($field->values)) {
+                continue;
+            }
+
+            $id = (int) ($field->group_id ?? 0);
+            $this->fieldGroups[$id] ??= ['title' => (string) ($field->group_title ?? ''), 'fields' => []];
+            $this->fieldGroups[$id]['fields'][$alias] = $field;
+        }
     }
 
     /**

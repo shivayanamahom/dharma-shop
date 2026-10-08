@@ -44,6 +44,7 @@ $heading = $page?->h1 ?? (string) ($this->item->title ?? '');
             <?php echo $this->loadTemplate('buy'); ?>
         </div>
     </div>
+    <?php echo $this->loadTemplate('tabs'); ?>
     <?php echo $hooks->render('afterContent'); ?>
 </section>
 </div>
