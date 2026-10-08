@@ -9,6 +9,7 @@ use Dharma\Component\DharmaShop\Administrator\Shipping\Quote;
 use Dharma\Component\DharmaShop\Administrator\Shipping\TypeInterface;
 use Dharma\Plugin\DharmaShopShipping\Courier\Geo\Distance;
 use Dharma\Plugin\DharmaShopShipping\Courier\Geo\Geocoder;
+use Dharma\Plugin\DharmaShopShipping\Courier\Geo\Suggest;
 use Joomla\CMS\Application\ApplicationHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
@@ -27,6 +28,9 @@ final class CourierType implements TypeInterface
 {
     /** Подмена серверного геокодера для автоматических проверок (в работе всегда null): функция принимает ключ и возвращает объект с методом search(). */
     public static ?\Closure $geocoderFactory = null;
+
+    /** Подмена клиента подсказок для автоматических проверок (в работе всегда null). */
+    public static ?\Closure $suggestFactory = null;
 
     private const FIELD_TYPES = ['text', 'textarea', 'tel', 'select'];
 
@@ -319,7 +323,7 @@ final class CourierType implements TypeInterface
         $found = null;
 
         try {
-            foreach ($this->geocoder($key)->search($query, 3, $warehouses[0]['coords']) as $item) {
+            foreach ($this->geocoder($key)->search($query, 3, $this->center($warehouses)) as $item) {
                 if (in_array($item['precision'], Geocoder::GOOD_PRECISION, true)) {
                     $found = $item;
                     break;
@@ -368,37 +372,18 @@ final class CourierType implements TypeInterface
 
         $key = $this->apiKey($method);
 
-        if ($key === '' || !$this->warehousesOf($method)) {
+        if ($key === '') {
             return ['ok' => false, 'error' => Text::_('PLG_DHARMASHOPSHIPPING_COURIER_ERROR_NOT_CONFIGURED')];
         }
 
         $city = trim(strip_tags((string) ($input['city'] ?? '')));
 
         if ($action === 'suggest') {
-            if ((string) ($method->params['suggest'] ?? '1') !== '1') {
-                return ['ok' => true, 'items' => []];
-            }
-
-            $text = trim(strip_tags((string) ($input['text'] ?? '')));
-
-            if (mb_strlen($text) < 3 || mb_strlen($text) > 200) {
-                return ['ok' => true, 'items' => []];
-            }
-
-            try {
-                $items = [];
-
-                foreach ($this->geocoder($key)->search($city !== '' ? $city . ', ' . $text : $text, 6, $this->warehousesOf($method)[0]['coords']) as $item) {
-                    $items[] = ['label' => $item['text'], 'city' => $item['city'], 'street' => $item['street'], 'house' => $item['house']];
-                }
-
-                return ['ok' => true, 'items' => $items];
-            } catch (\RuntimeException) {
-                return ['ok' => false, 'error' => Text::_('PLG_DHARMASHOPSHIPPING_COURIER_ERROR_GEOCODER')];
-            }
+            // Подсказки работают при любом режиме цены (нужен только ключ); склады — лишь смещение результатов.
+            return $this->suggest($method, $key, $city, trim(strip_tags((string) ($input['text'] ?? ''))), (string) ($input['kind'] ?? 'street'), trim(strip_tags((string) ($input['street'] ?? ''))));
         }
 
-        if (!$this->isDistance($method)) {
+        if (!$this->isDistance($method) || !$this->warehousesOf($method)) {
             return ['ok' => false, 'error' => Text::_('PLG_DHARMASHOPSHIPPING_COURIER_ERROR_NOT_CONFIGURED')];
         }
 
@@ -434,6 +419,92 @@ final class CourierType implements TypeInterface
         ];
     }
 
+    /**
+     * Подсказки при вводе: города, улицы или дома. Сначала «Геосаджест» Яндекса (если сервис разрешён ключу), иначе — поиск геокодера.
+     *
+     * @return array<string, mixed>
+     */
+    private function suggest(Method $method, string $key, string $city, string $text, string $kind, string $street): array
+    {
+        if ((string) ($method->params['suggest'] ?? '1') !== '1' || $text === '' || mb_strlen($text) > 200) {
+            return ['ok' => true, 'items' => []];
+        }
+
+        $kind = in_array($kind, ['city', 'street', 'house'], true) ? $kind : 'street';
+        [$query, $types] = match ($kind) {
+            'city' => [$text, 'locality'],
+            'house' => [trim($city . ', ' . $street . ' ' . $text, ', '), 'house'],
+            default => [trim($city !== '' ? $city . ', ' . $text : $text), 'street,house'],
+        };
+
+        // Улица — от трёх символов, номер дома — от одного.
+        if (($kind === 'street' && mb_strlen($text) < 3) || ($kind === 'house' && $text === '')) {
+            return ['ok' => true, 'items' => []];
+        }
+
+        $near = $this->center($this->warehousesOf($method));
+
+        try {
+            $client = self::$suggestFactory !== null ? (self::$suggestFactory)($key) : new Suggest($key);
+            $items = $this->suggestItems($client->search($query, $types, 7, $near), $kind);
+
+            return ['ok' => true, 'items' => $items];
+        } catch (\RuntimeException) {
+            // Геосаджест ключу не разрешён или недоступен: подсказки по геокодеру.
+        }
+
+        try {
+            $items = [];
+
+            foreach ($this->geocoder($key)->search($query, 8, $near) as $item) {
+                // Для города — только населённые пункты, для улицы — результаты с улицей, для дома — с номером дома.
+                if (($kind === 'city' && $item['kind'] !== 'locality') || ($kind === 'street' && $item['street'] === '') || ($kind === 'house' && $item['house'] === '')) {
+                    continue;
+                }
+
+                $items[] = ['label' => $item['text'], 'city' => $item['city'], 'street' => $item['street'], 'house' => $item['house'], 'title' => $item['city'], 'subtitle' => ''];
+            }
+
+            return ['ok' => true, 'items' => $this->suggestItems($items, $kind)];
+        } catch (\RuntimeException) {
+            return ['ok' => false, 'error' => Text::_('PLG_DHARMASHOPSHIPPING_COURIER_ERROR_GEOCODER')];
+        }
+    }
+
+    /**
+     * Подсказки для поля: подпись списка и значения, которые подставляются в город/улицу/дом.
+     *
+     * @param   array<int, array<string, string>>  $found
+     *
+     * @return  array<int, array{label: string, city: string, street: string, house: string}>
+     */
+    private function suggestItems(array $found, string $kind): array
+    {
+        $items = [];
+        $seen = [];
+
+        foreach ($found as $row) {
+            $city = (string) ($row['city'] ?? '');
+
+            if ($kind === 'city') {
+                $name = $city !== '' ? $city : (string) ($row['title'] ?? '');
+                $subtitle = trim((string) ($row['subtitle'] ?? ''));
+
+                if ($name === '' || isset($seen[$name . '|' . $subtitle])) {
+                    continue;
+                }
+
+                $seen[$name . '|' . $subtitle] = true;
+                $items[] = ['label' => $name . ($subtitle !== '' ? ', ' . $subtitle : ''), 'city' => $name, 'street' => '', 'house' => ''];
+                continue;
+            }
+
+            $items[] = ['label' => (string) $row['label'], 'city' => $city, 'street' => (string) ($row['street'] ?? ''), 'house' => (string) ($row['house'] ?? '')];
+        }
+
+        return array_slice($items, 0, 7);
+    }
+
     // ---------------------------------------------------------------- вывод
 
     public function render(array $displayData): string
@@ -448,7 +519,7 @@ final class CourierType implements TypeInterface
         ];
         $displayData['fields'] = $this->extraFields($method);
         $displayData['distance_mode'] = $this->isDistance($method);
-        $displayData['suggest'] = (string) ($p['suggest'] ?? '1') === '1' && $this->apiKey($method) !== '' && $this->warehousesOf($method) !== [];
+        $displayData['suggest'] = (string) ($p['suggest'] ?? '1') === '1' && $this->apiKey($method) !== '';
         $displayData['map'] = $this->mapDisplay($method);
 
         if ($displayData['distance_mode'] || $displayData['suggest'] || $displayData['map']['mode'] !== 'none') {
@@ -533,6 +604,22 @@ final class CourierType implements TypeInterface
         $query = $db->createQuery()->select('COUNT(*)')->from($db->quoteName('#__dharmashop_warehouses'))->whereIn('id', $ids)->where('lat IS NOT NULL AND lon IS NOT NULL');
 
         return (int) $db->setQuery($query)->loadResult() > 0;
+    }
+
+    /**
+     * Центр области поиска: геокодер ищет адрес в окрестности складов (смещение порядка результатов, не ограничение).
+     *
+     * @param   array<int, array{coords: array{0: float, 1: float}}>  $warehouses
+     *
+     * @return  array{0: float, 1: float}|null
+     */
+    private function center(array $warehouses): ?array
+    {
+        if (!$warehouses) {
+            return null;
+        }
+
+        return [array_sum(array_map(static fn (array $w): float => (float) $w['coords'][0], $warehouses)) / count($warehouses), array_sum(array_map(static fn (array $w): float => (float) $w['coords'][1], $warehouses)) / count($warehouses)];
     }
 
     private function km(float $km): string

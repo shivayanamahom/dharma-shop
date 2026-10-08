@@ -1,6 +1,6 @@
 /**
  * Dharma Shop: способ «Курьер» на странице оформления.
- *  - подсказки адреса (серверный геокодер через `shipping.ajax`, поле «Улица» — [data-courier-street]); выбор подсказки заполняет улицу, дом и город;
+ *  - подсказки при вводе города, улицы и дома («Геосаджест» Яндекса, при отказе — геокодер, через `shipping.ajax`); выбор подсказки заполняет город, улицу и дом;
  *  - расчёт цены по адресу (расстояние от ближайшего склада): обновляет цену способа и итог, строки боковой панели и событием
  *    `dharmashop:shipping-quote` сообщает об этом оформлению;
  *  - карта (Яндекс Карты, JavaScript API 3): склады и точка доставки, ближайший склад выделяется, между ними линия.
@@ -175,13 +175,12 @@
         const city = root.querySelector('[data-courier-city]');
         const street = root.querySelector('[data-courier-street]');
         const house = root.querySelector('[data-courier-house]');
-        const list = root.querySelector('[data-courier-suggest]');
         const status = root.querySelector('[data-courier-status]');
         const priceNode = option?.querySelector('[data-shipping-option-price]');
         if (!radio || !street) return;
 
         const initial = { price: radio.dataset.priceText || '', total: radio.dataset.totalText || '' };
-        let timer = null;
+        const timers = {};
         let sequence = 0;
         let silent = false;
 
@@ -237,12 +236,22 @@
             }
         };
 
-        const hide = () => { if (list) { list.classList.add('d-none'); list.replaceChildren(); } };
+        // Подсказки у каждого из трёх полей: город, улица, дом. Выбор подставляет всё, что известно о выбранном адресе.
+        const fieldKinds = [['city', city], ['street', street], ['house', house]].filter(([, field]) => field);
+        const lists = new Map(fieldKinds.map(([kind]) => [kind, root.querySelector('[data-courier-suggest="' + kind + '"]')]));
+        const hide = (kind) => {
+            (kind ? [kind] : Array.from(lists.keys())).forEach((name) => { const list = lists.get(name); if (list) { list.classList.add('d-none'); list.replaceChildren(); } });
+        };
 
-        const choose = (item) => {
-            street.value = item.street || item.label;
-            if (house && item.house) house.value = item.house;
-            if (city && item.city && !city.value.trim()) city.value = item.city;
+        const choose = (kind, item) => {
+            if (kind === 'city') {
+                city.value = item.city || item.label;
+            } else {
+                if (item.street) street.value = item.street;
+                else if (kind === 'street') street.value = item.label;
+                if (house && item.house) house.value = item.house;
+                if (city && item.city && !city.value.trim()) city.value = item.city;
+            }
             hide();
             // Событие input нужно оформлению (боковая панель), но подсказки по нему повторно запрашивать не надо.
             silent = true;
@@ -251,14 +260,15 @@
             calculate();
         };
 
-        const suggest = async () => {
+        const suggest = async (kind, field) => {
+            const list = lists.get(kind);
             if (!list || root.dataset.suggest !== '1') return;
-            const text = street.value.trim();
-            if (text.length < 3) { hide(); return; }
+            const text = field.value.trim();
+            if (text.length < (kind === 'city' ? 2 : 3)) { hide(kind); return; }
             try {
-                const result = await post(root, 'suggest', { text, city: city ? city.value.trim() : '' });
-                if (street.value.trim() !== text) return;
-                hide();
+                const result = await post(root, 'suggest', { kind, text, city: city ? city.value.trim() : '', street: street ? street.value.trim() : '' });
+                if (field.value.trim() !== text) return;
+                hide(kind);
                 if (!result.ok || !Array.isArray(result.items) || !result.items.length) return;
                 result.items.forEach((item) => {
                     const button = document.createElement('button');
@@ -266,21 +276,23 @@
                     button.className = 'list-group-item list-group-item-action small text-start';
                     button.setAttribute('role', 'option');
                     button.textContent = item.label;
-                    button.addEventListener('mousedown', (event) => { event.preventDefault(); choose(item); });
+                    button.addEventListener('mousedown', (event) => { event.preventDefault(); choose(kind, item); });
                     list.append(button);
                 });
                 list.classList.remove('d-none');
-            } catch (error) { hide(); }
+            } catch (error) { hide(kind); }
         };
 
-        street.addEventListener('input', () => {
-            if (silent) return;
-            window.clearTimeout(timer);
-            timer = window.setTimeout(suggest, 350);
+        fieldKinds.forEach(([kind, field]) => {
+            field.addEventListener('input', () => {
+                if (silent) return;
+                window.clearTimeout(timers[kind]);
+                timers[kind] = window.setTimeout(() => suggest(kind, field), 350);
+            });
+            field.addEventListener('blur', () => window.setTimeout(() => hide(kind), 150));
+            field.addEventListener('keydown', (event) => { if (event.key === 'Escape') hide(kind); });
+            field.addEventListener('change', calculate);
         });
-        street.addEventListener('blur', () => window.setTimeout(hide, 150));
-        street.addEventListener('keydown', (event) => { if (event.key === 'Escape') hide(); });
-        [street, house, city].forEach((field) => field?.addEventListener('change', calculate));
         // Расчёт по уже введённому адресу — только когда способ выбран (скрытые способы не тратят запросы геокодера).
         radio.addEventListener('change', () => { if (radio.checked && street.value.trim()) calculate(); });
         if (street.value.trim() && radio.checked) calculate();

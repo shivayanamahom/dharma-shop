@@ -11,7 +11,7 @@
  *
  * Правила для всех типов доставки (docs/SHIPPING.md): радиокнопка `shipping_method` с data-shipping-radio, data-price-text, data-total-text;
  * поля покупателя — `shipping[<id>][<ключ>]` в блоке data-shipping-extra, у каждого data-summary-label. Город, улица и дом — всегда:
- * [data-courier-city], [data-courier-street] (подсказки в [data-courier-suggest]) и [data-courier-house]; контейнер [data-courier]
+ * [data-courier-city], [data-courier-street] и [data-courier-house] (у каждого свой список подсказок [data-courier-suggest=<ключ>]); контейнер [data-courier]
  * (data-ajax-url, data-method-id, data-suggest, data-distance), статус расчёта — [data-courier-status], карта — [data-courier-map].
  * Скрипт плагина обновляет цену способа (data-shipping-option-price, data-price-text/-total-text радио) и событием
  * dharmashop:shipping-quote сообщает об этом оформлению.
@@ -62,13 +62,11 @@ $priceText = $quote->pending ? $displayData['price_text'] : ($quote->free ? $dis
                 $fieldId = 'dharma-shipping-' . $id . '-' . $key;
                 $invalid = isset($errors[$key]);
                 ?>
-                <div class="<?php echo $esc($base['col']); ?><?php echo $key === 'street' ? ' position-relative' : ''; ?>">
+                <div class="<?php echo $esc($base['col']); ?> position-relative">
                     <label class="form-label small mb-1" for="<?php echo $esc($fieldId); ?>"><?php echo $esc($base['label']); ?> <span class="text-danger" aria-hidden="true">*</span></label>
                     <input class="form-control<?php echo $invalid ? ' is-invalid' : ''; ?>" type="text" id="<?php echo $esc($fieldId); ?>" name="shipping[<?php echo $id; ?>][<?php echo $esc($key); ?>]"
-                        value="<?php echo $esc((string) ($values[$key] ?? '')); ?>" maxlength="<?php echo $key === 'house' ? 20 : 255; ?>" data-summary-label="<?php echo $esc($base['label']); ?>" data-courier-<?php echo $esc($key); ?><?php echo $key === 'street' ? ' autocomplete="off"' : ''; ?>>
-                    <?php if ($key === 'street') : ?>
-                        <div class="list-group position-absolute start-0 end-0 mx-2 shadow-sm z-3 d-none" data-courier-suggest role="listbox" aria-label="<?php echo $esc(Text::_('PLG_DHARMASHOPSHIPPING_COURIER_SUGGEST_LABEL')); ?>"></div>
-                    <?php endif; ?>
+                        value="<?php echo $esc((string) ($values[$key] ?? '')); ?>" maxlength="<?php echo $key === 'house' ? 20 : 255; ?>" data-summary-label="<?php echo $esc($base['label']); ?>" data-courier-<?php echo $esc($key); ?> autocomplete="off">
+                    <div class="list-group position-absolute start-0 end-0 mx-2 shadow-sm z-3 d-none" data-courier-suggest="<?php echo $esc($key); ?>" role="listbox" aria-label="<?php echo $esc(Text::_('PLG_DHARMASHOPSHIPPING_COURIER_SUGGEST_LABEL')); ?>"></div>
                     <?php if ($invalid) : ?><div class="invalid-feedback d-block"><?php echo $esc(Text::_($errors[$key])); ?></div><?php endif; ?>
                 </div>
             <?php endforeach; ?>

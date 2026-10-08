@@ -27,7 +27,7 @@ final class Geocoder
     /**
      * @param   array{0: float, 1: float}|null  $near  [широта, долгота] центра предпочтительной области (склады): влияет на порядок, не ограничивает
      *
-     * @return  array<int, array{text: string, address: string, city: string, street: string, house: string, coords: array{0: float, 1: float}, precision: string}>
+     * @return  array<int, array{text: string, address: string, city: string, street: string, house: string, coords: array{0: float, 1: float}, precision: string, kind: string}>
      *
      * @throws  \RuntimeException  ошибка сервиса (ключ, лимит, сеть)
      */
@@ -121,6 +121,7 @@ final class Geocoder
                 'house' => $house,
                 'coords' => [(float) $pos[1], (float) $pos[0]],
                 'precision' => (string) ($meta['precision'] ?? 'other'),
+                'kind' => (string) ($meta['kind'] ?? ''),
             ];
         }
 
