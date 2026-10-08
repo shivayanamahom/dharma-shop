@@ -51,6 +51,8 @@ class Router extends RouterView
         $this->registerView(new RouterViewConfiguration('checkout'));
         $this->registerView(new RouterViewConfiguration('checkoutcomplete'));
         $this->registerView(new RouterViewConfiguration('order'));
+        // Личный кабинет: список заказов пользователя (пункт меню «Мои заказы»).
+        $this->registerView(new RouterViewConfiguration('orders'));
         parent::__construct($app, $menu);
         $this->attachRule(new MenuRules($this));
         $this->attachRule(new StandardRules($this));

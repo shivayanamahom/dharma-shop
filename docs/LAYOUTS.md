@@ -266,6 +266,10 @@ C74: результат вынесен в `site/tmpl/checkoutcomplete/default.ph
 - **Модуль:** `tmpl/default.php` (форма, `<template data-dharmashop-search-template="item|category|all|message">` для разметки подсказок — переопределяется в `templates/<шаблон>/html/mod_dharmashop_search/`), `media/mod_dharmashop_search/{js/search.js,css/search.css}`. Крючки: `dharmaSearchModule`, атрибуты `data-dharmashop-search`, `-search-input`, `-search-results`, `data-field` (title, image, sku, category, price, stock, count, label, message). Переменные CSS: `--dharma-search-results-min`, `--dharma-search-results-max-height`.
 - **Страница результатов** (`tmpl/search/default.php`, `default_items.php`): контейнер `dharmaSearch`, форма `dharmaSearchForm`; по умолчанию результаты выводит страница каталога как обычный отфильтрованный список (без отдельной строки «найдено»; пустой результат — «Ничего не найдено…»). Подробно — `docs/SEARCH.md`.
 
+## Мои заказы (личный кабинет, вид `orders`)
+
+Тип пункта меню «Мои заказы» (`tmpl/orders/default.xml`), страница `tmpl/orders/default.php`: контейнер `dharmaOrders`, список `dharmaOrdersList` / `dharmaOrdersItem` (номер и дата, статус цветным бейджем `text-bg-<цвет статуса>`, число позиций, сумма, ссылка на просмотр заказа `view=order`), `dharmaOrdersEmpty`. Показывает заказы вошедшего пользователя (`orders.user_id`), по 10 на страницу, новые первыми; гостю — приглашение войти. Рекомендуется доступ пункта меню «Registered»: гость тогда сразу попадает на форму входа. Пункт меню «Заказ» (`view=order`) нужен для красивого адреса заказа (`/zakaz?id=5`); оба пункта можно скрыть из навигации (`menu_show` = 0).
+
 ## Пункт меню «Товар» (C68)
 
 `tmpl/product/default.xml` — тип пункта «Один товар» (поле `modal_product`: окно выбора `view=products&layout=modal`, `tmpl/products/modal.php` в админке). Страница, открытая через такой пункт, берёт заголовок/описание/роботы из пункта меню, а крошки — только его цепочку.
