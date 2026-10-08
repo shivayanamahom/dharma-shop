@@ -20,8 +20,8 @@ final class ProductValues
 
         return [
             'product.title' => (string) $item->title,
-            'product.price_min' => $min !== null ? $money->format((string) $min) : '',
-            'product.price_max' => $max !== null ? $money->format((string) $max) : '',
+            'product.price_min' => $money->price($min !== null ? (string) $min : null),
+            'product.price_max' => $money->price($max !== null ? (string) $max : null),
             'product.unit' => (string) ($item->unit ?? ''),
             'product.stock' => !empty($item->in_stock) ? Text::_('COM_DHARMASHOP_PRODUCT_IN_STOCK') : Text::_('COM_DHARMASHOP_PRODUCT_OUT_OF_STOCK'),
             'product.introtext' => mb_substr($intro, 0, 200),

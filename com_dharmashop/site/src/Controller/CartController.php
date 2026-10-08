@@ -130,7 +130,7 @@ class CartController extends BaseController
         echo json_encode([
             'success' => $ok,
             'message' => $message,
-            'cart' => $summary + ['subtotalText' => $money->format((string) $summary['subtotal']), 'url' => $cartUrl, 'products' => (object) $products],
+            'cart' => $summary + ['subtotalText' => (int) $summary['count'] > 0 ? $money->price((string) $summary['subtotal']) : $money->format((string) $summary['subtotal']), 'url' => $cartUrl, 'products' => (object) $products],
         ], JSON_UNESCAPED_UNICODE);
         $this->app->close();
     }

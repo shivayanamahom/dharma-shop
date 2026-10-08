@@ -91,7 +91,7 @@
     const remove = event.target.closest('[data-dharmashop-minicart-remove]');
 
     if (step) {
-      const input = step.closest('.input-group').querySelector('[data-dharmashop-minicart-qty]');
+      const input = step.closest('[data-dharmashop-minicart-stepper]').querySelector('[data-dharmashop-minicart-qty]');
       const direction = step.dataset.dharmashopMinicartStep === 'up' ? 1 : -1;
       changeQty(input, (parseFloat(String(input.value).replace(',', '.')) || 0) + direction * (parseFloat(input.dataset.step) || 1));
     } else if (remove) {

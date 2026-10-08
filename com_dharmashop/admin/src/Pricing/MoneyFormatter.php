@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace Dharma\Component\DharmaShop\Administrator\Pricing;
 
+use Joomla\CMS\Language\Text;
 use Joomla\Registry\Registry;
 
 \defined('_JEXEC') or die;
@@ -38,5 +39,44 @@ final class MoneyFormatter
         return $this->params->get('currency_position', 'after') === 'before'
             ? $symbol . "\u{00A0}" . $number
             : $number . "\u{00A0}" . $symbol;
+    }
+
+    /** Включена ли замена нулевой цены текстом (настройки магазина, вкладка «Корзина»). */
+    public function replacesZero(): bool
+    {
+        return (int) $this->params->get('price_zero_replace', 0) === 1;
+    }
+
+    /** Текст вместо нулевой цены; если не задан — «Цена по запросу». */
+    public function zeroText(): string
+    {
+        $text = trim((string) $this->params->get('price_zero_text', ''));
+
+        return $text !== '' ? $text : Text::_('COM_DHARMASHOP_PRODUCT_PRICE_REQUEST');
+    }
+
+    /** Цена для витрины: нулевая сумма заменяется текстом, если замена включена; пустое значение остаётся пустым. */
+    public function price(null|float|string $amount): string
+    {
+        if ($amount === null || $amount === '') {
+            return '';
+        }
+
+        return $this->replacesZero() && (float) $amount === 0.0 ? $this->zeroText() : $this->format($amount);
+    }
+
+    /** Диапазон цен для витрины: «от — до»; если обе границы нулевые и замена включена, выводится только текст. */
+    public function range(null|float|string $min, null|float|string $max = null): string
+    {
+        if ($min === null || $min === '') {
+            return '';
+        }
+
+        if ($this->replacesZero() && (float) $min === 0.0) {
+            // Нулевая цена не участвует в диапазоне: «0 — 5000» превращается в «5000».
+            return $max !== null && $max !== '' && (float) $max > 0.0 ? $this->format($max) : $this->zeroText();
+        }
+
+        return $this->format($min) . ($max !== null && $max !== '' && (string) $min !== (string) $max ? ' — ' . $this->format($max) : '');
     }
 }

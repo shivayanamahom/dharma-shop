@@ -13,6 +13,10 @@
 		<folder>src</folder>
 		<folder>tmpl</folder>
 	</files>
+	<media folder="media" destination="mod_dharmashop_cart">
+		<folder>css</folder>
+		<filename>joomla.asset.json</filename>
+	</media>
 	<languages>
 		<language tag="ru-RU">language/ru-RU/mod_dharmashop_cart.ini</language>
 		<language tag="ru-RU">language/ru-RU/mod_dharmashop_cart.sys.ini</language>
@@ -35,6 +39,26 @@
 					<option value="1">JYES</option>
 				</field>
 				<field name="hide_empty_badge" type="radio" layout="joomla.form.field.radio.switcher" default="1" filter="integer" label="MOD_DHARMASHOP_CART_HIDE_EMPTY" description="MOD_DHARMASHOP_CART_HIDE_EMPTY_DESC">
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+				<field name="panel_styles" type="radio" layout="joomla.form.field.radio.switcher" default="1" filter="integer" label="MOD_DHARMASHOP_CART_PANEL_STYLES" description="MOD_DHARMASHOP_CART_PANEL_STYLES_DESC" showon="click_action:offcanvas">
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+				<field name="show_image" type="radio" layout="joomla.form.field.radio.switcher" default="1" filter="integer" label="MOD_DHARMASHOP_CART_SHOW_IMAGE" showon="click_action:offcanvas">
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+				<field name="show_category" type="radio" layout="joomla.form.field.radio.switcher" default="1" filter="integer" label="MOD_DHARMASHOP_CART_SHOW_CATEGORY" description="MOD_DHARMASHOP_CART_SHOW_CATEGORY_DESC" showon="click_action:offcanvas">
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+				<field name="show_sku" type="radio" layout="joomla.form.field.radio.switcher" default="0" filter="integer" label="MOD_DHARMASHOP_CART_SHOW_SKU" showon="click_action:offcanvas">
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+				<field name="show_unit_price" type="radio" layout="joomla.form.field.radio.switcher" default="1" filter="integer" label="MOD_DHARMASHOP_CART_SHOW_UNIT_PRICE" description="MOD_DHARMASHOP_CART_SHOW_UNIT_PRICE_DESC" showon="click_action:offcanvas">
 					<option value="0">JNO</option>
 					<option value="1">JYES</option>
 				</field>

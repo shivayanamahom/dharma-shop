@@ -1,0 +1,62 @@
+/* Dharma Shop: оформление боковой мини-корзины (подключается модулем; выключается настройкой «Подключать стили панели»).
+   Цвета берутся из переменных Bootstrap; свои значения можно задать в шаблоне сайта через --dharma-minicart-*. */
+.dharmaMiniCartPanel {
+  --dharma-minicart-bg: var(--bs-tertiary-bg, #f4f5f7);
+  --dharma-minicart-card: var(--bs-body-bg, #fff);
+  --dharma-minicart-accent: var(--bs-primary, #0d6efd);
+  --dharma-minicart-accent-text: var(--bs-white, #fff);
+  --dharma-minicart-muted: var(--bs-secondary-color, #6c757d);
+  --dharma-minicart-border: var(--bs-border-color, #dee2e6);
+  --dharma-minicart-radius: 0.375rem;
+  --bs-offcanvas-width: min(100vw, 26rem);
+  --bs-offcanvas-padding-x: 0;
+  --bs-offcanvas-padding-y: 0;
+}
+
+.dharmaMiniCartPanel .offcanvas-header { padding: 1rem 1.25rem; }
+.dharmaMiniCartPanel .offcanvas-title { display: flex; align-items: center; gap: 0.75rem; font-size: 1.125rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+.dharmaMiniCartPanel .offcanvas-body { background: var(--dharma-minicart-bg); padding: 0; }
+.dharmaMiniCartClose { margin-left: auto; display: inline-flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; padding: 0; border: 0; border-radius: 50%; background: var(--dharma-minicart-bg); color: inherit; }
+.dharmaMiniCartClose:hover, .dharmaMiniCartClose:focus-visible { background: var(--dharma-minicart-border); }
+
+.dharmaMiniCart { display: flex; flex-direction: column; min-height: 100%; }
+.dharmaMiniCartEmpty { padding: 1.5rem 1.25rem; }
+.dharmaMiniCartList { flex: 1 1 auto; margin: 0; padding: 0.75rem; list-style: none; }
+
+.dharmaMiniCartLine { position: relative; display: flex; gap: 0.875rem; margin-bottom: 0.75rem; padding: 1rem; border-radius: var(--dharma-minicart-radius); background: var(--dharma-minicart-card); box-shadow: 0 1px 3px rgb(0 0 0 / 0.08); }
+.dharmaMiniCartLineError { opacity: 0.85; }
+.dharmaMiniCartImage { flex: 0 0 auto; align-self: flex-start; display: block; width: 4.5rem; height: 4.5rem; border: 1px solid var(--dharma-minicart-border); border-radius: var(--dharma-minicart-radius); overflow: hidden; background: #fff; }
+.dharmaMiniCartImage img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.dharmaMiniCartInfo { flex: 1 1 auto; min-width: 0; padding-right: 1.5rem; }
+.dharmaMiniCartCategory { font-size: 0.8125rem; letter-spacing: 0.04em; color: var(--dharma-minicart-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dharmaMiniCartTitle { display: block; font-weight: 600; line-height: 1.3; color: inherit; text-decoration: none; overflow-wrap: anywhere; }
+.dharmaMiniCartTitle:hover { text-decoration: underline; }
+.dharmaMiniCartMeta { font-size: 0.8125rem; color: var(--dharma-minicart-muted); }
+.dharmaMiniCartMessage { margin-top: 0.25rem; font-size: 0.8125rem; color: var(--bs-danger, #dc3545); }
+
+.dharmaMiniCartBottom { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 0.5rem; margin-top: 0.625rem; }
+.dharmaMiniCartQty { display: inline-flex; align-items: center; border: 1px solid var(--dharma-minicart-border); border-radius: var(--dharma-minicart-radius); }
+.dharmaMiniCartQty button { width: 2.25rem; height: 2.25rem; padding: 0; border: 0; background: transparent; font-size: 1.125rem; line-height: 1; color: inherit; }
+.dharmaMiniCartQty button:hover, .dharmaMiniCartQty button:focus-visible { background: var(--dharma-minicart-bg); }
+.dharmaMiniCartQty input { width: 2.75rem; height: 2.25rem; padding: 0; border: 0; background: transparent; text-align: center; font-weight: 600; color: inherit; -moz-appearance: textfield; }
+.dharmaMiniCartQty input::-webkit-outer-spin-button, .dharmaMiniCartQty input::-webkit-inner-spin-button { margin: 0; -webkit-appearance: none; }
+
+.dharmaMiniCartPrices { display: flex; flex-direction: column; align-items: flex-end; margin-left: auto; text-align: right; line-height: 1.25; }
+.dharmaMiniCartUnitPrice { font-size: 0.8125rem; color: var(--dharma-minicart-muted); white-space: nowrap; }
+.dharmaMiniCartTotal { font-size: 1.0625rem; font-weight: 700; white-space: nowrap; }
+
+.dharmaMiniCartRemove { position: absolute; top: 0.625rem; right: 0.625rem; display: inline-flex; align-items: center; justify-content: center; width: 1.75rem; height: 1.75rem; padding: 0; border: 0; border-radius: 50%; background: var(--dharma-minicart-bg); color: inherit; }
+.dharmaMiniCartRemove:hover, .dharmaMiniCartRemove:focus-visible { background: var(--dharma-minicart-border); }
+
+.dharmaMiniCartFooter { position: sticky; bottom: 0; padding: 1rem 1.25rem 1.25rem; background: var(--dharma-minicart-card); box-shadow: 0 -1px 0 var(--dharma-minicart-border); }
+.dharmaMiniCartSum { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
+.dharmaMiniCartAdjustment { margin-bottom: 0.25rem; font-size: 0.875rem; color: var(--dharma-minicart-muted); }
+.dharmaMiniCartSumTotal { margin-bottom: 1rem; }
+.dharmaMiniCartSumTotal > :first-child { font-size: 0.875rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+.dharmaMiniCartSumTotal > :last-child { font-size: 1.25rem; font-weight: 700; text-align: right; }
+.dharmaMiniCartActions { display: flex; gap: 0.75rem; }
+.dharmaMiniCartActions .btn { flex: 1 1 0; padding: 0.75rem 1rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+.dharmaMiniCartGo { border-color: var(--dharma-minicart-accent); background: var(--dharma-minicart-accent); color: var(--dharma-minicart-accent-text); }
+.dharmaMiniCartGo:hover, .dharmaMiniCartGo:focus-visible { border-color: var(--dharma-minicart-accent); background: var(--dharma-minicart-accent); color: var(--dharma-minicart-accent-text); filter: brightness(0.92); }
+
+@media (prefers-reduced-motion: reduce) { .dharmaMiniCartPanel * { transition: none !important; } }

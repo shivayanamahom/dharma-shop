@@ -35,7 +35,7 @@ class Dispatcher extends AbstractModuleDispatcher
         $cart = $session->current();
         $summary = $cart !== null ? $services->cart()->summary($cart) : ['count' => 0, 'qty' => 0.0, 'subtotal' => 0.0];
         $data['count'] = (int) $summary['count'];
-        $data['total'] = $services->money()->format((string) $summary['subtotal']);
+        $data['total'] = $summary['count'] > 0 ? $services->money()->price((string) $summary['subtotal']) : $services->money()->format((string) $summary['subtotal']);
         $data['cartUrl'] = Route::_('index.php?option=com_dharmashop&view=cart', false);
         $data['offcanvas'] = $data['params']->get('click_action', 'link') === 'offcanvas';
         $data['openOnAdd'] = (int) $data['params']->get('open_on_add', 1) === 1;
@@ -46,8 +46,18 @@ class Dispatcher extends AbstractModuleDispatcher
             $wa = $document->getWebAssetManager();
             $wa->getRegistry()->addExtensionRegistryFile('com_dharmashop');
             $wa->useScript('bootstrap.offcanvas')->useScript('com_dharmashop.mini-cart');
+
+            // Оформление панели лежит в media модуля; его можно выключить и задать стили в шаблоне сайта.
+            if ((int) $data['params']->get('panel_styles', 1) === 1) {
+                $wa->getRegistry()->addExtensionRegistryFile('mod_dharmashop_cart');
+                $wa->useStyle('mod_dharmashop_cart.minicart');
+            }
             $document->addScriptOptions('com_dharmashop.minicart', [
-                'fragmentUrl' => Route::_('index.php?option=com_dharmashop&view=cart&layout=mini&format=raw', false),
+                'fragmentUrl' => Route::_('index.php?option=com_dharmashop&view=cart&layout=mini&format=raw'
+                    . '&mc_image=' . (int) $data['params']->get('show_image', 1)
+                    . '&mc_category=' . (int) $data['params']->get('show_category', 1)
+                    . '&mc_sku=' . (int) $data['params']->get('show_sku', 0)
+                    . '&mc_unit=' . (int) $data['params']->get('show_unit_price', 1), false),
                 'updateUrl' => Route::_('index.php?option=com_dharmashop&task=cart.update&format=json', false),
                 'removeUrl' => Route::_('index.php?option=com_dharmashop&task=cart.remove&format=json', false),
                 'error' => Text::_('COM_DHARMASHOP_CART_ERROR_GENERIC'),

@@ -1,0 +1,14 @@
+{
+	"$schema": "https://developer.joomla.org/schemas/json-schema/web_assets.json",
+	"name": "mod_dharmashop_cart",
+	"version": "0.1.0",
+	"description": "Dharma Shop: оформление боковой мини-корзины",
+	"license": "GPL-2.0-or-later",
+	"assets": [
+		{
+			"name": "mod_dharmashop_cart.minicart",
+			"type": "style",
+			"uri": "mod_dharmashop_cart/minicart.css"
+		}
+	]
+}

@@ -228,12 +228,13 @@ final class CartService
             ->select([
                 'ci.id', 'ci.variant_id', 'ci.qty', 'ci.params AS line_params', 'v.product_id', 'v.sku', 'v.title AS variant_title', 'v.state AS variant_state',
                 'v.stock_tracked', 'v.backorder', 'v.stock_total', 'v.in_stock',
-                'p.title', 'p.catid', 'p.cover', 'p.cover_alt', 'p.state AS product_state', 'p.unit', 'p.qty_min', 'p.qty_step', 'p.qty_max',
+                'p.title', 'p.catid', 'c.title AS category_title', 'p.cover', 'p.cover_alt', 'p.state AS product_state', 'p.unit', 'p.qty_min', 'p.qty_step', 'p.qty_max',
                 'vp.price', 'vp.price_final',
             ])
             ->from($this->db->quoteName('#__dharmashop_cart_items', 'ci'))
             ->join('INNER', $this->db->quoteName('#__dharmashop_variants', 'v') . ' ON v.id = ci.variant_id')
             ->join('INNER', $this->db->quoteName('#__dharmashop_products', 'p') . ' ON p.id = v.product_id')
+            ->join('LEFT', $this->db->quoteName('#__categories', 'c') . ' ON c.id = p.catid')
             ->join('LEFT', $this->db->quoteName('#__dharmashop_variant_prices', 'vp') . ' ON vp.variant_id = v.id AND vp.price_list_id = :pl')
             ->where('ci.cart_id = :c')->order('ci.id')
             ->bind(':c', $cart->id, ParameterType::INTEGER)->bind(':pl', $cart->price_list_id, ParameterType::INTEGER);

@@ -49,14 +49,14 @@ $hasErrors = (bool) array_filter($this->lines, static fn (object $line): bool =>
                                         </div>
                                     </div>
                                 </td>
-                                <td class="text-end text-nowrap d-none d-md-table-cell"><?php echo $line->unit_price !== null ? $this->escape($this->money->format((string) $line->unit_price)) : '—'; ?></td>
+                                <td class="text-end text-nowrap d-none d-md-table-cell"><?php echo $line->unit_price !== null ? $this->escape($this->money->price((string) $line->unit_price)) : '—'; ?></td>
                                 <td>
                                     <div class="input-group input-group-sm flex-nowrap w-auto">
                                         <input type="text" inputmode="decimal" size="4" class="form-control text-center" name="qty[<?php echo (int) $line->id; ?>]" value="<?php echo $this->escape(rtrim(rtrim(number_format($line->qty, 3, '.', ''), '0'), '.')); ?>" aria-label="<?php echo $this->escape(Text::_('COM_DHARMASHOP_QUANTITY')); ?>">
                                         <?php if ($line->unit) : ?><span class="input-group-text"><?php echo $this->escape($line->unit); ?></span><?php endif; ?>
                                     </div>
                                 </td>
-                                <td class="text-end text-nowrap fw-semibold"><?php echo $line->error === '' ? $this->escape($this->money->format((string) $line->total)) : '—'; ?></td>
+                                <td class="text-end text-nowrap fw-semibold"><?php echo $line->error === '' ? $this->escape($this->money->price((string) $line->total)) : '—'; ?></td>
                                 <td class="text-end">
                                     <button type="submit" class="btn btn-sm btn-outline-secondary" name="item_id" value="<?php echo (int) $line->id; ?>" formaction="<?php echo $this->escape($remove); ?>" title="<?php echo $this->escape(Text::_('COM_DHARMASHOP_CART_REMOVE')); ?>" aria-label="<?php echo $this->escape(Text::_('COM_DHARMASHOP_CART_REMOVE')); ?>">&times;</button>
                                 </td>
@@ -72,11 +72,11 @@ $hasErrors = (bool) array_filter($this->lines, static fn (object $line): bool =>
                     <a class="btn btn-link" href="<?php echo $this->escape($this->catalogUrl); ?>"><?php echo Text::_('COM_DHARMASHOP_CART_CONTINUE'); ?></a>
                 </div>
                 <dl class="mb-0 dharmaCartTotals">
-                    <div class="d-flex justify-content-between gap-5"><dt class="fw-normal"><?php echo Text::_('COM_DHARMASHOP_CART_SUBTOTAL'); ?></dt><dd class="mb-0"><?php echo $this->escape($this->money->format((string) $this->totals['subtotal'])); ?></dd></div>
+                    <div class="d-flex justify-content-between gap-5"><dt class="fw-normal"><?php echo Text::_('COM_DHARMASHOP_CART_SUBTOTAL'); ?></dt><dd class="mb-0"><?php echo $this->escape($this->totalText((float) $this->totals['subtotal'])); ?></dd></div>
                     <?php foreach ($this->totals['adjustments'] as $adjustment) : ?>
                         <div class="d-flex justify-content-between gap-5"><dt class="fw-normal"><?php echo $this->escape($adjustment['title']); ?></dt><dd class="mb-0"><?php echo $this->escape($this->money->format((string) $adjustment['amount'])); ?></dd></div>
                     <?php endforeach; ?>
-                    <div class="d-flex justify-content-between gap-5 h4 mt-2"><dt><?php echo Text::_('COM_DHARMASHOP_CART_TOTAL'); ?></dt><dd class="mb-0 fw-bold"><?php echo $this->escape($this->money->format((string) $this->totals['total'])); ?></dd></div>
+                    <div class="d-flex justify-content-between gap-5 h4 mt-2"><dt><?php echo Text::_('COM_DHARMASHOP_CART_TOTAL'); ?></dt><dd class="mb-0 fw-bold"><?php echo $this->escape($this->totalText((float) $this->totals['total'])); ?></dd></div>
                     <?php if ($hasErrors) : ?><div class="small text-danger"><?php echo Text::_('COM_DHARMASHOP_CART_HAS_ERRORS'); ?></div><?php endif; ?>
                 </dl>
             </div>

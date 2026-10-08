@@ -43,9 +43,7 @@ class HtmlView extends BaseHtmlView
         $this->item = $this->getModel()->getItem();
         $this->params = ComponentHelper::getParams('com_dharmashop');
         $money = new MoneyFormatter($this->params);
-        $min = $this->item->price_min !== null ? $money->format((string) $this->item->price_min) : '';
-        $max = $this->item->price_max !== null ? $money->format((string) $this->item->price_max) : '';
-        $this->price = $min . ($max !== '' && $max !== $min ? ' — ' . $max : '');
+        $this->price = $money->range($this->item->price_min, $this->item->price_max);
         $this->showDiscount = (int) $this->params->get('product_page_show_discount', 1) === 1 && $this->item->base_price !== null;
         $this->showSaleCountdown = (int) $this->params->get('product_page_sale_countdown', 1) === 1
             && !empty($this->item->sale_end_timestamp);

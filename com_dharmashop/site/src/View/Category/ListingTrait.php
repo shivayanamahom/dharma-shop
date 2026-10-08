@@ -309,11 +309,7 @@ trait ListingTrait
 
     private function formatRange(?string $min, ?string $max): string
     {
-        if ($min === null) {
-            return '';
-        }
-
-        return $this->money->format($min) . ($max !== null && $min !== $max ? ' — ' . $this->money->format($max) : '');
+        return $this->money->range($min, $max);
     }
 
     private function existingLayout(string $name, string $directory, string $fallback = 'default'): string

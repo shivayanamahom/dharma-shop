@@ -21,4 +21,13 @@ if [ -d "$S/files_dharmashop_layouts/layouts" ]; then
   rsync -a --exclude .DS_Store "$S/files_dharmashop_layouts/layouts/" "$T/layouts/components/dharmashop/"
 fi
 [ -d "$S/com_dharmashop/media" ] && $R "$S/com_dharmashop/media/" "$T/media/com_dharmashop/" || true
+# Модуль корзины: код, media и языковые файлы (как при установке пакета).
+M="$S/mod_dharmashop_cart"
+if [ -d "$M" ]; then
+  mkdir -p "$T/modules/mod_dharmashop_cart" "$T/media/mod_dharmashop_cart"
+  for d in services src tmpl; do $R "$M/$d/" "$T/modules/mod_dharmashop_cart/$d/"; done
+  cp "$M/mod_dharmashop_cart.xml" "$T/modules/mod_dharmashop_cart/"
+  [ -d "$M/media" ] && $R "$M/media/" "$T/media/mod_dharmashop_cart/" || true
+  for l in ru-RU en-GB; do cp "$M/language/$l/"*.ini "$T/language/$l/"; done
+fi
 echo synced
