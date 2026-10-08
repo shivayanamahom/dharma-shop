@@ -78,20 +78,18 @@
                 + (selected ? 'border-primary shadow' : 'shadow-sm');
             const dot = svg(10, (s) => s.append(shape('circle', { cx: 12, cy: 12, r: 11, fill })));
             dot.classList.add('flex-shrink-0');
+            // Размеры шрифта задаются явно в пикселях (а не через em/rem): карта и страница могут иметь крупный базовый шрифт.
+            label.style.fontSize = '13px';
             const text = document.createElement('div');
             const name = document.createElement('div');
-            name.className = 'small fw-semibold';
+            name.className = 'fw-semibold';
             name.textContent = point.name;
             text.append(name);
             if (point.address && (addressMode === 'all' || (addressMode === 'active' && selected))) {
-                // Адрес совсем мелким шрифтом: три вложенных размера small (класс Bootstrap, тег small, тег small) — около 0,67 от основного.
                 const address = document.createElement('div');
-                address.className = 'small text-body-secondary mt-1';
-                const inner = document.createElement('small');
-                const innermost = document.createElement('small');
-                innermost.textContent = point.address;
-                inner.append(innermost);
-                address.append(inner);
+                address.className = 'text-body-secondary mt-1';
+                address.style.fontSize = '10px';
+                address.textContent = point.address;
                 text.append(address);
             }
             label.append(dot, text);

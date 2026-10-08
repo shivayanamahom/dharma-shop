@@ -7,7 +7,7 @@
 	"assets": [
 		{
 			"name": "plg_dharmashopshipping_pickup.map",
-			"version": "581130c8d888",
+			"version": "1556c84f29c2",
 			"type": "script",
 			"uri": "plg_dharmashopshipping_pickup/pickup-map.js",
 			"attributes": { "defer": true }
