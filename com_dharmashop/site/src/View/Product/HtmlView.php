@@ -77,6 +77,7 @@ class HtmlView extends BaseHtmlView
         $this->setLayout($layout);
 
         $this->prepareGallery();
+        $this->prepareBreadcrumbs();
 
         // Корзина: в режиме каталога на страницу ничего не подключается.
         if ((int) $this->params->get('catalog_mode', 0) !== 1) {
@@ -89,6 +90,25 @@ class HtmlView extends BaseHtmlView
         }
 
         parent::display($tpl);
+    }
+
+    /**
+     * Хлебные крошки: цепочка категорий товара (ссылки на их страницы по тому же правилу, что адреса категорий) и название товара.
+     * Начало цепочки (главная, пункт меню) добавляет Joomla по активному пункту меню.
+     */
+    private function prepareBreadcrumbs(): void
+    {
+        $menu = Factory::getApplication()->getMenu();
+        $catalog = $menu->getItems('link', 'index.php?option=com_dharmashop&view=categories&id=0')
+            ?: $menu->getItems('link', 'index.php?option=com_dharmashop&view=categories&id=1');
+        $view = $catalog ? 'categories' : 'category';
+        $pathway = Factory::getApplication()->getPathway();
+
+        foreach ($this->item->category_path as $category) {
+            $pathway->addItem($category->title, Route::_('index.php?option=com_dharmashop&view=' . $view . '&id=' . $category->id, false));
+        }
+
+        $pathway->addItem($this->seo->breadcrumb !== '' ? $this->seo->breadcrumb : (string) $this->item->title, '');
     }
 
     /**

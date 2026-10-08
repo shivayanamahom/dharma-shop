@@ -70,6 +70,20 @@ class ProductModel extends BaseDatabaseModel
             $item->sale_end_timestamp = SaleCountdown::endTimestamp($price->discount_start, $price->discount_end, true);
         }
 
+        // Цепочка категорий от верхней до основной категории товара (для хлебных крошек): id, название для крошки.
+        $item->category_path = [];
+
+        foreach ($db->setQuery(
+            $db->createQuery()->select($db->quoteName(['a.id', 'a.title', 'a.params']))
+                ->from($db->quoteName('#__categories', 'a'))
+                ->join('INNER', $db->quoteName('#__categories', 'leaf') . ' ON leaf.id = :leaf AND a.lft <= leaf.lft AND a.rgt >= leaf.rgt')
+                ->where('a.extension = ' . $db->quote('com_dharmashop'))->where('a.level >= 1')->order('a.lft')
+                ->bind(':leaf', $item->catid, ParameterType::INTEGER)
+        )->loadObjectList() as $row) {
+            $params = new Registry($row->params);
+            $item->category_path[] = (object) ['id' => (int) $row->id, 'title' => (string) ($params->get('breadcrumb_title') ?: $row->title)];
+        }
+
         // Галерея: изображения товара по порядку (без вариантов); при их отсутствии — обложка.
         $item->gallery = [];
 
