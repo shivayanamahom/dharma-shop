@@ -30,7 +30,8 @@
     let active = -1;
 
     const clone = (name) => templates[name] && templates[name].content.firstElementChild.cloneNode(true);
-    const field = (node, name) => node.querySelector('[data-field="' + name + '"]');
+    // Элемент значения: внутри шаблона или сам корень шаблона (например, ссылка «Все результаты»).
+    const field = (node, name) => (node.matches('[data-field="' + name + '"]') ? node : node.querySelector('[data-field="' + name + '"]'));
     // Значение в элемент: пустое — элемент убирается (нет артикула, цены и т. п.).
     const fill = (node, name, value) => {
       const target = field(node, name);
@@ -64,13 +65,14 @@
       input.setAttribute('aria-expanded', state ? 'true' : 'false');
       if (!state) active = -1;
     };
+    // index === null — снять выбор; иначе номер подсказки (по кругу).
     const setActive = (index) => {
       const items = options();
       items.forEach((item) => {
         item.classList.remove('active');
         item.removeAttribute('aria-selected');
       });
-      active = items.length ? (index + items.length) % items.length : -1;
+      active = items.length && index !== null ? (index + items.length) % items.length : -1;
       if (active >= 0) {
         items[active].classList.add('active');
         items[active].setAttribute('aria-selected', 'true');
@@ -142,7 +144,7 @@
 
       box.replaceChildren(...nodes);
       open(true);
-      setActive(-1);
+      setActive(null);
     };
 
     const search = () => {
@@ -185,7 +187,7 @@
         setActive(active + 1);
       } else if (event.key === 'ArrowUp') {
         event.preventDefault();
-        setActive(active - 1);
+        setActive(active < 0 ? -1 : active - 1);
       } else if (event.key === 'Enter' && active >= 0) {
         event.preventDefault();
         options()[active].click();
