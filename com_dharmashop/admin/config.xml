@@ -259,6 +259,10 @@
 		</field>
 	</fieldset>
 
+	<fieldset name="extensions" label="COM_DHARMASHOP_CONFIG_EXTENSIONS" description="COM_DHARMASHOP_CONFIG_EXTENSIONS_DESC" addfieldprefix="Dharma\Component\DharmaShop\Administrator\Field">
+		<field name="libraries" type="libraries" filter="unset" />
+	</fieldset>
+
 	<fieldset name="permissions" label="JCONFIG_PERMISSIONS_LABEL" description="JCONFIG_PERMISSIONS_DESC">
 		<field name="rules" type="rules" label="JCONFIG_PERMISSIONS_LABEL" validate="rules" filter="rules" component="com_dharmashop" section="component" />
 	</fieldset>
