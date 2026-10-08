@@ -1,23 +1,62 @@
-/** Контактная форма checkout: маски телефона и защита кнопки от повторного нажатия. */
+/** Checkout: маски телефона, состояние ожидания POST и защита от повторного нажатия. */
 (() => {
     'use strict';
 
     const form = document.querySelector('[data-dharmashop-checkout-form]');
     if (!form) return;
 
+    const options = window.Joomla?.getOptions('com_dharmashop.checkout', {}) || {};
+    const processing = document.querySelector('[data-checkout-processing]');
+    const slowNotice = processing?.querySelector('[data-checkout-processing-slow]');
+    const buttons = Array.from(form.querySelectorAll('[data-checkout-submit]'), (button) => ({
+        button, contents: button.innerHTML, disabled: button.disabled,
+    }));
     let sending = false;
+    let modal = null;
+    let slowTimer = null;
+
+    const reset = () => {
+        sending = false;
+        window.clearTimeout(slowTimer);
+        slowTimer = null;
+        form.removeAttribute('aria-busy');
+        slowNotice?.classList.add('d-none');
+        modal?.hide();
+        buttons.forEach(({ button, contents, disabled }) => {
+            button.disabled = disabled;
+            button.removeAttribute('aria-busy');
+            button.innerHTML = contents;
+        });
+    };
+
     form.addEventListener('submit', (event) => {
+        if (event.defaultPrevented) return;
         if (sending) { event.preventDefault(); return; }
         if (!form.checkValidity()) { event.preventDefault(); form.reportValidity(); return; }
         sending = true;
-        form.querySelectorAll('[data-checkout-submit]').forEach((button) => { button.disabled = true; button.setAttribute('aria-busy', 'true'); });
+        form.setAttribute('aria-busy', 'true');
+        buttons.forEach(({ button }) => {
+            const spinner = document.createElement('span');
+            spinner.className = 'spinner-border spinner-border-sm me-2';
+            spinner.setAttribute('aria-hidden', 'true');
+            button.replaceChildren(spinner, document.createTextNode(options.processing || button.textContent));
+            button.disabled = true;
+            button.setAttribute('aria-busy', 'true');
+        });
+        // Bootstrap owns the backdrop, focus trap and scroll lock. Fields stay enabled for the POST.
+        if (processing && window.bootstrap?.Modal) {
+            modal = window.bootstrap.Modal.getOrCreateInstance(processing, { backdrop: 'static', keyboard: false });
+            modal.show();
+        }
+        slowTimer = window.setTimeout(() => {
+            if (sending) slowNotice?.classList.remove('d-none');
+        }, 15000);
+        // Another submit listener may cancel navigation after this listener has run.
+        queueMicrotask(() => { if (event.defaultPrevented) reset(); });
     });
-    window.addEventListener('pageshow', () => {
-        sending = false;
-        form.querySelectorAll('[data-checkout-submit]').forEach((button) => { button.disabled = false; button.removeAttribute('aria-busy'); });
-    });
+    // Restores the form and Bootstrap backdrop when returning via the browser's back/forward cache.
+    window.addEventListener('pageshow', reset);
 
-    const options = window.Joomla?.getOptions('com_dharmashop.checkout', {}) || {};
     form.querySelectorAll('[data-dharmashop-phone-mask]').forEach((input) => {
         const mask = input.dataset.dharmashopPhoneMask;
         const capacity = (mask.match(/#/g) || []).length;

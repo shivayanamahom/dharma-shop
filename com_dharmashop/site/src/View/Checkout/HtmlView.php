@@ -130,6 +130,7 @@ class HtmlView extends BaseHtmlView
             $wa->useScript('com_dharmashop.checkout');
             $document->addScriptOptions('com_dharmashop.checkout', [
                 'phoneInvalid' => Text::_('COM_DHARMASHOP_CHECKOUT_PHONE_INVALID'),
+                'processing' => Text::_('COM_DHARMASHOP_CHECKOUT_PROCESSING'),
             ]);
         }
 

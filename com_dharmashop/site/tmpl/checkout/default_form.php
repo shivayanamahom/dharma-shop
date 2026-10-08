@@ -20,3 +20,4 @@ use Joomla\CMS\Router\Route;
     <input type="hidden" name="task" value="checkout.submit">
     <input type="hidden" name="checkout_key" value="<?php echo $this->escape($this->submitKey); ?>">
 </form>
+<?php echo $this->loadTemplate('processing'); ?>
