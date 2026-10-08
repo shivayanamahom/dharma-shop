@@ -63,6 +63,17 @@ final class ProductSearch
             $binds[':dsft2'] = $boolean;
             $score = 'MATCH(title_norm, body) AGAINST(:dsft1 IN BOOLEAN MODE)';
             $where = 'MATCH(title_norm, body) AGAINST(:dsft2 IN BOOLEAN MODE)';
+
+            // Совпадение в названии важнее совпадения в описании: +100 за каждое слово запроса в названии (по началу слова) и +50, если
+            // название начинается с запроса целиком. Считается только для уже найденных индексом строк.
+            foreach ($long as $index => $term) {
+                $binds[':dstw' . $index . 'a'] = $term . '%';
+                $binds[':dstw' . $index . 'b'] = '% ' . $term . '%';
+                $score .= ' + IF(title_norm LIKE :dstw' . $index . 'a OR title_norm LIKE :dstw' . $index . 'b, 100, 0)';
+            }
+
+            $binds[':dstfull'] = implode(' ', $terms) . '%';
+            $score .= ' + IF(title_norm LIKE :dstfull, 50, 0)';
         } else {
             $score = '1';
             $where = '1 = 1';
