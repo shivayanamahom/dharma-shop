@@ -19,7 +19,7 @@ $hideEmpty = (int) $params->get('hide_empty_badge', 1) === 1;
         <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true" focusable="false"><path d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .491.592l-1.5 8A.5.5 0 0 1 13 12H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5M3.102 4l1.313 7h8.17l1.313-7zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4m7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4m-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2m7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2"/></svg>
         <span class="position-absolute top-0 start-100 translate-middle badge text-bg-primary rounded-pill<?php echo $hideEmpty && $count === 0 ? ' d-none' : ''; ?>" data-dharmashop-cart-count<?php echo $hideEmpty ? ' data-hide-empty' : ''; ?>><?php echo (int) $count; ?></span>
     </span>
-    <?php if ($showTotal) : ?><span class="d-none d-md-inline small ms-3" data-dharmashop-cart-total><?php echo $escape($total); ?></span><?php endif; ?>
+    <?php if ($showTotal) : ?><span class="d-none d-md-inline small ms-1" data-dharmashop-cart-total><?php echo $escape($total); ?></span><?php endif; ?>
     <span class="visually-hidden"><?php echo $escape(Text::_('MOD_DHARMASHOP_CART_TITLE')); ?></span>
 </a>
 <?php if ($offcanvas) : ?>
