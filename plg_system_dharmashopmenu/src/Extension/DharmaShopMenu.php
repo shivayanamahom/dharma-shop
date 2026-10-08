@@ -84,7 +84,7 @@ final class DharmaShopMenu extends CMSPlugin implements SubscriberInterface
         $this->getApplication()->getLanguage()->load(self::ELEMENT . '.sys', JPATH_ADMINISTRATOR);
 
         $root = new AdministratorMenuItem([
-            'title' => 'COM_DHARMASHOP', 'alias' => 'dharmashop-root', 'type' => 'heading', 'link' => '', 'class' => 'class:shopping-cart',
+            'title' => 'COM_DHARMASHOP', 'alias' => 'dharmashop-root', 'type' => 'heading', 'link' => '', 'class' => 'class:cart',
             'element' => self::ELEMENT, 'scope' => 'default',
         ]);
 
