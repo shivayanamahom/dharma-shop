@@ -104,19 +104,16 @@ final class PickupType implements TypeInterface
             }
 
             $map = in_array((string) ($row['map'] ?? ''), self::MAPS, true) ? (string) $row['map'] : 'none';
-            $lat = '';
-            $lon = '';
+            $coords = '';
 
             if ($map !== 'none') {
-                $latRaw = str_replace(',', '.', trim((string) ($row['lat'] ?? '')));
-                $lonRaw = str_replace(',', '.', trim((string) ($row['lon'] ?? '')));
+                $parsed = self::parseCoords((string) ($row['coords'] ?? ''));
 
-                if (!is_numeric($latRaw) || !is_numeric($lonRaw) || abs((float) $latRaw) > 90 || abs((float) $lonRaw) > 180) {
+                if ($parsed === null) {
                     throw new \DomainException('PLG_DHARMASHOPSHIPPING_PICKUP_ERROR_COORDS');
                 }
 
-                $lat = rtrim(rtrim(number_format((float) $latRaw, 6, '.', ''), '0'), '.');
-                $lon = rtrim(rtrim(number_format((float) $lonRaw, 6, '.', ''), '0'), '.');
+                $coords = $parsed[0] . ', ' . $parsed[1];
             }
 
             $key = substr(str_replace('-', '_', ApplicationHelper::stringURLSafe($name)) ?: 'point', 0, 40);
@@ -131,11 +128,35 @@ final class PickupType implements TypeInterface
             $points[] = [
                 'key' => $key, 'name' => $name, 'address' => $address, 'phone' => $text('phone', 100), 'email' => $email,
                 'hours' => $text('hours', 500), 'info' => $text('info', 1000), 'term' => $text('term', 100),
-                'map' => $map, 'lat' => $lat, 'lon' => $lon, 'zoom' => (string) min(19, max(1, (int) ($row['zoom'] ?? 16))),
+                'map' => $map, 'coords' => $coords, 'zoom' => (string) min(19, max(1, (int) ($row['zoom'] ?? 16))),
             ];
         }
 
         return $points;
+    }
+
+    /**
+     * Координаты в том виде, как их даёт Яндекс Карты: «[55.753994, 37.622093]» (широта, долгота); принимаются также без скобок,
+     * через запятую, точку с запятой или пробел и с десятичной запятой. Возвращает [широта, долгота] строками или null.
+     *
+     * @return  array{0: string, 1: string}|null
+     */
+    public static function parseCoords(string $value): ?array
+    {
+        $value = trim(str_replace(['[', ']', '(', ')'], ' ', $value));
+
+        if (!preg_match('/^(-?\d+(?:[.,]\d+)?)\s*[;,\s]\s*(-?\d+(?:[.,]\d+)?)$/D', $value, $m)) {
+            return null;
+        }
+
+        $lat = (float) str_replace(',', '.', $m[1]);
+        $lon = (float) str_replace(',', '.', $m[2]);
+
+        if (abs($lat) > 90 || abs($lon) > 180) {
+            return null;
+        }
+
+        return [rtrim(rtrim(number_format($lat, 6, '.', ''), '0'), '.'), rtrim(rtrim(number_format($lon, 6, '.', ''), '0'), '.')];
     }
 
     /** @return array<int, array<string, string>> */
@@ -232,8 +253,13 @@ final class PickupType implements TypeInterface
     private function mapUrl(array $point): string
     {
         $map = (string) ($point['map'] ?? 'none');
-        $lat = (float) ($point['lat'] ?? 0);
-        $lon = (float) ($point['lon'] ?? 0);
+        $parsed = self::parseCoords((string) ($point['coords'] ?? ''));
+
+        if ($parsed === null) {
+            return '';
+        }
+
+        [$lat, $lon] = [(float) $parsed[0], (float) $parsed[1]];
         $zoom = (int) ($point['zoom'] ?? 16);
 
         if ($map === 'yandex') {

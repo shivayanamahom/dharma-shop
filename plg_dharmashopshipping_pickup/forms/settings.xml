@@ -15,8 +15,7 @@
                 <option value="yandex">PLG_DHARMASHOPSHIPPING_PICKUP_MAP_YANDEX</option>
                 <option value="osm">PLG_DHARMASHOPSHIPPING_PICKUP_MAP_OSM</option>
             </field>
-            <field name="lat" type="text" label="PLG_DHARMASHOPSHIPPING_PICKUP_LAT" description="PLG_DHARMASHOPSHIPPING_PICKUP_COORD_DESC" showon="map:yandex[OR]map:osm" hint="56.838011" filter="string" />
-            <field name="lon" type="text" label="PLG_DHARMASHOPSHIPPING_PICKUP_LON" description="PLG_DHARMASHOPSHIPPING_PICKUP_COORD_DESC" showon="map:yandex[OR]map:osm" hint="60.597474" filter="string" />
+            <field name="coords" type="text" label="PLG_DHARMASHOPSHIPPING_PICKUP_COORDS" description="PLG_DHARMASHOPSHIPPING_PICKUP_COORDS_DESC" showon="map:yandex[OR]map:osm" hint="[55.753994, 37.622093]" maxlength="60" filter="string" />
             <field name="zoom" type="number" label="PLG_DHARMASHOPSHIPPING_PICKUP_ZOOM" showon="map:yandex[OR]map:osm" default="16" min="1" max="19" filter="integer" />
         </form>
     </field>
