@@ -5,7 +5,7 @@
 use Joomla\CMS\Language\Text;
 ?>
 <?php if ($this->contacts) : ?>
-<section class="card shadow-sm mb-4 dharmaCheckoutContacts" aria-labelledby="dharma-checkout-contacts-title">
+<section class="card shadow-sm dharmaCheckoutContacts" aria-labelledby="dharma-checkout-contacts-title">
     <div class="card-header bg-body-tertiary p-3">
         <h2 id="dharma-checkout-contacts-title" class="fs-6 fw-semibold mb-0 d-flex align-items-center gap-2">
             <span class="badge bg-primary text-white rounded-circle" aria-hidden="true">1</span>

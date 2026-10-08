@@ -7,7 +7,7 @@ use Joomla\CMS\Router\Route;
 ?>
 <form class="dharmaCheckoutForm" action="<?php echo $this->escape(Route::_('index.php?option=com_dharmashop&view=checkout', false)); ?>" method="post" data-dharmashop-checkout-form>
     <div class="row g-4 align-items-start">
-        <div class="col-lg-8 dharmaCheckoutMain">
+        <div class="col-lg-8 d-flex flex-column gap-4 dharmaCheckoutMain">
             <?php echo $this->loadTemplate('contacts'); ?>
             <?php echo $this->loadTemplate('shipping'); ?>
             <?php // Оплата будет подключаться здесь отдельным макетом. ?>
