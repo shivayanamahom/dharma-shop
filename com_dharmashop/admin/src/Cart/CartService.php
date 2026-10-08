@@ -329,6 +329,29 @@ final class CartService
         return count($ids);
     }
 
+    /**
+     * Количество, до которого можно уменьшить позицию, не хватающую остатка: наибольшее допустимое (минимум + целое число шагов) не больше
+     * доступного. null — уменьшить нельзя (позиция недоступна по другой причине или остатка не хватает даже на минимум).
+     */
+    public static function reducedQty(object $line): ?float
+    {
+        if ((string) $line->error !== 'COM_DHARMASHOP_CART_ERROR_STOCK' || (float) $line->stock_total <= 0) {
+            return null;
+        }
+
+        $step = (float) ($line->qty_step ?: 1);
+        $min = (float) ($line->qty_min ?: $step);
+        $available = (float) $line->stock_total;
+
+        if ($available < $min - 1e-9) {
+            return null;
+        }
+
+        $qty = $min + floor(($available - $min) / $step + 1e-9) * $step;
+
+        return $qty >= $min - 1e-9 && $qty < (float) $line->qty - 1e-9 ? round($qty, 3) : null;
+    }
+
     /** Удаляет просроченные корзины (задача очистки). */
     public function purgeExpired(): int
     {

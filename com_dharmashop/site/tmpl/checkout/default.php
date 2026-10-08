@@ -16,6 +16,10 @@ use Joomla\CMS\Language\Text;
             <div class="card shadow-sm"><div class="card-body p-4"><p><?php echo Text::_('COM_DHARMASHOP_CHECKOUT_LOGIN_REQUIRED'); ?></p><a class="btn btn-primary bg-primary text-white" href="<?php echo $this->escape($this->loginUrl); ?>"><?php echo Text::_('COM_DHARMASHOP_CHECKOUT_LOGIN'); ?></a></div></div>
         <?php else : ?>
             <?php echo $this->loadTemplate('form'); ?>
+            <form id="dharma-cart-fix" action="<?php echo $this->escape(\Joomla\CMS\Router\Route::_('index.php?option=com_dharmashop&task=cart.removeUnavailable', false)); ?>" method="post" hidden>
+                <input type="hidden" name="return" value="checkout">
+                <?php echo \Joomla\CMS\HTML\HTMLHelper::_('form.token'); ?>
+            </form>
         <?php endif; ?>
     </section>
 </div>

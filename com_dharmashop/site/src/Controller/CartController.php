@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Dharma\Component\DharmaShop\Site\Controller;
 
+use Dharma\Component\DharmaShop\Administrator\Cart\CartService;
 use Dharma\Component\DharmaShop\Administrator\Pricing\MoneyFormatter;
 use Dharma\Component\DharmaShop\Site\Support\CartSession;
 use Joomla\CMS\Component\ComponentHelper;
@@ -66,6 +67,39 @@ class CartController extends BaseController
         });
     }
 
+    /**
+     * Исправляет корзину с недоступными позициями: `mode=remove` — удаляет их, `mode=reduce` — уменьшает позиции, не хватающие остатка,
+     * до наличия (остальные недоступные удаляются). `return=checkout` возвращает на оформление, иначе — на страницу корзины.
+     */
+    public function removeUnavailable(): void
+    {
+        $this->run(function (CartSession $session): array {
+            $cart = $session->current();
+
+            if ($cart === null) {
+                return ['ok' => false, 'error' => 'COM_DHARMASHOP_CART_ERROR_LINE'];
+            }
+
+            $service = $session->service();
+            $reduce = $this->input->post->getCmd('mode') === 'reduce';
+            $changed = 0;
+
+            foreach ($service->lines($cart) as $line) {
+                if ($line->error === '') {
+                    continue;
+                }
+
+                $qty = $reduce ? CartService::reducedQty($line) : null;
+                $done = $qty !== null ? ($service->setQty($cart, (int) $line->id, $qty)['ok'] ?? false) : $service->remove($cart, (int) $line->id);
+                $changed += $done ? 1 : 0;
+            }
+
+            return $changed > 0
+                ? ['ok' => true, 'message' => $reduce ? 'COM_DHARMASHOP_CART_REDUCED' : 'COM_DHARMASHOP_CART_UNAVAILABLE_REMOVED']
+                : ['ok' => false, 'error' => 'COM_DHARMASHOP_CART_NOTHING_TO_FIX'];
+        });
+    }
+
     public function clear(): void
     {
         $this->run(function (CartSession $session): array {
@@ -109,7 +143,9 @@ class CartController extends BaseController
         $message = Text::_($ok ? (string) ($result['message'] ?? 'COM_DHARMASHOP_CART_UPDATED') : (string) ($result['error'] ?? 'COM_DHARMASHOP_CART_ERROR_LINE'));
 
         if (!$ajax) {
-            $this->setRedirect($cartUrl, $message, $ok ? 'message' : 'warning');
+            // Возврат на оформление допускается только по белому списку (`return=checkout`), иначе — страница корзины.
+        $target = $this->input->post->getCmd('return') === 'checkout' ? Route::_('index.php?option=com_dharmashop&view=checkout', false) : $cartUrl;
+        $this->setRedirect($target, $message, $ok ? 'message' : 'warning');
 
             return;
         }

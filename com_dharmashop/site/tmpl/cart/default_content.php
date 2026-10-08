@@ -14,6 +14,7 @@ use Joomla\CMS\Router\Route;
 
 $remove = Route::_('index.php?option=com_dharmashop&task=cart.remove', false);
 $clear = Route::_('index.php?option=com_dharmashop&task=cart.clear', false);
+$removeUnavailable = Route::_('index.php?option=com_dharmashop&task=cart.removeUnavailable', false);
 $hasErrors = (bool) array_filter($this->lines, static fn (object $line): bool => $line->error !== '');
 $checkoutUrl = Route::_('index.php?option=com_dharmashop&view=checkout', false);
 $discount = $this->discountTotals();
@@ -25,6 +26,8 @@ $qtyText = static fn (float $qty): string => rtrim(rtrim(number_format($qty, 3, 
 <?php else : ?>
     <form action="<?php echo $this->escape($this->actionUrl); ?>" method="post" class="dharmaCartForm fs-6">
         <?php // Кнопка «Оформить заказ» с утилитами bg-primary/text-white: в шаблоне dharma_starter заливка .btn-primary не задана. Слева карточки позиций, справа панель итога (на узком экране — под списком). ?>
+        <?php // Недоступные позиции: предупреждение и кнопки «Удалить недоступные» / «Уменьшить до наличия» (макет cart/unavailable, переопределяется). ?>
+        <?php echo (new \Joomla\CMS\Layout\FileLayout('components.dharmashop.cart.unavailable', null, ['component' => 'none', 'client' => 0]))->render(['lines' => $this->lines, 'action' => $removeUnavailable, 'formId' => '', 'return' => 'cart']); ?>
         <div class="row g-4 align-items-start">
             <div class="col-lg-8 dharmaCartList">
                 <?php foreach ($this->lines as $line) : ?>

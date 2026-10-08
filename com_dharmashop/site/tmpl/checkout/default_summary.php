@@ -12,6 +12,8 @@ $qtyText = static fn (float $qty): string => rtrim(rtrim(number_format($qty, 3, 
         <h2 id="dharma-checkout-summary-title" class="fs-6 fw-semibold mb-0"><?php echo Text::_('COM_DHARMASHOP_CHECKOUT_SUMMARY'); ?></h2>
     </div>
     <div class="card-body p-3 small">
+        <?php // Недоступные позиции: кнопки отправляют отдельную форму `dharma-cart-fix` (вложенных форм нет). ?>
+        <?php echo (new \Joomla\CMS\Layout\FileLayout('components.dharmashop.cart.unavailable', null, ['component' => 'none', 'client' => 0]))->render(['lines' => $this->lines, 'formId' => 'dharma-cart-fix']); ?>
         <?php if (!$this->lines) : ?>
             <p class="text-body-secondary mb-0"><?php echo Text::_('COM_DHARMASHOP_CART_EMPTY'); ?></p>
         <?php else : ?>
