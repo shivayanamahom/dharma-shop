@@ -1,9 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <form><fields name="params"><fields name="standard"><fieldset name="type_standard" label="PLG_DHARMASHOPSHIPPING_STANDARD_SETTINGS">
-    <field name="price" type="text" label="PLG_DHARMASHOPSHIPPING_STANDARD_PRICE" description="PLG_DHARMASHOPSHIPPING_STANDARD_PRICE_DESC" showon=".plugin:standard" default="0" filter="string" />
-    <field name="free_from" type="text" label="PLG_DHARMASHOPSHIPPING_STANDARD_FREE_FROM" description="PLG_DHARMASHOPSHIPPING_STANDARD_FREE_FROM_DESC" showon=".plugin:standard" default="0" filter="string" />
-    <field name="min_total" type="text" label="PLG_DHARMASHOPSHIPPING_STANDARD_MIN_TOTAL" description="PLG_DHARMASHOPSHIPPING_STANDARD_MIN_TOTAL_DESC" showon=".plugin:standard" default="0" filter="string" />
-    <field name="max_total" type="text" label="PLG_DHARMASHOPSHIPPING_STANDARD_MAX_TOTAL" description="PLG_DHARMASHOPSHIPPING_STANDARD_MAX_TOTAL_DESC" showon=".plugin:standard" default="0" filter="string" />
     <field name="term" type="text" label="PLG_DHARMASHOPSHIPPING_STANDARD_TERM" description="PLG_DHARMASHOPSHIPPING_STANDARD_TERM_DESC" showon=".plugin:standard" maxlength="100" filter="string" />
     <field name="note" type="textarea" label="PLG_DHARMASHOPSHIPPING_STANDARD_NOTE" description="PLG_DHARMASHOPSHIPPING_STANDARD_NOTE_DESC" showon=".plugin:standard" rows="2" maxlength="500" filter="string" default="Менеджер свяжется с вами и уточнит детали доставки." />
     <field name="fields" type="subform" label="PLG_DHARMASHOPSHIPPING_STANDARD_FIELDS" description="PLG_DHARMASHOPSHIPPING_STANDARD_FIELDS_DESC" showon=".plugin:standard" multiple="true" min="0" max="20" buttons="add,remove,move"
@@ -28,4 +24,9 @@
             <field name="options" type="textarea" label="PLG_DHARMASHOPSHIPPING_STANDARD_FIELD_OPTIONS" description="PLG_DHARMASHOPSHIPPING_STANDARD_FIELD_OPTIONS_DESC" rows="3" showon="type:select" filter="string" />
         </form>
     </field>
+</fieldset><fieldset name="price_standard" label="PLG_DHARMASHOPSHIPPING_STANDARD_PRICE_SETTINGS">
+    <field name="price" type="text" label="PLG_DHARMASHOPSHIPPING_STANDARD_PRICE" description="PLG_DHARMASHOPSHIPPING_STANDARD_PRICE_DESC" showon=".plugin:standard" default="0" filter="string" />
+    <field name="free_from" type="text" label="PLG_DHARMASHOPSHIPPING_STANDARD_FREE_FROM" description="PLG_DHARMASHOPSHIPPING_STANDARD_FREE_FROM_DESC" showon=".plugin:standard" default="0" filter="string" />
+    <field name="min_total" type="text" label="PLG_DHARMASHOPSHIPPING_STANDARD_MIN_TOTAL" description="PLG_DHARMASHOPSHIPPING_STANDARD_MIN_TOTAL_DESC" showon=".plugin:standard" default="0" filter="string" />
+    <field name="max_total" type="text" label="PLG_DHARMASHOPSHIPPING_STANDARD_MAX_TOTAL" description="PLG_DHARMASHOPSHIPPING_STANDARD_MAX_TOTAL_DESC" showon=".plugin:standard" default="0" filter="string" />
 </fieldset></fields></fields></form>

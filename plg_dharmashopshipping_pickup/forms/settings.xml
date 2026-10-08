@@ -6,10 +6,6 @@
     <field name="hours" type="textarea" label="PLG_DHARMASHOPSHIPPING_PICKUP_HOURS" description="PLG_DHARMASHOPSHIPPING_PICKUP_HOURS_DESC" showon=".plugin:pickup" rows="2" maxlength="500" filter="string" />
     <field name="info" type="textarea" label="PLG_DHARMASHOPSHIPPING_PICKUP_INFO" description="PLG_DHARMASHOPSHIPPING_PICKUP_INFO_DESC" showon=".plugin:pickup" rows="3" maxlength="1000" filter="string" />
     <field name="term" type="text" label="PLG_DHARMASHOPSHIPPING_PICKUP_TERM" description="PLG_DHARMASHOPSHIPPING_PICKUP_TERM_DESC" showon=".plugin:pickup" maxlength="100" filter="string" />
-    <field name="price" type="text" label="PLG_DHARMASHOPSHIPPING_PICKUP_PRICE" description="PLG_DHARMASHOPSHIPPING_PICKUP_PRICE_DESC" showon=".plugin:pickup" default="0" filter="string" />
-    <field name="free_from" type="text" label="PLG_DHARMASHOPSHIPPING_PICKUP_FREE_FROM" description="PLG_DHARMASHOPSHIPPING_PICKUP_FREE_FROM_DESC" showon=".plugin:pickup" default="0" filter="string" />
-    <field name="min_total" type="text" label="PLG_DHARMASHOPSHIPPING_PICKUP_MIN_TOTAL" description="PLG_DHARMASHOPSHIPPING_PICKUP_MIN_TOTAL_DESC" showon=".plugin:pickup" default="0" filter="string" />
-    <field name="max_total" type="text" label="PLG_DHARMASHOPSHIPPING_PICKUP_MAX_TOTAL" description="PLG_DHARMASHOPSHIPPING_PICKUP_MAX_TOTAL_DESC" showon=".plugin:pickup" default="0" filter="string" />
     <field name="map" type="list" label="PLG_DHARMASHOPSHIPPING_PICKUP_MAP" description="PLG_DHARMASHOPSHIPPING_PICKUP_MAP_DESC" showon=".plugin:pickup" default="none" filter="cmd" validate="options">
         <option value="none">PLG_DHARMASHOPSHIPPING_PICKUP_MAP_NONE</option>
         <option value="yandex">PLG_DHARMASHOPSHIPPING_PICKUP_MAP_YANDEX</option>
@@ -18,4 +14,9 @@
     <field name="lat" type="text" label="PLG_DHARMASHOPSHIPPING_PICKUP_LAT" description="PLG_DHARMASHOPSHIPPING_PICKUP_COORD_DESC" showon=".plugin:pickup[AND]map:yandex[OR].plugin:pickup[AND]map:osm" hint="56.838011" filter="string" />
     <field name="lon" type="text" label="PLG_DHARMASHOPSHIPPING_PICKUP_LON" description="PLG_DHARMASHOPSHIPPING_PICKUP_COORD_DESC" showon=".plugin:pickup[AND]map:yandex[OR].plugin:pickup[AND]map:osm" hint="60.597474" filter="string" />
     <field name="zoom" type="number" label="PLG_DHARMASHOPSHIPPING_PICKUP_ZOOM" showon=".plugin:pickup[AND]map:yandex[OR].plugin:pickup[AND]map:osm" default="16" min="1" max="19" filter="integer" />
+</fieldset><fieldset name="price_pickup" label="PLG_DHARMASHOPSHIPPING_PICKUP_PRICE_SETTINGS">
+    <field name="price" type="text" label="PLG_DHARMASHOPSHIPPING_PICKUP_PRICE" description="PLG_DHARMASHOPSHIPPING_PICKUP_PRICE_DESC" showon=".plugin:pickup" default="0" filter="string" />
+    <field name="free_from" type="text" label="PLG_DHARMASHOPSHIPPING_PICKUP_FREE_FROM" description="PLG_DHARMASHOPSHIPPING_PICKUP_FREE_FROM_DESC" showon=".plugin:pickup" default="0" filter="string" />
+    <field name="min_total" type="text" label="PLG_DHARMASHOPSHIPPING_PICKUP_MIN_TOTAL" description="PLG_DHARMASHOPSHIPPING_PICKUP_MIN_TOTAL_DESC" showon=".plugin:pickup" default="0" filter="string" />
+    <field name="max_total" type="text" label="PLG_DHARMASHOPSHIPPING_PICKUP_MAX_TOTAL" description="PLG_DHARMASHOPSHIPPING_PICKUP_MAX_TOTAL_DESC" showon=".plugin:pickup" default="0" filter="string" />
 </fieldset></fields></fields></form>

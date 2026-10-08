@@ -27,6 +27,15 @@ $this->getDocument()->getWebAssetManager()->useScript('keepalive')->useScript('f
                     <?php endforeach; ?>
                 </fieldset>
                 <?php echo HTMLHelper::_('uitab.endTab'); ?>
+                <?php // Всё, что связано с ценой и суммой заказа (фиксированная цена, «бесплатно от суммы», пределы суммы), — отдельная вкладка: fieldset `price_<id>` формы типа. ?>
+                <?php echo HTMLHelper::_('uitab.addTab', 'shippingTab', 'prices', Text::_('COM_DHARMASHOP_SHIPPING_TAB_PRICES')); ?>
+                <fieldset class="options-form">
+                    <legend><?php echo Text::_('COM_DHARMASHOP_SHIPPING_TAB_PRICES_LEGEND'); ?></legend>
+                    <?php foreach (TypeRegistry::current()->all() as $type) : ?>
+                        <?php echo $this->form->renderFieldset('price_' . $type->id()); ?>
+                    <?php endforeach; ?>
+                </fieldset>
+                <?php echo HTMLHelper::_('uitab.endTab'); ?>
                 <?php echo HTMLHelper::_('uitab.endTabSet'); ?>
             </div>
         </div>
