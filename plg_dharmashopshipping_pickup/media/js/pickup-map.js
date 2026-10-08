@@ -3,7 +3,8 @@
  * Конфигурацию отдаёт сервер в data-config контейнера [data-pickup-map] (координаты пунктов — [широта, долгота], как у Яндекса;
  * в API 3 порядок [долгота, широта], переставляем здесь). Карта создаётся, когда контейнер попадает в окно.
  * Метки — свои элементы (булавка, точка, круг, метка с названием); размеры и позиционирование — атрибуты SVG и классы Bootstrap.
- * Выбор пункта (радио [data-shipping-point]) выделяет метку и сдвигает карту. Тексты выводятся как текст (textContent).
+ * Выбор пункта (радио [data-shipping-point] в карточке) выделяет метку и сдвигает карту; клик по метке выбирает карточку.
+ * Тексты выводятся как текст (textContent).
  */
 (() => {
     'use strict';
@@ -99,6 +100,15 @@
             map.addChild(new YMapControls({ position: 'right' }).addChild(new YMapZoomControl({})));
 
             const marks = new Map();
+            const select = (key) => {
+                const radio = el.closest('[data-shipping-option]')?.querySelector('[data-shipping-point][value="' + CSS.escape(key) + '"]');
+                if (radio && !radio.checked) {
+                    radio.checked = true;
+                    radio.dispatchEvent(new Event('change', { bubbles: true }));
+                } else if (!radio) {
+                    el._pickupMap?.setActive(key);
+                }
+            };
             const render = (key) => config.points.forEach((point) => {
                 const mark = marks.get(point.key);
                 const element = buildMarker(point, config.markerKind, point.key === key ? config.selectedColor : config.markerColor, point.key === key);
@@ -110,7 +120,9 @@
             config.points.forEach((point) => {
                 const element = document.createElement('div');
                 element.className = 'position-relative';
-                const marker = new YMapMarker({ coordinates: lonLat(point.coords), zIndex: 100 }, element);
+                element.setAttribute('role', 'button');
+                // Клик по метке выбирает карточку пункта (радио в ней): дальше работают общий change и боковая панель.
+                const marker = new YMapMarker({ coordinates: lonLat(point.coords), zIndex: 100, onClick: () => select(point.key) }, element);
                 marks.set(point.key, { marker, element });
                 map.addChild(marker);
             });

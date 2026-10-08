@@ -73,6 +73,12 @@
             });
             form.querySelector('[data-shipping-details="' + radio.value + '"]')?.classList.toggle('d-none', !radio.checked);
         });
+        // Карточки пунктов (data-shipping-point-card): рамка выбранной выделяется.
+        form.querySelectorAll('[data-shipping-point]').forEach((radio) => {
+            const card = radio.closest('[data-shipping-point-card]');
+            card?.classList.toggle('border-primary', radio.checked);
+            card?.classList.toggle('shadow-sm', radio.checked);
+        });
         // Общая карта способа: адрес берётся у выбранного пункта (data-map-url); без адреса блок скрыт.
         shippingRadios.forEach((radio) => {
             const option = radio.closest('[data-shipping-option]');
