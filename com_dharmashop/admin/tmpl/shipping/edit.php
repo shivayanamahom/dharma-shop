@@ -45,6 +45,35 @@ $this->getDocument()->getWebAssetManager()->useScript('keepalive')->useScript('f
                     <?php endforeach; ?>
                 </fieldset>
                 <?php echo HTMLHelper::_('uitab.endTab'); ?>
+                <?php // Вкладка «Склады» — если тип описывает fieldset `warehouses_<id>` (выбор складов из справочника «Склады», с пометкой и ссылкой на раздел). ?>
+                <?php
+                $warehouseSets = [];
+                foreach (TypeRegistry::current()->all() as $type) {
+                    $fieldsets = $this->form->getFieldsets();
+                    if (isset($fieldsets['warehouses_' . $type->id()])) {
+                        $warehouseSets[$type->id()] = $fieldsets['warehouses_' . $type->id()];
+                    }
+                }
+                ?>
+                <?php if ($warehouseSets) : ?>
+                    <?php echo HTMLHelper::_('uitab.addTab', 'shippingTab', 'warehouses', Text::_('COM_DHARMASHOP_SHIPPING_TAB_WAREHOUSES')); ?>
+                    <?php foreach ($warehouseSets as $typeId => $fieldset) : ?>
+                        <div data-showon='[{"field":"jform[plugin]","values":["<?php echo $this->escape($typeId); ?>"],"sign":"=","op":""}]'>
+                            <fieldset class="options-form">
+                                <legend><?php echo Text::_($fieldset->label ?: 'COM_DHARMASHOP_SHIPPING_TAB_WAREHOUSES'); ?></legend>
+                                <div class="alert alert-info d-flex flex-wrap justify-content-between align-items-center gap-2">
+                                    <span><span class="icon-info-circle me-1" aria-hidden="true"></span><?php echo Text::_('COM_DHARMASHOP_SHIPPING_WAREHOUSES_HELP'); ?></span>
+                                    <span class="d-flex gap-2">
+                                        <a class="btn btn-sm btn-primary" href="<?php echo Route::_('index.php?option=com_dharmashop&view=warehouses'); ?>" target="_blank" rel="noopener"><?php echo Text::_('COM_DHARMASHOP_SHIPPING_WAREHOUSES_MANAGE'); ?></a>
+                                        <a class="btn btn-sm btn-outline-secondary" href="<?php echo Route::_('index.php?option=com_dharmashop&task=warehouse.add'); ?>" target="_blank" rel="noopener"><?php echo Text::_('COM_DHARMASHOP_SHIPPING_WAREHOUSES_ADD'); ?></a>
+                                    </span>
+                                </div>
+                                <?php echo $this->form->renderFieldset('warehouses_' . $typeId); ?>
+                            </fieldset>
+                        </div>
+                    <?php endforeach; ?>
+                    <?php echo HTMLHelper::_('uitab.endTab'); ?>
+                <?php endif; ?>
                 <?php // Вкладка «Настройка карты» — только если тип описывает fieldset `map_<id>` (например, самовывоз). ?>
                 <?php
                 $mapSets = [];

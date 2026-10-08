@@ -1,18 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<form><fields name="params"><fields name="pickup"><fieldset name="type_pickup" label="PLG_DHARMASHOPSHIPPING_PICKUP_SETTINGS">
+<form addfieldprefix="Dharma\Component\DharmaShop\Administrator\Field"><fields name="params"><fields name="pickup"><fieldset name="type_pickup" label="PLG_DHARMASHOPSHIPPING_PICKUP_SETTINGS">
     <field name="term" type="text" label="PLG_DHARMASHOPSHIPPING_PICKUP_TERM" description="PLG_DHARMASHOPSHIPPING_PICKUP_TERM_DESC" showon=".plugin:pickup" maxlength="100" filter="string" />
-    <field name="points" type="subform" label="PLG_DHARMASHOPSHIPPING_PICKUP_POINTS" description="PLG_DHARMASHOPSHIPPING_PICKUP_POINTS_DESC" showon=".plugin:pickup" multiple="true" min="1" max="50" buttons="add,remove,move">
-        <form>
-            <field name="name" type="text" label="PLG_DHARMASHOPSHIPPING_PICKUP_POINT_NAME" description="PLG_DHARMASHOPSHIPPING_PICKUP_POINT_NAME_DESC" required="true" maxlength="150" filter="string" />
-            <field name="address" type="textarea" label="PLG_DHARMASHOPSHIPPING_PICKUP_ADDRESS" description="PLG_DHARMASHOPSHIPPING_PICKUP_ADDRESS_DESC" required="true" rows="2" maxlength="500" filter="string" />
-            <field name="phone" type="text" label="PLG_DHARMASHOPSHIPPING_PICKUP_PHONE" maxlength="100" filter="string" />
-            <field name="email" type="text" label="PLG_DHARMASHOPSHIPPING_PICKUP_EMAIL" maxlength="190" filter="string" />
-            <field name="hours" type="textarea" label="PLG_DHARMASHOPSHIPPING_PICKUP_HOURS" description="PLG_DHARMASHOPSHIPPING_PICKUP_HOURS_DESC" rows="2" maxlength="500" filter="string" />
-            <field name="info" type="textarea" label="PLG_DHARMASHOPSHIPPING_PICKUP_INFO" description="PLG_DHARMASHOPSHIPPING_PICKUP_INFO_DESC" rows="3" maxlength="1000" filter="string" />
-            <field name="term" type="text" label="PLG_DHARMASHOPSHIPPING_PICKUP_POINT_TERM" description="PLG_DHARMASHOPSHIPPING_PICKUP_POINT_TERM_DESC" maxlength="100" filter="string" />
-            <field name="coords" type="text" label="PLG_DHARMASHOPSHIPPING_PICKUP_COORDS" description="PLG_DHARMASHOPSHIPPING_PICKUP_COORDS_DESC" hint="[55.753994, 37.622093]" maxlength="60" filter="string" />
-        </form>
-    </field>
+</fieldset><fieldset name="warehouses_pickup" label="PLG_DHARMASHOPSHIPPING_PICKUP_WAREHOUSES_LEGEND">
+    <field name="warehouses" type="warehouseselect" multiple="true" label="PLG_DHARMASHOPSHIPPING_PICKUP_WAREHOUSES" description="PLG_DHARMASHOPSHIPPING_PICKUP_WAREHOUSES_DESC" showon=".plugin:pickup" class="form-select" size="8" filter="int_array" />
 </fieldset><fieldset name="map_pickup" label="PLG_DHARMASHOPSHIPPING_PICKUP_MAP_SETTINGS">
     <field name="map" type="list" label="PLG_DHARMASHOPSHIPPING_PICKUP_MAP" description="PLG_DHARMASHOPSHIPPING_PICKUP_MAP_DESC" showon=".plugin:pickup" default="none" filter="cmd" validate="options">
         <option value="none">PLG_DHARMASHOPSHIPPING_PICKUP_MAP_NONE</option>

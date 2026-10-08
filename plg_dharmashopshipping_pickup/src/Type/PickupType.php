@@ -80,15 +80,16 @@ final class PickupType implements TypeInterface
             'marker_color' => in_array((string) ($settings['marker_color'] ?? ''), self::COLORS, true) ? (string) $settings['marker_color'] : 'blue',
             'marker_selected_color' => in_array((string) ($settings['marker_selected_color'] ?? ''), self::COLORS, true) ? (string) $settings['marker_selected_color'] : 'red',
             'center' => '',
-            'points' => $this->normalizePoints((array) ($settings['points'] ?? [])),
+            'warehouses' => array_values(array_unique(array_filter(array_map('intval', (array) ($settings['warehouses'] ?? [])), static fn (int $id): bool => $id > 0))),
         ];
 
         if ($normalized['max_total'] > 0 && $normalized['min_total'] > $normalized['max_total']) {
             throw new \DomainException('PLG_DHARMASHOPSHIPPING_PICKUP_ERROR_RANGE');
         }
 
-        if (!$normalized['points']) {
-            throw new \DomainException('PLG_DHARMASHOPSHIPPING_PICKUP_ERROR_POINTS');
+        // Пункты выдачи — склады из справочника «Склады»: нужен хотя бы один.
+        if (!$normalized['warehouses']) {
+            throw new \DomainException('PLG_DHARMASHOPSHIPPING_PICKUP_ERROR_WAREHOUSES');
         }
 
         // Ключ API Яндекса — публичный ключ браузера (виден в коде страницы): только буквы, цифры и дефисы.
@@ -110,69 +111,11 @@ final class PickupType implements TypeInterface
         }
 
         // Карта общая для способа: нужен хотя бы один пункт с координатами.
-        if ($normalized['map'] !== 'none' && !array_filter($normalized['points'], static fn (array $point): bool => $point['coords'] !== '')) {
+        if ($normalized['map'] !== 'none' && !$this->hasCoords($normalized['warehouses'])) {
             throw new \DomainException('PLG_DHARMASHOPSHIPPING_PICKUP_ERROR_COORDS_NEEDED');
         }
 
         return $normalized;
-    }
-
-    /** Пункты выдачи (склады): ключ из названия (латиница, уникальный), обязательны название и адрес, координаты — числами. */
-    private function normalizePoints(array $rows): array
-    {
-        $points = [];
-        $used = [];
-
-        foreach ($rows as $row) {
-            $row = (array) $row;
-            $text = static fn (string $key, int $limit): string => mb_substr(trim(strip_tags((string) ($row[$key] ?? ''))), 0, $limit);
-            $name = $text('name', 150);
-            $address = $text('address', 500);
-
-            if ($name === '' && $address === '') {
-                continue;
-            }
-
-            if ($name === '' || $address === '') {
-                throw new \DomainException('PLG_DHARMASHOPSHIPPING_PICKUP_ERROR_POINT');
-            }
-
-            $email = $text('email', 190);
-
-            if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                throw new \DomainException('PLG_DHARMASHOPSHIPPING_PICKUP_ERROR_EMAIL');
-            }
-
-            $coords = '';
-            $coordsRaw = trim((string) ($row['coords'] ?? ''));
-
-            if ($coordsRaw !== '') {
-                $parsed = self::parseCoords($coordsRaw);
-
-                if ($parsed === null) {
-                    throw new \DomainException('PLG_DHARMASHOPSHIPPING_PICKUP_ERROR_COORDS');
-                }
-
-                $coords = $parsed[0] . ', ' . $parsed[1];
-            }
-
-            $key = substr(str_replace('-', '_', ApplicationHelper::stringURLSafe($name)) ?: 'point', 0, 40);
-            $base = $key;
-
-            for ($n = 2; isset($used[$key]); $n++) {
-                $key = $base . '_' . $n;
-            }
-
-            $used[$key] = true;
-            // Значения — строки (как в форме подформы), чтобы настройки без потерь открывались для правки.
-            $points[] = [
-                'key' => $key, 'name' => $name, 'address' => $address, 'phone' => $text('phone', 100), 'email' => $email,
-                'hours' => $text('hours', 500), 'info' => $text('info', 1000), 'term' => $text('term', 100),
-                'coords' => $coords,
-            ];
-        }
-
-        return $points;
     }
 
     /** Адрес в подписи метки: `active` — у выбранной (по умолчанию), `all` — у всех, `none` — не показывать (старые значения 1/0 понимаются). */
@@ -211,10 +154,46 @@ final class PickupType implements TypeInterface
         return [rtrim(rtrim(number_format($lat, 6, '.', ''), '0'), '.'), rtrim(rtrim(number_format($lon, 6, '.', ''), '0'), '.')];
     }
 
-    /** @return array<int, array<string, string>> */
+    /**
+     * Пункты выдачи способа — опубликованные склады из справочника (`params.warehouses`): ключ — id склада, срок — «срок готовности» склада.
+     *
+     * @return array<int, array<string, string>>
+     */
     private function pointsOf(Method $method): array
     {
-        return array_values(array_filter((array) ($method->params['points'] ?? []), 'is_array'));
+        $ids = array_map('intval', (array) ($method->params['warehouses'] ?? []));
+        $services = Factory::getApplication()->bootComponent('com_dharmashop')->getServices();
+        $points = [];
+
+        foreach ($services->warehouses()->byIds($ids) as $warehouse) {
+            $coords = $warehouse->coords();
+            $points[] = [
+                'key' => (string) $warehouse->id,
+                'name' => $warehouse->title,
+                'address' => $warehouse->address,
+                'phone' => $warehouse->phone,
+                'email' => $warehouse->email,
+                'hours' => $warehouse->hours,
+                'info' => $warehouse->info,
+                'term' => $warehouse->readyTerm,
+                'coords' => $coords !== null ? $coords[0] . ', ' . $coords[1] : '',
+            ];
+        }
+
+        return $points;
+    }
+
+    /** Есть ли среди выбранных складов хотя бы один с координатами (для карты) — по справочнику, независимо от публикации. */
+    private function hasCoords(array $ids): bool
+    {
+        if (!$ids) {
+            return false;
+        }
+
+        $db = Factory::getContainer()->get('DatabaseDriver');
+        $query = $db->createQuery()->select('COUNT(*)')->from($db->quoteName('#__dharmashop_warehouses'))->whereIn('id', $ids)->where('lat IS NOT NULL AND lon IS NOT NULL');
+
+        return (int) $db->setQuery($query)->loadResult() > 0;
     }
 
     /** Сведения пункта обычным текстом: адрес, телефон, e-mail, часы работы, срок, дополнительная информация. */
