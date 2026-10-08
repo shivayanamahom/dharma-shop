@@ -242,6 +242,12 @@ final class CartService
 
         foreach ($this->db->setQuery($query)->loadObjectList() as $row) {
             $row->line_params = (array) json_decode((string) $row->line_params, true);
+            // Единица, минимум и шаг — итоговые правила товара (его значение, иначе категории, иначе настройки магазина).
+            $rules = $this->rules->forProduct($row);
+            $row->unit = (string) $rules['unit'];
+            $row->qty_min = $rules['qty_min'];
+            $row->qty_step = $rules['qty_step'];
+            $row->qty_max = $rules['qty_max'];
             $row->qty = (float) $row->qty;
             $row->error = $this->lineError((array) $row, $row->qty);
             $event = $this->dispatch('onDharmaShopCartItemValidate', ['cart' => $cart, 'line' => $row, 'error' => (string) ($row->error ?? '')]);
