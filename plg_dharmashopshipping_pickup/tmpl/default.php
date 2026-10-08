@@ -1,13 +1,15 @@
 <?php
 /**
- * Вариант способа «Самовывоз» на странице оформления: пункт выдачи, контакты и карта. Переопределение в шаблоне сайта:
- * templates/<шаблон>/html/plg_dharmashopshipping_pickup/default.php
+ * Вариант способа «Самовывоз» на странице оформления: один или несколько пунктов выдачи (складов) с контактами и картой.
+ * Переопределение в шаблоне сайта: templates/<шаблон>/html/plg_dharmashopshipping_pickup/default.php
  *
- * @var  array  $displayData  method (Method), quote (Quote), selected (bool), id (int), info (строки describe), map_url (адрес карты или ''),
- *                            image_url (адрес изображения способа или ''), price_text, total_text, free_text (строки)
+ * @var  array  $displayData  method (Method), quote (Quote), selected (bool), id (int), errors (array), info (строки describe),
+ *                            points (пункты: key, name, address, rows, map_url…), point_selected (ключ выбранного пункта),
+ *                            image_url, price_text, total_text, free_text (строки)
  *
  * Правила для всех типов доставки (docs/SHIPPING.md): радиокнопка `shipping_method` с data-shipping-radio, data-price-text, data-total-text;
- * блок data-shipping-extra скрывается у невыбранных способов (карта показывается только у выбранного).
+ * блоки data-shipping-extra скрываются у невыбранных способов; выбор пункта — радио `shipping[<id>][point]` с data-shipping-point
+ * (data-summary-label/-value/-rows дублируют выбор в боковой панели), сведения пункта и карта — блок data-shipping-extra data-shipping-point-detail="<ключ>".
  */
 \defined('_JEXEC') or die;
 
@@ -17,6 +19,10 @@ $method = $displayData['method'];
 $quote = $displayData['quote'];
 $selected = (bool) $displayData['selected'];
 $id = (int) $displayData['id'];
+$errors = (array) ($displayData['errors'] ?? []);
+$points = (array) $displayData['points'];
+$many = count($points) > 1;
+$activePoint = (string) $displayData['point_selected'];
 $esc = static fn ($value): string => htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 $priceText = $quote->free ? $displayData['free_text'] : $displayData['price_text'];
 ?>
@@ -38,20 +44,41 @@ $priceText = $quote->free ? $displayData['free_text'] : $displayData['price_text
     <?php if ($method->description !== '') : ?>
         <div class="small text-body-secondary mt-2 ms-4 text-break"><?php echo nl2br($esc($method->description)); ?></div>
     <?php endif; ?>
-    <?php if ($displayData['info']) : ?>
-        <dl class="row small mb-0 mt-2 ms-3 dharmaShippingInfo">
-            <?php foreach ($displayData['info'] as $row) : ?>
-                <dt class="col-sm-4 fw-normal text-body-secondary"><?php echo $esc($row['label']); ?></dt>
-                <dd class="col-sm-8 mb-1 text-break"><?php echo nl2br($esc($row['value'])); ?></dd>
+    <?php if ($many) : ?>
+        <div class="mt-2 ms-3 d-flex flex-column gap-2<?php echo $selected ? '' : ' d-none'; ?>" data-shipping-extra role="radiogroup" aria-label="<?php echo $esc(Text::_('PLG_DHARMASHOPSHIPPING_PICKUP_ROW_POINT')); ?>">
+            <?php foreach ($points as $point) :
+                $pointId = 'dharma-shipping-' . $id . '-point-' . $point['key'];
+                ?>
+                <div class="form-check mb-0">
+                    <input class="form-check-input<?php echo isset($errors['point']) ? ' is-invalid' : ''; ?>" type="radio" name="shipping[<?php echo $id; ?>][point]" id="<?php echo $esc($pointId); ?>" value="<?php echo $esc($point['key']); ?>"<?php echo $point['key'] === $activePoint ? ' checked' : ''; ?>
+                        data-shipping-point data-summary-label="<?php echo $esc(Text::_('PLG_DHARMASHOPSHIPPING_PICKUP_ROW_POINT')); ?>" data-summary-value="<?php echo $esc($point['name']); ?>" data-summary-rows="<?php echo $esc(json_encode($point['rows'], JSON_UNESCAPED_UNICODE)); ?>">
+                    <label class="form-check-label" for="<?php echo $esc($pointId); ?>">
+                        <span class="fw-semibold"><?php echo $esc($point['name']); ?></span>
+                        <span class="d-block small text-body-secondary"><?php echo $esc($point['address']); ?></span>
+                    </label>
+                </div>
             <?php endforeach; ?>
-        </dl>
-    <?php endif; ?>
-    <?php if ($displayData['map_url'] !== '') : ?>
-        <div class="mt-2 ms-3<?php echo $selected ? '' : ' d-none'; ?>" data-shipping-extra>
-            <div class="ratio ratio-16x9 rounded overflow-hidden border">
-                <iframe src="<?php echo $esc($displayData['map_url']); ?>" title="<?php echo $esc(Text::sprintf('PLG_DHARMASHOPSHIPPING_PICKUP_MAP_TITLE', $method->title)); ?>"
-                    loading="lazy" referrerpolicy="no-referrer" allowfullscreen></iframe>
-            </div>
+            <?php if (isset($errors['point'])) : ?><div class="invalid-feedback d-block"><?php echo $esc(Text::_($errors['point'])); ?></div><?php endif; ?>
         </div>
     <?php endif; ?>
+    <?php foreach ($points as $point) :
+        $visible = $selected && (!$many || $point['key'] === $activePoint);
+        ?>
+        <div class="mt-2 ms-3<?php echo $visible ? '' : ' d-none'; ?>" data-shipping-extra<?php echo $many ? ' data-shipping-point-detail="' . $esc($point['key']) . '"' : ''; ?>>
+            <?php if ($point['rows']) : ?>
+                <dl class="row small mb-0 dharmaShippingInfo">
+                    <?php foreach ($point['rows'] as $row) : ?>
+                        <dt class="col-sm-4 fw-normal text-body-secondary"><?php echo $esc($row['label']); ?></dt>
+                        <dd class="col-sm-8 mb-1 text-break"><?php echo nl2br($esc($row['value'])); ?></dd>
+                    <?php endforeach; ?>
+                </dl>
+            <?php endif; ?>
+            <?php if ($point['map_url'] !== '') : ?>
+                <div class="ratio ratio-16x9 rounded overflow-hidden border mt-2">
+                    <iframe src="<?php echo $esc($point['map_url']); ?>" title="<?php echo $esc(Text::sprintf('PLG_DHARMASHOPSHIPPING_PICKUP_MAP_TITLE', $point['name'])); ?>"
+                        loading="lazy" referrerpolicy="no-referrer" allowfullscreen></iframe>
+                </div>
+            <?php endif; ?>
+        </div>
+    <?php endforeach; ?>
 </div>

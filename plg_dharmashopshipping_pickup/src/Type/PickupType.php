@@ -7,14 +7,15 @@ use Dharma\Component\DharmaShop\Administrator\Shipping\Context;
 use Dharma\Component\DharmaShop\Administrator\Shipping\Method;
 use Dharma\Component\DharmaShop\Administrator\Shipping\Quote;
 use Dharma\Component\DharmaShop\Administrator\Shipping\TypeInterface;
+use Joomla\CMS\Application\ApplicationHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Plugin\PluginHelper;
 
 \defined('_JEXEC') or die;
 
 /**
- * Самовывоз: пункт выдачи (склад) с адресом, контактами, часами работы, дополнительными сведениями и картой.
- * Один способ — один пункт; несколько пунктов — несколько способов этого типа. Данных от покупателя не требуется.
+ * Самовывоз: несколько пунктов выдачи (складов) в одном способе — повторяемая форма; у пункта адрес, контакты, часы работы,
+ * дополнительные сведения и карта. Покупатель выбирает пункт; цена и ограничения по сумме общие для способа.
  */
 final class PickupType implements TypeInterface
 {
@@ -55,50 +56,105 @@ final class PickupType implements TypeInterface
 
             return round((float) $text, 2);
         };
-        $text = static fn (string $key, int $limit): string => mb_substr(trim(strip_tags((string) ($settings[$key] ?? ''))), 0, $limit);
 
         $normalized = [
-            'address' => $text('address', 500),
-            'phone' => $text('phone', 100),
-            'email' => $text('email', 190),
-            'hours' => $text('hours', 500),
-            'info' => $text('info', 1000),
-            'term' => $text('term', 100),
+            'term' => mb_substr(trim(strip_tags((string) ($settings['term'] ?? ''))), 0, 100),
             'price' => $money($settings['price'] ?? 0, 'PRICE'),
             'free_from' => $money($settings['free_from'] ?? 0, 'FREE_FROM'),
             'min_total' => $money($settings['min_total'] ?? 0, 'MIN_TOTAL'),
             'max_total' => $money($settings['max_total'] ?? 0, 'MAX_TOTAL'),
-            'map' => in_array((string) ($settings['map'] ?? ''), self::MAPS, true) ? (string) $settings['map'] : 'none',
-            'lat' => '',
-            'lon' => '',
-            'zoom' => min(19, max(1, (int) ($settings['zoom'] ?? 16))),
+            'points' => $this->normalizePoints((array) ($settings['points'] ?? [])),
         ];
-
-        if ($normalized['address'] === '') {
-            throw new \DomainException('PLG_DHARMASHOPSHIPPING_PICKUP_ERROR_ADDRESS');
-        }
-
-        if ($normalized['email'] !== '' && !filter_var($normalized['email'], FILTER_VALIDATE_EMAIL)) {
-            throw new \DomainException('PLG_DHARMASHOPSHIPPING_PICKUP_ERROR_EMAIL');
-        }
 
         if ($normalized['max_total'] > 0 && $normalized['min_total'] > $normalized['max_total']) {
             throw new \DomainException('PLG_DHARMASHOPSHIPPING_PICKUP_ERROR_RANGE');
         }
 
-        if ($normalized['map'] !== 'none') {
-            $lat = str_replace(',', '.', trim((string) ($settings['lat'] ?? '')));
-            $lon = str_replace(',', '.', trim((string) ($settings['lon'] ?? '')));
-
-            if (!is_numeric($lat) || !is_numeric($lon) || abs((float) $lat) > 90 || abs((float) $lon) > 180) {
-                throw new \DomainException('PLG_DHARMASHOPSHIPPING_PICKUP_ERROR_COORDS');
-            }
-
-            $normalized['lat'] = rtrim(rtrim(number_format((float) $lat, 6, '.', ''), '0'), '.');
-            $normalized['lon'] = rtrim(rtrim(number_format((float) $lon, 6, '.', ''), '0'), '.');
+        if (!$normalized['points']) {
+            throw new \DomainException('PLG_DHARMASHOPSHIPPING_PICKUP_ERROR_POINTS');
         }
 
         return $normalized;
+    }
+
+    /** Пункты выдачи (склады): ключ из названия (латиница, уникальный), обязательны название и адрес, координаты — числами. */
+    private function normalizePoints(array $rows): array
+    {
+        $points = [];
+        $used = [];
+
+        foreach ($rows as $row) {
+            $row = (array) $row;
+            $text = static fn (string $key, int $limit): string => mb_substr(trim(strip_tags((string) ($row[$key] ?? ''))), 0, $limit);
+            $name = $text('name', 150);
+            $address = $text('address', 500);
+
+            if ($name === '' && $address === '') {
+                continue;
+            }
+
+            if ($name === '' || $address === '') {
+                throw new \DomainException('PLG_DHARMASHOPSHIPPING_PICKUP_ERROR_POINT');
+            }
+
+            $email = $text('email', 190);
+
+            if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                throw new \DomainException('PLG_DHARMASHOPSHIPPING_PICKUP_ERROR_EMAIL');
+            }
+
+            $map = in_array((string) ($row['map'] ?? ''), self::MAPS, true) ? (string) $row['map'] : 'none';
+            $lat = '';
+            $lon = '';
+
+            if ($map !== 'none') {
+                $latRaw = str_replace(',', '.', trim((string) ($row['lat'] ?? '')));
+                $lonRaw = str_replace(',', '.', trim((string) ($row['lon'] ?? '')));
+
+                if (!is_numeric($latRaw) || !is_numeric($lonRaw) || abs((float) $latRaw) > 90 || abs((float) $lonRaw) > 180) {
+                    throw new \DomainException('PLG_DHARMASHOPSHIPPING_PICKUP_ERROR_COORDS');
+                }
+
+                $lat = rtrim(rtrim(number_format((float) $latRaw, 6, '.', ''), '0'), '.');
+                $lon = rtrim(rtrim(number_format((float) $lonRaw, 6, '.', ''), '0'), '.');
+            }
+
+            $key = substr(str_replace('-', '_', ApplicationHelper::stringURLSafe($name)) ?: 'point', 0, 40);
+            $base = $key;
+
+            for ($n = 2; isset($used[$key]); $n++) {
+                $key = $base . '_' . $n;
+            }
+
+            $used[$key] = true;
+            // Значения — строки (как в форме подформы), чтобы настройки без потерь открывались для правки.
+            $points[] = [
+                'key' => $key, 'name' => $name, 'address' => $address, 'phone' => $text('phone', 100), 'email' => $email,
+                'hours' => $text('hours', 500), 'info' => $text('info', 1000), 'term' => $text('term', 100),
+                'map' => $map, 'lat' => $lat, 'lon' => $lon, 'zoom' => (string) min(19, max(1, (int) ($row['zoom'] ?? 16))),
+            ];
+        }
+
+        return $points;
+    }
+
+    /** @return array<int, array<string, string>> */
+    private function pointsOf(Method $method): array
+    {
+        return array_values(array_filter((array) ($method->params['points'] ?? []), 'is_array'));
+    }
+
+    /** Сведения пункта обычным текстом: адрес, телефон, e-mail, часы работы, срок, дополнительная информация. */
+    private function pointRows(array $point): array
+    {
+        return [
+            ['label' => Text::_('PLG_DHARMASHOPSHIPPING_PICKUP_ROW_ADDRESS'), 'value' => (string) ($point['address'] ?? '')],
+            ['label' => Text::_('PLG_DHARMASHOPSHIPPING_PICKUP_ROW_PHONE'), 'value' => (string) ($point['phone'] ?? '')],
+            ['label' => Text::_('PLG_DHARMASHOPSHIPPING_PICKUP_ROW_EMAIL'), 'value' => (string) ($point['email'] ?? '')],
+            ['label' => Text::_('PLG_DHARMASHOPSHIPPING_PICKUP_ROW_HOURS'), 'value' => (string) ($point['hours'] ?? '')],
+            ['label' => Text::_('PLG_DHARMASHOPSHIPPING_PICKUP_ROW_TERM'), 'value' => (string) ($point['term'] ?? '')],
+            ['label' => Text::_('PLG_DHARMASHOPSHIPPING_PICKUP_ROW_INFO'), 'value' => (string) ($point['info'] ?? '')],
+        ];
     }
 
     public function quote(Method $method, Context $context): ?Quote
@@ -109,7 +165,7 @@ final class PickupType implements TypeInterface
         $price = (float) ($p['price'] ?? 0);
         $from  = (float) ($p['free_from'] ?? 0);
 
-        if (($min > 0 && $context->total < $min) || ($max > 0 && $context->total > $max)) {
+        if (!$this->pointsOf($method) || ($min > 0 && $context->total < $min) || ($max > 0 && $context->total > $max)) {
             return null;
         }
 
@@ -118,41 +174,51 @@ final class PickupType implements TypeInterface
         return new Quote($free ? 0.0 : round($price, 2), (string) ($p['term'] ?? ''), '', $free);
     }
 
+    /** Один пункт — его сведения постоянны для способа; при нескольких пунктах сведения зависят от выбора покупателя. */
     public function describe(Method $method, Quote $quote): array
     {
-        $p = $method->params;
+        $points = $this->pointsOf($method);
 
-        return [
-            ['label' => Text::_('PLG_DHARMASHOPSHIPPING_PICKUP_ROW_ADDRESS'), 'value' => (string) ($p['address'] ?? '')],
-            ['label' => Text::_('PLG_DHARMASHOPSHIPPING_PICKUP_ROW_PHONE'), 'value' => (string) ($p['phone'] ?? '')],
-            ['label' => Text::_('PLG_DHARMASHOPSHIPPING_PICKUP_ROW_EMAIL'), 'value' => (string) ($p['email'] ?? '')],
-            ['label' => Text::_('PLG_DHARMASHOPSHIPPING_PICKUP_ROW_HOURS'), 'value' => (string) ($p['hours'] ?? '')],
-            ['label' => Text::_('PLG_DHARMASHOPSHIPPING_PICKUP_ROW_INFO'), 'value' => (string) ($p['info'] ?? '')],
-        ];
+        return count($points) === 1 ? $this->pointRows($points[0]) : [];
     }
 
     public function validateInput(Method $method, Context $context, array $input): array
     {
-        return ['data' => [], 'rows' => [], 'errors' => []];
+        $points = $this->pointsOf($method);
+
+        if (count($points) === 1) {
+            return ['data' => ['point' => (string) $points[0]['key']], 'rows' => [], 'errors' => []];
+        }
+
+        $key = (string) ($input['point'] ?? '');
+
+        foreach ($points as $point) {
+            if ((string) $point['key'] === $key) {
+                return [
+                    'data' => ['point' => $key],
+                    'rows' => array_merge([['label' => Text::_('PLG_DHARMASHOPSHIPPING_PICKUP_ROW_POINT'), 'value' => (string) $point['name']]], $this->pointRows($point)),
+                    'errors' => [],
+                ];
+            }
+        }
+
+        return ['data' => [], 'rows' => [], 'errors' => ['point' => 'PLG_DHARMASHOPSHIPPING_PICKUP_POINT_REQUIRED']];
     }
 
     public function render(array $displayData): string
     {
         $path = PluginHelper::getLayoutPath('dharmashopshipping', 'pickup', 'default');
-        $p = $displayData['method']->params;
-        $map = (string) ($p['map'] ?? 'none');
-        $lat = (float) ($p['lat'] ?? 0);
-        $lon = (float) ($p['lon'] ?? 0);
-        $zoom = (int) ($p['zoom'] ?? 16);
-        $displayData['map_url'] = '';
+        $points = [];
 
-        if ($map === 'yandex') {
-            $displayData['map_url'] = 'https://yandex.ru/map-widget/v1/?ll=' . rawurlencode($lon . ',' . $lat) . '&z=' . $zoom . '&pt=' . rawurlencode($lon . ',' . $lat . ',pm2rdm');
-        } elseif ($map === 'osm') {
-            $delta = 0.01 / (2 ** max(0, $zoom - 14));
-            $bbox = ($lon - $delta * 2) . ',' . ($lat - $delta) . ',' . ($lon + $delta * 2) . ',' . ($lat + $delta);
-            $displayData['map_url'] = 'https://www.openstreetmap.org/export/embed.html?bbox=' . rawurlencode($bbox) . '&layer=mapnik&marker=' . rawurlencode($lat . ',' . $lon);
+        foreach ($this->pointsOf($displayData['method']) as $point) {
+            $point['map_url'] = $this->mapUrl($point);
+            $point['rows'] = array_values(array_filter($this->pointRows($point), static fn (array $row): bool => trim($row['value']) !== ''));
+            $points[] = $point;
         }
+
+        $displayData['points'] = $points;
+        $selectedKey = (string) ($displayData['values']['point'] ?? '');
+        $displayData['point_selected'] = in_array($selectedKey, array_column($points, 'key'), true) ? $selectedKey : (string) ($points[0]['key'] ?? '');
 
         return (static function (string $__path, array $displayData): string {
             ob_start();
@@ -160,5 +226,27 @@ final class PickupType implements TypeInterface
 
             return (string) ob_get_clean();
         })($path, $displayData);
+    }
+
+    /** Адрес виджета карты пункта (Яндекс Карты или OpenStreetMap по координатам); пустая строка — карты нет. */
+    private function mapUrl(array $point): string
+    {
+        $map = (string) ($point['map'] ?? 'none');
+        $lat = (float) ($point['lat'] ?? 0);
+        $lon = (float) ($point['lon'] ?? 0);
+        $zoom = (int) ($point['zoom'] ?? 16);
+
+        if ($map === 'yandex') {
+            return 'https://yandex.ru/map-widget/v1/?ll=' . rawurlencode($lon . ',' . $lat) . '&z=' . $zoom . '&pt=' . rawurlencode($lon . ',' . $lat . ',pm2rdm');
+        }
+
+        if ($map === 'osm') {
+            $delta = 0.01 / (2 ** max(0, $zoom - 14));
+            $bbox = ($lon - $delta * 2) . ',' . ($lat - $delta) . ',' . ($lon + $delta * 2) . ',' . ($lat + $delta);
+
+            return 'https://www.openstreetmap.org/export/embed.html?bbox=' . rawurlencode($bbox) . '&layer=mapnik&marker=' . rawurlencode($lat . ',' . $lon);
+        }
+
+        return '';
     }
 }

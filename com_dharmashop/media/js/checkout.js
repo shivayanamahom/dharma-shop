@@ -64,23 +64,42 @@
     const syncShipping = () => {
         const chosen = Array.from(shippingRadios).find((radio) => radio.checked);
         shippingRadios.forEach((radio) => {
-            radio.closest('[data-shipping-option]')?.querySelectorAll('[data-shipping-extra]').forEach((node) => node.classList.toggle('d-none', !radio.checked));
+            const option = radio.closest('[data-shipping-option]');
+            const point = option?.querySelector('[data-shipping-point]:checked')?.value;
+            // Блоки способа видны у выбранного способа; сведения пункта (data-shipping-point-detail) — ещё и у выбранного пункта.
+            option?.querySelectorAll('[data-shipping-extra]').forEach((node) => {
+                const forPoint = node.dataset.shippingPointDetail;
+                node.classList.toggle('d-none', !radio.checked || (forPoint !== undefined && forPoint !== point));
+            });
             form.querySelector('[data-shipping-details="' + radio.value + '"]')?.classList.toggle('d-none', !radio.checked);
         });
         inputRows?.replaceChildren();
         if (!chosen) return;
         form.querySelectorAll('[data-checkout-shipping-price]').forEach((node) => { node.textContent = chosen.dataset.priceText || ''; });
         form.querySelectorAll('[data-checkout-total]').forEach((node) => { node.textContent = chosen.dataset.totalText || ''; });
-        chosen.closest('[data-shipping-option]')?.querySelectorAll('[data-summary-label]').forEach((input) => {
-            const value = input.tagName === 'SELECT' ? (input.selectedOptions[0]?.value ? input.selectedOptions[0].textContent : '') : input.value.trim();
+        const addRow = (label, value) => {
             if (!value || !inputRows) return;
             const line = document.createElement('div');
             line.className = 'text-break';
-            const label = document.createElement('span');
-            label.className = 'text-body-secondary';
-            label.textContent = input.dataset.summaryLabel + ': ';
-            line.append(label, document.createTextNode(value));
+            const caption = document.createElement('span');
+            caption.className = 'text-body-secondary';
+            caption.textContent = label + ': ';
+            line.append(caption, document.createTextNode(value));
             inputRows.append(line);
+        };
+        // Поля и выбор покупателя внутри способа дублируются в боковой панели. data-summary-value — готовое значение (радио пункта),
+        // data-summary-rows — JSON-список {label, value} с дополнительными сведениями выбранного пункта. Всё выводится как текст.
+        chosen.closest('[data-shipping-option]')?.querySelectorAll('[data-summary-label], [data-summary-rows]').forEach((input) => {
+            if (input.type === 'radio' && !input.checked) return;
+            if (input.dataset.summaryLabel) {
+                const value = input.dataset.summaryValue ?? (input.tagName === 'SELECT' ? (input.selectedOptions[0]?.value ? input.selectedOptions[0].textContent : '') : input.value.trim());
+                addRow(input.dataset.summaryLabel, value);
+            }
+            if (input.dataset.summaryRows) {
+                try {
+                    (JSON.parse(input.dataset.summaryRows) || []).forEach((row) => addRow(String(row.label ?? ''), String(row.value ?? '')));
+                } catch (error) { /* некорректный JSON не должен ломать форму */ }
+            }
         });
     };
     shippingRadios.forEach((radio) => radio.addEventListener('change', syncShipping));
