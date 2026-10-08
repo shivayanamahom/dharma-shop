@@ -12,6 +12,10 @@
   const panel = document.querySelector('[data-dharmashop-minicart]');
   if (!panel || !options.fragmentUrl) return;
   const body = panel.querySelector('[data-dharmashop-minicart-body]');
+
+  // Панель лежит в шапке сайта, а у шапки свой контекст наложения (z-index): внутри него панель оказывается под другими блоками.
+  // Как и штатные модальные окна Bootstrap, переносим её в body.
+  if (panel.parentElement !== document.body) document.body.appendChild(panel);
   let shown = false;
   let stale = true;
   let controller = null;

@@ -8,6 +8,9 @@
   --dharma-minicart-muted: var(--bs-secondary-color, #6c757d);
   --dharma-minicart-border: var(--bs-border-color, #dee2e6);
   --dharma-minicart-radius: 0.375rem;
+  --dharma-minicart-z: 1100;
+  --bs-offcanvas-zindex: var(--dharma-minicart-z);
+  z-index: var(--dharma-minicart-z);
   --dharma-minicart-duration: 0.75s;
   --dharma-minicart-easing: cubic-bezier(0.45, 0.05, 0.25, 1);
   --bs-offcanvas-transition: transform var(--dharma-minicart-duration) var(--dharma-minicart-easing);
@@ -59,11 +62,14 @@
 .dharmaMiniCartSumTotal > :first-child { font-size: 0.875rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
 .dharmaMiniCartSumTotal > :last-child { font-size: 1.25rem; font-weight: 700; text-align: right; }
 .dharmaMiniCartActions { display: flex; gap: 0.75rem; }
-.dharmaMiniCartActions .btn { flex: 1 1 0; padding: 0.75rem 0.5rem; display: inline-flex; align-items: center; justify-content: center; text-align: center; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+.dharmaMiniCartActions .btn { flex: 1 1 0; padding: 0.75rem 0.5rem; font-size: 0.875rem; display: inline-flex; align-items: center; justify-content: center; text-align: center; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
 /* Кнопки: классы задаются в настройках модуля; цвета Bootstrap-кнопок берём из акцента панели. */
 .dharmaMiniCartActions .btn-primary { --bs-btn-color: var(--dharma-minicart-accent-text); --bs-btn-bg: var(--dharma-minicart-accent); --bs-btn-border-color: var(--dharma-minicart-accent); --bs-btn-hover-color: var(--dharma-minicart-accent-text); --bs-btn-hover-bg: var(--dharma-minicart-accent); --bs-btn-hover-border-color: var(--dharma-minicart-accent); background-color: var(--dharma-minicart-accent); border-color: var(--dharma-minicart-accent); color: var(--dharma-minicart-accent-text); }
 .dharmaMiniCartActions .btn-primary:hover, .dharmaMiniCartActions .btn-primary:focus-visible { filter: brightness(0.92); }
 .dharmaMiniCartActions .btn-outline-primary { --bs-btn-color: var(--dharma-minicart-accent); --bs-btn-border-color: var(--dharma-minicart-accent); --bs-btn-hover-color: var(--dharma-minicart-accent-text); --bs-btn-hover-bg: var(--dharma-minicart-accent); --bs-btn-hover-border-color: var(--dharma-minicart-accent); border-color: var(--dharma-minicart-accent); color: var(--dharma-minicart-accent); }
 .dharmaMiniCartActions .btn-outline-primary:hover, .dharmaMiniCartActions .btn-outline-primary:focus-visible { background-color: var(--dharma-minicart-accent); color: var(--dharma-minicart-accent-text); }
+
+/* Затемнение за панелью — тоже выше шапки сайта (у штатного 1040). */
+body:has(.dharmaMiniCartPanel:is(.show, .showing)) > .offcanvas-backdrop { z-index: calc(var(--dharma-minicart-z, 1100) - 5); }
 
 @media (prefers-reduced-motion: reduce) { .dharmaMiniCartPanel * { transition: none !important; } }
