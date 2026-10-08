@@ -48,5 +48,10 @@ $seconds = max(0, min(300, (int) ($displayData['seconds'] ?? 5)));
             </div>
             <a class="d-inline-block mt-3" href="<?php echo $escape($displayData['cartUrl'] ?? ''); ?>"><?php echo Text::_('COM_DHARMASHOP_CART_GO'); ?></a>
         </div>
+        <?php if ($seconds > 0) : ?>
+            <div class="overflow-hidden rounded-bottom" aria-hidden="true">
+                <div class="w-100 border-top border-2 border-primary dharmaCartToastProgress" data-dharmashop-cart-toast-progress></div>
+            </div>
+        <?php endif; ?>
     </div>
 </div>

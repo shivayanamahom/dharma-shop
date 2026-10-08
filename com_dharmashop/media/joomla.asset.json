@@ -50,7 +50,7 @@
 		},
 		{
 			"name": "com_dharmashop.cart-toast",
-			"version": "fa0f72fb0193",
+			"version": "13cfd38213c6",
 			"type": "script",
 			"uri": "com_dharmashop/cart-toast.js",
 			"attributes": { "defer": true },
