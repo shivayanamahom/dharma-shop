@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Dharma\Component\DharmaShop\Site\View\Cart;
 
 use Joomla\CMS\Factory;
+use Joomla\CMS\Helper\ModuleHelper;
 use Joomla\Database\DatabaseInterface;
 use Joomla\Database\ParameterType;
 use Joomla\Registry\Registry;
@@ -11,7 +12,7 @@ use Joomla\Registry\Registry;
 \defined('_JEXEC') or die;
 
 /**
- * Фрагмент мини-корзины (`format=raw`) для боковой панели модуля: только содержимое макета `mini` (tmpl/cart/mini.php).
+ * Фрагмент мини-корзины (`format=raw`) для боковой панели модуля: содержимое панели (шаблон модуля `default_items.php`).
  * Те же данные, что у страницы корзины; режим каталога и кеш обрабатывает родительский вид. Что показывать и какие классы у кнопок,
  * берётся из настроек модуля корзины (номер модуля — параметр `mid`; на данные корзины это не влияет).
  */
@@ -43,6 +44,28 @@ class RawView extends HtmlView
         ];
 
         parent::display($tpl);
+    }
+
+    /**
+     * Мини-корзина: разметку берём из шаблона модуля (`default_items.php`, с учётом переопределения в шаблоне сайта); файл подключается
+     * здесь, поэтому в нём `$this` — этот вид. Остальные макеты — как обычно.
+     */
+    public function loadTemplate($tpl = null)
+    {
+        if ($this->getLayout() !== 'mini') {
+            return parent::loadTemplate($tpl);
+        }
+
+        $path = ModuleHelper::getLayoutPath('mod_dharmashop_cart', 'default_items');
+
+        if (!is_file($path)) {
+            return '';
+        }
+
+        ob_start();
+        include $path;
+
+        return (string) ob_get_clean();
     }
 
     /** Параметры опубликованного модуля корзины сайта; без номера или при его ошибке — значения по умолчанию. */
