@@ -169,6 +169,9 @@ return new class () implements ServiceProviderInterface {
                     $query = $db->createQuery()->insert($table)->columns(['title','alias','color','is_default','stock_effect','ordering','state'])
                         ->values(':title,' . $db->quote('new') . ',' . $db->quote('info') . ',1,0,1,1')->bind(':title',$title);
                     $db->setQuery($query)->execute();
+                    // Остальные стандартные статусы (в обработке, оплачен, отправлен, выполнен, отменён…) — тоже только в пустой справочник.
+                    require_once JPATH_ADMINISTRATOR . '/components/com_dharmashop/src/Order/DefaultStatuses.php';
+                    \Dharma\Component\DharmaShop\Administrator\Order\DefaultStatuses::install($db);
                 }
 
                 /** C50: аддитивное обновление существующей схемы без деинсталляции и удаления каталога. */
