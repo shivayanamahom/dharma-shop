@@ -4,6 +4,7 @@ namespace Dharma\Component\DharmaShop\Administrator\Order;
 
 use Dharma\Component\DharmaShop\Administrator\Cart\CartService;
 use Dharma\Component\DharmaShop\Administrator\Customer\CustomerService;
+use Dharma\Component\DharmaShop\Administrator\Stock\StockService;
 use Dharma\Component\DharmaShop\Administrator\Support\Sql;
 use Dharma\Component\DharmaShop\Administrator\Notification\NotificationService;
 use Joomla\CMS\Factory;
@@ -78,6 +79,12 @@ final class OrderService
                     'title'=>(string) $line->title,'unit'=>(string) $line->unit,'qty'=>$line->qty,'price'=>$line->unit_price,'total'=>$line->total,
                     'params'=>json_encode(['variant_title'=>$line->variant_title,'base_price'=>$line->base_price,'line_params'=>$line->line_params],JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),'ordering'=>$index+1];
                 $this->db->insertObject('#__dharmashop_order_items',$item);
+            }
+            // Остаток под заказ: списываем по вариантам с включённым учётом остатков (атомарно, в этой же транзакции; возврат — статусом с эффектом «возвращает остатки»).
+            $stock = new StockService($this->db);
+            foreach ($quantities as $variantId=>$qty) {
+                $tracked = array_values(array_filter($lines, static fn (object $l): bool => (int) $l->variant_id === (int) $variantId))[0];
+                if ((int) $tracked->stock_tracked === 1) $stock->consume((int) $variantId,(float) $qty,$id,$userId ?: null,(int) $tracked->backorder === 1);
             }
             foreach ($totals['adjustments'] as $index=>$row) {
                 $amount = (float) $row['amount'];

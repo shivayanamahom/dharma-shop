@@ -70,7 +70,7 @@ final class CartSession
     private function writeCookie(string $token): void
     {
         $this->app->getInput()->cookie->set(self::COOKIE, $token, [
-            'expires' => time() + CartService::LIFETIME_DAYS * 86400,
+            'expires' => time() + CartService::lifetimeDays(false) * 86400,
             'path' => (string) $this->app->get('cookie_path', '/') ?: '/',
             'domain' => (string) $this->app->get('cookie_domain', ''),
             'secure' => $this->app->isSslConnection(),

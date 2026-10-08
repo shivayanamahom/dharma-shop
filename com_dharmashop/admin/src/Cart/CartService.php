@@ -14,6 +14,7 @@ namespace Dharma\Component\DharmaShop\Administrator\Cart;
 
 use Dharma\Component\DharmaShop\Administrator\Order\OrderRules;
 use Dharma\Component\DharmaShop\Administrator\Support\Sql;
+use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Plugin\PluginHelper;
 use Joomla\Database\DatabaseInterface;
@@ -32,8 +33,14 @@ use Joomla\Event\Event;
  */
 final class CartService
 {
-    /** Срок жизни корзины, дней с последнего изменения. */
-    public const LIFETIME_DAYS = 30;
+    /** Срок жизни корзины гостя по умолчанию, дней с последнего изменения (настройка `cart_guest_days`). */
+    public const GUEST_DAYS = 30;
+
+    /** Срок жизни корзины вошедшего пользователя по умолчанию (настройка `cart_user_days`; 0 — без срока). */
+    public const USER_DAYS = 365;
+
+    /** «Без срока»: корзина хранится, пока пользователь её не очистит (дата далеко в будущем). */
+    private const FOREVER = '2999-12-31 23:59:59';
 
     public function __construct(private readonly DatabaseInterface $db, private readonly OrderRules $rules)
     {
@@ -76,8 +83,8 @@ final class CartService
     {
         $token = bin2hex(random_bytes(16));
         $now = $this->now();
-        $expires = $this->expires();
         $user = $userId > 0 ? $userId : null;
+        $expires = $this->expires($user !== null);
         $query = $this->db->createQuery()->insert($this->db->quoteName('#__dharmashop_carts'))
             ->columns($this->db->quoteName(['token', 'user_id', 'price_list_id', 'created', 'modified', 'expires']))
             ->values(':token, :user, 1, :created, :modified, :expires')
@@ -459,7 +466,10 @@ final class CartService
     /** Продлевает срок жизни корзины. */
     private function touch(int $cartId): void
     {
-        $this->execute('UPDATE #__dharmashop_carts SET modified = :m, expires = :e WHERE id = :c', [':m' => [$this->now()], ':e' => [$this->expires()], ':c' => [$cartId, ParameterType::INTEGER]]);
+        $this->execute(
+            'UPDATE #__dharmashop_carts SET modified = :m, expires = IF(user_id IS NULL, :eg, :eu) WHERE id = :c',
+            [':m' => [$this->now()], ':eg' => [$this->expires(false)], ':eu' => [$this->expires(true)], ':c' => [$cartId, ParameterType::INTEGER]]
+        );
     }
 
     /** @param array<string, array{0: mixed, 1?: string}> $binds */
@@ -482,8 +492,23 @@ final class CartService
         return Factory::getDate()->toSql();
     }
 
-    private function expires(): string
+    /**
+     * Срок жизни корзины, дней: у гостя (`cart_guest_days`, по умолчанию 30) и у вошедшего пользователя (`cart_user_days`, по умолчанию 365,
+     * 0 — без срока). Корзина гостя ограничена и сроком cookie; корзина пользователя хранится в базе и доступна с любого устройства.
+     */
+    public static function lifetimeDays(bool $user): int
     {
-        return Factory::getDate('+' . self::LIFETIME_DAYS . ' days')->toSql();
+        $settings = ComponentHelper::getParams('com_dharmashop');
+
+        return $user
+            ? max(0, min(3650, (int) $settings->get('cart_user_days', self::USER_DAYS)))
+            : max(1, min(3650, (int) $settings->get('cart_guest_days', self::GUEST_DAYS)));
+    }
+
+    private function expires(bool $user): string
+    {
+        $days = self::lifetimeDays($user);
+
+        return $days === 0 ? self::FOREVER : Factory::getDate('+' . $days . ' days')->toSql();
     }
 }

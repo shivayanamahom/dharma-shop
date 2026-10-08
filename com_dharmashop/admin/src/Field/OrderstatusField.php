@@ -13,7 +13,7 @@ class OrderstatusField extends ListField
         $options = parent::getOptions();
         $db = Factory::getContainer()->get(DatabaseInterface::class);
         $query = $db->createQuery()->select(['id','title'])->from($db->quoteName('#__dharmashop_statuses'))->order('ordering,id');
-        if ((string) $this->element['active_only'] === 'true') $query->where('state=1 AND stock_effect=0');
+        if ((string) $this->element['active_only'] === 'true') $query->where('state=1');
         $rows = $db->setQuery($query)->loadObjectList();
         foreach ($rows as $row) $options[] = (object) ['value'=>(string) $row->id,'text'=>$row->title];
         return $options;

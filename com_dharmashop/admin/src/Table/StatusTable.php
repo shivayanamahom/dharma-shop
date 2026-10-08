@@ -27,7 +27,7 @@ class StatusTable extends Table
         $this->customer_message = trim(strip_tags((string) $this->customer_message));
         if ($this->title === '' || mb_strlen($this->title)>255 || $this->alias === '' || mb_strlen($this->alias)>190 || mb_strlen($this->customer_message)>2000
             || !in_array($this->color,['primary','secondary','success','danger','warning','info','dark'],true)
-            || !in_array($this->state,[0,1],true) || !in_array($this->is_default,[0,1],true)) {
+            || !in_array($this->state,[0,1],true) || !in_array($this->is_default,[0,1],true) || !in_array((int) $this->stock_effect,[0,1],true)) {
             $this->setError(Text::_('COM_DHARMASHOP_STATUS_INVALID')); return false;
         }
         if ($this->is_default && ($this->state !== 1 || (int) $this->stock_effect !== 0)) {

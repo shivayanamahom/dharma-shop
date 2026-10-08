@@ -23,9 +23,9 @@ class StatusModel extends AdminModel
     protected function loadFormData(): mixed { return Factory::getApplication()->getUserState('com_dharmashop.edit.status.data',[]) ?: $this->getItem(); }
     public function save($data)
     {
-        $data = array_intersect_key((array) $data,array_flip(['id','title','alias','color','ordering','state','is_default','customer_message']));
+        $data = array_intersect_key((array) $data,array_flip(['id','title','alias','color','ordering','state','is_default','customer_message','stock_effect']));
         if (!$this->getCurrentUser()->authorise('core.edit.state',$this->option)) {
-            unset($data['state'],$data['ordering'],$data['is_default']);
+            unset($data['state'],$data['ordering'],$data['is_default'],$data['stock_effect']);
         }
         return parent::save($data);
     }
