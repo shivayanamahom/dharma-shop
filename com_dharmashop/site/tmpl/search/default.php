@@ -18,7 +18,7 @@ $modes = ['grid' => 'COM_DHARMASHOP_VIEW_GRID', 'list' => 'COM_DHARMASHOP_VIEW_L
         <div class="row g-2 align-items-end">
             <div class="col-12 col-lg">
                 <label for="dharmashop-search-q" class="visually-hidden"><?php echo Text::_('COM_DHARMASHOP_SEARCH_LABEL'); ?></label>
-                <input type="search" id="dharmashop-search-q" name="q" class="form-control" value="<?php echo $this->escape($this->query); ?>" maxlength="100" placeholder="<?php echo $this->escape(Text::_('COM_DHARMASHOP_SEARCH_PLACEHOLDER')); ?>" autocomplete="off">
+                <input type="search" id="dharmashop-search-q" name="filter[search]" class="form-control" value="<?php echo $this->escape($this->query); ?>" maxlength="100" placeholder="<?php echo $this->escape(Text::_('COM_DHARMASHOP_SEARCH_PLACEHOLDER')); ?>" autocomplete="off">
             </div>
             <div class="col-6 col-lg-auto">
                 <label for="dharmashop-search-sort" class="visually-hidden"><?php echo Text::_('COM_DHARMASHOP_SORT_LABEL'); ?></label>

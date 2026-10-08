@@ -19,6 +19,18 @@ final class ProductSearch
     public const MAX_LENGTH = 100;
 
     /**
+     * Текст поискового запроса из адреса страницы: `?filter[search]=…` (общий формат параметров фильтра каталога; в нём же будут
+     * остальные условия модуля фильтра). Старый `?q=` читается для совместимости.
+     */
+    public static function fromInput(\Joomla\Input\Input $input): string
+    {
+        $filter = $input->get('filter', [], 'array');
+        $raw = is_array($filter) && isset($filter['search']) && is_scalar($filter['search']) ? (string) $filter['search'] : (string) $input->getString('q', '');
+
+        return self::clean($raw);
+    }
+
+    /**
      * Очищенный текст запроса (без управляющих символов, не длиннее MAX_LENGTH).
      */
     public static function clean(string $raw): string

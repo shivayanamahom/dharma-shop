@@ -91,7 +91,7 @@
     const resultsUrl = (query) => {
       const url = new URL(form.getAttribute('action') || window.location.href, window.location.href);
       form.querySelectorAll('input[type="hidden"]').forEach((hidden) => url.searchParams.set(hidden.name, hidden.value));
-      url.searchParams.set('q', query);
+      url.searchParams.set('filter[search]', query);
       return url.toString();
     };
 

@@ -161,7 +161,7 @@ trait ListingTrait
 
             $pagination->setAdditionalUrlParam('sort', $query->exists('sort') ? $this->ordering : null);
             $pagination->setAdditionalUrlParam('product_view', $query->exists('product_view') ? $this->productView : null);
-            $pagination->setAdditionalUrlParam('q', $this->searchQuery !== '' ? $this->searchQuery : null);
+            $pagination->setAdditionalUrlParam('filter', $this->searchQuery !== '' ? ['search' => $this->searchQuery] : null);
         }
     }
 

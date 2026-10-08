@@ -34,7 +34,7 @@ $sfx = $escape(trim((string) $params->get('moduleclass_sfx', '')));
     <?php endforeach; ?>
     <div class="input-group flex-nowrap rounded bg-body-tertiary">
         <label class="visually-hidden" for="dharmashop-search-<?php echo $id; ?>"><?php echo Text::_('MOD_DHARMASHOP_SEARCH_LABEL'); ?></label>
-        <input type="search" name="q" id="dharmashop-search-<?php echo $id; ?>" class="<?php echo $escape($inputClass); ?>" maxlength="100" autocomplete="off"
+        <input type="search" name="filter[search]" id="dharmashop-search-<?php echo $id; ?>" class="<?php echo $escape($inputClass); ?>" maxlength="100" autocomplete="off"
             value="<?php echo $escape($query); ?>" placeholder="<?php echo $escape($placeholder); ?>" data-dharmashop-search-input
             <?php if ($suggest) : ?>role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="dharmashop-search-results-<?php echo $id; ?>"<?php endif; ?>>
         <?php if ($showButton) : ?>

@@ -44,7 +44,7 @@ class SearchController extends BaseController
                     'id' => (int) $row->catid,
                     'title' => (string) $row->title,
                     'count' => (int) $row->n,
-                    'url' => Route::_('index.php?option=com_dharmashop&view=category&id=' . (int) $row->catid . '&q=' . rawurlencode($query), false),
+                    'url' => Route::_('index.php?option=com_dharmashop&view=category&id=' . (int) $row->catid . '&filter[search]=' . rawurlencode($query), false),
                 ];
             }
 
@@ -82,7 +82,7 @@ class SearchController extends BaseController
             'total' => $total,
             'categories' => $categories,
             'items' => $items,
-            'url' => Route::_('index.php?option=com_dharmashop&view=search&q=' . rawurlencode($query), false),
+            'url' => Route::_('index.php?option=com_dharmashop&view=search&filter[search]=' . rawurlencode($query), false),
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         $this->app->close();
     }

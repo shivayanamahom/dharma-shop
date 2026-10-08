@@ -38,7 +38,7 @@ class Dispatcher extends AbstractModuleDispatcher
         $data['action'] = $query === '' ? $url : substr($url, 0, strpos($url, '?'));
         $data['hidden'] = array_filter($hidden, 'is_scalar');
         // На странице с результатами строка показывает текущий запрос.
-        $data['query'] = mb_substr(trim((string) $this->getApplication()->getInput()->getString('q', '')), 0, 100);
+        $data['query'] = mb_substr(trim(\Dharma\Component\DharmaShop\Site\Search\ProductSearch::fromInput($this->getApplication()->getInput())), 0, 100);
         $data['suggestUrl'] = Route::_('index.php?option=com_dharmashop&task=search.suggest&format=json', false);
         $data['inputClass'] = $this->classes((string) $params->get('input_class', ''), 'form-control border-0 bg-transparent shadow-none');
         $data['buttonClass'] = $this->classes((string) $params->get('button_class', ''), 'btn border-0 bg-transparent');

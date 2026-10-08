@@ -22,10 +22,10 @@ class CategoryModel extends CategoriesModel
     /** @var array<string, string> значения параметров поискового подзапроса (переменные нужны для привязки по ссылке) */
     private array $searchBinds = [];
 
-    /** Текст поискового запроса (`q`) страницы списка; пусто — без поиска. */
+    /** Текст поискового запроса (`filter[search]`) страницы списка; пусто — без поиска. */
     public function getQueryText(): string
     {
-        return ProductSearch::clean((string) Factory::getApplication()->getInput()->getString('q', ''));
+        return ProductSearch::fromInput(Factory::getApplication()->getInput());
     }
 
     /**
