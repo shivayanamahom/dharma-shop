@@ -92,11 +92,12 @@
     document.querySelectorAll('[data-dharmashop-cart-control]').forEach((control) => render(control, products[control.dataset.product]));
   };
 
-  const apply = (data, anchor) => {
+  const apply = (data, anchor, source) => {
     if (data.cart) {
       indicators(data.cart);
       sync(data.cart.products);
-      document.dispatchEvent(new CustomEvent('dharmashop:cart-updated', { detail: data.cart }));
+      // source: «add» — добавлена позиция (боковая панель модуля может открыться), «change» — изменено количество или позиция удалена.
+      document.dispatchEvent(new CustomEvent('dharmashop:cart-updated', { detail: Object.assign({}, data.cart, { source }) }));
     }
     if (!data.success) showError(anchor, data.message || text('COM_DHARMASHOP_CART_ERROR_GENERIC', 'Error'));
   };
@@ -113,7 +114,7 @@
       ? post(options.removeUrl, { item_id: item })
       : post(options.updateUrl, { ['qty[' + item + ']']: format(next) });
 
-    request.then((data) => apply(data, control))
+    request.then((data) => apply(data, control, 'change'))
       .catch(() => showError(control, text('COM_DHARMASHOP_CART_ERROR_GENERIC', 'Error')))
       .finally(() => busy.delete(control));
   };
@@ -144,7 +145,7 @@
     post(options.url, params)
       .then((data) => {
         const control = button.closest('[data-dharmashop-cart-control]');
-        apply(data, button);
+        apply(data, button, 'add');
         // Кнопка без виджета: короткое подтверждение «Добавлено»; с виджетом подтверждением служит сам виджет.
         if (data.success && !control) flash(button);
       })

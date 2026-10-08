@@ -42,6 +42,29 @@ class HtmlView extends BaseHtmlView
         return $amount > 0 ? $this->money->format((string) $amount) . ' + ' . $this->money->zeroText() : $this->money->zeroText();
     }
 
+    /**
+     * Сумма позиций по обычным ценам и размер скидки (разница с итоговыми ценами) для боковой панели итога; только позиции без ошибок.
+     *
+     * @return  array{before: float, saved: float}
+     */
+    public function discountTotals(): array
+    {
+        $before = 0.0;
+        $actual = 0.0;
+
+        foreach ($this->lines as $line) {
+            if ($line->error !== '' || $line->unit_price === null) {
+                continue;
+            }
+
+            $regular = $line->base_price !== null && $line->base_price > $line->unit_price ? $line->base_price : $line->unit_price;
+            $before += round($regular * $line->qty, 2);
+            $actual += $line->total;
+        }
+
+        return ['before' => round($before, 2), 'saved' => round($before - $actual, 2)];
+    }
+
     public function display($tpl = null): void
     {
         $app = Factory::getApplication();
@@ -72,6 +95,19 @@ class HtmlView extends BaseHtmlView
         $this->actionUrl = Route::_('index.php?option=com_dharmashop&task=cart.update', false);
 
         if ($this->getDocument() instanceof HtmlDocument) {
+            // Количество, удаление и очистка без перезагрузки (cart-page.js); без JavaScript работают обычные формы.
+            $document = $this->getDocument();
+            $wa = $document->getWebAssetManager();
+            $wa->getRegistry()->addExtensionRegistryFile('com_dharmashop');
+            $wa->useScript('com_dharmashop.cart-page');
+            $document->addScriptOptions('com_dharmashop.cartpage', [
+                'fragmentUrl' => Route::_('index.php?option=com_dharmashop&view=cart&layout=page&format=raw', false),
+                'updateUrl' => Route::_('index.php?option=com_dharmashop&task=cart.update&format=json', false),
+                'removeUrl' => Route::_('index.php?option=com_dharmashop&task=cart.remove&format=json', false),
+                'clearUrl' => Route::_('index.php?option=com_dharmashop&task=cart.clear&format=json', false),
+                'error' => Text::_('COM_DHARMASHOP_CART_ERROR_GENERIC'),
+            ]);
+
             $this->getDocument()->setTitle(Text::_('COM_DHARMASHOP_CART_TITLE'));
             $this->getDocument()->setMetaData('robots', 'noindex, nofollow');
         }

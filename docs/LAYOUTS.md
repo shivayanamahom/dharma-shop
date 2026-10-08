@@ -234,6 +234,10 @@ C61: editor исключён из данных card в EntityFields до зап�
 - **Поведение:** панель при загрузке переносится в `body` (у шапки сайта свой контекст наложения); содержимое подгружается фрагментом `view=cart&layout=mini&format=raw&mid=<номер модуля>`, настройки показа (фото, категория, артикул, цена за единицу, скидка, кнопка «Оформить заказ», классы кнопок) фрагмент читает у опубликованного модуля.
 - **Страницы cart и checkout — разные шаблоны.** `checkout` появится на этапе заказов; до него кнопка «Оформить заказ» ведёт на несуществующий адрес (её можно выключить в настройках модуля).
 
+## Страница корзины (C69)
+
+`tmpl/cart/default.php` — контейнер `<div id="dharma_shop" class="dharmaCart">`, заголовок, `[data-dharmashop-cart-messages]` и `[data-dharmashop-cart-page]`; содержимое — `default_content.php` (его отдаёт и фрагмент `layout=page&format=raw`). Крючки: `dharmaCartList`, `dharmaCartLine`, `dharmaCartQty`, `dharmaCartSummary`, `dharmaCartEmpty`, `dharmaCartForm`. Data-атрибуты скрипта: `data-dharmashop-cartpage-step|qty|remove|clear|stepper`. Только Bootstrap: `row`, `col-lg-8/4`, `card shadow-sm`, `sticky-lg-top`, `input-group`.
+
 ## Пункт меню «Товар» (C68)
 
 `tmpl/product/default.xml` — тип пункта «Один товар» (поле `modal_product`: окно выбора `view=products&layout=modal`, `tmpl/products/modal.php` в админке). Страница, открытая через такой пункт, берёт заголовок/описание/роботы из пункта меню, а крошки — только его цепочку.

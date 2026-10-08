@@ -19,8 +19,18 @@ class RawView extends HtmlView
 {
     public function display($tpl = null): void
     {
+        $input = Factory::getApplication()->getInput();
+
+        // layout=page — содержимое страницы корзины (обновляется скриптом cart-page.js), иначе — мини-корзина модуля.
+        if ($input->getCmd('layout') === 'page') {
+            $this->setLayout('default');
+            parent::display('content');
+
+            return;
+        }
+
         $this->setLayout('mini');
-        $params = $this->moduleParams(Factory::getApplication()->getInput()->getInt('mid', 0));
+        $params = $this->moduleParams($input->getInt('mid', 0));
         $this->mini = [
             'image' => (int) $params->get('show_image', 1) === 1,
             'category' => (int) $params->get('show_category', 1) === 1,

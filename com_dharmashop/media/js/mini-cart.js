@@ -122,7 +122,7 @@
 
     if (shown) {
       load();
-    } else if (panel.dataset.openOnAdd === '1' && window.bootstrap && bootstrap.Offcanvas) {
+    } else if (panel.dataset.openOnAdd === '1' && event.detail && event.detail.source === 'add' && window.bootstrap && bootstrap.Offcanvas) {
       bootstrap.Offcanvas.getOrCreateInstance(panel).show();
     }
   });
