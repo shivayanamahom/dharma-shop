@@ -10,6 +10,7 @@ declare(strict_types=1);
 
 namespace Dharma\Component\DharmaShop\Administrator\View\Fields;
 
+use Dharma\Component\DharmaShop\Administrator\Fields\TypeRegistry;
 use Joomla\CMS\Form\Form;
 use Joomla\CMS\Helper\ContentHelper;
 use Joomla\CMS\Language\Text;
@@ -25,12 +26,17 @@ class HtmlView extends BaseHtmlView
 {
     protected $option = 'com_dharmashop';
     protected array $items = [];
+    protected array $typeLabels = [];
     protected ?Pagination $pagination = null;
     public ?Form $filterForm = null;
     public array $activeFilters = [];
 
     public function display($tpl = null): void
     {
+        // Import enabled providers and their language files, as in the type selector.
+        foreach (TypeRegistry::current()->all() as $id => $type) {
+            $this->typeLabels[$id] = Text::_($type->label());
+        }
         $model = $this->getModel();
         $this->items = $model->getItems();
         $this->pagination = $model->getPagination();

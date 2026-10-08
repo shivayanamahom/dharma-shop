@@ -88,7 +88,7 @@ if ($saveOrder) {
                             <div class="small text-muted"><?php echo Text::_('JFIELD_ALIAS_LABEL'); ?>: <?php echo $this->escape($item->alias); ?></div>
                         </th>
                         <td><?php echo Text::_('COM_DHARMASHOP_FIELD_TARGET_' . strtoupper((string) $item->target)); ?></td>
-                        <td><?php echo Text::_('COM_DHARMASHOP_FIELD_TYPE_' . strtoupper((string) $item->type)); ?></td>
+                        <td><?php echo $this->escape($this->typeLabels[$item->type] ?? (string) $item->type); ?></td>
                         <td class="text-center"><?php echo $item->group_title !== null ? $this->escape($item->group_title) : Text::_('COM_DHARMASHOP_FIELD_NO_GROUP'); ?></td>
                         <td><?php echo (int) $item->id; ?></td>
                     </tr>
