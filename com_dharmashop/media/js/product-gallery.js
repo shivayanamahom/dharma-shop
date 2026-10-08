@@ -49,18 +49,39 @@
         options.keyboard = { enabled: true };
       }
 
+      let thumbs = null;
+
       if (thumbsElement) {
-        options.thumbs = {
-          swiper: new window.Swiper(thumbsElement, {
-            slidesPerView: 5,
-            spaceBetween: 8,
-            freeMode: true,
-            watchSlidesProgress: true,
-          }),
-        };
+        const prev = thumbsElement.querySelector('[data-dharmashop-slider-prev]');
+        const next = thumbsElement.querySelector('[data-dharmashop-slider-next]');
+        // На узких экранах последняя миниатюра видна частично — намёк на прокрутку; стрелки нужны, только если миниатюры не помещаются.
+        thumbs = new window.Swiper(thumbsElement, {
+          slidesPerView: 3.5,
+          spaceBetween: 8,
+          freeMode: true,
+          watchSlidesProgress: true,
+          breakpoints: { 576: { slidesPerView: 4.5 }, 992: { slidesPerView: 5 } },
+          navigation: prev && next ? { prevEl: prev, nextEl: next } : false,
+        });
+        const toggleArrows = () => [prev, next].forEach((arrow) => arrow && arrow.classList.toggle('d-none', thumbs.isLocked));
+        ['lock', 'unlock', 'breakpoint', 'resize'].forEach((name) => thumbs.on(name, toggleArrows));
+        toggleArrows();
+        options.thumbs = { swiper: thumbs, autoScrollOffset: 1 };
       }
 
-      if (mainElement) new window.Swiper(mainElement, options);
+      const main = mainElement ? new window.Swiper(mainElement, options) : null;
+
+      // Активная миниатюра: рамка основного цвета Bootstrap (border-primary), остальные приглушены (opacity-50).
+      if (main && thumbs) {
+        const mark = () => thumbs.slides.forEach((slide, index) => {
+          const active = index === main.realIndex;
+          slide.classList.toggle('border-primary', active);
+          slide.classList.toggle('border-2', active);
+          slide.classList.toggle('opacity-50', !active);
+        });
+        main.on('slideChange', mark);
+        mark();
+      }
     }
 
     if (root.dataset.lightbox === '1' && window.Fancybox && typeof window.Fancybox.bind === 'function') {

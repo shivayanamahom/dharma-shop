@@ -57,6 +57,9 @@ $link = static function (object $image, string $content) use ($escape, $lightbox
                         </div>
                     <?php endforeach; ?>
                 </div>
+                <?php // Стрелки миниатюр (классы Bootstrap); показываются скриптом, только если миниатюры не помещаются. ?>
+                <button type="button" class="carousel-control-prev w-auto px-1 bg-dark bg-opacity-25 d-none" data-dharmashop-slider-prev aria-label="<?php echo $escape(Text::_('JPREVIOUS')); ?>"><span class="carousel-control-prev-icon" aria-hidden="true"></span></button>
+                <button type="button" class="carousel-control-next w-auto px-1 bg-dark bg-opacity-25 d-none" data-dharmashop-slider-next aria-label="<?php echo $escape(Text::_('JNEXT')); ?>"><span class="carousel-control-next-icon" aria-hidden="true"></span></button>
             </div>
         <?php endif; ?>
     <?php else : ?>
