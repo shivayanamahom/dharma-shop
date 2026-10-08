@@ -24,7 +24,25 @@ $ratio = preg_replace('/[^0-9x]/', '', (string) ($displayData['mediaRatio'] ?? '
 ?>
     <div class="position-relative">
         <?php $images = (array) ($displayData['images'] ?? []); ?>
-        <?php if (count($images) > 1) : ?>
+        <?php if (count($images) > 1 && ($displayData['sliderType'] ?? 'bootstrap') === 'swiper') : ?>
+            <?php // Swiper (плагин «Dharma Shop Swiper»): создаётся лениво скриптом card-slider.js, до этого видна первая картинка. ?>
+            <div class="swiper <?php echo $rounded; ?> overflow-hidden dharmaCardSlider" data-dharmashop-card-slider>
+                <div class="swiper-wrapper">
+                    <?php foreach ($images as $n => $image) : ?>
+                        <div class="swiper-slide">
+                            <a class="d-block text-reset" href="<?php echo $escape($productUrl); ?>" aria-label="<?php echo $escape($item->title); ?>">
+                                <div class="ratio ratio-<?php echo $ratio; ?> bg-body-tertiary">
+                                    <img class="w-100 h-100 object-fit-cover" src="<?php echo $escape($image->url); ?>" alt="<?php echo $escape($image->alt); ?>"<?php echo $n === 0 ? '' : ' loading="lazy"'; ?> decoding="async">
+                                </div>
+                            </a>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+                <div class="swiper-pagination"></div>
+                <div class="swiper-button-prev" aria-label="<?php echo $escape(Text::_('JPREVIOUS')); ?>"></div>
+                <div class="swiper-button-next" aria-label="<?php echo $escape(Text::_('JNEXT')); ?>"></div>
+            </div>
+        <?php elseif (count($images) > 1) : ?>
             <?php $carousel = 'dharmaCarousel-' . (int) $item->id; ?>
             <div id="<?php echo $carousel; ?>" class="carousel slide <?php echo $rounded; ?> overflow-hidden dharmaCardCarousel" data-bs-ride="false" data-bs-touch="true">
                 <div class="carousel-indicators">

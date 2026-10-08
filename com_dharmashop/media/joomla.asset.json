@@ -32,6 +32,12 @@
 			"attributes": { "defer": true }
 		},
 		{
+			"name": "com_dharmashop.card-slider",
+			"type": "script",
+			"uri": "com_dharmashop/card-slider.js",
+			"attributes": { "defer": true }
+		},
+		{
 			"name": "com_dharmashop.product-gallery",
 			"type": "script",
 			"uri": "com_dharmashop/product-gallery.js",

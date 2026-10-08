@@ -190,6 +190,18 @@ trait ListingTrait
         return $found;
     }
 
+    /**
+     * Слайдер фото: Swiper (набор `dharmashop.swiper` зарегистрирован включённым плагином и выбран в настройках) или карусель
+     * Bootstrap. Один выбор на карточки и страницу товара.
+     */
+    protected function sliderType(): string
+    {
+        $registry = Factory::getApplication()->getDocument()->getWebAssetManager()->getRegistry();
+
+        return ComponentHelper::getParams('com_dharmashop')->get('product_gallery_type', 'swiper') !== 'bootstrap'
+            && $registry->exists('preset', 'dharmashop.swiper') ? 'swiper' : 'bootstrap';
+    }
+
     /** Сколько фото выводить в карточке: 1 — только первое (по умолчанию), 2–5 — столько, 0 — все. */
     protected function cardImagesLimit(): int
     {
@@ -256,6 +268,7 @@ trait ListingTrait
             'categoryTitle' => (string) ($item->category_title ?? ''),
             'categoryUrl' => $this->categoryRoute((int) $item->catid),
             'images' => $this->cardImages($item),
+            'sliderType' => $this->sliderType(),
             'catalogMode' => $this->catalogMode,
             'cartText' => trim((string) ComponentHelper::getParams('com_dharmashop')->get('cart_button_text', '')),
             'showQty' => !$this->catalogMode && (int) $this->params->get('product_card_qty', 0) === 1]);

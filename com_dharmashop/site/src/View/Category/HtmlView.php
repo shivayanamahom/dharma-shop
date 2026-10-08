@@ -106,7 +106,11 @@ class HtmlView extends BaseHtmlView
 
         // Несколько фото в карточке — карусель Bootstrap (штатный скрипт Joomla, только при необходимости).
         if ($this->cardImagesLimit() !== 1) {
-            $wa->useScript('bootstrap.carousel');
+            if ($this->sliderType() === 'swiper') {
+                $wa->usePreset('dharmashop.swiper')->useScript('com_dharmashop.card-slider');
+            } else {
+                $wa->useScript('bootstrap.carousel');
+            }
         }
 
         // Режим каталога (настройки магазина): без корзины — ни виджета количества, ни кнопки, ни их скриптов.

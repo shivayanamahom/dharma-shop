@@ -79,6 +79,8 @@
           current = pagination;
           current.hidden = true;
           if (!nextUrl(current)) finish(false);
+          // Новые карточки: слайдеры и прочие скрипты списка подхватывают их по этому событию.
+          document.dispatchEvent(new CustomEvent('dharmashop:updated'));
         })
         .catch(() => finish(true))
         .finally(() => {
