@@ -71,7 +71,7 @@
 					<option value="0">JNO</option>
 					<option value="1">JYES</option>
 				</field>
-				<field name="input_class" type="text" default="form-control border-0 bg-transparent shadow-none" filter="string" validate="CssIdentifier" label="MOD_DHARMASHOP_SEARCH_INPUT_CLASS" description="MOD_DHARMASHOP_SEARCH_CLASS_DESC" />
+				<field name="input_class" type="text" default="form-control border-0 bg-transparent shadow-none small" filter="string" validate="CssIdentifier" label="MOD_DHARMASHOP_SEARCH_INPUT_CLASS" description="MOD_DHARMASHOP_SEARCH_CLASS_DESC" />
 				<field name="button_class" type="text" default="btn border-0 bg-transparent" filter="string" validate="CssIdentifier" label="MOD_DHARMASHOP_SEARCH_BUTTON_CLASS" description="MOD_DHARMASHOP_SEARCH_CLASS_DESC" showon="show_button:1" />
 			</fieldset>
 			<fieldset name="advanced">

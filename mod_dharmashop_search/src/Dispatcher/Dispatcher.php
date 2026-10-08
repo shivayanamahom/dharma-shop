@@ -40,7 +40,7 @@ class Dispatcher extends AbstractModuleDispatcher
         // На странице с результатами строка показывает текущий запрос.
         $data['query'] = mb_substr(trim(\Dharma\Component\DharmaShop\Site\Search\ProductSearch::fromInput($this->getApplication()->getInput())), 0, 100);
         $data['suggestUrl'] = Route::_('index.php?option=com_dharmashop&task=search.suggest&format=json', false);
-        $data['inputClass'] = $this->classes((string) $params->get('input_class', ''), 'form-control border-0 bg-transparent shadow-none');
+        $data['inputClass'] = $this->classes((string) $params->get('input_class', ''), 'form-control border-0 bg-transparent shadow-none small');
         $data['buttonClass'] = $this->classes((string) $params->get('button_class', ''), 'btn border-0 bg-transparent');
 
         if ((int) $params->get('show_suggestions', 1) === 1) {
