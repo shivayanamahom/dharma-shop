@@ -15,6 +15,9 @@ use Joomla\Filesystem\Path;
 /** Нативные записи/редактор MailTemplate, отдельный HTML/text-канал без изменения com_mails. */
 final class HtmlTemplate extends MailTemplate
 {
+    private array $embeddedImages = [];
+    private int $embeddedBytes = 0;
+
     public function send()
     {
         $mail = static::getTemplate($this->template_id, $this->language);
@@ -45,14 +48,14 @@ final class HtmlTemplate extends MailTemplate
         $plain = $this->renderTags($lang->_($mail->body), $this->plain_data ?: $this->data);
         $htmlData = $this->data;
         $shop = $this->plain_data ?: $this->data;
-        $logo = $this->embedLogo((string) ($shop['SHOP_LOGO'] ?? ''));
-        $htmlData['SHOP_LOGO'] = $shop['SHOP_LOGO'] = $logo;
         // При сохранённом пользовательском тексте без HTML показываем именно его.
         $html = trim((string) $mail->htmlbody) !== ''
             ? $this->renderTags($lang->_($mail->htmlbody), $htmlData, true)
             : nl2br(htmlspecialchars($plain, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8'), false);
         $layout = new FileLayout('mail', dirname(__DIR__, 2) . '/tmpl', ['client'=>'site']);
         $body = $layout->render(['content'=>$html, 'shop'=>$shop, 'language'=>$this->language]);
+        $body = preg_replace_callback('~(<img\b[^>]*\bsrc=")([^"]+)(")~i',
+            fn(array $match): string => $match[1] . htmlspecialchars($this->embedImage(html_entity_decode($match[2], ENT_QUOTES, 'UTF-8')), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . $match[3], $body);
         $this->mailer->isHtml(true);
         $this->mailer->setBody(MailHelper::convertRelativeToAbsoluteUrls($body));
         $this->mailer->AltBody = $plain !== '' ? $plain : html_entity_decode(strip_tags(str_replace(['<br>', '<br/>', '<br />', '</p>', '</tr>'], "\n", $html)), ENT_QUOTES, 'UTF-8');
@@ -81,10 +84,11 @@ final class HtmlTemplate extends MailTemplate
         return $this->mailer->Send();
     }
 
-    /** Свой локальный логотип — inline CID; чужие URL не скачиваем. */
-    private function embedLogo(string $url): string
+    /** Свои локальные изображения — inline CID; чужие URL не скачиваем. */
+    private function embedImage(string $url): string
     {
         if ($url === '') return '';
+        if (isset($this->embeddedImages[$url])) return $this->embeddedImages[$url];
         $image = parse_url($url);
         $root = parse_url(Uri::root());
         if (!$image || !$root || strtolower($image['host'] ?? '') !== strtolower($root['host'] ?? '')
@@ -96,12 +100,15 @@ final class HtmlTemplate extends MailTemplate
         $file = realpath(JPATH_ROOT . '/' . substr($path, strlen($prefix)));
         if ($site === false || $file === false || !str_starts_with($file, $site . DIRECTORY_SEPARATOR)
             || !is_file($file) || !is_readable($file) || filesize($file) > 5 * 1024 * 1024) return $url;
+        $size = (int) filesize($file);
+        if ($this->embeddedBytes + $size > 10 * 1024 * 1024) return $url;
         $mime = mime_content_type($file);
         $types = ['image/png'=>'png', 'image/jpeg'=>'jpg', 'image/gif'=>'gif', 'image/webp'=>'webp'];
         if (!isset($types[$mime])) return $url;
-        $cid = 'dharma-shop-logo@dharmashop';
-        return $this->mailer->addEmbeddedImage($file, $cid, 'shop-logo.' . $types[$mime], 'base64', $mime)
-            ? 'cid:' . $cid : $url;
+        $cid = 'dharma-image-' . hash('sha256', $file) . '@dharmashop';
+        if (!$this->mailer->addEmbeddedImage($file, $cid, 'image.' . $types[$mime], 'base64', $mime)) return $url;
+        $this->embeddedBytes += $size;
+        return $this->embeddedImages[$url] = 'cid:' . $cid;
     }
 
     /** Один проход: пользовательские фигурные скобки не становятся следующими подстановками. */

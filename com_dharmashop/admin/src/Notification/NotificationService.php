@@ -34,7 +34,8 @@ final class NotificationService
             $first = (int) $this->db->setQuery(Sql::query($this->db, 'SELECT MIN(id) FROM #__dharmashop_order_history WHERE order_id=:id', [':id'=>[$orderId,ParameterType::INTEGER]]))->loadResult();
             $contacts = json_decode((string) $order['contacts'], true) ?: [];
             unset($order['contacts']);
-            $items = $this->db->setQuery(Sql::query($this->db, 'SELECT title,sku,unit,qty,price,total,params FROM #__dharmashop_order_items WHERE order_id=:id ORDER BY ordering,id', [':id'=>[$orderId,ParameterType::INTEGER]]))->loadAssocList();
+            // Каталог даёт только оформление: название/количество/цены остаются из снимка.
+            $items = $this->db->setQuery(Sql::query($this->db, 'SELECT i.product_id,i.title,i.sku,i.unit,i.qty,i.price,i.total,i.params,p.id AS available_product_id,p.cover FROM #__dharmashop_order_items AS i LEFT JOIN #__dharmashop_products AS p ON p.id=i.product_id AND p.state=1 WHERE i.order_id=:id ORDER BY i.ordering,i.id', [':id'=>[$orderId,ParameterType::INTEGER]]))->loadAssocList();
             $adjustments = $this->db->setQuery(Sql::query($this->db, 'SELECT title,amount FROM #__dharmashop_order_adjustments WHERE order_id=:id ORDER BY ordering,id', [':id'=>[$orderId,ParameterType::INTEGER]]))->loadAssocList();
             $notification = new OrderNotification($historyId, $first === $historyId ? 'created' : 'status', $order, $items, $adjustments, $contacts);
             PluginHelper::importPlugin('dharmashopnotify');

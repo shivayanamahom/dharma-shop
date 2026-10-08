@@ -13,7 +13,12 @@ $l = $d['labels'];
 <table width="100%" cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;font-size:14px">
 <tr><th scope="col" align="left" style="padding:10px 0;border-bottom:2px solid #e2e7ed;font-weight:normal;color:#637083"><?= $e($l['PRODUCT']) ?></th><th scope="col" align="right" style="padding:10px 0 10px 12px;border-bottom:2px solid #e2e7ed;font-weight:normal;color:#637083"><?= $e($l['AMOUNT']) ?></th></tr>
 <?php foreach ($d['items'] as $item): ?><tr>
-<td valign="top" style="padding:14px 0;border-bottom:1px solid #e2e7ed;overflow-wrap:anywhere"><strong><?= $e($item['title']) ?></strong><?php if ($item['sku'] !== ''): ?><br><span style="font-size:12px;color:#637083"><?= $e($item['sku']) ?></span><?php endif; ?><br><span style="font-size:13px;color:#637083"><?= $e($item['qty']) ?> × <?= $e($item['price']) ?></span></td>
+<td valign="top" style="padding:14px 0;border-bottom:1px solid #e2e7ed;overflow-wrap:anywhere">
+<table role="presentation" cellpadding="0" cellspacing="0"><tr>
+<?php if ($item['image'] !== ''): ?><td width="76" valign="top" style="width:76px;padding:0 12px 0 0"><img src="<?= $e($item['image']) ?>" alt="" width="64" style="display:block;width:64px;max-width:64px;height:auto;border:0;border-radius:4px"></td><?php endif; ?>
+<td valign="top"><strong><?php if ($item['url'] !== ''): ?><a href="<?= $e($item['url']) ?>" style="color:#176b9b;text-decoration:none"><?= $e($item['title']) ?></a><?php else: ?><?= $e($item['title']) ?><?php endif; ?></strong><?php if ($item['sku'] !== ''): ?><br><span style="font-size:12px;color:#637083"><?= $e($item['sku']) ?></span><?php endif; ?><br><span style="font-size:13px;color:#637083"><?= $e($item['qty']) ?> × <?= $e($item['price']) ?></span></td>
+</tr></table>
+</td>
 <td align="right" valign="top" style="padding:14px 0 14px 12px;border-bottom:1px solid #e2e7ed"><?= $e($item['total']) ?></td>
 </tr><?php endforeach; ?>
 <?php foreach ($d['adjustments'] as $item): ?><tr><td style="padding:10px 0"><?= $e($item['title']) ?></td><td align="right" style="padding:10px 0 10px 12px"><?= $e($item['amount']) ?></td></tr><?php endforeach; ?>

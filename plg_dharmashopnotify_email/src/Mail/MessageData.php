@@ -12,7 +12,7 @@ use Joomla\CMS\Uri\Uri;
 use Joomla\Registry\Registry;
 \defined('_JEXEC') or die;
 
-/** Подготовка из снимка заказа: ни запросов каталога, ни HTML из данных покупателя. */
+/** Снимок заказа с необязательной обложкой/ссылкой; без HTML из данных покупателя. */
 final class MessageData
 {
     public function build(OrderNotification $message, Registry $settings, string $audience, string $siteName, Language $language): array
@@ -21,6 +21,7 @@ final class MessageData
         $params = clone $settings;
         if ($order['currency'] !== $params->get('currency_code', 'RUB')) $params->set('currency_symbol', $order['currency']);
         $money = new MoneyFormatter($params);
+        $root = rtrim(Uri::root(), '/');
         $items = []; $plainItems = []; $unknown = false;
         foreach ($message->items as $item) {
             $variant = json_decode((string) $item['params'], true) ?: [];
@@ -28,7 +29,10 @@ final class MessageData
             $qty = rtrim(rtrim(number_format((float) $item['qty'], 3, ',', ' '), '0'), ',') . ' ' . $item['unit'];
             $price = $item['price'] === null ? $money->zeroText() : $money->price($item['price']);
             $total = $item['total'] === null ? $money->zeroText() : $money->price($item['total']);
-            $items[] = ['title'=>$title, 'sku'=>$item['sku'], 'qty'=>$qty, 'price'=>$price, 'total'=>$total];
+            $productId = (int) ($item['available_product_id'] ?? 0);
+            $url = $productId > 0 ? $root . '/index.php?option=com_dharmashop&view=product&id=' . $productId : '';
+            $image = $productId > 0 ? $this->imageUrl((string) ($item['cover'] ?? ''), $root) : '';
+            $items[] = ['title'=>$title, 'sku'=>$item['sku'], 'qty'=>$qty, 'price'=>$price, 'total'=>$total, 'url'=>$url, 'image'=>$image];
             $plainItems[] = $title . ($item['sku'] !== '' ? ' [' . $item['sku'] . ']' : '') . "\n" . $qty . ' × ' . $price . ' = ' . $total;
             if ($item['price'] === null || ($money->replacesZero() && (float) $item['price'] === 0.0)) $unknown = true;
         }
@@ -45,7 +49,6 @@ final class MessageData
             $contacts[] = ['label'=>(string) $field['label'], 'value'=>$value];
             $plainContacts[] = $field['label'] . ': ' . $value;
         }
-        $root = rtrim(Uri::root(), '/');
         $link = $audience === 'admin' ? $root . '/administrator/index.php?option=com_dharmashop&view=order&id=' . (int) $order['id'] : '';
         if ($audience === 'customer' && !empty($order['user_id']) && (int) $settings->get('notify_customer_link', 1) === 1) $link = $root . '/index.php?option=com_dharmashop&view=order&id=' . (int) $order['id'];
         $shopName = trim((string) $settings->get('shop_name', '')) ?: $siteName;
@@ -53,7 +56,7 @@ final class MessageData
         if (!MailHelper::isEmailAddress($shopEmail)) $shopEmail = '';
         $shopPhone = trim((string) $settings->get('shop_phone', ''));
         $shopAddress = trim((string) $settings->get('shop_address', ''));
-        $logo = $this->logoUrl((string) $settings->get('shop_logo', ''), $root);
+        $logo = $this->imageUrl((string) $settings->get('shop_logo', ''), $root);
         $showItems = $audience === 'admin' || (int) $settings->get('notify_customer_items', 1) === 1;
         $showContacts = $audience === 'admin' || (int) $settings->get('notify_customer_contacts', 1) === 1;
         $labels = [];
@@ -95,7 +98,7 @@ final class MessageData
         return ['plain'=>$plain, 'html'=>$html, 'unsafe'=>$unsafe];
     }
 
-    private function logoUrl(string $value, string $root): string
+    private function imageUrl(string $value, string $root): string
     {
         $value = trim(HTMLHelper::_('cleanImageURL', $value)->url);
         if ($value === '' || str_contains($value, '\\') || preg_match('/[\x00-\x20]/', $value)) return '';
