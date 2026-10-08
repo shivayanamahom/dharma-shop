@@ -331,7 +331,7 @@ CREATE TABLE `#__dharmashop_field_values` (
 
 ### 5.8 Покупатели
 
-`#__dharmashop_customers`: `id`, `user_id` NULL (`UNIQUE`), `name`, `email` (`KEY`), `phone`, `phone_norm` (`KEY`), `note`, `params`, `created`, `modified`. C73: создаётся при первом заказе или вручную. Связь с Joomla только по `user_id`; гостевая запись без аккаунта. Нет объединения по email/телефону. CustomerService работает внутри транзакции заказа; контакты покупателя не меняют снимки заказов.
+`#__dharmashop_customers`: `id`, `user_id` NULL (`UNIQUE`), `name`, `email` (`KEY`), `phone`, `phone_norm` (`KEY`), `contact_key` char(64) NULL (`UNIQUE uq_guest_contact`), `note`, `params`, `created`, `modified`. C78 заменяет определение гостя C73 по прежней корзине: полная совпадающая пара нормализованных email/телефон даёт SHA-256 contact_key и одну гостевую карточку, атомарный INSERT/ON DUPLICATE исключает гонку разных корзин. Неполная пара — новая запись с NULL; аккаунты исключительно по user_id, с гостями не объединяются. Непустое имя карточки не перезаписывается; введённое имя остаётся в снимке заказа. CustomerTable пересчитывает ключ при ручном изменении контактов и отклоняет дубль. CustomerStorage обновляет схему/ключи аддитивно, исторические дубли не удаляет. CustomerService работает внутри транзакции заказа; контактная CRM-связь не меняет авторизацию заказов. Подробнее CUSTOMER_IDENTITY.md.
 
 ### 5.9 Заказы
 

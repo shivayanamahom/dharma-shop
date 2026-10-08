@@ -7,30 +7,37 @@ use Joomla\Database\DatabaseInterface;
 use Joomla\Database\ParameterType;
 \defined('_JEXEC') or die;
 
-/** Вызывается внутри транзакции заказа. Email/телефон не используются для определения владельца. */
+/** В транзакции заказа. Гостевая пара — связь CRM, доступ к заказам задаётся отдельно. */
 final class CustomerService
 {
     public function __construct(private readonly DatabaseInterface $db) {}
-    public function forOrder(int $userId, ?int $guestCustomerId, array $profile, string $now): int
+    public function forOrder(int $userId, array $profile, string $now): int
     {
-        $data = [(string) $profile['name'],(string) $profile['email'],(string) $profile['phone'],preg_replace('/\D/','',(string) $profile['phone']),$now];
-        $id = 0;
+        $name = trim((string) $profile['name']);
+        $email = trim((string) $profile['email']);
+        $phone = trim((string) $profile['phone']);
+        $normal = preg_replace('/\D/', '', $phone);
         if ($userId > 0) {
-            // UNIQUE user_id защищает и параллельные первые заказы из разных корзин.
+            // Аккаунты никогда не определяются по введённым гостевым контактам.
             Sql::exec($this->db, 'INSERT INTO #__dharmashop_customers (user_id,name,email,phone,phone_norm,created) VALUES (:u,:n,:e,:p,:pn,:c) ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id)',
-                [':u'=>[$userId,ParameterType::INTEGER],':n'=>[$data[0]],':e'=>[$data[1]],':p'=>[$data[2]],':pn'=>[$data[3]],':c'=>[$now]]);
+                [':u'=>[$userId,ParameterType::INTEGER],':n'=>[$name],':e'=>[$email],':p'=>[$phone],':pn'=>[$normal],':c'=>[$now]]);
             $id = (int) $this->db->insertid();
-        } elseif ($guestCustomerId) {
-            $query = $this->db->createQuery()->select('id')->from($this->db->quoteName('#__dharmashop_customers'))
-                ->where('id=:id')->where('user_id IS NULL')->bind(':id',$guestCustomerId,ParameterType::INTEGER);
-            $id = (int) $this->db->setQuery($query)->loadResult();
-        }
-        if ($id > 0) {
-            Sql::exec($this->db, 'UPDATE #__dharmashop_customers SET name=:n,email=:e,phone=:p,phone_norm=:pn,modified=:m WHERE id=:id',
-                [':n'=>[$data[0]],':e'=>[$data[1]],':p'=>[$data[2]],':pn'=>[$data[3]],':m'=>[$now],':id'=>[$id,ParameterType::INTEGER]]);
+            Sql::exec($this->db, "UPDATE #__dharmashop_customers SET name=IF(name='',:n,name),email=:e,phone=:p,phone_norm=:pn,modified=:m WHERE id=:id",
+                [':n'=>[$name],':e'=>[$email],':p'=>[$phone],':pn'=>[$normal],':m'=>[$now],':id'=>[$id,ParameterType::INTEGER]]);
             return $id;
         }
-        $object = (object) ['user_id'=>null,'name'=>$data[0],'email'=>$data[1],'phone'=>$data[2],'phone_norm'=>$data[3],'created'=>$now];
+        $key = ContactKey::guest($email, $phone);
+        if ($key !== null) {
+            // UNIQUE contact_key исключает дубли при одновременных заказах из разных корзин.
+            Sql::exec($this->db, 'INSERT INTO #__dharmashop_customers (user_id,name,email,phone,phone_norm,contact_key,created) VALUES (NULL,:n,:e,:p,:pn,:key,:c) ON DUPLICATE KEY UPDATE id=LAST_INSERT_ID(id)',
+                [':n'=>[$name],':e'=>[$email],':p'=>[$phone],':pn'=>[$normal],':key'=>[$key],':c'=>[$now]]);
+            $id = (int) $this->db->insertid();
+            if ($name !== '') Sql::exec($this->db, "UPDATE #__dharmashop_customers SET name=:n,modified=:m WHERE id=:id AND name=''",
+                [':n'=>[$name],':m'=>[$now],':id'=>[$id,ParameterType::INTEGER]]);
+            return $id;
+        }
+        // Недостаточно контактов для сопоставления: новая запись, даже в прежней корзине.
+        $object = (object) ['user_id'=>null,'name'=>$name,'email'=>$email,'phone'=>$phone,'phone_norm'=>$normal,'contact_key'=>null,'created'=>$now];
         $this->db->insertObject('#__dharmashop_customers',$object);
         return (int) $this->db->insertid();
     }

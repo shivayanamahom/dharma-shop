@@ -6,7 +6,9 @@ use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Table\Table;
 use Joomla\Database\DatabaseInterface;
+use Joomla\Database\ParameterType;
 use Joomla\Event\DispatcherInterface;
+use Dharma\Component\DharmaShop\Administrator\Customer\ContactKey;
 \defined('_JEXEC') or die;
 
 class CustomerTable extends Table
@@ -36,6 +38,17 @@ class CustomerTable extends Table
         }
         if (!$this->id) { $this->created = Factory::getDate()->toSql(); $this->user_id = null; }
         else $this->modified = Factory::getDate()->toSql();
+        $this->contact_key = empty($this->user_id) ? ContactKey::guest($this->email, $this->phone_norm) : null;
+        if ($this->contact_key !== null) {
+            $db = $this->getDatabase();
+            $key = $this->contact_key;
+            $id = (int) $this->id;
+            $query = $db->createQuery()->select('id')->from($db->quoteName('#__dharmashop_customers'))
+                ->where('contact_key=:key')->where('id<>:id')->bind(':key',$key)->bind(':id',$id,ParameterType::INTEGER);
+            if ($db->setQuery($query,0,1)->loadResult()) {
+                $this->setError(Text::_('COM_DHARMASHOP_CUSTOMER_CONTACT_DUPLICATE')); return false;
+            }
+        }
         return parent::check();
     }
 }

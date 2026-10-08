@@ -39,7 +39,7 @@ final class OrderService
         if ($validated['errors'] || !preg_match('/^[a-f0-9]{32}$/',$key)) throw new \DomainException(Text::_('COM_DHARMASHOP_ORDER_INVALID'));
         $this->db->transactionStart();
         try {
-            $locked = $this->db->setQuery(Sql::query($this->db,'SELECT id,customer_id,user_id FROM #__dharmashop_carts WHERE id=:id FOR UPDATE', [':id'=>[(int) $cart->id,ParameterType::INTEGER]]))->loadObject();
+            $locked = $this->db->setQuery(Sql::query($this->db,'SELECT id,user_id FROM #__dharmashop_carts WHERE id=:id FOR UPDATE', [':id'=>[(int) $cart->id,ParameterType::INTEGER]]))->loadObject();
             if (!$locked || ((int) $locked->user_id > 0 && (int) $locked->user_id !== $userId)) throw new \DomainException(Text::_('COM_DHARMASHOP_ORDER_INVALID'));
             $existing = $this->db->setQuery(Sql::query($this->db,'SELECT id,number FROM #__dharmashop_orders WHERE secret=:s', [':s'=>[$key]]))->loadAssoc();
             if ($existing) { $this->db->transactionCommit(); return $existing; }
@@ -60,7 +60,7 @@ final class OrderService
             if (!is_finite($totals['total'])) throw new \DomainException(Text::_('COM_DHARMASHOP_ORDER_INVALID'));
             $now = Factory::getDate()->toSql();
             $statusId = $this->ensureInitialStatus();
-            $customerId = $this->customers->forOrder($userId,(int) $locked->customer_id ?: null,$validated['profile'],$now);
+            $customerId = $this->customers->forOrder($userId,$validated['profile'],$now);
             $snapshot = $validated['snapshot'];
             foreach ($snapshot['consents'] as &$consent) $consent['accepted_at'] = $consent['accepted'] ? $now : null;
             unset($consent);

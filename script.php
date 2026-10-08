@@ -140,6 +140,12 @@ return new class () implements ServiceProviderInterface {
 
                     $this->ensureDefaultCategory();
                     $this->ensureInitialOrderStatus();
+                    // При первой установке PSR-4 карта нового компонента может ещё не обновиться.
+                    $customerSource = JPATH_ADMINISTRATOR . '/components/com_dharmashop/src';
+                    require_once $customerSource . '/Support/Sql.php';
+                    require_once $customerSource . '/Customer/ContactKey.php';
+                    require_once $customerSource . '/Customer/CustomerStorage.php';
+                    \Dharma\Component\DharmaShop\Administrator\Customer\CustomerStorage::upgrade($this->db);
                     $ddl = file_get_contents(JPATH_ADMINISTRATOR . '/components/com_dharmashop/sql/notifications.mysql.utf8.sql');
                     $this->db->setQuery($ddl)->execute();
 

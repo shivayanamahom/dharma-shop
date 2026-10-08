@@ -302,12 +302,14 @@ CREATE TABLE IF NOT EXISTS `#__dharmashop_customers` (
   `email` varchar(255) NOT NULL DEFAULT '',
   `phone` varchar(50) NOT NULL DEFAULT '',
   `phone_norm` varchar(20) NOT NULL DEFAULT '',
+  `contact_key` char(64) CHARACTER SET ascii COLLATE ascii_bin NULL,
   `note` text NULL,
   `params` text NULL,
   `created` datetime NOT NULL,
   `modified` datetime NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_user` (`user_id`),
+  UNIQUE KEY `uq_guest_contact` (`contact_key`),
   KEY `idx_email` (`email`(100)),
   KEY `idx_phone` (`phone_norm`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
