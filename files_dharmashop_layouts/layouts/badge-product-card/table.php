@@ -15,24 +15,32 @@ $categoryTitle = (string) ($displayData['categoryTitle'] ?? '');
 $images = (array) ($displayData['images'] ?? []);
 $columns = (array) ($displayData['fieldColumns'] ?? []);
 $fields = (array) ($displayData['fields'] ?? $item->fields ?? []);
-$part = static fn (string $name): string => (new FileLayout('components.dharmashop.product-card-parts.' . $name, null, ['component' => 'none', 'client' => 0]))->render($displayData);
+$part = static fn (string $name, array $extra = []): string => (new FileLayout('components.dharmashop.product-card-parts.' . $name, null, ['component' => 'none', 'client' => 0]))->render($extra + $displayData);
 $valueLayout = new FileLayout('components.dharmashop.fields.value', null, ['component' => 'none', 'client' => 0]);
 ?>
 <tr class="dharmaCard dharmaCardRow">
-    <td class="dharmaCardThumb">
-        <a class="d-block" href="<?php echo $escape($productUrl); ?>" tabindex="-1" aria-hidden="true">
+    <td class="w-100 dharmaCardTitle">
+        <?php // Миниатюра внутри ячейки названия, а не отдельной колонкой: у img max-width 100% в шаблоне, колонка схлопывается. ?>
+        <div class="d-flex gap-3">
+        <a class="flex-shrink-0 dharmaCardThumb" href="<?php echo $escape($productUrl); ?>" tabindex="-1" aria-hidden="true">
             <?php if ($images) : ?>
-                <img class="rounded object-fit-cover" src="<?php echo $escape($images[0]->url); ?>" width="72" height="72" alt="" loading="lazy" decoding="async">
+                <img class="rounded object-fit-cover" src="<?php echo $escape($images[0]->url); ?>" width="56" height="56" alt="" loading="lazy" decoding="async">
             <?php else : ?>
-                <span class="d-inline-block rounded bg-body-tertiary p-4 align-middle" aria-hidden="true"></span>
+                <span class="d-block rounded bg-body-tertiary p-4"></span>
             <?php endif; ?>
         </a>
-    </td>
-    <td class="dharmaCardTitle">
+        <div>
         <?php if ($categoryTitle !== '') : ?>
             <div class="small text-body-secondary dharmaCardCategory"><a class="link-secondary text-decoration-none" href="<?php echo $escape($displayData['categoryUrl'] ?? '#'); ?>"><?php echo $escape($categoryTitle); ?></a></div>
         <?php endif; ?>
         <a class="fw-semibold link-body-emphasis text-decoration-none" href="<?php echo $escape($productUrl); ?>"><?php echo $escape($item->title); ?></a>
+        <?php // Ниже lg колонок характеристик нет: значения — строками под названием. ?>
+        <?php foreach ($columns as $alias => $title) : ?>
+            <?php $field = $fields[$alias] ?? null; ?>
+            <?php if ($field && !empty($field->show) && !empty($field->values)) : ?>
+                <div class="d-lg-none small dharmaField" data-field="<?php echo $escape($alias); ?>"><span class="text-body-secondary"><?php echo $escape($title); ?>:</span> <?php echo $valueLayout->render(['field' => $field]); ?></div>
+            <?php endif; ?>
+        <?php endforeach; ?>
         <?php if (!empty($displayData['badges'])) : ?>
             <div class="d-flex flex-wrap gap-1 mt-1 dharmaCardBadges">
                 <?php foreach ($displayData['badges'] as $badge) : ?>
@@ -40,13 +48,17 @@ $valueLayout = new FileLayout('components.dharmashop.fields.value', null, ['comp
                 <?php endforeach; ?>
             </div>
         <?php endif; ?>
+        </div>
+        </div>
     </td>
     <?php foreach ($columns as $alias => $title) : ?>
-        <td class="dharmaField" data-field="<?php echo $escape($alias); ?>">
+        <td class="d-none d-lg-table-cell dharmaField" data-field="<?php echo $escape($alias); ?>">
             <?php $field = $fields[$alias] ?? null; ?>
             <?php if ($field && !empty($field->show) && !empty($field->values)) : ?><?php echo $valueLayout->render(['field' => $field]); ?><?php else : ?><span class="text-body-secondary">—</span><?php endif; ?>
         </td>
     <?php endforeach; ?>
-    <td class="text-nowrap dharmaCardPriceCell"><?php echo $part('price'); ?></td>
-    <td class="text-end text-nowrap dharmaCardActionsCell"><?php echo $part('actions'); ?></td>
+    <td class="text-end text-nowrap dharmaCardPriceCell">
+        <?php echo $part('price'); ?>
+        <div class="mt-2"><?php echo $part('actions', ['compactActions' => true]); ?></div>
+    </td>
 </tr>

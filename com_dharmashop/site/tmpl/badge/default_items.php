@@ -11,11 +11,9 @@ use Joomla\CMS\Language\Text;
                 <caption class="visually-hidden"><?php echo Text::_('COM_DHARMASHOP_PRODUCTS'); ?></caption>
                 <thead>
                     <tr>
-                        <th scope="col"><span class="visually-hidden"><?php echo Text::_('COM_DHARMASHOP_TABLE_IMAGE'); ?></span></th>
                         <th scope="col"><?php echo Text::_('COM_DHARMASHOP_TABLE_PRODUCT'); ?></th>
-                        <?php foreach ($this->fieldColumns as $alias => $title) : ?><th scope="col" data-field="<?php echo $this->escape($alias); ?>"><?php echo $this->escape($title); ?></th><?php endforeach; ?>
-                        <th scope="col"><?php echo Text::_('COM_DHARMASHOP_TABLE_PRICE'); ?></th>
-                        <th scope="col"><span class="visually-hidden"><?php echo Text::_('COM_DHARMASHOP_TABLE_ACTIONS'); ?></span></th>
+                        <?php foreach ($this->fieldColumns as $alias => $title) : ?><th scope="col" class="d-none d-lg-table-cell" data-field="<?php echo $this->escape($alias); ?>"><?php echo $this->escape($title); ?></th><?php endforeach; ?>
+                        <th scope="col" class="text-end"><?php echo Text::_('COM_DHARMASHOP_TABLE_PRICE'); ?></th>
                     </tr>
                 </thead>
                 <tbody><?php foreach ($this->items as $product) : ?><?php echo $this->renderProduct($product); ?><?php endforeach; ?></tbody>
