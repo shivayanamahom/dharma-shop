@@ -110,7 +110,7 @@ class HtmlView extends BaseHtmlView
                 $pastMenu = true;
             } elseif ($pastMenu) {
                 $meta = $service->resolve($taxonomy->area, $ancestor, CategoryValues::build($taxonomy->area, $ancestor, $chain, $model, $this->money),
-                    new Registry(), $this->absoluteRoute((int) $ancestor->id));
+                    new Registry(), $this->absoluteRoute((int) $ancestor->id), prepareImage: false);
                 $app->getPathway()->addItem($meta->breadcrumb, $this->categoryRoute((int) $ancestor->id));
             }
             $chain[] = $ancestor;

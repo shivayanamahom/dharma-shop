@@ -6,7 +6,7 @@ namespace Dharma\Component\DharmaShop\Site\Seo;
 use Dharma\Component\DharmaShop\Administrator\Seo\SeoSettings;
 use Dharma\Component\DharmaShop\Site\Placeholder\Renderer;
 use Dharma\Component\DharmaShop\Site\Placeholder\GlobalValues;
-use Dharma\Component\DharmaShop\Site\Support\MediaUrl;
+use Dharma\Component\DharmaShop\Administrator\Image\ImageUrl;
 use Joomla\CMS\Document\HtmlDocument;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
@@ -23,7 +23,7 @@ final class PageSeo
     {
     }
 
-    public function resolve(string $area, object $item, array $values, Registry $menu, string $url, ?string $robots = null, int $page = 1): PageMetadata
+    public function resolve(string $area, object $item, array $values, Registry $menu, string $url, ?string $robots = null, int $page = 1, bool $prepareImage = true): PageMetadata
     {
         $app = Factory::getApplication();
         $defaults = new SeoSettings($this->settings);
@@ -47,8 +47,8 @@ final class PageSeo
             return '';
         };
         $image = '';
-        foreach ([$params->get('meta_image', ''), $params->get('image', ''), $defaults->defaultImage()] as $candidate) {
-            if ($image = MediaUrl::absolute((string) $candidate)) {
+        foreach ($prepareImage ? [$params->get('meta_image', ''), $item->cover ?? '', $params->get('image', ''), $defaults->defaultImage()] : [] as $candidate) {
+            if ($image = ImageUrl::resolve((string) $candidate, 'seo.social')) {
                 break;
             }
         }
@@ -68,10 +68,11 @@ final class PageSeo
             $url,
             $text((string) $app->get('sitename')),
             str_replace('-', '_', $app->getLanguage()->getTag()),
+            imageAlt: $text((string) ($item->title ?? '')),
         );
     }
 
-    public function apply(PageMetadata $page, HtmlDocument $document, ?CollectionMetadata $content = null): void
+    public function apply(PageMetadata $page, HtmlDocument $document, CollectionMetadata|ProductMetadata|null $content = null): void
     {
         $app = Factory::getApplication();
         if (!$app->isClient('site')) {

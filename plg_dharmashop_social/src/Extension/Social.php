@@ -4,6 +4,8 @@ declare(strict_types=1);
 namespace Dharma\Plugin\DharmaShop\Social\Extension;
 
 use Joomla\CMS\Document\HtmlDocument;
+use Dharma\Component\DharmaShop\Site\Seo\PageMetadata;
+use Joomla\Registry\Registry;
 use Joomla\CMS\Plugin\CMSPlugin;
 use Joomla\Event\EventInterface;
 use Joomla\Event\SubscriberInterface;
@@ -27,10 +29,15 @@ final class Social extends CMSPlugin implements SubscriberInterface
         }
         $page = $event->getArgument('page');
         $settings = $event->getArgument('settings');
+        if (!$page instanceof PageMetadata || !$settings instanceof Registry) {
+            return;
+        }
         if ((int) $settings->get('seo_opengraph', 1) === 1) {
             $tags = ['og:title' => $page->title, 'og:description' => $page->description, 'og:type' => $page->type,
                 'og:url' => $page->url, 'og:site_name' => $page->siteName, 'og:locale' => $page->locale,
-                'og:image' => $page->image];
+                'og:image' => $page->image,
+                'og:image:alt' => $page->image !== '' ? $page->imageAlt : '',
+                'og:image:secure_url' => str_starts_with($page->image, 'https://') ? $page->image : ''];
             foreach ($tags as $name => $value) {
                 if ($value !== '') {
                     $document->setMetaData($name, $value, 'property');
@@ -39,7 +46,8 @@ final class Social extends CMSPlugin implements SubscriberInterface
         }
         if ((int) $settings->get('seo_twitter', 1) === 1) {
             $document->setMetaData('twitter:card', $page->image !== '' ? 'summary_large_image' : 'summary');
-            foreach (['twitter:title' => $page->title, 'twitter:description' => $page->description, 'twitter:image' => $page->image] as $name => $value) {
+            foreach (['twitter:title' => $page->title, 'twitter:description' => $page->description, 'twitter:image' => $page->image, 'twitter:url' => $page->url,
+                'twitter:image:alt' => $page->image !== '' ? $page->imageAlt : ''] as $name => $value) {
                 if ($value !== '') {
                     $document->setMetaData($name, $value);
                 }

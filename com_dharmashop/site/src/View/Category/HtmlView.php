@@ -4,6 +4,8 @@ declare(strict_types=1);
 namespace Dharma\Component\DharmaShop\Site\View\Category;
 
 use Dharma\Component\DharmaShop\Site\Seo\PageMetadata;
+use Dharma\Component\DharmaShop\Site\Seo\CollectionMetadata;
+use Joomla\CMS\Router\Route;
 use Dharma\Component\DharmaShop\Site\Placeholder\CategoryValues;
 use Dharma\Component\DharmaShop\Site\Placeholder\GlobalValues;
 use Dharma\Component\DharmaShop\Site\Placeholder\Renderer;
@@ -88,8 +90,17 @@ class HtmlView extends BaseHtmlView
         $this->seo = $seo->resolve($taxonomy->area, $this->item, $this->textValues, $ownMenu,
             $this->absoluteRoute((int) $this->item->id) . (!$variant && $this->start ? '?start=' . $this->start : ''),
             $variant ? 'noindex, follow' : null, $this->pagination ? (int) $this->pagination->pagesCurrent : 1);
-        // Социальные теги работают; ItemList добавим вместе с содержимым и ссылками карточек.
-        $seo->apply($this->seo, $this->getDocument());
+        $content = null;
+        if ((int) $settings->get('seo_structureddata', 1) === 1) {
+            $entries = [];
+            foreach ($this->items as $product) {
+                $route = Route::_('index.php?option=com_dharmashop&view=product&id=' . (int) $product->id . '&catid=' . (int) $product->catid, false);
+                $entries[] = ['name' => (string) $product->title,
+                    'url' => preg_match('~^https?://~i', $route) ? $route : rtrim(Uri::root(), '/') . '/' . ltrim($route, '/')];
+            }
+            $content = new CollectionMetadata($this->seo->h1 ?: (string) $this->item->title, $entries, 'Product');
+        }
+        $seo->apply($this->seo, $this->getDocument(), $content);
         $pastMenu = $menuCategory <= 1;
         $chain = [];
         foreach (array_merge($ancestors, $this->item->id ? [$this->item] : []) as $ancestor) {
@@ -97,7 +108,7 @@ class HtmlView extends BaseHtmlView
                 $pastMenu = true;
             } elseif ($pastMenu) {
                 $page = $seo->resolve($taxonomy->area, $ancestor, CategoryValues::build($taxonomy->area, $ancestor, $chain, $model, $this->money),
-                    new Registry(), $this->absoluteRoute((int) $ancestor->id));
+                    new Registry(), $this->absoluteRoute((int) $ancestor->id), prepareImage: false);
                 $app->getPathway()->addItem($page->breadcrumb, $this->categoryRoute((int) $ancestor->id));
             }
             $chain[] = $ancestor;

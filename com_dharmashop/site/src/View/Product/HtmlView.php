@@ -9,6 +9,8 @@ use Dharma\Component\DharmaShop\Site\Placeholder\ProductValues;
 use Dharma\Component\DharmaShop\Site\Placeholder\Renderer;
 use Dharma\Component\DharmaShop\Site\Seo\PageMetadata;
 use Dharma\Component\DharmaShop\Site\Seo\PageSeo;
+use Dharma\Component\DharmaShop\Site\Seo\ProductMetadata;
+use Dharma\Component\DharmaShop\Administrator\Image\ImageUrl;
 use Dharma\Component\DharmaShop\Site\Support\CartAssets;
 use Dharma\Component\DharmaShop\Site\Support\CartSession;
 use Joomla\CMS\Component\ComponentHelper;
@@ -82,7 +84,22 @@ class HtmlView extends BaseHtmlView
 
         $seo = new PageSeo($this->params);
         $this->seo = $seo->resolve('product', $this->item, ProductValues::build($this->item, new MoneyFormatter($this->params)), $ownMenu ? $active->getParams() : new Registry(), $url);
-        $seo->apply($this->seo, $this->getDocument());
+        $content = null;
+        if ((int) $this->params->get('seo_structureddata', 1) === 1) {
+            $min = $this->item->price_min;
+            $max = $this->item->price_max;
+            // Одно Offer только для одной реальной цены; диапазон вариантов не выдаём за конкретное предложение.
+            $offerPrice = $min !== null && $min !== '' && (float) $min >= 0
+                && ($max === null || (float) $min === (float) $max)
+                && !($money->replacesZero() && (float) $min === 0.0) ? (string) $min : null;
+            $content = new ProductMetadata(
+                (string) $this->item->title, (string) $this->item->sku, (string) $this->item->brand_title,
+                ProductValues::introtext($this->text((string) $this->item->introtext)),
+                ImageUrl::resolve((string) $this->item->cover, 'seo.social'), $offerPrice,
+                strtoupper(trim((string) $this->params->get('currency_code', 'RUB'))), (bool) $this->item->in_stock,
+            );
+        }
+        $seo->apply($this->seo, $this->getDocument(), $content);
 
         $layout = (string) $this->params->get('product_layout', 'default');
         $layout = preg_match('/^[a-z0-9_-]+$/i', $layout) && is_file(JPATH_ROOT . '/components/com_dharmashop/tmpl/product/' . $layout . '.php')

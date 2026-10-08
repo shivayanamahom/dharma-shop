@@ -15,6 +15,7 @@ namespace Dharma\Component\DharmaShop\Administrator\View\Product;
 use Dharma\Component\DharmaShop\Administrator\Seo\PlaceholderCatalog;
 use Dharma\Component\DharmaShop\Administrator\Support\FieldGroupTabs;
 use Dharma\Component\DharmaShop\Site\Placeholder\ProductValues;
+use Dharma\Component\DharmaShop\Site\Placeholder\GlobalValues;
 use Joomla\Database\DatabaseInterface;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
@@ -95,24 +96,25 @@ class HtmlView extends BaseHtmlView
             return $catid > 1 ? (string) $db->setQuery('SELECT title FROM #__categories WHERE id = ' . $catid)->loadResult() : '';
         };
         $has = $id > 0;
-        $intro = ProductValues::introtext((string) ($item->introtext ?? ''));
+        $preview = clone $item;
+        $preview->category_title = $titleOf((int) ($item->catid ?? 0));
+        $preview->brand_title = $titleOf((int) ($item->brand_id ?? 0));
         $effective = $has && $item->price_min !== null ? (float) $item->price_min : null;
         $regular = $has && $item->price !== null ? (float) $item->price : null;
-        $values = [
-            'product.title' => $has ? (string) $item->title : $none,
-            'product.introtext' => $has && $intro !== '' ? $intro : $none,
-            'product.sku' => $has && (string) $item->sku !== '' ? (string) $item->sku : $none,
-            'product.category' => ($t = $titleOf((int) ($item->catid ?? 0))) !== '' ? $t : $none,
-            'product.brand' => ($t = $titleOf((int) ($item->brand_id ?? 0))) !== '' ? $t : $none,
-            'product.price' => $effective !== null ? $money->format($effective) : $none,
-            'product.price_old' => $effective !== null && $regular !== null && $regular > $effective ? $money->format($regular) : $none,
-            'product.discount' => $effective !== null && $regular !== null && $regular > $effective && (string) $item->discount !== ''
-                ? '−' . (str_ends_with((string) $item->discount, '%') ? (string) $item->discount : $money->format((float) $item->discount)) : $none,
-            'product.unit' => $has ? (string) $shop->orderRules()->forProduct($item)['unit'] ?: $none : $none,
-            'product.stock' => $has ? Text::_((int) $item->in_stock === 1 ? 'COM_DHARMASHOP_IN_STOCK' : 'COM_DHARMASHOP_OUT_OF_STOCK') : $none,
-            'global.sitename' => (string) Factory::getApplication()->get('sitename'),
-            'global.currency' => (string) ComponentHelper::getParams('com_dharmashop')->get('currency_symbol', '₽'),
-        ];
+        $preview->base_price = $effective !== null && $regular !== null && $regular > $effective ? $regular : null;
+        $preview->discount_percent = $preview->base_price !== null && $regular > 0 ? (1 - $effective / $regular) * 100 : 0;
+        $preview->unit = (string) $shop->orderRules()->forProduct($item)['unit'];
+        $values = $has ? ProductValues::build($preview, $money) : [];
+        foreach ($values as &$value) {
+            if ($value === '') {
+                $value = $none;
+            }
+        }
+        unset($value);
+        if ($has) {
+            $values['product.stock'] = Text::_((int) $item->in_stock === 1 ? 'COM_DHARMASHOP_IN_STOCK' : 'COM_DHARMASHOP_OUT_OF_STOCK');
+        }
+        $values += GlobalValues::build(ComponentHelper::getParams('com_dharmashop'));
 
         $this->placeholders = PlaceholderCatalog::describe('product', $values);
     }

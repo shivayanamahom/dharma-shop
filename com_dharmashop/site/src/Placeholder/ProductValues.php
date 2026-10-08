@@ -19,6 +19,14 @@ final class ProductValues
 
         return [
             'product.title' => (string) $item->title,
+            'product.sku' => (string) ($item->sku ?? ''),
+            'product.category' => (string) ($item->category_title ?? ''),
+            'product.brand' => (string) ($item->brand_title ?? ''),
+            'product.price' => $money->range($min, $max),
+            'product.price_old' => $money->format($item->base_price ?? null),
+            'product.discount' => (float) ($item->discount_percent ?? 0) > 0
+                ? '−' . rtrim(rtrim(number_format((float) $item->discount_percent, 2, ',', ''), '0'), ',') . '%' : '',
+            // Алиасы для ранее сохранённых шаблонов; в справочнике только product.price.
             'product.price_min' => $money->price($min !== null ? (string) $min : null),
             'product.price_max' => $money->price($max !== null ? (string) $max : null),
             'product.unit' => (string) ($item->unit ?? ''),

@@ -118,9 +118,9 @@ class CategoryModel extends CategoriesModel
         $prices = [];
 
         foreach ($db->setQuery(
-            'SELECT v.product_id, vp.price, vp.price_final, vp.discount_start, vp.discount_end FROM ' . $db->quoteName('#__dharmashop_variants', 'v')
+            'SELECT v.product_id, v.sku, vp.price, vp.price_final, vp.discount_start, vp.discount_end FROM ' . $db->quoteName('#__dharmashop_variants', 'v')
             . ' JOIN ' . $db->quoteName('#__dharmashop_variant_prices', 'vp') . ' ON vp.variant_id = v.id'
-            . ' WHERE v.product_id IN (' . $list . ') AND v.is_default = 1 AND vp.price_list_id = 1'
+            . ' WHERE v.product_id IN (' . $list . ') AND v.is_default = 1 AND v.state = 1 AND vp.price_list_id = 1'
         )->loadObjectList() as $row) {
             $prices[(int) $row->product_id] = $row;
         }
@@ -143,14 +143,20 @@ class CategoryModel extends CategoriesModel
 
         $levels = implode(',', array_map('intval', $this->getCurrentUser()->getAuthorisedViewLevels()) ?: [0]);
         $badges = [];
+        $brands = [];
 
         foreach ($db->setQuery(
-            'SELECT pc.product_id, c.id, c.title, c.params FROM ' . $db->quoteName('#__dharmashop_product_categories', 'pc')
+            'SELECT pc.product_id, c.id, c.title, c.params, c.extension FROM ' . $db->quoteName('#__dharmashop_product_categories', 'pc')
             . ' JOIN ' . $db->quoteName('#__categories', 'c') . ' ON c.id = pc.catid'
-            . ' WHERE pc.product_id IN (' . $list . ') AND pc.direct = 1 AND c.extension = ' . $db->quote('com_dharmashop.badge')
+            . ' WHERE pc.product_id IN (' . $list . ') AND pc.direct = 1 AND c.extension IN (' . $db->quote('com_dharmashop.badge') . ',' . $db->quote('com_dharmashop.brand') . ')'
             . ' AND c.published = 1 AND c.access IN (' . $levels . ') ORDER BY c.lft'
         )->loadObjectList() as $row) {
             $params = new Registry($row->params);
+
+            if ($row->extension === 'com_dharmashop.brand') {
+                $brands[(int) $row->product_id] ??= (string) $row->title;
+                continue;
+            }
 
             // Настройка бейджа «Показывать в списках»: выключенный бейдж на карточках не выводится.
             if ((int) $params->get('badge_show_list', 1) !== 1) {
@@ -174,6 +180,8 @@ class CategoryModel extends CategoriesModel
             $item->discount_percent = 0;
             $item->sale_end_timestamp = null;
             $row = $prices[$id] ?? null;
+            $item->sku = (string) ($row->sku ?? '');
+            $item->brand_title = $brands[$id] ?? '';
 
             if ($row && $row->price !== null && $row->price_final !== null && (float) $row->price > 0 && (float) $row->price_final < (float) $row->price) {
                 $item->base_price = (string) $row->price;

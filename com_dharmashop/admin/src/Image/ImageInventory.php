@@ -31,7 +31,7 @@ final class ImageInventory
             if (!is_array($params)) $params = [];
             $product = array_values(array_filter(array_keys(ImageContexts::SIZES), static fn($c) => str_starts_with($c,'product.') || str_starts_with($c,'cart.') || str_starts_with($c,'search.') || str_starts_with($c,'module.products.') || in_array($c,['admin.product','email.product'],true)));
             return match ($phase) {
-                0 => [[$row['cover'], $product], [$params['meta_image'] ?? '', []]],
+                0 => [[$row['cover'], [...$product, 'seo.social']], [$params['meta_image'] ?? '', ['seo.social']]],
                 1 => [[$row['path'], $product]],
                 2 => $this->category($params, match ($row['extension']) { 'com_dharmashop.brand'=>'brand', 'com_dharmashop.badge'=>'badge', default=>'category' }),
                 3 => [[$row['image'], ['field.option']]],
@@ -39,7 +39,7 @@ final class ImageInventory
         }
         if ($phase === 4) {
             $cursor = ['phase'=>5, 'id'=>0];
-            $result = [[$this->settings->get('shop_logo',''), ['email.logo']], [$this->settings->get('seo_default_image',''), []]];
+            $result = [[$this->settings->get('shop_logo',''), ['email.logo']], [$this->settings->get('seo_default_image',''), ['seo.social']]];
             foreach (['root_category'=>'category', 'root_brand'=>'brand'] as $key=>$kind) {
                 $result = array_merge($result, $this->category((array)$this->settings->get($key, []), $kind));
             }
@@ -50,7 +50,7 @@ final class ImageInventory
 
     private function category(array $params, string $kind): array
     {
-        return [[$params['image'] ?? '', [$kind.'.card', $kind.'.header','admin.category','search.module']],
-            [$params['icon'] ?? '', ['admin.category']], [$params['meta_image'] ?? '', []]];
+        return [[$params['image'] ?? '', [$kind.'.card', $kind.'.header','admin.category','search.module','seo.social']],
+            [$params['icon'] ?? '', ['admin.category']], [$params['meta_image'] ?? '', ['seo.social']]];
     }
 }

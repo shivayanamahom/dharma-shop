@@ -37,6 +37,7 @@ class ProductModel extends BaseDatabaseModel
                 'p.id', 'p.catid', 'p.title', 'p.alias', 'p.introtext', 'p.fulltext', 'p.cover', 'p.cover_alt',
                 'p.price_min', 'p.price_max', 'p.unit', 'p.qty_min', 'p.qty_step', 'p.in_stock', 'p.metadesc', 'p.metadata', 'p.params',
             ]))
+            ->select($db->quoteName('c.title', 'category_title'))
             ->from($db->quoteName('#__dharmashop_products', 'p'))
             ->join('INNER', $db->quoteName('#__categories', 'c') . ' ON c.id = p.catid')
             ->where('p.id = :id')->bind(':id', $id, ParameterType::INTEGER)
@@ -49,6 +50,12 @@ class ProductModel extends BaseDatabaseModel
             throw new \RuntimeException(Text::_('COM_DHARMASHOP_PRODUCT_NOT_FOUND'), 404);
         }
 
+        $item->brand_title = (string) $db->setQuery($db->createQuery()->select('b.title')
+            ->from($db->quoteName('#__dharmashop_product_categories', 'pc'))
+            ->join('INNER', $db->quoteName('#__categories', 'b') . ' ON b.id = pc.catid')
+            ->where('pc.product_id = :brand')->bind(':brand', $id, ParameterType::INTEGER)
+            ->where('pc.direct = 1')->where('b.extension = ' . $db->quote('com_dharmashop.brand'))
+            ->where('b.published = 1')->where('b.access IN (' . $levels . ')')->order('b.id'), 0, 1)->loadResult();
         $item->description = (string) ($item->fulltext ?? '');
         // Артикул варианта по умолчанию.
         $item->sku = (string) $db->setQuery($db->createQuery()->select('sku')->from($db->quoteName('#__dharmashop_variants'))

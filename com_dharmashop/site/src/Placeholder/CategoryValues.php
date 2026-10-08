@@ -29,7 +29,6 @@ final class CategoryValues
         return [
             $area . '.title' => (string) $item->title,
             $area . '.parent' => $ancestors ? (string) end($ancestors)->title : '',
-            $area . '.introtext' => static fn (): string => mb_substr(trim(strip_tags((string) $item->params->get('introtext', ''))), 0, 200),
             $area . '.price_min' => static fn (): string => $money->price($getRange()['min']),
             $area . '.price_max' => static fn (): string => $money->price($getRange()['max']),
             $area . '.count' => static fn (): string => $model->getCountLabel($id),

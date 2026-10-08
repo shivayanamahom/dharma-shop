@@ -19,6 +19,7 @@ final readonly class PageMetadata
         public string $siteName,
         public string $locale,
         public string $type = 'website',
+        public string $imageAlt = '',
     ) {
     }
 }

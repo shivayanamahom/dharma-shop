@@ -35,6 +35,7 @@ final class ImageContexts
         'admin.category' => [96, 96],
         'email.product' => [128, 128],
         'email.logo' => [320, 160],
+        'seo.social' => [1200, 630],
     ];
     public static function label(string $context): string
     {
