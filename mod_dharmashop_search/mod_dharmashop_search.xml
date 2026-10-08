@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<extension type="module" client="site" method="upgrade">
+	<name>MOD_DHARMASHOP_SEARCH</name>
+	<author>Dharma</author>
+	<creationDate>2026-10</creationDate>
+	<copyright>(C) 2026 Dharma</copyright>
+	<license>GNU General Public License version 2 or later</license>
+	<version>0.1.0</version>
+	<description>MOD_DHARMASHOP_SEARCH_XML_DESCRIPTION</description>
+	<namespace path="src">Dharma\Module\DharmaShopSearch</namespace>
+	<files>
+		<folder module="mod_dharmashop_search">services</folder>
+		<folder>src</folder>
+		<folder>tmpl</folder>
+	</files>
+	<media folder="media" destination="mod_dharmashop_search">
+		<folder>css</folder>
+		<folder>js</folder>
+		<filename>joomla.asset.json</filename>
+	</media>
+	<languages>
+		<language tag="ru-RU">language/ru-RU/mod_dharmashop_search.ini</language>
+		<language tag="ru-RU">language/ru-RU/mod_dharmashop_search.sys.ini</language>
+		<language tag="en-GB">language/en-GB/mod_dharmashop_search.ini</language>
+		<language tag="en-GB">language/en-GB/mod_dharmashop_search.sys.ini</language>
+	</languages>
+	<config>
+		<fields name="params">
+			<fieldset name="basic">
+				<field name="menu_item" type="menuitem" published="1" filter="integer" label="MOD_DHARMASHOP_SEARCH_MENU_ITEM" description="MOD_DHARMASHOP_SEARCH_MENU_ITEM_DESC">
+					<option value="0">MOD_DHARMASHOP_SEARCH_MENU_ITEM_AUTO</option>
+				</field>
+				<field name="placeholder" type="text" filter="string" label="MOD_DHARMASHOP_SEARCH_PLACEHOLDER" description="MOD_DHARMASHOP_SEARCH_PLACEHOLDER_DESC" />
+				<field name="min_chars" type="number" default="2" min="1" max="10" filter="integer" label="MOD_DHARMASHOP_SEARCH_MIN_CHARS" description="MOD_DHARMASHOP_SEARCH_MIN_CHARS_DESC" />
+				<field name="delay" type="number" default="300" min="100" max="2000" step="50" filter="integer" label="MOD_DHARMASHOP_SEARCH_DELAY" description="MOD_DHARMASHOP_SEARCH_DELAY_DESC" />
+				<field name="max_results" type="number" default="6" min="1" max="20" filter="integer" label="MOD_DHARMASHOP_SEARCH_MAX_RESULTS" description="MOD_DHARMASHOP_SEARCH_MAX_RESULTS_DESC" />
+				<field name="show_suggestions" type="radio" layout="joomla.form.field.radio.switcher" default="1" filter="integer" label="MOD_DHARMASHOP_SEARCH_SHOW_SUGGESTIONS" description="MOD_DHARMASHOP_SEARCH_SHOW_SUGGESTIONS_DESC">
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+				<field name="show_image" type="radio" layout="joomla.form.field.radio.switcher" default="1" filter="integer" label="MOD_DHARMASHOP_SEARCH_SHOW_IMAGE" showon="show_suggestions:1">
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+				<field name="show_category" type="radio" layout="joomla.form.field.radio.switcher" default="1" filter="integer" label="MOD_DHARMASHOP_SEARCH_SHOW_CATEGORY" showon="show_suggestions:1">
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+				<field name="show_sku" type="radio" layout="joomla.form.field.radio.switcher" default="1" filter="integer" label="MOD_DHARMASHOP_SEARCH_SHOW_SKU" showon="show_suggestions:1">
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+				<field name="show_categories" type="radio" layout="joomla.form.field.radio.switcher" default="1" filter="integer" label="MOD_DHARMASHOP_SEARCH_SHOW_CATEGORIES" description="MOD_DHARMASHOP_SEARCH_SHOW_CATEGORIES_DESC" showon="show_suggestions:1">
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+				<field name="show_price" type="radio" layout="joomla.form.field.radio.switcher" default="1" filter="integer" label="MOD_DHARMASHOP_SEARCH_SHOW_PRICE" showon="show_suggestions:1">
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+				<field name="show_all" type="radio" layout="joomla.form.field.radio.switcher" default="1" filter="integer" label="MOD_DHARMASHOP_SEARCH_SHOW_ALL" description="MOD_DHARMASHOP_SEARCH_SHOW_ALL_DESC" showon="show_suggestions:1">
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+				<field name="show_button" type="radio" layout="joomla.form.field.radio.switcher" default="1" filter="integer" label="MOD_DHARMASHOP_SEARCH_SHOW_BUTTON">
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+				<field name="button_text" type="text" filter="string" label="MOD_DHARMASHOP_SEARCH_BUTTON_TEXT" description="MOD_DHARMASHOP_SEARCH_BUTTON_TEXT_DESC" showon="show_button:1" />
+				<field name="button_icon" type="radio" layout="joomla.form.field.radio.switcher" default="1" filter="integer" label="MOD_DHARMASHOP_SEARCH_BUTTON_ICON" showon="show_button:1">
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+				<field name="input_class" type="text" default="form-control border-0 bg-transparent shadow-none" filter="string" validate="CssIdentifier" label="MOD_DHARMASHOP_SEARCH_INPUT_CLASS" description="MOD_DHARMASHOP_SEARCH_CLASS_DESC" />
+				<field name="button_class" type="text" default="btn border-0 bg-transparent" filter="string" validate="CssIdentifier" label="MOD_DHARMASHOP_SEARCH_BUTTON_CLASS" description="MOD_DHARMASHOP_SEARCH_CLASS_DESC" showon="show_button:1" />
+			</fieldset>
+			<fieldset name="advanced">
+				<field name="layout" type="modulelayout" label="JFIELD_ALT_LAYOUT_LABEL" class="form-select" validate="moduleLayout" />
+				<field name="moduleclass_sfx" type="textarea" label="COM_MODULES_FIELD_MODULECLASS_SFX_LABEL" rows="3" validate="CssIdentifier" />
+			</fieldset>
+		</fields>
+	</config>
+</extension>

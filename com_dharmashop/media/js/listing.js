@@ -28,6 +28,9 @@
     const url = new URL(form.getAttribute('action') || window.location.href, window.location.href);
     const current = stateOf(form);
     url.search = '';
+    // Поисковый запрос страницы (?q=) остаётся: сортировка и вид меняют порядок найденных товаров, а не сбрасывают поиск.
+    const query = new URLSearchParams(window.location.search).get('q');
+    if (query) url.searchParams.set('q', query);
     if (current.sort) url.searchParams.set('sort', current.sort);
     if (current.view) url.searchParams.set('product_view', current.view);
     return url;

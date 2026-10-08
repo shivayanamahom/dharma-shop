@@ -3,7 +3,9 @@ declare(strict_types=1);
 
 namespace Dharma\Component\DharmaShop\Site\Model;
 
+use Dharma\Component\DharmaShop\Site\Search\ProductSearch;
 use Dharma\Component\DharmaShop\Site\Support\SaleCountdown;
+use Joomla\CMS\Factory;
 use Dharma\Component\DharmaShop\Site\Support\ProductFields;
 use Joomla\Database\ParameterType;
 use Joomla\Database\QueryInterface;
@@ -15,7 +17,30 @@ use Joomla\Registry\Registry;
 class CategoryModel extends CategoriesModel
 {
     /** Колонки сортировки выбираются только из этого списка. */
-    public const SORTS = ['order', 'price_asc', 'price_desc', 'new', 'title'];
+    public const SORTS = ['order', 'price_asc', 'price_desc', 'new', 'title', 'relevance'];
+
+    /** @var array<string, string> значения параметров поискового подзапроса (переменные нужны для привязки по ссылке) */
+    private array $searchBinds = [];
+
+    /** Текст поискового запроса (`q`) страницы списка; пусто — без поиска. */
+    public function getQueryText(): string
+    {
+        return ProductSearch::clean((string) Factory::getApplication()->getInput()->getString('q', ''));
+    }
+
+    /**
+     * Основные категории найденных товаров с числом товаров (для подсказок поиска): по убыванию числа, не больше $limit.
+     *
+     * @return  object[]  catid, title, n
+     */
+    public function getCategoryCounts(int $limit): array
+    {
+        $db = $this->getDatabase();
+        $query = $this->productsQuery()->select([$db->quoteName('p.catid'), $db->quoteName('c.title'), 'COUNT(*) AS n'])
+            ->group([$db->quoteName('p.catid'), $db->quoteName('c.title')])->order('n DESC')->order($db->quoteName('p.catid'));
+
+        return $db->setQuery($query, 0, max(1, $limit))->loadObjectList();
+    }
 
     /** Число видимых товаров списка (для постраничной навигации). */
     public function getTotal(): int
@@ -33,21 +58,9 @@ class CategoryModel extends CategoriesModel
      */
     public function getProducts(string $ordering, int $limit, int $start = 0): array
     {
-        $ordering = in_array($ordering, self::SORTS, true) ? $ordering : 'order';
+        $ordering = in_array($ordering, static::SORTS, true) ? $ordering : static::SORTS[0];
         $db = $this->getDatabase();
-        $category = (int) $this->getParent()->id;
-        $column = $category ? match ($ordering) {
-            'price_asc', 'price_desc' => 'pc.price_sort',
-            'new' => 'pc.created',
-            'title' => 'pc.title_sort',
-            default => 'pc.sort_order',
-        } : match ($ordering) {
-            'price_asc', 'price_desc' => 'p.price_min',
-            'new' => 'p.created',
-            'title' => 'p.title',
-            default => 'p.id',
-        };
-        $direction = in_array($ordering, ['price_desc', 'new'], true) ? 'DESC' : 'ASC';
+        [$column, $direction] = $this->sortExpression($ordering);
         $sort = $db->quoteName($column);
         $query = $this->productsQuery()
             ->select($db->quoteName(['p.id', 'p.catid', 'p.title', 'p.alias', 'p.cover', 'p.cover_alt',
@@ -148,6 +161,34 @@ class CategoryModel extends CategoriesModel
         }
     }
 
+    /**
+     * Столбец и направление сортировки (столбец — из закрытого списка, в запрос попадает через quoteName).
+     *
+     * @return  array{0: string, 1: string}
+     */
+    protected function sortExpression(string $ordering): array
+    {
+        // Релевантность есть только у поиска; без запроса вместо неё — обычный порядок.
+        if ($ordering === 'relevance') {
+            return $this->getQueryText() !== '' ? ['m.score', 'DESC'] : $this->sortExpression('order');
+        }
+
+        $category = (int) $this->getParent()->id;
+        $column = $category ? match ($ordering) {
+            'price_asc', 'price_desc' => 'pc.price_sort',
+            'new' => 'pc.created',
+            'title' => 'pc.title_sort',
+            default => 'pc.sort_order',
+        } : match ($ordering) {
+            'price_asc', 'price_desc' => 'p.price_min',
+            'new' => 'p.created',
+            'title' => 'p.title',
+            default => 'p.id',
+        };
+
+        return [$column, in_array($ordering, ['price_desc', 'new'], true) ? 'DESC' : 'ASC'];
+    }
+
     /** Итоги всей категории (по индексу, с потолком); цены нужны только если включены настройками. Корень цен не имеет. */
     public function getProductStats(bool $prices): object
     {
@@ -157,7 +198,7 @@ class CategoryModel extends CategoriesModel
         return (object) ['product_count' => $this->getCountLabel($category), 'price_min' => $range['min'], 'price_max' => $range['max']];
     }
 
-    private function productsQuery(): QueryInterface
+    protected function productsQuery(): QueryInterface
     {
         $category = (int) $this->getParent()->id;
         $db = $this->getDatabase();
@@ -176,6 +217,22 @@ class CategoryModel extends CategoriesModel
             ->where('blocked.lft <= c.lft')->where('blocked.rgt >= c.rgt')
             ->where('(blocked.published != 1 OR blocked.access NOT IN (' . $levels . '))');
         $query->where('NOT EXISTS (' . $blocked . ')');
+
+        // Поиск на странице списка (категория, бренд, бейдж, каталог): состав ограничивает поисковый индекс.
+        if (($text = $this->getQueryText()) !== '') {
+            $matched = ProductSearch::matched($text);
+
+            if ($matched === null) {
+                return $query->where('1 = 0');
+            }
+
+            [$sql, $this->searchBinds] = $matched;
+            $query->join('INNER', '(' . $sql . ') AS m ON m.product_id = p.id');
+
+            foreach ($this->searchBinds as $name => $value) {
+                $query->bind($name, $this->searchBinds[$name], ParameterType::STRING);
+            }
+        }
 
         return $query;
     }

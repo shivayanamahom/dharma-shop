@@ -316,7 +316,7 @@ CREATE TABLE `#__dharmashop_field_values` (
 
 ### 5.6 Поиск
 
-`#__dharmashop_search`: `product_id` PK, `title_norm` varchar(255), `body` mediumtext (описание без HTML + `products.search_text` + значения строковых полей); `FULLTEXT (title_norm, body)`. Поиск по артикулу — префиксный по `variants.sku` (`uq_sku`). Интеграция с Умным поиском Joomla — плагином `finder`.
+`#__dharmashop_search`: `product_id` PK, `title_norm` varchar(255), `body` mediumtext (описание без HTML + `products.search_text` + значения строковых полей); `FULLTEXT (title_norm, body)`. Поиск по артикулу — префиксный по `variants.sku` (`uq_sku`). Интеграция с Умным поиском Joomla — плагином `finder`. **Реализовано (C78, предложено):** индекс наполняют `SearchIndexer` (при сохранении товара и в «Перестроить индекс»), запрос — `Site\Search\ProductSearch` (FULLTEXT по началу слов, короткие слова по названию, артикул по префиксу), поиск работает параметром `q` на страницах каталога, категорий, брендов и бейджей, подсказки — `SearchController::suggest`, строка — модуль `mod_dharmashop_search`; подробности — `docs/SEARCH.md`.
 
 ### 5.7 Корзины
 

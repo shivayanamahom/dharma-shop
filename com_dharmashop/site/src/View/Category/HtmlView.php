@@ -48,7 +48,8 @@ class HtmlView extends BaseHtmlView
         $menu = $this->prepareListing($model, $ancestors);
         $this->redirectLegacyUrl();
         $this->loadProducts($model);
-        $this->subcategories = $model->getItems();
+        // Поиск показывает товары: плитки подкатегорий при запросе не выводятся.
+        $this->subcategories = $model->getQueryText() !== '' ? [] : $model->getItems();
         $settings = ComponentHelper::getParams('com_dharmashop');
         $active = $app->getMenu()->getActive();
         $this->showHeading = (int) $menu->get('show_page_heading', 1) === 1;
@@ -62,6 +63,11 @@ class HtmlView extends BaseHtmlView
             'price_asc' => Text::_('COM_DHARMASHOP_SORT_PRICE_ASC'), 'price_desc' => Text::_('COM_DHARMASHOP_SORT_PRICE_DESC'),
             'new' => Text::_('COM_DHARMASHOP_SORT_NEW'),
         ];
+
+        // При поиске первой в списке — сортировка по релевантности.
+        if ($this->searchQuery !== '') {
+            $this->sortOptions = ['relevance' => Text::_('COM_DHARMASHOP_SORT_RELEVANCE')] + $this->sortOptions;
+        }
         $showCount = (int) $this->params->get('category_product_count', 0) === 1;
         $showPrices = (int) $this->params->get('category_price_range', 0) === 1;
         if ($showCount || $showPrices) {
@@ -78,7 +84,7 @@ class HtmlView extends BaseHtmlView
         $this->textValues = CategoryValues::build($taxonomy->area, $this->item, $ancestors, $model, $this->money);
         // Сортировка и вид в запросе (форма без JavaScript): страница-дубль, канонический адрес — без параметров, индексировать не нужно.
         $query = $app->getInput()->get;
-        $variant = $query->exists('sort') || $query->exists('product_view');
+        $variant = $query->exists('sort') || $query->exists('product_view') || $this->searchQuery !== '';
         $this->seo = $seo->resolve($taxonomy->area, $this->item, $this->textValues, $ownMenu,
             $this->absoluteRoute((int) $this->item->id) . (!$variant && $this->start ? '?start=' . $this->start : ''),
             $variant ? 'noindex, follow' : null, $this->pagination ? (int) $this->pagination->pagesCurrent : 1);

@@ -1,0 +1,13 @@
+/* Dharma Shop: размеры выпадающего списка подсказок поиска (утилит Bootstrap для минимальной ширины и высоты нет).
+   Значения можно переопределить в шаблоне сайта через переменные. Список не уже 28rem (в узкой позиции шапки он шире поля) и не выше
+   70% окна, дальше — прокрутка. */
+.dharmaSearchModule {
+  --dharma-search-results-min: 28rem;
+  --dharma-search-results-max-height: 70vh;
+}
+
+.dharmaSearchModule [data-dharmashop-search-results] {
+  min-width: min(var(--dharma-search-results-min), calc(100vw - 2rem));
+  max-height: var(--dharma-search-results-max-height);
+  overflow-y: auto;
+}

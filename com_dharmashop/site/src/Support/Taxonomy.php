@@ -32,6 +32,14 @@ final class Taxonomy
         return new self('category', 'com_dharmashop', 'categories', 'category', 'root_category', 'COM_DHARMASHOP_CATALOG');
     }
 
+    /**
+     * Результаты поиска: карточки, колонки и настройки отображения — как у каталога (корень категорий), страница — вид `search`.
+     */
+    public static function search(): self
+    {
+        return new self('category', 'com_dharmashop', 'categories', 'search', 'root_category', 'COM_DHARMASHOP_SEARCH');
+    }
+
     public static function brand(): self
     {
         return new self('brand', 'com_dharmashop.brand', 'brands', 'brand', 'root_brand', 'COM_DHARMASHOP_BRANDS');

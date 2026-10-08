@@ -1,0 +1,21 @@
+{
+	"$schema": "https://developer.joomla.org/schemas/json-schema/web_assets.json",
+	"name": "mod_dharmashop_search",
+	"version": "0.1.0",
+	"description": "Dharma Shop: подсказки модуля поиска",
+	"license": "GPL-2.0-or-later",
+	"assets": [
+		{
+			"name": "mod_dharmashop_search.search",
+			"type": "style",
+			"uri": "mod_dharmashop_search/search.css"
+		},
+		{
+			"name": "mod_dharmashop_search.search",
+			"type": "script",
+			"uri": "mod_dharmashop_search/search.js",
+			"attributes": { "defer": true },
+			"dependencies": ["core"]
+		}
+	]
+}

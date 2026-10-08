@@ -44,6 +44,10 @@ trait ListingTrait
     /** @var array<string, string> колонки характеристик таблицы товаров: алиас => название (по товарам страницы) */
     public array $fieldColumns = [];
     public ?Pagination $pagination = null;
+    /** Всего товаров в списке (с учётом поиска) */
+    public int $total = 0;
+    /** Поисковый запрос страницы (`q`) */
+    public string $searchQuery = '';
     public string $cardFolder = 'product-card';
     private MoneyFormatter $money;
 
@@ -113,7 +117,10 @@ trait ListingTrait
             'layouts/components/dharmashop/' . $this->cardFolder, $this->productView);
         $this->gridClasses = Grid::classes($this->params, 'category');
         $ordering = $app->getInput()->getCmd('sort', (string) $this->params->get('list_ordering', 'order'));
-        $this->ordering = in_array($ordering, CategoryModel::SORTS, true) ? $ordering : 'order';
+        $this->searchQuery = $model->getQueryText();
+        // С поисковым запросом по умолчанию — по релевантности.
+        $this->ordering = $this->searchQuery !== '' && !$app->getInput()->exists('sort') ? 'relevance'
+            : (in_array($ordering, CategoryModel::SORTS, true) ? $ordering : 'order');
         // Joomla в адресах пишет `start` (штатная навигация); `limitstart` тоже понимается.
         $this->start = max(0, $app->getInput()->getInt('start', $app->getInput()->getInt('limitstart')));
 
@@ -125,6 +132,7 @@ trait ListingTrait
     {
         $limit = max(1, min(200, (int) $this->params->get('list_limit', 24)));
         $total = $model->getTotal();
+        $this->total = $total;
         // Смещение кратно размеру страницы: один адрес на одну страницу.
         $pagination = new Pagination($total, intdiv($this->start, $limit) * $limit, $limit);
         $this->start = $pagination->limitstart;
@@ -153,6 +161,7 @@ trait ListingTrait
 
             $pagination->setAdditionalUrlParam('sort', $query->exists('sort') ? $this->ordering : null);
             $pagination->setAdditionalUrlParam('product_view', $query->exists('product_view') ? $this->productView : null);
+            $pagination->setAdditionalUrlParam('q', $this->searchQuery !== '' ? $this->searchQuery : null);
         }
     }
 

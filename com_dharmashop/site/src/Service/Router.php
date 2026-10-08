@@ -46,6 +46,8 @@ class Router extends RouterView
         // Товар: адрес — адрес категории + алиас товара (`/smartfony/flagmany/apple-iphone-16-pro`); ключ родителя — catid (основная категория).
         $this->registerView((new RouterViewConfiguration('product'))->setKey('id')->setParent($category, 'catid'));
         $this->registerView(new RouterViewConfiguration('cart'));
+        // Результаты поиска: пункт меню «Поиск» или адрес компонента; запрос — параметр q.
+        $this->registerView(new RouterViewConfiguration('search'));
         $this->registerView(new RouterViewConfiguration('checkout'));
         $this->registerView(new RouterViewConfiguration('checkoutcomplete'));
         $this->registerView(new RouterViewConfiguration('order'));

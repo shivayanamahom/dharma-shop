@@ -30,4 +30,13 @@ if [ -d "$M" ]; then
   [ -d "$M/media" ] && $R "$M/media/" "$T/media/mod_dharmashop_cart/" || true
   for l in ru-RU en-GB; do cp "$M/language/$l/"*.ini "$T/language/$l/"; done
 fi
+# Модуль поиска: код, media и языковые файлы.
+M="$S/mod_dharmashop_search"
+if [ -d "$M" ]; then
+  mkdir -p "$T/modules/mod_dharmashop_search" "$T/media/mod_dharmashop_search"
+  for d in services src tmpl; do $R "$M/$d/" "$T/modules/mod_dharmashop_search/$d/"; done
+  cp "$M/mod_dharmashop_search.xml" "$T/modules/mod_dharmashop_search/"
+  [ -d "$M/media" ] && $R "$M/media/" "$T/media/mod_dharmashop_search/" || true
+  for l in ru-RU en-GB; do cp "$M/language/$l/"*.ini "$T/language/$l/"; done
+fi
 echo synced

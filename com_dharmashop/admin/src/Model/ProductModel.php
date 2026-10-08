@@ -14,6 +14,7 @@ namespace Dharma\Component\DharmaShop\Administrator\Model;
 
 use Dharma\Component\DharmaShop\Administrator\Image\ImageCleaner;
 use Dharma\Component\DharmaShop\Administrator\Catalog\CategoryPositionRules;
+use Dharma\Component\DharmaShop\Administrator\Catalog\SearchIndexer;
 use Dharma\Component\DharmaShop\Administrator\Order\InheritHints;
 use Dharma\Component\DharmaShop\Administrator\Pricing\Discount;
 use Dharma\Component\DharmaShop\Administrator\Service\ShopServices;
@@ -270,6 +271,7 @@ class ProductModel extends AdminModel
             }
 
             $fieldValues->save('product', $id, $preparedFields);
+            (new SearchIndexer($db))->rebuild($id);
             $db->transactionCommit();
         } catch (\Throwable $e) {
             $db->transactionRollback();
@@ -423,6 +425,7 @@ class ProductModel extends AdminModel
         foreach ($ids as $pk) {
             $shop->orderRules()->materializeRange($pk, $pk);
             $shop->rebuilder()->rebuild($pk);
+            (new SearchIndexer($this->getDatabase()))->rebuild($pk);
         }
 
         if ($ids) {

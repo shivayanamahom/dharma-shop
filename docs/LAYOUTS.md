@@ -253,6 +253,11 @@ C74: результат вынесен в `site/tmpl/checkoutcomplete/default.ph
 
 `tmpl/cart/default.php` — контейнер `<div id="dharma_shop" class="dharmaCart">`, заголовок, `[data-dharmashop-cart-messages]` и `[data-dharmashop-cart-page]`; содержимое — `default_content.php` (его отдаёт и фрагмент `layout=page&format=raw`). Крючки: `dharmaCartList`, `dharmaCartLine`, `dharmaCartQty`, `dharmaCartSummary`, `dharmaCartEmpty`, `dharmaCartForm`. Data-атрибуты скрипта: `data-dharmashop-cartpage-step|qty|remove|clear|stepper`. Только Bootstrap: `row`, `col-lg-8/4`, `card shadow-sm`, `sticky-lg-top`, `input-group`.
 
+## Поиск (модуль `mod_dharmashop_search`, страница «Поиск»)
+
+- **Модуль:** `tmpl/default.php` (форма, `<template data-dharmashop-search-template="item|category|all|message">` для разметки подсказок — переопределяется в `templates/<шаблон>/html/mod_dharmashop_search/`), `media/mod_dharmashop_search/{js/search.js,css/search.css}`. Крючки: `dharmaSearchModule`, атрибуты `data-dharmashop-search`, `-search-input`, `-search-results`, `data-field` (title, image, sku, category, price, stock, count, label, message). Переменные CSS: `--dharma-search-results-min`, `--dharma-search-results-max-height`.
+- **Страница результатов** (`tmpl/search/default.php`, `default_items.php`): контейнер `dharmaSearch`, форма `dharmaSearchForm`; по умолчанию результаты выводит страница каталога (`dharmaSearchNote` — строка «найдено» над списком). Подробно — `docs/SEARCH.md`.
+
 ## Пункт меню «Товар» (C68)
 
 `tmpl/product/default.xml` — тип пункта «Один товар» (поле `modal_product`: окно выбора `view=products&layout=modal`, `tmpl/products/modal.php` в админке). Страница, открытая через такой пункт, берёт заголовок/описание/роботы из пункта меню, а крошки — только его цепочку.

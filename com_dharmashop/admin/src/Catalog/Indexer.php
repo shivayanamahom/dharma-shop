@@ -185,6 +185,8 @@ final class Indexer
         )->loadColumn();
 
         $this->rebuildParentsForProducts(array_map('intval', $ids));
+        // Поисковый индекс — часть той же пересборки («Перестроить индекс» в админке).
+        (new SearchIndexer($this->db))->rebuildRange($from, $to);
     }
 
     /**
