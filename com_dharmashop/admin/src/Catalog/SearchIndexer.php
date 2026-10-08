@@ -14,15 +14,17 @@ namespace Dharma\Component\DharmaShop\Administrator\Catalog;
 
 use Dharma\Component\DharmaShop\Administrator\Search\SearchText;
 use Dharma\Component\DharmaShop\Administrator\Support\Sql;
+use Joomla\CMS\Component\ComponentHelper;
 use Joomla\Database\DatabaseInterface;
 use Joomla\Database\ParameterType;
 
 \defined('_JEXEC') or die;
 
 /**
- * Поисковый индекс товаров (`#__dharmashop_search`): нормализованное название и «тело» — описание без разметки, «текст для поиска»
- * (синонимы), артикулы вариантов, значения строковых и списочных полей, названия категорий и бренда. Источник правды — таблицы
- * товаров; индекс всегда можно перестроить. Читает диапазон товаров несколькими запросами (без запроса на каждый товар).
+ * Поисковый индекс товаров (`#__dharmashop_search`): нормализованное название и «тело». В теле всегда артикулы вариантов; остальное — по
+ * настройкам магазина «Где искать» (вкладка «Каталог»): «текст для поиска» (синонимы, по умолчанию да), описание без разметки, значения
+ * строковых и списочных полей, названия категорий и бренда (по умолчанию нет). Источник правды — таблицы товаров; индекс всегда можно
+ * перестроить (после смены настроек — «Перестроить индекс»). Читает диапазон товаров несколькими запросами (без запроса на каждый товар).
  */
 final class SearchIndexer
 {
@@ -37,9 +39,13 @@ final class SearchIndexer
     public function rebuildRange(int $from, int $to): void
     {
         $params = [':f' => [$from, ParameterType::INTEGER], ':t' => [$to, ParameterType::INTEGER]];
+        $settings = ComponentHelper::getParams('com_dharmashop');
+        $in = static fn (string $key, int $default): bool => (int) $settings->get($key, $default) === 1;
+        $description = $in('search_in_description', 0);
+        $synonyms = $in('search_in_synonyms', 1);
         $products = $this->db->setQuery(Sql::query(
             $this->db,
-            'SELECT id, title, introtext, `fulltext`, search_text FROM #__dharmashop_products WHERE id BETWEEN :f AND :t',
+            'SELECT id, title, ' . ($description ? 'introtext, `fulltext`, ' : '') . 'search_text FROM #__dharmashop_products WHERE id BETWEEN :f AND :t',
             $params
         ))->loadObjectList();
 
@@ -54,26 +60,40 @@ final class SearchIndexer
             }
         };
 
-        // Артикулы, значения полей (строки и названия выбранных вариантов списка), категории и бренд.
+        // Артикулы — всегда; значения полей, категории и бренд — по настройкам.
         $collect('SELECT product_id, sku FROM #__dharmashop_variants WHERE product_id BETWEEN :f AND :t');
-        $collect('SELECT product_id, str FROM #__dharmashop_field_values WHERE product_id BETWEEN :f AND :t AND str IS NOT NULL AND str <> \'\'');
-        $collect(
-            'SELECT fv.product_id, fo.title FROM #__dharmashop_field_values fv JOIN #__dharmashop_field_options fo ON fo.id = fv.option_id '
-            . 'WHERE fv.product_id BETWEEN :f AND :t',
-        );
-        $collect(
-            'SELECT pc.product_id, c.title FROM #__dharmashop_product_categories pc JOIN #__categories c ON c.id = pc.catid '
-            . 'WHERE pc.product_id BETWEEN :f AND :t AND pc.direct = 1 AND c.extension IN (\'com_dharmashop\', \'com_dharmashop.brand\')',
-        );
+
+        if ($in('search_in_fields', 0)) {
+            $collect('SELECT product_id, str FROM #__dharmashop_field_values WHERE product_id BETWEEN :f AND :t AND str IS NOT NULL AND str <> \'\'');
+            $collect(
+                'SELECT fv.product_id, fo.title FROM #__dharmashop_field_values fv JOIN #__dharmashop_field_options fo ON fo.id = fv.option_id '
+                . 'WHERE fv.product_id BETWEEN :f AND :t'
+            );
+        }
+
+        if ($in('search_in_categories', 0)) {
+            $collect(
+                'SELECT pc.product_id, c.title FROM #__dharmashop_product_categories pc JOIN #__categories c ON c.id = pc.catid '
+                . 'WHERE pc.product_id BETWEEN :f AND :t AND pc.direct = 1 AND c.extension IN (\'com_dharmashop\', \'com_dharmashop.brand\')'
+            );
+        }
 
         $values = [];
 
         foreach ($products as $product) {
             $id = (int) $product->id;
-            $body = SearchText::normalize(implode(' ', array_merge(
-                [(string) $product->introtext, (string) $product->fulltext, (string) $product->search_text],
-                $parts[$id] ?? []
-            )));
+            $text = $parts[$id] ?? [];
+
+            if ($synonyms) {
+                $text[] = (string) $product->search_text;
+            }
+
+            if ($description) {
+                $text[] = (string) $product->introtext;
+                $text[] = (string) $product->fulltext;
+            }
+
+            $body = SearchText::normalize(implode(' ', $text));
             $values[] = '(' . $id . ', ' . $this->db->quote(mb_substr(SearchText::normalize((string) $product->title), 0, 255))
                 . ', ' . $this->db->quote(mb_substr($body, 0, self::BODY_LIMIT)) . ')';
         }

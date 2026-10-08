@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Dharma\Component\DharmaShop\Site\Search;
 
 use Dharma\Component\DharmaShop\Administrator\Search\SearchText;
+use Joomla\CMS\Component\ComponentHelper;
 
 \defined('_JEXEC') or die;
 
@@ -43,9 +44,13 @@ final class ProductSearch
     /**
      * Подзапрос «product_id, score» и значения его параметров; null — искать нечего (нет слов).
      *
+     * Каждое слово запроса раскрывается в варианты: само слово, синонимы из настроек, другая раскладка и транслитерация (если включены);
+     * товар должен содержать каждое слово хотя бы в одном из вариантов. Мягкий режим ($fuzzy) — для запроса без результатов: слова
+     * от 5 букв ищутся без двух последних, поэтому находятся слова с опечаткой в конце.
+     *
      * @return  array{0: string, 1: array<string, string>}|null
      */
-    public static function matched(string $raw): ?array
+    public static function matched(string $raw, bool $fuzzy = false): ?array
     {
         $terms = SearchText::terms($raw);
 
@@ -53,38 +58,66 @@ final class ProductSearch
             return null;
         }
 
-        $long = array_values(array_filter($terms, static fn (string $term): bool => mb_strlen($term) >= SearchText::MIN_INDEXED));
-        $short = array_values(array_diff($terms, $long));
+        $settings = ComponentHelper::getParams('com_dharmashop');
+        $synonyms = SearchText::parseSynonyms((string) $settings->get('search_synonyms', ''));
+        $translit = (int) $settings->get('search_translit', 1) === 1;
         $binds = [];
+        $groups = [];
+        $score = '';
+        $where = '';
+        $counter = 0;
+        $bind = static function (string $value) use (&$binds, &$counter): string {
+            $name = ':dsv' . $counter++;
+            $binds[$name] = $value;
 
-        if ($long) {
-            $boolean = implode(' ', array_map(static fn (string $term): string => '+' . $term . '*', $long));
-            $binds[':dsft1'] = $boolean;
-            $binds[':dsft2'] = $boolean;
-            $score = 'MATCH(title_norm, body) AGAINST(:dsft1 IN BOOLEAN MODE)';
-            $where = 'MATCH(title_norm, body) AGAINST(:dsft2 IN BOOLEAN MODE)';
+            return $name;
+        };
 
-            // Совпадение в названии важнее совпадения в описании: +100 за каждое слово запроса в названии (по началу слова) и +50, если
-            // название начинается с запроса целиком. Считается только для уже найденных индексом строк.
-            foreach ($long as $index => $term) {
-                $binds[':dstw' . $index . 'a'] = $term . '%';
-                $binds[':dstw' . $index . 'b'] = '% ' . $term . '%';
-                $score .= ' + IF(title_norm LIKE :dstw' . $index . 'a OR title_norm LIKE :dstw' . $index . 'b, 100, 0)';
+        foreach ($terms as $term) {
+            $variants = SearchText::variants($term, $synonyms, $translit);
+            $long = mb_strlen($term) >= SearchText::MIN_INDEXED;
+            $words = [];
+
+            foreach ($variants as $variant) {
+                if ($fuzzy && mb_strlen($variant) >= 5) {
+                    $variant = mb_substr($variant, 0, max(SearchText::MIN_INDEXED, mb_strlen($variant) - 2));
+                }
+
+                $words[] = $variant;
             }
 
-            $binds[':dstfull'] = implode(' ', $terms) . '%';
-            $score .= ' + IF(title_norm LIKE :dstfull, 50, 0)';
+            $words = array_values(array_unique($words));
+
+            // Совпадение слова в начале слова названия: для слов короче 3 символов это же и условие отбора (FULLTEXT их не знает).
+            $like = [];
+
+            foreach ($words as $word) {
+                $like[] = 'title_norm LIKE ' . $bind($word . '%') . ' OR title_norm LIKE ' . $bind('% ' . $word . '%');
+            }
+
+            if ($long) {
+                $indexed = array_values(array_filter($words, static fn (string $word): bool => mb_strlen($word) >= SearchText::MIN_INDEXED));
+                $groups[] = count($indexed) > 1 ? '+(' . implode(' ', array_map(static fn (string $word): string => $word . '*', $indexed)) . ')' : '+' . $indexed[0] . '*';
+                // Совпадение в названии важнее совпадения в описании: +100 за слово запроса в названии.
+                $score .= ' + IF(' . implode(' OR ', $like) . ', 100, 0)';
+            } else {
+                $where .= ' AND (' . implode(' OR ', $like) . ')';
+            }
+        }
+
+        if ($groups) {
+            $boolean = implode(' ', $groups);
+            $binds[':dsft1'] = $boolean;
+            $binds[':dsft2'] = $boolean;
+            $score = 'MATCH(title_norm, body) AGAINST(:dsft1 IN BOOLEAN MODE)' . $score;
+            $where = 'MATCH(title_norm, body) AGAINST(:dsft2 IN BOOLEAN MODE)' . $where;
         } else {
             $score = '1';
-            $where = '1 = 1';
+            $where = '1 = 1' . $where;
         }
 
-        foreach ($short as $index => $term) {
-            $binds[':dsa' . $index] = $term . '%';
-            $binds[':dsb' . $index] = '% ' . $term . '%';
-            $where .= ' AND (title_norm LIKE :dsa' . $index . ' OR title_norm LIKE :dsb' . $index . ')';
-        }
-
+        // +50, если название начинается с запроса целиком.
+        $score .= ' + IF(title_norm LIKE ' . $bind(implode(' ', $terms) . '%') . ', 50, 0)';
         $branches = ['SELECT product_id, ' . $score . ' AS score FROM #__dharmashop_search WHERE ' . $where];
         $sku = self::skuPattern($raw);
 

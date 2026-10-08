@@ -5,6 +5,7 @@ namespace Dharma\Component\DharmaShop\Site\Model;
 
 use Dharma\Component\DharmaShop\Site\Search\ProductSearch;
 use Dharma\Component\DharmaShop\Site\Support\SaleCountdown;
+use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
 use Dharma\Component\DharmaShop\Site\Support\ProductFields;
 use Joomla\Database\ParameterType;
@@ -21,6 +22,28 @@ class CategoryModel extends CategoriesModel
 
     /** @var array<string, string> значения параметров поискового подзапроса (переменные нужны для привязки по ссылке) */
     private array $searchBinds = [];
+
+    /** Мягкий режим поиска включён (null — ещё не определено) */
+    private ?bool $searchFuzzy = null;
+
+    /**
+     * Нужен ли мягкий режим поиска: он включается, только если обычный запрос ничего не нашёл (один дополнительный COUNT на запрос)
+     * и разрешён настройкой «Мягкий поиск при отсутствии результатов».
+     */
+    private function searchIsFuzzy(string $text): bool
+    {
+        if ($this->searchFuzzy !== null) {
+            return $this->searchFuzzy;
+        }
+
+        $this->searchFuzzy = false;
+
+        if ((int) ComponentHelper::getParams('com_dharmashop')->get('search_fuzzy', 1) === 1) {
+            $this->searchFuzzy = (int) $this->getDatabase()->setQuery($this->productsQuery()->select('COUNT(*)'))->loadResult() === 0;
+        }
+
+        return $this->searchFuzzy;
+    }
 
     /** Текст поискового запроса (`filter[search]`) страницы списка; пусто — без поиска. */
     public function getQueryText(): string
@@ -220,7 +243,7 @@ class CategoryModel extends CategoriesModel
 
         // Поиск на странице списка (категория, бренд, бейдж, каталог): состав ограничивает поисковый индекс.
         if (($text = $this->getQueryText()) !== '') {
-            $matched = ProductSearch::matched($text);
+            $matched = ProductSearch::matched($text, $this->searchIsFuzzy($text));
 
             if ($matched === null) {
                 return $query->where('1 = 0');
