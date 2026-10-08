@@ -86,6 +86,7 @@ com_dharmashop/
   api/                            веб-сервисы Joomla — позже
   media/                          joomla.asset.json, административный uploader.css, минимум js; фронтенд — классы Bootstrap без своего CSS
 plg_system_dharmashop/            слияние корзины при входе, хуки жизненного цикла
+plg_system_dharmashopmenu/        раздел «Dharma Shop» в боковом меню админки после «Компонентов» (onPreprocessMenuItems), без записей в БД
 plg_task_dharmashop/              задачи планировщика: старт/конец скидок, очистка корзин, переиндексация
 plg_dharmashop_imageresize/       C79: размеры по контекстам, производные Joomla Image/GD, кеш с двумя уровнями хеша
 plg_dharmashopshipping_standard/  фиксированная цена, бесплатно от суммы, самовывоз
