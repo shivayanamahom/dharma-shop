@@ -18,9 +18,11 @@
   --bs-offcanvas-padding-x: 0;
   --bs-offcanvas-padding-y: 0;
   z-index: var(--dharma-minicart-z);
-  transition: transform var(--dharma-minicart-duration) var(--dharma-minicart-easing);
   font-size: 1rem;
 }
+
+/* Слайд сохраняется независимо от media-query Bootstrap для уменьшения движения. */
+.offcanvas.dharmaMiniCartPanel { transition: transform var(--dharma-minicart-duration) var(--dharma-minicart-easing); }
 
 .dharmaMiniCartPanel .offcanvas-header { padding: 1.25rem; border-bottom: 1px solid var(--dharma-minicart-bg); }
 .dharmaMiniCartPanel .offcanvas-title { display: flex; align-items: center; gap: 0.625rem; margin: 0; font-size: 1rem; font-weight: 800; letter-spacing: 0.04em; line-height: 1.2; text-transform: uppercase; }
@@ -79,5 +81,3 @@
 
 /* Затемнение за панелью — тоже выше шапки сайта (у штатного 1040). */
 body:has(.dharmaMiniCartPanel:is(.show, .showing)) > .offcanvas-backdrop { z-index: calc(var(--dharma-minicart-z, 1100) - 5); }
-
-@media (prefers-reduced-motion: reduce) { .dharmaMiniCartPanel * { transition: none !important; } .dharmaMiniCartPanel { transition: none !important; } }

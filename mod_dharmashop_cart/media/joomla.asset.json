@@ -7,6 +7,7 @@
 	"assets": [
 		{
 			"name": "mod_dharmashop_cart.minicart",
+			"version": "46486c5c8f62",
 			"type": "style",
 			"uri": "mod_dharmashop_cart/minicart.css"
 		}

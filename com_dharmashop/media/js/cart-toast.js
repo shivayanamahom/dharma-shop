@@ -46,9 +46,7 @@
           { transform: 'scaleX(0)', transformOrigin: 'left' },
         ], {
           duration, fill: 'forwards',
-          // В reduced motion отсчёт всё равно должен быть виден: примерно один шаг в секунду.
-          easing: window.matchMedia('(prefers-reduced-motion: reduce)').matches
-            ? `steps(${Math.max(2, Math.ceil(duration / 1000))}, end)` : 'linear',
+          easing: 'linear',
         });
         animation.pause();
         animation.currentTime = 0;
