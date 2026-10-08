@@ -87,7 +87,7 @@ class ShippingModel extends AdminModel
 
     public function save($data)
     {
-        $data = array_intersect_key((array) $data, array_flip(['id', 'title', 'alias', 'plugin', 'description', 'params', 'is_default', 'state', 'access', 'ordering']));
+        $data = array_intersect_key((array) $data, array_flip(['id', 'title', 'alias', 'plugin', 'description', 'image', 'params', 'is_default', 'state', 'access', 'ordering']));
         $id   = (int) ($data['id'] ?? 0);
 
         if (!$this->getCurrentUser()->authorise('core.edit.state', $this->option)) {

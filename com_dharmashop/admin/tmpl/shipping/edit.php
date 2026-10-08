@@ -20,6 +20,7 @@ $this->getDocument()->getWebAssetManager()->useScript('keepalive')->useScript('f
                 <?php echo HTMLHelper::_('uitab.addTab', 'shippingTab', 'details', Text::_('COM_DHARMASHOP_SHIPPING_COMMON')); ?>
                 <fieldset class="options-form">
                     <legend><?php echo Text::_('COM_DHARMASHOP_SHIPPING_SETTINGS'); ?></legend>
+                    <?php echo $this->form->renderField('image'); ?>
                     <?php echo $this->form->renderField('description'); ?>
                     <?php foreach (TypeRegistry::current()->all() as $type) : ?>
                         <?php // Настройки типа показываются по выбранному типу (showon поля plugin). ?>

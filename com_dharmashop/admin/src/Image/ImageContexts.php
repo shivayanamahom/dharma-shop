@@ -20,6 +20,7 @@ final class ImageContexts
         'brand.header' => [1200, 600],
         'badge.card' => [600, 400],
         'badge.header' => [1200, 600],
+        'shipping.option' => [96, 96],
         'cart.module' => [144, 144],
         'cart.page' => [192, 192],
         'cart.toast' => [128, 128],

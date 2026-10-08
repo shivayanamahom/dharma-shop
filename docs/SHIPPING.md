@@ -53,7 +53,8 @@
 - Радиокнопка: `name="shipping_method"`, `value="<id способа>"`, атрибуты `data-shipping-radio`, `data-price-text` (текст цены/«Бесплатно»), `data-total-text` (итог с этим способом) — их выдаёт ядро в `displayData`.
 - Поля покупателя: имена `shipping[<id способа>][<ключ>]`, у каждого `data-summary-label="<подпись>"`; блок с полями и картой — внутри контейнера `data-shipping-extra` (скрывается у невыбранных способов; у выбранного показан).
 - Только классы Bootstrap 5, без своего CSS и inline-стилей; значения в вывод — через `htmlspecialchars`. Внешние виджеты (карта) — `loading="lazy"`, `referrerpolicy="no-referrer"`, показ только у выбранного способа.
-- `displayData`: `method`, `quote`, `selected`, `id`, `values`, `errors`, `info`, `price_text`, `total_text`, `free_text`.
+- `displayData`: `method`, `quote`, `selected`, `id`, `values`, `errors`, `info`, `image_url`, `price_text`, `total_text`, `free_text`.
+- Изображение способа (картинка или SVG-иконка) задаётся в первой вкладке формы способа (`shipping_methods.image`, загрузчик с папкой `shipping`); ядро отдаёт `image_url` через `ImageUrl::resolve($path, 'shipping.option')` (контекст размеров 96 × 96, реестр — `docs/IMAGE_RESIZE.md`), макет выводит `<img>` рядом с названием. Любой новый вывод изображения в типе — только через свой контекст (правило проекта).
 
 ## 6. Безопасность и надёжность
 

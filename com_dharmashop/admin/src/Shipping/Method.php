@@ -18,6 +18,7 @@ final class Method
         public readonly string $description,
         public readonly array $params,
         public readonly bool $isDefault,
+        public readonly string $image = '',
     ) {
     }
 
@@ -30,6 +31,7 @@ final class Method
             (string) ($row->description ?? ''),
             (new Registry((string) ($row->params ?? '')))->toArray(),
             (int) ($row->is_default ?? 0) === 1,
+            (string) ($row->image ?? ''),
         );
     }
 }

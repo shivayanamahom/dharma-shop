@@ -30,7 +30,7 @@ final class ShippingService
         $identity = Factory::getApplication()->getIdentity();
         $levels   = $identity ? array_map('intval', $identity->getAuthorisedViewLevels()) : [1];
         $query    = $this->db->createQuery()
-            ->select(['id', 'title', 'plugin', 'description', 'params', 'is_default'])
+            ->select(['id', 'title', 'plugin', 'description', 'image', 'params', 'is_default'])
             ->from($this->db->quoteName('#__dharmashop_shipping_methods'))
             ->where('state = 1')
             ->whereIn('access', $levels)

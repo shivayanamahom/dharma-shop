@@ -4,6 +4,7 @@
         <field name="id" type="hidden" filter="integer" />
         <field name="title" type="text" label="JGLOBAL_TITLE" required="true" maxlength="255" filter="string" class="input-large-text" />
         <field name="alias" type="text" label="JFIELD_ALIAS_LABEL" description="COM_DHARMASHOP_SHIPPING_ALIAS_DESC" maxlength="190" filter="string" />
+        <field name="image" type="imageupload" filter="Dharma\Component\DharmaShop\Administrator\Image\ImageUploader::filterPath" folder="shipping" label="COM_DHARMASHOP_SHIPPING_IMAGE" description="COM_DHARMASHOP_SHIPPING_IMAGE_DESC" />
         <field name="description" type="textarea" label="COM_DHARMASHOP_SHIPPING_DESCRIPTION" description="COM_DHARMASHOP_SHIPPING_DESCRIPTION_DESC" rows="4" maxlength="5000" filter="string" />
     </fieldset>
     <fieldset name="identity">

@@ -30,12 +30,13 @@ class ShippingTable extends Table
         $this->alias       = ApplicationHelper::stringURLSafe(trim((string) $this->alias) ?: $this->title);
         $this->plugin      = trim((string) $this->plugin);
         $this->description = trim((string) $this->description);
+        $this->image       = trim((string) $this->image);
         $this->state       = (int) $this->state;
         $this->is_default  = (int) $this->is_default;
         $this->access      = max(1, (int) $this->access);
         $this->ordering    = (int) $this->ordering;
 
-        if ($this->title === '' || mb_strlen($this->title) > 255 || $this->alias === '' || mb_strlen($this->alias) > 190 || mb_strlen($this->description) > 5000
+        if ($this->title === '' || mb_strlen($this->title) > 255 || $this->alias === '' || mb_strlen($this->alias) > 190 || mb_strlen($this->description) > 5000 || mb_strlen($this->image) > 500
             || !in_array($this->state, [0, 1], true) || !in_array($this->is_default, [0, 1], true)) {
             $this->setError(Text::_('COM_DHARMASHOP_SHIPPING_INVALID'));
 

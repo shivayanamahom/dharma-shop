@@ -11,6 +11,7 @@ use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Router\Route;
 use Dharma\Component\DharmaShop\Administrator\Pricing\MoneyFormatter;
 use Dharma\Component\DharmaShop\Administrator\Order\CheckoutFields;
+use Dharma\Component\DharmaShop\Administrator\Image\ImageUrl;
 use Dharma\Component\DharmaShop\Administrator\Shipping\Context as ShippingContext;
 use Dharma\Component\DharmaShop\Site\Support\CartSession;
 use Dharma\Component\DharmaShop\Site\Support\CheckoutPrefill;
@@ -119,6 +120,7 @@ class HtmlView extends BaseHtmlView
                     'id' => $id,
                     'values' => (array) ($state['input'][$id] ?? []),
                     'info' => $option['info'],
+                    'image_url' => $option['method']->image !== '' ? ImageUrl::resolve($option['method']->image, 'shipping.option') : '',
                     'errors' => $id === $this->shippingSelected ? (array) ($state['errors'] ?? []) : [],
                     'price_text' => $this->money->format((string) $quote->price),
                     'total_text' => $this->totalText(round((float) $this->totals['total'] + $quote->price, 2)),

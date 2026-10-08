@@ -4,7 +4,7 @@
  * templates/<шаблон>/html/plg_dharmashopshipping_standard/default.php
  *
  * @var  array  $displayData  method (Method), quote (Quote), selected (bool), id (int), values (array), errors (array [ключ поля => языковой ключ]),
- *                            info (строки describe), fields (определения полей покупателя), price_text, total_text, free_text (строки)
+ *                            info (строки describe), fields (определения полей покупателя), image_url (адрес изображения способа или ''), price_text, total_text, free_text (строки)
  *
  * Правила для всех типов доставки (docs/SHIPPING.md): радиокнопка `shipping_method` со значением id способа и атрибутами
  * data-shipping-radio, data-price-text, data-total-text; поля покупателя — `shipping[<id>][<ключ>]` внутри блока data-shipping-extra
@@ -29,9 +29,12 @@ $priceText = $quote->free ? $displayData['free_text'] : $displayData['price_text
         <input class="form-check-input" type="radio" name="shipping_method" id="dharma-shipping-<?php echo $id; ?>" value="<?php echo $id; ?>"<?php echo $selected ? ' checked' : ''; ?>
             data-shipping-radio data-price-text="<?php echo $esc($priceText); ?>" data-total-text="<?php echo $esc($displayData['total_text']); ?>">
         <label class="form-check-label w-100 d-flex justify-content-between align-items-baseline gap-3" for="dharma-shipping-<?php echo $id; ?>">
-            <span>
-                <span class="fw-semibold"><?php echo $esc($method->title); ?></span>
-                <?php if ($quote->term !== '') : ?><span class="d-block small text-body-secondary"><?php echo $esc($quote->term); ?></span><?php endif; ?>
+            <span class="d-flex align-items-center gap-2">
+                <?php if (!empty($displayData['image_url'])) : ?><img src="<?php echo $esc($displayData['image_url']); ?>" alt="" width="32" height="32" class="flex-shrink-0 object-fit-contain" loading="lazy"><?php endif; ?>
+                <span>
+                    <span class="fw-semibold"><?php echo $esc($method->title); ?></span>
+                    <?php if ($quote->term !== '') : ?><span class="d-block small text-body-secondary"><?php echo $esc($quote->term); ?></span><?php endif; ?>
+                </span>
             </span>
             <span class="fw-semibold text-nowrap<?php echo $quote->free ? ' text-success' : ''; ?>"><?php echo $esc($priceText); ?></span>
         </label>
