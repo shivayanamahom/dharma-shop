@@ -39,6 +39,9 @@ $priceText = $quote->free ? $displayData['free_text'] : $displayData['price_text
     <?php if ($method->description !== '') : ?>
         <div class="small text-body-secondary mt-2 ms-4 text-break"><?php echo nl2br($esc($method->description)); ?></div>
     <?php endif; ?>
+    <?php if ($quote->note !== '') : ?>
+        <div class="small text-body-secondary mt-2 ms-4 text-break"><?php echo nl2br($esc($quote->note)); ?></div>
+    <?php endif; ?>
     <?php if ($fields) : ?>
         <div class="row g-2 mt-1 ms-3<?php echo $selected ? '' : ' d-none'; ?>" data-shipping-extra>
             <?php foreach ($fields as $field) :

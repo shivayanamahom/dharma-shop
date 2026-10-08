@@ -63,6 +63,7 @@ final class StandardType implements TypeInterface
             'min_total' => $money($settings['min_total'] ?? 0, 'MIN_TOTAL'),
             'max_total' => $money($settings['max_total'] ?? 0, 'MAX_TOTAL'),
             'term' => mb_substr(trim(strip_tags((string) ($settings['term'] ?? ''))), 0, 100),
+            'note' => mb_substr(trim(strip_tags((string) ($settings['note'] ?? ''))), 0, 500),
             'fields' => $this->normalizeFields((array) ($settings['fields'] ?? [])),
         ];
 
@@ -145,12 +146,13 @@ final class StandardType implements TypeInterface
         // Бесплатно: нулевая цена или итог заказа (после скидок, без доставки) не меньше порога.
         $free = $price <= 0 || ($from > 0 && $context->total >= $from);
 
-        return new Quote($free ? 0.0 : round($price, 2), (string) ($p['term'] ?? ''), '', $free);
+        return new Quote($free ? 0.0 : round($price, 2), (string) ($p['term'] ?? ''), (string) ($p['note'] ?? ''), $free);
     }
 
+    /** Подпись способа (например, «менеджер уточнит детали») идёт в боковую панель, заказ и письма отдельной строкой. */
     public function describe(Method $method, Quote $quote): array
     {
-        return [];
+        return $quote->note !== '' ? [['label' => Text::_('PLG_DHARMASHOPSHIPPING_STANDARD_ROW_NOTE'), 'value' => $quote->note]] : [];
     }
 
     public function validateInput(Method $method, Context $context, array $input): array

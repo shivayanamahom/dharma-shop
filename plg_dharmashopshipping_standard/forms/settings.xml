@@ -5,6 +5,7 @@
     <field name="min_total" type="text" label="PLG_DHARMASHOPSHIPPING_STANDARD_MIN_TOTAL" description="PLG_DHARMASHOPSHIPPING_STANDARD_MIN_TOTAL_DESC" showon=".plugin:standard" default="0" filter="string" />
     <field name="max_total" type="text" label="PLG_DHARMASHOPSHIPPING_STANDARD_MAX_TOTAL" description="PLG_DHARMASHOPSHIPPING_STANDARD_MAX_TOTAL_DESC" showon=".plugin:standard" default="0" filter="string" />
     <field name="term" type="text" label="PLG_DHARMASHOPSHIPPING_STANDARD_TERM" description="PLG_DHARMASHOPSHIPPING_STANDARD_TERM_DESC" showon=".plugin:standard" maxlength="100" filter="string" />
+    <field name="note" type="textarea" label="PLG_DHARMASHOPSHIPPING_STANDARD_NOTE" description="PLG_DHARMASHOPSHIPPING_STANDARD_NOTE_DESC" showon=".plugin:standard" rows="2" maxlength="500" filter="string" default="Менеджер свяжется с вами и уточнит детали доставки." />
     <field name="fields" type="subform" label="PLG_DHARMASHOPSHIPPING_STANDARD_FIELDS" description="PLG_DHARMASHOPSHIPPING_STANDARD_FIELDS_DESC" showon=".plugin:standard" multiple="true" min="0" max="20" buttons="add,remove,move"
         default='{"fields0":{"label":"Город","type":"text","required":"1","width":"half","placeholder":"","options":""},"fields1":{"label":"Адрес","type":"textarea","required":"1","width":"full","placeholder":"Улица, дом, квартира","options":""}}'>
         <form>
