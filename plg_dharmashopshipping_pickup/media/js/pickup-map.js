@@ -71,16 +71,17 @@
         root.append(holder);
 
         if (kind === 'label') {
-            // Метка с названием и адресом склада: пузырь на классах Bootstrap справа от булавки.
+            // Подпись метки мелким шрифтом (два вложенных `small` Bootstrap): название у всех, адрес — только у выбранной метки,
+            // чтобы подписи не наплывали друг на друга.
             const label = document.createElement('div');
-            label.className = 'position-absolute bottom-0 ms-3 bg-body border rounded shadow-sm px-2 py-1 small text-nowrap';
+            label.className = 'position-absolute bottom-0 ms-3 bg-body border rounded shadow-sm px-2 py-1 small lh-sm text-nowrap';
             const name = document.createElement('div');
-            name.className = 'fw-semibold';
+            name.className = 'small fw-semibold';
             name.textContent = point.name;
             label.append(name);
-            if (point.address) {
+            if (selected && point.address) {
                 const address = document.createElement('div');
-                address.className = 'text-body-secondary';
+                address.className = 'small text-body-secondary';
                 address.textContent = point.address;
                 label.append(address);
             }
