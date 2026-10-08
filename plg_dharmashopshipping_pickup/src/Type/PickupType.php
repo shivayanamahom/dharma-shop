@@ -20,13 +20,11 @@ use Joomla\CMS\Plugin\PluginHelper;
  */
 final class PickupType implements TypeInterface
 {
-    private const MAPS = ['none', 'yandex', 'osm'];
+    private const MAPS = ['none', 'yandex'];
 
-    private const MARKER_KINDS = ['Icon', 'DotIcon', 'CircleDotIcon', 'StretchyIcon'];
+    private const MARKER_KINDS = ['pin', 'dot', 'circle', 'label'];
 
     private const COLORS = ['blue', 'red', 'green', 'darkGreen', 'darkBlue', 'lightBlue', 'orange', 'darkOrange', 'violet', 'pink', 'yellow', 'brown', 'black', 'gray', 'night'];
-
-    private const OSM_LAYERS = ['mapnik', 'cyclemap', 'transportmap', 'hot'];
 
     private const RATIOS = ['21x9', '16x9', '4x3', '1x1'];
 
@@ -76,10 +74,9 @@ final class PickupType implements TypeInterface
             'zoom' => (string) min(19, max(0, (int) ($settings['zoom'] ?? 0))),
             'map_ratio' => in_array((string) ($settings['map_ratio'] ?? ''), self::RATIOS, true) ? (string) $settings['map_ratio'] : '16x9',
             'yandex_apikey' => trim((string) ($settings['yandex_apikey'] ?? '')),
-            'marker_kind' => in_array((string) ($settings['marker_kind'] ?? ''), self::MARKER_KINDS, true) ? (string) $settings['marker_kind'] : 'Icon',
+            'marker_kind' => in_array((string) ($settings['marker_kind'] ?? ''), self::MARKER_KINDS, true) ? (string) $settings['marker_kind'] : 'pin',
             'marker_color' => in_array((string) ($settings['marker_color'] ?? ''), self::COLORS, true) ? (string) $settings['marker_color'] : 'blue',
             'marker_selected_color' => in_array((string) ($settings['marker_selected_color'] ?? ''), self::COLORS, true) ? (string) $settings['marker_selected_color'] : 'red',
-            'osm_layer' => in_array((string) ($settings['osm_layer'] ?? ''), self::OSM_LAYERS, true) ? (string) $settings['osm_layer'] : 'mapnik',
             'center' => '',
             'points' => $this->normalizePoints((array) ($settings['points'] ?? [])),
         ];
@@ -297,12 +294,11 @@ final class PickupType implements TypeInterface
     }
 
     /**
-     * Адрес виджета общей карты способа с центром на пункте $activeKey. Яндекс Карты показывают все пункты метками
-     * (выбранный — крупной), OpenStreetMap — только выбранный пункт (виджет без нескольких меток). Пустая строка — карты нет.
+     * Адрес простого виджета Яндекс Карт (без ключа API): все пункты метками (выбранный — крупной), центр на выбранном
+     * либо рамка по всем пунктам при масштабе 0. Пустая строка — карты нет или карту строит скрипт по ключу (mapDisplay).
      */
     private function mapUrl(Method $method, array $points, string $activeKey): string
     {
-        $map = (string) ($method->params['map'] ?? 'none');
         $zoom = (int) ($method->params['zoom'] ?? 0);
         $located = [];
 
@@ -314,49 +310,34 @@ final class PickupType implements TypeInterface
             }
         }
 
-        if ($map === 'none' || !isset($located[$activeKey])) {
+        if ((string) ($method->params['map'] ?? 'none') !== 'yandex' || trim((string) ($method->params['yandex_apikey'] ?? '')) !== '' || !isset($located[$activeKey])) {
             return '';
         }
 
         [$lat, $lon] = $located[$activeKey];
+        $marks = [];
 
-        if ($map === 'yandex' && trim((string) ($method->params['yandex_apikey'] ?? '')) !== '') {
-            // С ключом API карту рисует скрипт (mapDisplay), адрес для упрощённого виджета не нужен.
-            return '';
+        foreach ($located as $key => [$pLat, $pLon]) {
+            $marks[] = $pLon . ',' . $pLat . ',' . ($key === $activeKey ? 'pm2rdl' : 'pm2gnm');
         }
 
-        if ($map === 'yandex') {
-            $marks = [];
+        $url = 'https://yandex.ru/map-widget/v1/?pt=' . rawurlencode(implode('~', $marks));
 
-            foreach ($located as $key => [$pLat, $pLon]) {
-                $marks[] = $pLon . ',' . $pLat . ',' . ($key === $activeKey ? 'pm2rdl' : 'pm2gnm');
-            }
+        // Масштаб 0 — показать все пункты, если их несколько; иначе центр на выбранном.
+        if ($zoom === 0 && count($located) > 1) {
+            $lats = array_column($located, 0);
+            $lons = array_column($located, 1);
+            $padLat = max(0.005, (max($lats) - min($lats)) * 0.15);
+            $padLon = max(0.005, (max($lons) - min($lons)) * 0.15);
 
-            $url = 'https://yandex.ru/map-widget/v1/?pt=' . rawurlencode(implode('~', $marks));
-
-            // Масштаб 0 — показать все пункты, если их несколько; иначе центр на выбранном.
-            if ($zoom === 0 && count($located) > 1) {
-                $lats = array_column($located, 0);
-                $lons = array_column($located, 1);
-                $padLat = max(0.005, (max($lats) - min($lats)) * 0.15);
-                $padLon = max(0.005, (max($lons) - min($lons)) * 0.15);
-
-                return $url . '&bbox=' . rawurlencode((min($lons) - $padLon) . ',' . (min($lats) - $padLat) . '~' . (max($lons) + $padLon) . ',' . (max($lats) + $padLat));
-            }
-
-            return $url . '&ll=' . rawurlencode($lon . ',' . $lat) . '&z=' . ($zoom ?: 16);
+            return $url . '&bbox=' . rawurlencode((min($lons) - $padLon) . ',' . (min($lats) - $padLat) . '~' . (max($lons) + $padLon) . ',' . (max($lats) + $padLat));
         }
 
-        $zoom = $zoom ?: 16;
-        $delta = 0.01 / (2 ** max(0, $zoom - 14));
-        $bbox = ($lon - $delta * 2) . ',' . ($lat - $delta) . ',' . ($lon + $delta * 2) . ',' . ($lat + $delta);
-        $layer = in_array((string) ($method->params['osm_layer'] ?? ''), self::OSM_LAYERS, true) ? (string) $method->params['osm_layer'] : 'mapnik';
-
-        return 'https://www.openstreetmap.org/export/embed.html?bbox=' . rawurlencode($bbox) . '&layer=' . $layer . '&marker=' . rawurlencode($lat . ',' . $lon);
+        return $url . '&ll=' . rawurlencode($lon . ',' . $lat) . '&z=' . ($zoom ?: 16);
     }
 
     /**
-     * Описание карты для макета: режим (`js` — карта Яндекса по ключу API, `iframe` — виджет, `none`), пропорции и конфигурация для скрипта.
+     * Описание карты для макета: режим (`js` — карта Яндекса JavaScript API 3 по ключу, `iframe` — простой виджет без ключа, `none`), пропорции и конфигурация для скрипта.
      *
      * @return  array{mode: string, ratio: string, config: string}
      */
@@ -371,7 +352,11 @@ final class PickupType implements TypeInterface
             return ['mode' => 'none', 'ratio' => $ratio, 'config' => ''];
         }
 
-        if ($kind !== 'yandex' || $key === '') {
+        if ($kind !== 'yandex') {
+            return ['mode' => 'none', 'ratio' => $ratio, 'config' => ''];
+        }
+
+        if ($key === '') {
             return ['mode' => 'iframe', 'ratio' => $ratio, 'config' => ''];
         }
 
@@ -391,7 +376,7 @@ final class PickupType implements TypeInterface
             'zoom' => (int) ($p['zoom'] ?? 0),
             'center' => $center !== null ? [(float) $center[0], (float) $center[1]] : null,
             'active' => $active,
-            'markerKind' => in_array((string) ($p['marker_kind'] ?? ''), self::MARKER_KINDS, true) ? (string) $p['marker_kind'] : 'Icon',
+            'markerKind' => in_array((string) ($p['marker_kind'] ?? ''), self::MARKER_KINDS, true) ? (string) $p['marker_kind'] : 'pin',
             'markerColor' => in_array((string) ($p['marker_color'] ?? ''), self::COLORS, true) ? (string) $p['marker_color'] : 'blue',
             'selectedColor' => in_array((string) ($p['marker_selected_color'] ?? ''), self::COLORS, true) ? (string) $p['marker_selected_color'] : 'red',
             'points' => $located,

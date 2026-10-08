@@ -86,7 +86,7 @@ $priceText = $quote->free ? $displayData['free_text'] : $displayData['price_text
             </div>
         </div>
     <?php elseif ($map['mode'] === 'iframe' && ($displayData['map_url'] !== '' || array_filter(array_column($points, 'map_url')))) : ?>
-        <?php // Виджет без ключа (Яндекс) или OpenStreetMap: адрес меняется при выборе пункта (data-map-url). ?>
+        <?php // Простой виджет Яндекса без ключа API: адрес меняется при выборе пункта (data-map-url). ?>
         <div class="mt-2 ms-3<?php echo $selected && $displayData['map_url'] !== '' ? '' : ' d-none'; ?>" data-shipping-extra data-shipping-map-wrap>
             <div class="ratio <?php echo $esc($ratio); ?> rounded overflow-hidden border">
                 <iframe src="<?php echo $esc($displayData['map_url']); ?>" title="<?php echo $esc(Text::sprintf('PLG_DHARMASHOPSHIPPING_PICKUP_MAP_TITLE', $method->title)); ?>"

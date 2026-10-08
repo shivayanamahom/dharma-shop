@@ -17,26 +17,19 @@
     <field name="map" type="list" label="PLG_DHARMASHOPSHIPPING_PICKUP_MAP" description="PLG_DHARMASHOPSHIPPING_PICKUP_MAP_DESC" showon=".plugin:pickup" default="none" filter="cmd" validate="options">
         <option value="none">PLG_DHARMASHOPSHIPPING_PICKUP_MAP_NONE</option>
         <option value="yandex">PLG_DHARMASHOPSHIPPING_PICKUP_MAP_YANDEX</option>
-        <option value="osm">PLG_DHARMASHOPSHIPPING_PICKUP_MAP_OSM</option>
     </field>
     <field name="yandex_apikey" type="text" label="PLG_DHARMASHOPSHIPPING_PICKUP_YANDEX_APIKEY" description="PLG_DHARMASHOPSHIPPING_PICKUP_YANDEX_APIKEY_DESC" showon=".plugin:pickup[AND]map:yandex" maxlength="100" autocomplete="off" filter="string" />
-    <field name="marker_kind" type="list" label="PLG_DHARMASHOPSHIPPING_PICKUP_MARKER_KIND" description="PLG_DHARMASHOPSHIPPING_PICKUP_MARKER_KIND_DESC" showon=".plugin:pickup[AND]map:yandex" default="Icon" filter="string" validate="options">
-        <option value="Icon">PLG_DHARMASHOPSHIPPING_PICKUP_MARKER_ICON</option>
-        <option value="DotIcon">PLG_DHARMASHOPSHIPPING_PICKUP_MARKER_DOT</option>
-        <option value="CircleDotIcon">PLG_DHARMASHOPSHIPPING_PICKUP_MARKER_CIRCLE</option>
-        <option value="StretchyIcon">PLG_DHARMASHOPSHIPPING_PICKUP_MARKER_LABEL</option>
+    <field name="marker_kind" type="list" label="PLG_DHARMASHOPSHIPPING_PICKUP_MARKER_KIND" description="PLG_DHARMASHOPSHIPPING_PICKUP_MARKER_KIND_DESC" showon=".plugin:pickup[AND]map:yandex" default="pin" filter="string" validate="options">
+        <option value="pin">PLG_DHARMASHOPSHIPPING_PICKUP_MARKER_ICON</option>
+        <option value="dot">PLG_DHARMASHOPSHIPPING_PICKUP_MARKER_DOT</option>
+        <option value="circle">PLG_DHARMASHOPSHIPPING_PICKUP_MARKER_CIRCLE</option>
+        <option value="label">PLG_DHARMASHOPSHIPPING_PICKUP_MARKER_LABEL</option>
     </field>
     <field name="marker_color" type="list" label="PLG_DHARMASHOPSHIPPING_PICKUP_MARKER_COLOR" showon=".plugin:pickup[AND]map:yandex" default="blue" filter="string" validate="options"><option value="blue">PLG_DHARMASHOPSHIPPING_PICKUP_COLOR_BLUE</option><option value="red">PLG_DHARMASHOPSHIPPING_PICKUP_COLOR_RED</option><option value="green">PLG_DHARMASHOPSHIPPING_PICKUP_COLOR_GREEN</option><option value="darkGreen">PLG_DHARMASHOPSHIPPING_PICKUP_COLOR_DARKGREEN</option><option value="darkBlue">PLG_DHARMASHOPSHIPPING_PICKUP_COLOR_DARKBLUE</option><option value="lightBlue">PLG_DHARMASHOPSHIPPING_PICKUP_COLOR_LIGHTBLUE</option><option value="orange">PLG_DHARMASHOPSHIPPING_PICKUP_COLOR_ORANGE</option><option value="darkOrange">PLG_DHARMASHOPSHIPPING_PICKUP_COLOR_DARKORANGE</option><option value="violet">PLG_DHARMASHOPSHIPPING_PICKUP_COLOR_VIOLET</option><option value="pink">PLG_DHARMASHOPSHIPPING_PICKUP_COLOR_PINK</option><option value="yellow">PLG_DHARMASHOPSHIPPING_PICKUP_COLOR_YELLOW</option><option value="brown">PLG_DHARMASHOPSHIPPING_PICKUP_COLOR_BROWN</option><option value="black">PLG_DHARMASHOPSHIPPING_PICKUP_COLOR_BLACK</option><option value="gray">PLG_DHARMASHOPSHIPPING_PICKUP_COLOR_GRAY</option><option value="night">PLG_DHARMASHOPSHIPPING_PICKUP_COLOR_NIGHT</option></field>
     <field name="marker_selected_color" type="list" label="PLG_DHARMASHOPSHIPPING_PICKUP_MARKER_SELECTED_COLOR" description="PLG_DHARMASHOPSHIPPING_PICKUP_MARKER_SELECTED_COLOR_DESC" showon=".plugin:pickup[AND]map:yandex" default="red" filter="string" validate="options"><option value="blue">PLG_DHARMASHOPSHIPPING_PICKUP_COLOR_BLUE</option><option value="red">PLG_DHARMASHOPSHIPPING_PICKUP_COLOR_RED</option><option value="green">PLG_DHARMASHOPSHIPPING_PICKUP_COLOR_GREEN</option><option value="darkGreen">PLG_DHARMASHOPSHIPPING_PICKUP_COLOR_DARKGREEN</option><option value="darkBlue">PLG_DHARMASHOPSHIPPING_PICKUP_COLOR_DARKBLUE</option><option value="lightBlue">PLG_DHARMASHOPSHIPPING_PICKUP_COLOR_LIGHTBLUE</option><option value="orange">PLG_DHARMASHOPSHIPPING_PICKUP_COLOR_ORANGE</option><option value="darkOrange">PLG_DHARMASHOPSHIPPING_PICKUP_COLOR_DARKORANGE</option><option value="violet">PLG_DHARMASHOPSHIPPING_PICKUP_COLOR_VIOLET</option><option value="pink">PLG_DHARMASHOPSHIPPING_PICKUP_COLOR_PINK</option><option value="yellow">PLG_DHARMASHOPSHIPPING_PICKUP_COLOR_YELLOW</option><option value="brown">PLG_DHARMASHOPSHIPPING_PICKUP_COLOR_BROWN</option><option value="black">PLG_DHARMASHOPSHIPPING_PICKUP_COLOR_BLACK</option><option value="gray">PLG_DHARMASHOPSHIPPING_PICKUP_COLOR_GRAY</option><option value="night">PLG_DHARMASHOPSHIPPING_PICKUP_COLOR_NIGHT</option></field>
     <field name="center" type="text" label="PLG_DHARMASHOPSHIPPING_PICKUP_CENTER" description="PLG_DHARMASHOPSHIPPING_PICKUP_CENTER_DESC" showon=".plugin:pickup[AND]map:yandex" hint="[55.753994, 37.622093]" maxlength="60" filter="string" />
-    <field name="osm_layer" type="list" label="PLG_DHARMASHOPSHIPPING_PICKUP_OSM_LAYER" description="PLG_DHARMASHOPSHIPPING_PICKUP_OSM_LAYER_DESC" showon=".plugin:pickup[AND]map:osm" default="mapnik" filter="cmd" validate="options">
-        <option value="mapnik">PLG_DHARMASHOPSHIPPING_PICKUP_OSM_MAPNIK</option>
-        <option value="cyclemap">PLG_DHARMASHOPSHIPPING_PICKUP_OSM_CYCLE</option>
-        <option value="transportmap">PLG_DHARMASHOPSHIPPING_PICKUP_OSM_TRANSPORT</option>
-        <option value="hot">PLG_DHARMASHOPSHIPPING_PICKUP_OSM_HOT</option>
-    </field>
-    <field name="zoom" type="number" label="PLG_DHARMASHOPSHIPPING_PICKUP_ZOOM" description="PLG_DHARMASHOPSHIPPING_PICKUP_ZOOM_DESC" showon=".plugin:pickup[AND]map:yandex[OR].plugin:pickup[AND]map:osm" default="0" min="0" max="19" filter="integer" />
-    <field name="map_ratio" type="list" label="PLG_DHARMASHOPSHIPPING_PICKUP_RATIO" description="PLG_DHARMASHOPSHIPPING_PICKUP_RATIO_DESC" showon=".plugin:pickup[AND]map:yandex[OR].plugin:pickup[AND]map:osm" default="16x9" filter="cmd" validate="options">
+    <field name="zoom" type="number" label="PLG_DHARMASHOPSHIPPING_PICKUP_ZOOM" description="PLG_DHARMASHOPSHIPPING_PICKUP_ZOOM_DESC" showon=".plugin:pickup[AND]map:yandex" default="0" min="0" max="19" filter="integer" />
+    <field name="map_ratio" type="list" label="PLG_DHARMASHOPSHIPPING_PICKUP_RATIO" description="PLG_DHARMASHOPSHIPPING_PICKUP_RATIO_DESC" showon=".plugin:pickup[AND]map:yandex" default="16x9" filter="cmd" validate="options">
         <option value="21x9">PLG_DHARMASHOPSHIPPING_PICKUP_RATIO_21X9</option>
         <option value="16x9">PLG_DHARMASHOPSHIPPING_PICKUP_RATIO_16X9</option>
         <option value="4x3">PLG_DHARMASHOPSHIPPING_PICKUP_RATIO_4X3</option>
