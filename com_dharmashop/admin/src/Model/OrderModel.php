@@ -14,7 +14,7 @@ class OrderModel extends BaseDatabaseModel
     {
         $id = Factory::getApplication()->getInput()->getInt('id');
         $db = $this->getDatabase();
-        $query = $db->createQuery()->select(['o.id','o.number','o.kind','o.customer_id','o.user_id','o.status_id','o.currency','o.subtotal','o.adjustments_total','o.total',
+        $query = $db->createQuery()->select(['o.id','o.number','o.secret','o.kind','o.customer_id','o.user_id','o.status_id','o.currency','o.subtotal','o.adjustments_total','o.total',
             'o.contact_name','o.contact_email','o.contact_phone','o.contacts','o.note','o.shipping_title','o.payment_title','o.created','s.title AS status_title','s.color AS status_color'])
             ->from($db->quoteName('#__dharmashop_orders','o'))->join('LEFT',$db->quoteName('#__dharmashop_statuses','s') . ' ON s.id=o.status_id')
             ->where('o.id=:id')->bind(':id',$id,ParameterType::INTEGER);

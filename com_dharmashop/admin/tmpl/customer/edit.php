@@ -12,7 +12,11 @@ $this->getDocument()->getWebAssetManager()->useScript('keepalive')->useScript('f
             <dl class="row mb-0"><dt class="col-5">ID</dt><dd class="col-7"><?php echo (int) $this->item->id; ?></dd>
                 <dt class="col-5"><?php echo Text::_('COM_DHARMASHOP_CUSTOMER_ACCOUNT'); ?></dt><dd class="col-7 text-break"><?php echo $this->escape($this->username ?: ($this->item->user_id ? '#' . (int) $this->item->user_id : Text::_('COM_DHARMASHOP_CUSTOMER_GUEST'))); ?></dd>
                 <?php if ($this->item->created) : ?><dt class="col-5"><?php echo Text::_('JDATE'); ?></dt><dd class="col-7"><?php echo HTMLHelper::_('date',$this->item->created,Text::_('DATE_FORMAT_LC6')); ?></dd><?php endif; ?>
-            </dl><p class="small text-body-secondary mb-0"><?php echo Text::_('COM_DHARMASHOP_CUSTOMER_SNAPSHOT_HINT'); ?></p>
+            </dl>
+            <?php if ($this->item->user_id && $this->getCurrentUser()->authorise('core.manage', 'com_users')) : ?>
+                <p class="mt-3"><a class="btn btn-sm btn-outline-secondary" href="<?php echo Route::_('index.php?option=com_users&task=user.edit&id=' . (int) $this->item->user_id); ?>"><?php echo Text::_('COM_DHARMASHOP_CUSTOMER_OPEN_USER'); ?></a></p>
+            <?php endif; ?>
+            <p class="small text-body-secondary mb-0"><?php echo Text::_('COM_DHARMASHOP_CUSTOMER_SNAPSHOT_HINT'); ?></p>
         </fieldset></div>
     </div>
     <?php if ($this->item->id && $this->getCurrentUser()->authorise('dharmashop.orders.manage','com_dharmashop')) : ?>

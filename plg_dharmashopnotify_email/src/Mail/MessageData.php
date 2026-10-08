@@ -52,7 +52,11 @@ final class MessageData
             $plainContacts[] = $field['label'] . ': ' . $value;
         }
         $link = $audience === 'admin' ? $root . '/administrator/index.php?option=com_dharmashop&view=order&id=' . (int) $order['id'] : '';
-        if ($audience === 'customer' && !empty($order['user_id']) && (int) $settings->get('notify_customer_link', 1) === 1) $link = $root . '/index.php?option=com_dharmashop&view=order&id=' . (int) $order['id'];
+        if ($audience === 'customer' && (int) $settings->get('notify_customer_link', 1) === 1) {
+            // Заказ вошедшего пользователя открывается после входа; гостевой — по секретному ключу из письма (без сессии и срока).
+            $link = $root . '/index.php?option=com_dharmashop&view=order&id=' . (int) $order['id']
+                . (empty($order['user_id']) && preg_match('/^[a-f0-9]{32}$/', (string) ($order['secret'] ?? '')) ? '&key=' . $order['secret'] : '');
+        }
         $shopName = trim((string) $settings->get('shop_name', '')) ?: $siteName;
         $shopEmail = trim((string) $settings->get('shop_email', ''));
         if (!MailHelper::isEmailAddress($shopEmail)) $shopEmail = '';

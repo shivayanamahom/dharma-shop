@@ -51,7 +51,19 @@ $qty = static fn ($value): string => rtrim(rtrim(number_format((float) $value,3,
         <dt class="col-5"><?php echo Text::_('JSTATUS'); ?></dt><dd class="col-7"><?php echo $this->escape($order->status_title); ?></dd><dt class="col-5"><?php echo Text::_('JDATE'); ?></dt><dd class="col-7"><?php echo HTMLHelper::_('date',$order->created,Text::_('DATE_FORMAT_LC6')); ?></dd>
         <dt class="col-5"><?php echo Text::_('COM_DHARMASHOP_CUSTOMER_TITLE'); ?></dt><dd class="col-7"><?php if ($order->customer_id && $this->getCurrentUser()->authorise('dharmashop.customers.view','com_dharmashop')) : ?><a href="<?php echo Route::_('index.php?option=com_dharmashop&' . ($this->getCurrentUser()->authorise('core.edit','com_dharmashop') ? 'task=customer.edit' : 'view=customer&layout=edit') . '&id=' . (int) $order->customer_id); ?>">#<?php echo (int) $order->customer_id; ?></a><?php else : ?>#<?php echo (int) $order->customer_id; ?><?php endif; ?></dd>
         <dt class="col-5"><?php echo Text::_('COM_DHARMASHOP_CUSTOMER_ACCOUNT'); ?></dt><dd class="col-7"><?php echo $order->user_id ? '#' . (int) $order->user_id : Text::_('COM_DHARMASHOP_CUSTOMER_GUEST'); ?></dd>
-    </dl><div class="border-top pt-3 d-flex flex-column gap-2"><div class="d-flex justify-content-between gap-3"><span><?php echo Text::_('COM_DHARMASHOP_ORDER_SUBTOTAL'); ?></span><span><?php echo $money($order->subtotal); ?></span></div>
+    </dl>
+        <?php // Доступ покупателя: секретный ключ заказа и ссылка для гостя (то же, что уходит в письме); заказ вошедшего пользователя открывается после его входа. ?>
+        <div class="border-top pt-3 mb-3 small">
+            <div class="text-body-secondary mb-1"><?php echo Text::_('COM_DHARMASHOP_ORDER_SECRET'); ?></div>
+            <input type="text" class="form-control form-control-sm font-monospace mb-2" readonly value="<?php echo $this->escape((string) $order->secret); ?>">
+            <?php if (!$order->user_id) : ?>
+                <?php $guestUrl = rtrim(\Joomla\CMS\Uri\Uri::root(), '/') . '/index.php?option=com_dharmashop&view=order&id=' . (int) $order->id . '&key=' . rawurlencode((string) $order->secret); ?>
+                <a class="btn btn-sm btn-outline-secondary" href="<?php echo $this->escape($guestUrl); ?>" target="_blank" rel="noopener noreferrer"><?php echo Text::_('COM_DHARMASHOP_ORDER_OPEN_ON_SITE'); ?></a>
+            <?php elseif ($this->getCurrentUser()->authorise('core.manage', 'com_users')) : ?>
+                <a class="btn btn-sm btn-outline-secondary" href="<?php echo Route::_('index.php?option=com_users&task=user.edit&id=' . (int) $order->user_id); ?>"><?php echo Text::_('COM_DHARMASHOP_CUSTOMER_OPEN_USER'); ?></a>
+            <?php endif; ?>
+        </div>
+    <div class="border-top pt-3 d-flex flex-column gap-2"><div class="d-flex justify-content-between gap-3"><span><?php echo Text::_('COM_DHARMASHOP_ORDER_SUBTOTAL'); ?></span><span><?php echo $money($order->subtotal); ?></span></div>
         <?php foreach ($order->adjustments as $adjustment) : ?><div class="d-flex justify-content-between gap-3"><span><?php echo $this->escape($adjustment->title); ?></span><span><?php echo $money($adjustment->amount); ?></span></div><?php endforeach; ?>
         <div class="d-flex justify-content-between gap-3 fw-semibold border-top pt-2"><span><?php echo Text::_('COM_DHARMASHOP_ORDER_TOTAL'); ?></span><span><?php echo $money($order->total); ?></span></div>
     </div></div></section></div>

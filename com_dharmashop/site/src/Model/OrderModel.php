@@ -22,7 +22,11 @@ class OrderModel extends BaseDatabaseModel
         $id ??= $app->getInput()->getInt('id');
         $identity = $app->getIdentity();
         $userId = $identity && !$identity->guest ? (int) $identity->id : 0;
-        if ($id < 1 || ($userId === 0 && !OrderAccess::allowsGuest($app, $id, $userId))) {
+        // Гостевой заказ по секретной ссылке из письма (`key` = orders.secret): доступ без сессии. Ключ не уходит дальше этой страницы.
+        $key = (string) $app->getInput()->get('key', '', 'cmd');
+        $byKey = preg_match('/^[a-f0-9]{32}$/', $key) === 1;
+        if ($byKey) $app->setHeader('Referrer-Policy', 'no-referrer', true);
+        if ($id < 1 || ($userId === 0 && !$byKey && !OrderAccess::allowsGuest($app, $id, $userId))) {
             throw new \RuntimeException(Text::_('COM_DHARMASHOP_ORDER_NOT_FOUND'), 404);
         }
         $db = $this->getDatabase();
@@ -32,10 +36,14 @@ class OrderModel extends BaseDatabaseModel
         ])->from($db->quoteName('#__dharmashop_orders', 'o'))
             ->join('LEFT', $db->quoteName('#__dharmashop_statuses', 's') . ' ON s.id = o.status_id')
             ->where('o.id = :id')->bind(':id', $id, ParameterType::INTEGER);
-        if ($userId > 0) {
+        // Доступ: свой заказ вошедшего пользователя или гостевой заказ по секретному ключу (в том числе вошедшему, оформившему его гостем).
+        if ($userId > 0 && $byKey) {
+            $query->where('(o.user_id = :owner OR (o.user_id IS NULL AND o.secret = :secret))')->bind(':owner', $userId, ParameterType::INTEGER)->bind(':secret', $key);
+        } elseif ($userId > 0) {
             $query->where('o.user_id = :owner')->bind(':owner', $userId, ParameterType::INTEGER);
         } else {
             $query->where('o.user_id IS NULL');
+            if ($byKey) $query->where('o.secret = :secret')->bind(':secret', $key);
         }
         $order = $db->setQuery($query)->loadObject();
         if (!$order) throw new \RuntimeException(Text::_('COM_DHARMASHOP_ORDER_NOT_FOUND'), 404);
