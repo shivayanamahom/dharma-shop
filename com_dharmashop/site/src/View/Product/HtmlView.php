@@ -37,6 +37,8 @@ class HtmlView extends BaseHtmlView
     /** @var array<string, mixed> данные блока покупки (макет product-card-parts/actions): cartMode, inCartQty и др. */
     public array $buy = [];
     public string $stepperTemplate = '';
+    /** Страница открыта через пункт меню этого товара (крошки уже содержат его). */
+    private bool $menuOwnsPage = false;
 
     public function display($tpl = null): void
     {
@@ -71,8 +73,13 @@ class HtmlView extends BaseHtmlView
             $app->redirect($url, 301);
         }
 
+        // Пункт меню этого товара: его заголовок и метаданные важнее общих правил, а цепочка крошек — сам пункт меню.
+        $active = $app->getMenu()->getActive();
+        $ownMenu = $active !== null && ($active->query['view'] ?? '') === 'product' && (int) ($active->query['id'] ?? 0) === (int) $this->item->id;
+        $this->menuOwnsPage = $ownMenu;
+
         $seo = new PageSeo($this->params);
-        $this->seo = $seo->resolve('product', $this->item, ProductValues::build($this->item, new MoneyFormatter($this->params)), new Registry(), $url);
+        $this->seo = $seo->resolve('product', $this->item, ProductValues::build($this->item, new MoneyFormatter($this->params)), $ownMenu ? $active->getParams() : new Registry(), $url);
         $seo->apply($this->seo, $this->getDocument());
 
         $layout = (string) $this->params->get('product_layout', 'default');
@@ -140,6 +147,10 @@ class HtmlView extends BaseHtmlView
      */
     private function prepareBreadcrumbs(): void
     {
+        if ($this->menuOwnsPage) {
+            return;
+        }
+
         $pathway = Factory::getApplication()->getPathway();
 
         foreach ($this->item->category_path as $category) {

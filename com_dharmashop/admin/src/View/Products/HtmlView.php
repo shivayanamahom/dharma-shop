@@ -58,7 +58,10 @@ class HtmlView extends BaseHtmlView
             throw new GenericDataException(implode("\n", $errors), 500);
         }
 
-        $this->addToolbar();
+        // В окне выбора товара (layout=modal) панели инструментов нет.
+        if ($this->getLayout() !== 'modal') {
+            $this->addToolbar();
+        }
 
         parent::display($tpl);
     }

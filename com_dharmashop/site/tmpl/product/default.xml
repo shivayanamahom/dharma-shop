@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+	<layout title="COM_DHARMASHOP_PRODUCT_VIEW_DEFAULT_TITLE" option="COM_DHARMASHOP_PRODUCT_VIEW_DEFAULT_OPTION">
+		<message><![CDATA[COM_DHARMASHOP_PRODUCT_VIEW_DEFAULT_DESC]]></message>
+	</layout>
+	<fields name="request">
+		<fieldset name="request" addfieldprefix="Dharma\Component\DharmaShop\Administrator\Field">
+			<field name="id" type="modal_product" label="COM_DHARMASHOP_MENU_PRODUCT" required="true" />
+		</fieldset>
+	</fields>
+</metadata>
