@@ -55,7 +55,7 @@ class GalleryField extends FormField
         };
         $native->setup(new \SimpleXMLElement('<field name="dharmashop_native_' . $attr($this->fieldname) . '" type="media" types="images" preview="false" />'), '');
 
-        $card = function (string $index, string $path, string $alt, string $title) use ($attr, $root): string {
+        $card = function (string $index, string $path, string $description) use ($attr, $root): string {
             $name = $this->name;
 
             return '<li class="dharmashop-gallery__item" draggable="true">'
@@ -64,15 +64,14 @@ class GalleryField extends FormField
                 . '<span class="dharmashop-gallery__main">' . $attr(Text::_('COM_DHARMASHOP_GALLERY_MAIN')) . '</span>'
                 . '<span class="dharmashop-gallery__handle" title="' . $attr(Text::_('COM_DHARMASHOP_GALLERY_DRAG')) . '" aria-hidden="true"><span class="icon-ellipsis-v"></span><span class="icon-ellipsis-v"></span></span>'
                 . '<button type="button" class="dharmashop-gallery__remove btn btn-sm btn-danger" title="' . $attr(Text::_('COM_DHARMASHOP_UPLOAD_REMOVE')) . '"><span class="icon-times" aria-hidden="true"></span><span class="visually-hidden">' . $attr(Text::_('COM_DHARMASHOP_UPLOAD_REMOVE')) . '</span></button></div>'
-                . '<input type="text" class="form-control form-control-sm" data-field="alt" name="' . $attr($name) . '[' . $index . '][alt]" value="' . $attr($alt) . '" maxlength="255" placeholder="' . $attr(Text::_('COM_DHARMASHOP_GALLERY_ALT')) . '">'
-                . '<input type="text" class="form-control form-control-sm" data-field="title" name="' . $attr($name) . '[' . $index . '][title]" value="' . $attr($title) . '" maxlength="255" placeholder="' . $attr(Text::_('COM_DHARMASHOP_GALLERY_TITLE')) . '">'
+                . '<input type="text" class="form-control form-control-sm" data-field="alt" name="' . $attr($name) . '[' . $index . '][alt]" value="' . $attr($description) . '" maxlength="255" placeholder="' . $attr(Text::_('COM_DHARMASHOP_GALLERY_DESCRIPTION')) . '" aria-label="' . $attr(Text::_('COM_DHARMASHOP_GALLERY_DESCRIPTION')) . '">'
                 . '</li>';
         };
 
         $list = '';
 
         foreach ($items as $i => $item) {
-            $list .= $card((string) $i, $item['path'], $item['alt'], $item['title']);
+            $list .= $card((string) $i, $item['path'], $item['alt'] !== '' ? $item['alt'] : $item['title']);
         }
 
         $limits = Text::sprintf('COM_DHARMASHOP_UPLOAD_LIMITS', strtoupper(implode(', ', $uploader->allowedExtensions())), $maxMb ?: '—');
@@ -105,7 +104,7 @@ class GalleryField extends FormField
             . '</div>'
             . '<div class="progress mt-2" hidden><div class="progress-bar" role="progressbar" style="width:0%"></div></div>'
             . '<ul class="dharmashop-gallery__list">' . $list . '</ul>'
-            . '<template class="dharmashop-gallery__tpl">' . $card('__i__', '', '', '') . '</template>'
+            . '<template class="dharmashop-gallery__tpl">' . $card('__i__', '', '') . '</template>'
             . '<div class="dharmashop-gallery__native" hidden>' . $native->inputHtml() . '</div>'
             . '</div>';
     }

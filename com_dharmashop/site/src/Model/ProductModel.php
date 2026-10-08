@@ -96,12 +96,17 @@ class ProductModel extends BaseDatabaseModel
                 ->bind(':gallery', $id, ParameterType::INTEGER)->order('ordering')
         )->loadObjectList() as $row) {
             if ($url = MediaUrl::absolute((string) $row->path)) {
-                $item->gallery[] = (object) ['url' => $url, 'alt' => (string) ($row->alt ?: $item->title), 'title' => (string) ($row->title ?: $item->title)];
+                $alt = (string) $row->alt;
+                $title = (string) $row->title;
+                $description = $alt !== '' ? $alt : ($title !== '' ? $title : (string) $item->title);
+                $item->gallery[] = (object) ['url' => $url, 'alt' => $description, 'title' => $description];
             }
         }
 
         if (!$item->gallery && ($url = MediaUrl::absolute((string) $item->cover))) {
-            $item->gallery[] = (object) ['url' => $url, 'alt' => (string) ($item->cover_alt ?: $item->title), 'title' => (string) $item->title];
+            $alt = (string) $item->cover_alt;
+            $description = $alt !== '' ? $alt : (string) $item->title;
+            $item->gallery[] = (object) ['url' => $url, 'alt' => $description, 'title' => $description];
         }
 
         ProductFields::attach($db, [$item], 'page');

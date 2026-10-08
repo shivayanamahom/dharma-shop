@@ -418,7 +418,10 @@ final class ImageUploader
 
             $seen[$path] = true;
             $clean = static fn (mixed $text): string => mb_substr(trim(strip_tags((string) $text)), 0, 255);
-            $result[] = ['path' => $path, 'alt' => $clean($item['alt'] ?? ''), 'title' => $clean($item['title'] ?? '')];
+            $alt = $clean($item['alt'] ?? '');
+            // Новая форма передаёт одно описание; прежние данные с отдельным title читаются без потери.
+            $title = array_key_exists('title', $item) ? $clean($item['title']) : $alt;
+            $result[] = ['path' => $path, 'alt' => $alt, 'title' => $title];
 
             if (count($result) >= 100) {
                 break;
