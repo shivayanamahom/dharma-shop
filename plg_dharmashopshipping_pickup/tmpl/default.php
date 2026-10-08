@@ -4,12 +4,14 @@
  * Переопределение в шаблоне сайта: templates/<шаблон>/html/plg_dharmashopshipping_pickup/default.php
  *
  * @var  array  $displayData  method (Method), quote (Quote), selected (bool), id (int), errors (array), info (строки describe),
- *                            points (пункты: key, name, address, rows, map_url…), point_selected (ключ выбранного пункта),
+ *                            points (пункты: key, name, address, rows, map_url — ссылка общей карты с центром на пункте), point_selected (ключ выбранного пункта),
+ *                            map_url (ссылка карты выбранного пункта или ''),
  *                            image_url, price_text, total_text, free_text (строки)
  *
  * Правила для всех типов доставки (docs/SHIPPING.md): радиокнопка `shipping_method` с data-shipping-radio, data-price-text, data-total-text;
  * блоки data-shipping-extra скрываются у невыбранных способов; выбор пункта — радио `shipping[<id>][point]` с data-shipping-point
- * (data-summary-label/-value/-rows дублируют выбор в боковой панели), сведения пункта и карта — блок data-shipping-extra data-shipping-point-detail="<ключ>".
+ * (data-summary-label/-value/-rows дублируют выбор в боковой панели, data-map-url — адрес карты пункта), сведения пункта — блок data-shipping-extra
+ * data-shipping-point-detail="<ключ>". Карта одна на способ: iframe с data-shipping-map внутри блока data-shipping-map-wrap (JS меняет src при выборе пункта).
  */
 \defined('_JEXEC') or die;
 
@@ -51,7 +53,7 @@ $priceText = $quote->free ? $displayData['free_text'] : $displayData['price_text
                 ?>
                 <div class="form-check mb-0">
                     <input class="form-check-input<?php echo isset($errors['point']) ? ' is-invalid' : ''; ?>" type="radio" name="shipping[<?php echo $id; ?>][point]" id="<?php echo $esc($pointId); ?>" value="<?php echo $esc($point['key']); ?>"<?php echo $point['key'] === $activePoint ? ' checked' : ''; ?>
-                        data-shipping-point data-summary-label="<?php echo $esc(Text::_('PLG_DHARMASHOPSHIPPING_PICKUP_ROW_POINT')); ?>" data-summary-value="<?php echo $esc($point['name']); ?>" data-summary-rows="<?php echo $esc(json_encode($point['rows'], JSON_UNESCAPED_UNICODE)); ?>">
+                        data-shipping-point data-summary-label="<?php echo $esc(Text::_('PLG_DHARMASHOPSHIPPING_PICKUP_ROW_POINT')); ?>" data-summary-value="<?php echo $esc($point['name']); ?>" data-summary-rows="<?php echo $esc(json_encode($point['rows'], JSON_UNESCAPED_UNICODE)); ?>" data-map-url="<?php echo $esc($point['map_url']); ?>">
                     <label class="form-check-label" for="<?php echo $esc($pointId); ?>">
                         <span class="fw-semibold"><?php echo $esc($point['name']); ?></span>
                         <span class="d-block small text-body-secondary"><?php echo $esc($point['address']); ?></span>
@@ -73,12 +75,14 @@ $priceText = $quote->free ? $displayData['free_text'] : $displayData['price_text
                     <?php endforeach; ?>
                 </dl>
             <?php endif; ?>
-            <?php if ($point['map_url'] !== '') : ?>
-                <div class="ratio ratio-16x9 rounded overflow-hidden border mt-2">
-                    <iframe src="<?php echo $esc($point['map_url']); ?>" title="<?php echo $esc(Text::sprintf('PLG_DHARMASHOPSHIPPING_PICKUP_MAP_TITLE', $point['name'])); ?>"
-                        loading="lazy" referrerpolicy="no-referrer" allowfullscreen></iframe>
-                </div>
-            <?php endif; ?>
         </div>
     <?php endforeach; ?>
+    <?php if ($displayData['map_url'] !== '' || array_filter(array_column($points, 'map_url'))) : ?>
+        <div class="mt-2 ms-3<?php echo $selected && $displayData['map_url'] !== '' ? '' : ' d-none'; ?>" data-shipping-extra data-shipping-map-wrap>
+            <div class="ratio ratio-16x9 rounded overflow-hidden border">
+                <iframe src="<?php echo $esc($displayData['map_url']); ?>" title="<?php echo $esc(Text::sprintf('PLG_DHARMASHOPSHIPPING_PICKUP_MAP_TITLE', $method->title)); ?>"
+                    loading="lazy" referrerpolicy="no-referrer" allowfullscreen data-shipping-map></iframe>
+            </div>
+        </div>
+    <?php endif; ?>
 </div>

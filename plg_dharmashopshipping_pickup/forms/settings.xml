@@ -10,15 +10,16 @@
             <field name="hours" type="textarea" label="PLG_DHARMASHOPSHIPPING_PICKUP_HOURS" description="PLG_DHARMASHOPSHIPPING_PICKUP_HOURS_DESC" rows="2" maxlength="500" filter="string" />
             <field name="info" type="textarea" label="PLG_DHARMASHOPSHIPPING_PICKUP_INFO" description="PLG_DHARMASHOPSHIPPING_PICKUP_INFO_DESC" rows="3" maxlength="1000" filter="string" />
             <field name="term" type="text" label="PLG_DHARMASHOPSHIPPING_PICKUP_POINT_TERM" description="PLG_DHARMASHOPSHIPPING_PICKUP_POINT_TERM_DESC" maxlength="100" filter="string" />
-            <field name="map" type="list" label="PLG_DHARMASHOPSHIPPING_PICKUP_MAP" description="PLG_DHARMASHOPSHIPPING_PICKUP_MAP_DESC" default="none" filter="cmd" validate="options">
-                <option value="none">PLG_DHARMASHOPSHIPPING_PICKUP_MAP_NONE</option>
-                <option value="yandex">PLG_DHARMASHOPSHIPPING_PICKUP_MAP_YANDEX</option>
-                <option value="osm">PLG_DHARMASHOPSHIPPING_PICKUP_MAP_OSM</option>
-            </field>
-            <field name="coords" type="text" label="PLG_DHARMASHOPSHIPPING_PICKUP_COORDS" description="PLG_DHARMASHOPSHIPPING_PICKUP_COORDS_DESC" showon="map:yandex[OR]map:osm" hint="[55.753994, 37.622093]" maxlength="60" filter="string" />
-            <field name="zoom" type="number" label="PLG_DHARMASHOPSHIPPING_PICKUP_ZOOM" showon="map:yandex[OR]map:osm" default="16" min="1" max="19" filter="integer" />
+            <field name="coords" type="text" label="PLG_DHARMASHOPSHIPPING_PICKUP_COORDS" description="PLG_DHARMASHOPSHIPPING_PICKUP_COORDS_DESC" hint="[55.753994, 37.622093]" maxlength="60" filter="string" />
         </form>
     </field>
+</fieldset><fieldset name="type_pickup_map" label="PLG_DHARMASHOPSHIPPING_PICKUP_MAP_SETTINGS">
+    <field name="map" type="list" label="PLG_DHARMASHOPSHIPPING_PICKUP_MAP" description="PLG_DHARMASHOPSHIPPING_PICKUP_MAP_DESC" showon=".plugin:pickup" default="none" filter="cmd" validate="options">
+        <option value="none">PLG_DHARMASHOPSHIPPING_PICKUP_MAP_NONE</option>
+        <option value="yandex">PLG_DHARMASHOPSHIPPING_PICKUP_MAP_YANDEX</option>
+        <option value="osm">PLG_DHARMASHOPSHIPPING_PICKUP_MAP_OSM</option>
+    </field>
+    <field name="zoom" type="number" label="PLG_DHARMASHOPSHIPPING_PICKUP_ZOOM" description="PLG_DHARMASHOPSHIPPING_PICKUP_ZOOM_DESC" showon=".plugin:pickup[AND]map:yandex[OR].plugin:pickup[AND]map:osm" default="0" min="0" max="19" filter="integer" />
 </fieldset><fieldset name="price_pickup" label="PLG_DHARMASHOPSHIPPING_PICKUP_PRICE_SETTINGS">
     <field name="price" type="text" label="PLG_DHARMASHOPSHIPPING_PICKUP_PRICE" description="PLG_DHARMASHOPSHIPPING_PICKUP_PRICE_DESC" showon=".plugin:pickup" default="0" filter="string" />
     <field name="free_from" type="text" label="PLG_DHARMASHOPSHIPPING_PICKUP_FREE_FROM" description="PLG_DHARMASHOPSHIPPING_PICKUP_FREE_FROM_DESC" showon=".plugin:pickup" default="0" filter="string" />

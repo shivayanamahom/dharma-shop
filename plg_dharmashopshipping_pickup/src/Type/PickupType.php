@@ -63,6 +63,8 @@ final class PickupType implements TypeInterface
             'free_from' => $money($settings['free_from'] ?? 0, 'FREE_FROM'),
             'min_total' => $money($settings['min_total'] ?? 0, 'MIN_TOTAL'),
             'max_total' => $money($settings['max_total'] ?? 0, 'MAX_TOTAL'),
+            'map' => in_array((string) ($settings['map'] ?? ''), self::MAPS, true) ? (string) $settings['map'] : 'none',
+            'zoom' => (string) min(19, max(0, (int) ($settings['zoom'] ?? 0))),
             'points' => $this->normalizePoints((array) ($settings['points'] ?? [])),
         ];
 
@@ -72,6 +74,11 @@ final class PickupType implements TypeInterface
 
         if (!$normalized['points']) {
             throw new \DomainException('PLG_DHARMASHOPSHIPPING_PICKUP_ERROR_POINTS');
+        }
+
+        // Карта общая для способа: нужен хотя бы один пункт с координатами.
+        if ($normalized['map'] !== 'none' && !array_filter($normalized['points'], static fn (array $point): bool => $point['coords'] !== '')) {
+            throw new \DomainException('PLG_DHARMASHOPSHIPPING_PICKUP_ERROR_COORDS_NEEDED');
         }
 
         return $normalized;
@@ -103,11 +110,11 @@ final class PickupType implements TypeInterface
                 throw new \DomainException('PLG_DHARMASHOPSHIPPING_PICKUP_ERROR_EMAIL');
             }
 
-            $map = in_array((string) ($row['map'] ?? ''), self::MAPS, true) ? (string) $row['map'] : 'none';
             $coords = '';
+            $coordsRaw = trim((string) ($row['coords'] ?? ''));
 
-            if ($map !== 'none') {
-                $parsed = self::parseCoords((string) ($row['coords'] ?? ''));
+            if ($coordsRaw !== '') {
+                $parsed = self::parseCoords($coordsRaw);
 
                 if ($parsed === null) {
                     throw new \DomainException('PLG_DHARMASHOPSHIPPING_PICKUP_ERROR_COORDS');
@@ -128,7 +135,7 @@ final class PickupType implements TypeInterface
             $points[] = [
                 'key' => $key, 'name' => $name, 'address' => $address, 'phone' => $text('phone', 100), 'email' => $email,
                 'hours' => $text('hours', 500), 'info' => $text('info', 1000), 'term' => $text('term', 100),
-                'map' => $map, 'coords' => $coords, 'zoom' => (string) min(19, max(1, (int) ($row['zoom'] ?? 16))),
+                'coords' => $coords,
             ];
         }
 
@@ -231,15 +238,20 @@ final class PickupType implements TypeInterface
         $path = PluginHelper::getLayoutPath('dharmashopshipping', 'pickup', 'default');
         $points = [];
 
-        foreach ($this->pointsOf($displayData['method']) as $point) {
-            $point['map_url'] = $this->mapUrl($point);
+        $all = $this->pointsOf($displayData['method']);
+        $selectedKey = (string) ($displayData['values']['point'] ?? '');
+        $active = in_array($selectedKey, array_column($all, 'key'), true) ? $selectedKey : (string) ($all[0]['key'] ?? '');
+
+        foreach ($all as $point) {
+            // Карта одна на способ: у каждого пункта своя ссылка (центр на пункте, остальные пункты — метками).
+            $point['map_url'] = $this->mapUrl($displayData['method'], $all, (string) $point['key']);
             $point['rows'] = array_values(array_filter($this->pointRows($point), static fn (array $row): bool => trim($row['value']) !== ''));
             $points[] = $point;
         }
 
         $displayData['points'] = $points;
-        $selectedKey = (string) ($displayData['values']['point'] ?? '');
-        $displayData['point_selected'] = in_array($selectedKey, array_column($points, 'key'), true) ? $selectedKey : (string) ($points[0]['key'] ?? '');
+        $displayData['point_selected'] = $active;
+        $displayData['map_url'] = (string) (array_column($points, 'map_url', 'key')[$active] ?? '');
 
         return (static function (string $__path, array $displayData): string {
             ob_start();
@@ -249,30 +261,56 @@ final class PickupType implements TypeInterface
         })($path, $displayData);
     }
 
-    /** Адрес виджета карты пункта (Яндекс Карты или OpenStreetMap по координатам); пустая строка — карты нет. */
-    private function mapUrl(array $point): string
+    /**
+     * Адрес виджета общей карты способа с центром на пункте $activeKey. Яндекс Карты показывают все пункты метками
+     * (выбранный — крупной), OpenStreetMap — только выбранный пункт (виджет без нескольких меток). Пустая строка — карты нет.
+     */
+    private function mapUrl(Method $method, array $points, string $activeKey): string
     {
-        $map = (string) ($point['map'] ?? 'none');
-        $parsed = self::parseCoords((string) ($point['coords'] ?? ''));
+        $map = (string) ($method->params['map'] ?? 'none');
+        $zoom = (int) ($method->params['zoom'] ?? 0);
+        $located = [];
 
-        if ($parsed === null) {
+        foreach ($points as $point) {
+            $parsed = self::parseCoords((string) ($point['coords'] ?? ''));
+
+            if ($parsed !== null) {
+                $located[(string) $point['key']] = [(float) $parsed[0], (float) $parsed[1]];
+            }
+        }
+
+        if ($map === 'none' || !isset($located[$activeKey])) {
             return '';
         }
 
-        [$lat, $lon] = [(float) $parsed[0], (float) $parsed[1]];
-        $zoom = (int) ($point['zoom'] ?? 16);
+        [$lat, $lon] = $located[$activeKey];
 
         if ($map === 'yandex') {
-            return 'https://yandex.ru/map-widget/v1/?ll=' . rawurlencode($lon . ',' . $lat) . '&z=' . $zoom . '&pt=' . rawurlencode($lon . ',' . $lat . ',pm2rdm');
+            $marks = [];
+
+            foreach ($located as $key => [$pLat, $pLon]) {
+                $marks[] = $pLon . ',' . $pLat . ',' . ($key === $activeKey ? 'pm2rdl' : 'pm2gnm');
+            }
+
+            $url = 'https://yandex.ru/map-widget/v1/?pt=' . rawurlencode(implode('~', $marks));
+
+            // Масштаб 0 — показать все пункты, если их несколько; иначе центр на выбранном.
+            if ($zoom === 0 && count($located) > 1) {
+                $lats = array_column($located, 0);
+                $lons = array_column($located, 1);
+                $padLat = max(0.005, (max($lats) - min($lats)) * 0.15);
+                $padLon = max(0.005, (max($lons) - min($lons)) * 0.15);
+
+                return $url . '&bbox=' . rawurlencode((min($lons) - $padLon) . ',' . (min($lats) - $padLat) . '~' . (max($lons) + $padLon) . ',' . (max($lats) + $padLat));
+            }
+
+            return $url . '&ll=' . rawurlencode($lon . ',' . $lat) . '&z=' . ($zoom ?: 16);
         }
 
-        if ($map === 'osm') {
-            $delta = 0.01 / (2 ** max(0, $zoom - 14));
-            $bbox = ($lon - $delta * 2) . ',' . ($lat - $delta) . ',' . ($lon + $delta * 2) . ',' . ($lat + $delta);
+        $zoom = $zoom ?: 16;
+        $delta = 0.01 / (2 ** max(0, $zoom - 14));
+        $bbox = ($lon - $delta * 2) . ',' . ($lat - $delta) . ',' . ($lon + $delta * 2) . ',' . ($lat + $delta);
 
-            return 'https://www.openstreetmap.org/export/embed.html?bbox=' . rawurlencode($bbox) . '&layer=mapnik&marker=' . rawurlencode($lat . ',' . $lon);
-        }
-
-        return '';
+        return 'https://www.openstreetmap.org/export/embed.html?bbox=' . rawurlencode($bbox) . '&layer=mapnik&marker=' . rawurlencode($lat . ',' . $lon);
     }
 }

@@ -73,6 +73,17 @@
             });
             form.querySelector('[data-shipping-details="' + radio.value + '"]')?.classList.toggle('d-none', !radio.checked);
         });
+        // Общая карта способа: адрес берётся у выбранного пункта (data-map-url); без адреса блок скрыт.
+        shippingRadios.forEach((radio) => {
+            const option = radio.closest('[data-shipping-option]');
+            const frame = option?.querySelector('[data-shipping-map]');
+            const wrap = option?.querySelector('[data-shipping-map-wrap]');
+            if (!frame || !wrap || !radio.checked) return;
+            const pointRadio = option.querySelector('[data-shipping-point]:checked');
+            const url = pointRadio ? (pointRadio.dataset.mapUrl || '') : (frame.getAttribute('src') || '');
+            if (url && frame.getAttribute('src') !== url) frame.setAttribute('src', url);
+            wrap.classList.toggle('d-none', !url);
+        });
         inputRows?.replaceChildren();
         if (!chosen) return;
         form.querySelectorAll('[data-checkout-shipping-price]').forEach((node) => { node.textContent = chosen.dataset.priceText || ''; });
