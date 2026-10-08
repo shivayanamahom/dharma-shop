@@ -71,9 +71,19 @@
         root.append(holder);
 
         if (kind === 'label') {
-            const label = document.createElement('span');
-            label.className = 'badge text-bg-light border shadow-sm position-absolute bottom-0 text-nowrap fw-normal ms-3';
-            label.textContent = point.name;
+            // Метка с названием и адресом склада: пузырь на классах Bootstrap справа от булавки.
+            const label = document.createElement('div');
+            label.className = 'position-absolute bottom-0 ms-3 bg-body border rounded shadow-sm px-2 py-1 small text-nowrap';
+            const name = document.createElement('div');
+            name.className = 'fw-semibold';
+            name.textContent = point.name;
+            label.append(name);
+            if (point.address) {
+                const address = document.createElement('div');
+                address.className = 'text-body-secondary';
+                address.textContent = point.address;
+                label.append(address);
+            }
             root.append(label);
         }
 
