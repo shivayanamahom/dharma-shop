@@ -33,15 +33,26 @@ final class Resizer
         if ($format === 'webp' && !function_exists('imagewebp')) $format = 'png';
         if ($format === 'avif' && !function_exists('imageavif')) $format = 'png';
         $outputType = ['jpeg'=>IMAGETYPE_JPEG,'png'=>IMAGETYPE_PNG,'webp'=>IMAGETYPE_WEBP,'avif'=>IMAGETYPE_AVIF][$format];
+        // Only effective rendering parameters identify a copy; context names and format aliases do not.
+        // PNG is lossless, so changing the shared JPEG/WebP quality must not duplicate PNG copies.
+        $preset = [
+            'width' => (int) $preset['width'],
+            'height' => (int) $preset['height'],
+            'mode' => (string) $preset['mode'],
+            'format' => $format,
+            'quality' => $format === 'png' ? 9 : (int) $preset['quality'],
+        ];
         $sourceKey = hash('sha256', $file);
-        $variant = hash('sha256', json_encode(['v1',filemtime($file),filesize($file),$preset,$format], JSON_THROW_ON_ERROR));
+        $variant = hash('sha256', json_encode(['v2',filemtime($file),filesize($file),$preset], JSON_THROW_ON_ERROR));
         if (!preg_match('~^images/(?:[a-zA-Z0-9_-]+/)*[a-zA-Z0-9_-]+$~D', $cache)) return $url;
-        // 256 x 256 buckets per context, made only when a derivative is first requested.
-        $relative = $cache . '/v1/' . $context . '/' . substr($sourceKey,0,2) . '/' . substr($sourceKey,2,2);
+        // One shared store, sharded by source. Identical presets share the URL, file and lock across contexts.
+        // Keep the context argument for caller compatibility; it is only used upstream to select settings.
+        $relative = $cache . '/v2/' . substr($sourceKey,0,2) . '/' . substr($sourceKey,2,2);
         $folder = $this->folder($site, $relative);
         if ($folder === null) return $url;
         $size = ($preset['width'] ?: 'auto') . 'x' . ($preset['height'] ?: 'auto');
-        $name = $size . '-' . $preset['mode'] . '-q' . $preset['quality'] . '-'
+        $qualityLabel = $format === 'png' ? 'lossless' : 'q' . $preset['quality'];
+        $name = $size . '-' . $preset['mode'] . '-' . $qualityLabel . '-'
             . substr($sourceKey,0,32) . '-' . substr($variant,0,24) . '.' . ($format === 'jpeg' ? 'jpg' : $format);
         $target = $folder . '/' . $name;
         $resultUrl = rtrim(Uri::root(), '/') . '/' . $relative . '/' . $name;
