@@ -266,6 +266,7 @@
 	</fieldset>
 
 	<fieldset name="seo" label="COM_DHARMASHOP_CONFIG_SEO" description="COM_DHARMASHOP_CONFIG_SEO_DESC" addfieldprefix="Dharma\Component\DharmaShop\Administrator\Field">
+		<field name="_seo_shortcodes" type="shortcodes" label="COM_DHARMASHOP_PH_TITLE" filter="unset" />
 		<field name="seo_robots" type="list" label="COM_DHARMASHOP_SEO_ROBOTS_LABEL" description="COM_DHARMASHOP_CONFIG_SEO_ROBOTS_DESC" default="index, follow" validate="options">
 			<option value="index, follow">index, follow</option>
 			<option value="noindex, follow">noindex, follow</option>
