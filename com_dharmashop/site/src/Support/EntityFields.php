@@ -135,6 +135,7 @@ final class EntityFields
                     'id' => $fieldId, 'alias' => $field->alias, 'title' => $field->title, 'type' => $field->type,
                     'group_id' => (int) $field->group_id, 'group_title' => (string) ($field->group_title ?? ''),
                     'show' => (int) $field->{'in_' . $context} === 1,
+                    'show_title' => (int) $field->settings->get('show_title_' . $context, 1) === 1,
                     'show_intro' => $target === 'product' && $context === 'page' && (int) $field->settings->get('show_intro', 0) === 1,
                     'format' => in_array($format, ['comma', 'list', 'image', 'image_title'], true) ? $format : 'comma',
                     'values' => $values[$id][$fieldId],

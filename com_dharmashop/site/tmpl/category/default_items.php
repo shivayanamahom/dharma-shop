@@ -12,7 +12,7 @@ use Joomla\CMS\Language\Text;
                 <thead>
                     <tr>
                         <th scope="col"><?php echo Text::_('COM_DHARMASHOP_TABLE_PRODUCT'); ?></th>
-                        <?php foreach ($this->fieldColumns as $alias => $title) : ?><th scope="col" class="d-none d-lg-table-cell" data-field="<?php echo $this->escape($alias); ?>"><?php echo $this->escape($title); ?></th><?php endforeach; ?>
+                        <?php foreach ($this->fieldColumns as $alias => $title) : ?><th scope="col" class="d-none d-lg-table-cell" data-field="<?php echo $this->escape($alias); ?>"><span<?php echo empty($this->fieldColumnShowTitle[$alias] ?? true) ? ' class="visually-hidden"' : ''; ?>><?php echo $this->escape($title); ?></span></th><?php endforeach; ?>
                         <th scope="col" class="text-end"><?php echo Text::_('COM_DHARMASHOP_TABLE_PRICE'); ?></th>
                     </tr>
                 </thead>

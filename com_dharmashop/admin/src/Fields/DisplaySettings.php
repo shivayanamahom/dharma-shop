@@ -21,6 +21,7 @@ final class DisplaySettings
                 throw new \InvalidArgumentException('COM_DHARMASHOP_FIELD_SETTINGS_INVALID');
             }
             $result['format_' . $context] = $format;
+            $result['show_title_' . $context] = (int) (bool) ($settings['show_title_' . $context] ?? 1);
         }
         $result['show_intro'] = (int) (bool) ($settings['show_intro'] ?? 0);
         $result['variation'] = $type === 'list' ? (int) (bool) ($settings['variation'] ?? 0) : 0;

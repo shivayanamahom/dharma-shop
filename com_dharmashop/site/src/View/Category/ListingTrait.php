@@ -43,6 +43,7 @@ trait ListingTrait
     public string $stepperTemplate = '';
     /** @var array<string, string> колонки характеристик таблицы товаров: алиас => название (по товарам страницы) */
     public array $fieldColumns = [];
+    public array $fieldColumnShowTitle = [];
     public ?Pagination $pagination = null;
     /** Всего товаров в списке (с учётом поиска) */
     public int $total = 0;
@@ -142,12 +143,14 @@ trait ListingTrait
 
         // Таблица: колонки характеристик — объединение полей, выводимых в карточках товаров этой страницы.
         $this->fieldColumns = [];
+        $this->fieldColumnShowTitle = [];
 
         if ($this->productView === 'table') {
             foreach ($this->items as $product) {
                 foreach ($product->fields ?? [] as $alias => $field) {
                     if (!empty($field->show) && !empty($field->values)) {
                         $this->fieldColumns[(string) $alias] ??= (string) $field->title;
+                        $this->fieldColumnShowTitle[(string) $alias] ??= $field->show_title ?? true;
                     }
                 }
             }

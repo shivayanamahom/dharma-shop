@@ -40,7 +40,7 @@ $valueLayout = new FileLayout('components.dharmashop.fields.value', null, ['comp
         <?php foreach ($columns as $alias => $title) : ?>
             <?php $field = $fields[$alias] ?? null; ?>
             <?php if ($field && !empty($field->show) && !empty($field->values)) : ?>
-                <div class="d-lg-none small dharmaField" data-field="<?php echo $escape($alias); ?>"><span class="text-body-secondary"><?php echo $escape($title); ?>:</span> <?php echo $valueLayout->render(['field' => $field]); ?></div>
+                <div class="d-lg-none small dharmaField" data-field="<?php echo $escape($alias); ?>"><span class="<?php echo empty($field->show_title ?? true) ? 'visually-hidden' : 'text-body-secondary'; ?>"><?php echo $escape($title); ?>:</span> <?php echo $valueLayout->render(['field' => $field]); ?></div>
             <?php endif; ?>
         <?php endforeach; ?>
         <?php if (!empty($displayData['badges'])) : ?>

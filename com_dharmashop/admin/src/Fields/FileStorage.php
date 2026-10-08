@@ -38,11 +38,15 @@ final class FileStorage
         $count = $settings['files_max_count'] ?? 10;
         if (!is_numeric($size) || !is_finite((float) $size) || (float) $size < 0.1 || (float) $size > 1024
             || !preg_match('/^\d+$/D', (string) $count) || (int) $count < 1 || (int) $count > 100
-            || !in_array($settings['files_label'] ?? 'caption', ['caption','filename'], true)) {
+            || !in_array($settings['files_label'] ?? 'caption', ['caption','filename'], true)
+            || !in_array($settings['files_layout'] ?? 'list', ['list','grid'], true)
+            || !in_array((string) ($settings['files_columns'] ?? 3), ['2','3','4','5','6'], true)) {
             throw new \InvalidArgumentException('PLG_DHARMASHOPFIELD_BASIC_FILES_SETTINGS_INVALID');
         }
         return ['files_extensions'=>implode(',', array_unique($extensions)), 'files_max_mb'=>(float) $size,
             'files_max_count'=>(int) $count, 'files_label'=>$settings['files_label'] ?? 'caption',
+            'files_layout'=>$settings['files_layout'] ?? 'list',
+            'files_columns'=>(int) ($settings['files_columns'] ?? 3),
             'files_show_size'=>(int) (bool) ($settings['files_show_size'] ?? 1),
             'files_show_extension'=>(int) (bool) ($settings['files_show_extension'] ?? 1),
             'files_new_tab'=>(int) (bool) ($settings['files_new_tab'] ?? 1)];

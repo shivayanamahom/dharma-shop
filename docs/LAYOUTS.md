@@ -12,6 +12,8 @@
 
 ## Правила
 
+Поля поддерживают `field.show_title` (по умолчанию true), подготовленный из `params.show_title_card/page`. Интро наследует page. Общий `fields/default` визуально скрывает выключенный заголовок и отдаёт значению всю ширину; для файлов видимый заголовок размещается над карточками. Табличный список сохраняет семантический заголовок колонки, скрывая его текст. Макет `fields/files.php` учитывает `field.file_settings.files_layout=list/grid` и `files_columns=2…6`: карточки в столбик или адаптивная сетка (одна колонка на телефоне, до двух на среднем экране). Оба макета переопределяются в `templates/<template>/html/layouts/components/dharmashop/fields/`. Новых SQL/JS/CSS нет.
+
 1. `administrator/components/com_dharmashop/tmpl` содержит экраны админки и никогда не используется как список витринных макетов.
 2. Страницы лежат в `com_dharmashop/site/tmpl/` и устанавливаются в `/components/com_dharmashop/tmpl/`. Подключаемые карточки лежат в `files_dharmashop_layouts/layouts/` и устанавливаются в `/layouts/components/dharmashop/` (C32).
 3. Для каждой записи показывается только `.php` из папки своего слота. Не нужно вручную добавлять название в XML формы или языковые файлы.
