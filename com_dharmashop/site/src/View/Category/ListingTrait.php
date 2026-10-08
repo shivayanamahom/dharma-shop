@@ -145,12 +145,6 @@ trait ListingTrait
             $query = Factory::getApplication()->getInput()->get;
             $pagination->setAdditionalUrlParam('format', null);
 
-            // Ссылки страниц строятся по тому же правилу, что адрес категории (`categoryRoute`): один адрес на страницу.
-            if ($this->taxonomy()->area === 'category' && (int) $this->item->id > 1) {
-                $pagination->setAdditionalUrlParam('view', $this->hasCatalogMenu() ? 'categories' : 'category');
-                $pagination->setAdditionalUrlParam('Itemid', null);
-            }
-
             $pagination->setAdditionalUrlParam('sort', $query->exists('sort') ? $this->ordering : null);
             $pagination->setAdditionalUrlParam('product_view', $query->exists('product_view') ? $this->productView : null);
         }
@@ -167,27 +161,7 @@ trait ListingTrait
             }
         }
 
-        // Один адрес на категорию, не зависящий от того, откуда пришёл посетитель: категории строятся от пункта «список категорий»
-        // (каталог), если он есть, иначе от пункта «Товары категории». Бренды и бейджи — от своих пунктов (Joomla выбирает их сама).
-        if ($this->taxonomy()->area === 'category') {
-            return Route::_('index.php?option=com_dharmashop&view=' . ($this->hasCatalogMenu() ? 'categories' : 'category') . '&id=' . $id, false);
-        }
-
         return Route::_('index.php?option=com_dharmashop&view=' . $this->taxonomy()->pageView . '&id=' . $id . ($this->menuId ? '&Itemid=' . $this->menuId : ''), false);
-    }
-
-    /** Есть ли опубликованный пункт меню «список категорий» корня (id 0 или 1): от него строятся адреса категорий. */
-    private function hasCatalogMenu(): bool
-    {
-        static $found = null;
-
-        if ($found === null) {
-            $menu = Factory::getApplication()->getMenu();
-            $found = (bool) ($menu->getItems('link', 'index.php?option=com_dharmashop&view=categories&id=0')
-                ?: $menu->getItems('link', 'index.php?option=com_dharmashop&view=categories&id=1'));
-        }
-
-        return $found;
     }
 
     /**

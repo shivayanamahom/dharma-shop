@@ -141,7 +141,7 @@ class HtmlView extends BaseHtmlView
             }
         }
         // Списки брендов и бейджей плоские: карточка ведёт на страницу записи (вложенные бренды — внутри неё), у категорий вложен сам список.
-        $view = $taxonomy->area === 'category' ? $taxonomy->listView : $taxonomy->pageView;
+        $view = $taxonomy->pageView;
 
         return Route::_('index.php?option=com_dharmashop&view=' . $view . '&id=' . $id, false);
     }

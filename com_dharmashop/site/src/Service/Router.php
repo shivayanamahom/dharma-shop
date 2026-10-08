@@ -30,8 +30,10 @@ class Router extends RouterView
 
     public function __construct($app, $menu, $categoryFactory, private readonly \Joomla\Database\DatabaseInterface $db)
     {
-        $categories = (new RouterViewConfiguration('categories'))->setKey('id')->setNestable();
-        $category = (new RouterViewConfiguration('category'))->setKey('id')->setNestable();
+        // Как в com_content: список категорий (пункт меню, корень) → категория (вложенная) → товар. Адрес строится от подходящего пункта меню
+        // штатными правилами Joomla (точный пункт категории, пункт предка, пункт корня каталога любого из двух типов), разбор работает под любым из них.
+        $categories = (new RouterViewConfiguration('categories'))->setKey('id');
+        $category = (new RouterViewConfiguration('category'))->setKey('id')->setParent($categories, 'catid')->setNestable();
         $this->registerView($categories);
         $this->registerView($category);
         // Бренды: список (пункт меню) → страница бренда (вложенная: бренд внутри бренда). Бейджи: список → страница бейджа.
@@ -41,11 +43,8 @@ class Router extends RouterView
         $badges = new RouterViewConfiguration('badges');
         $this->registerView($badges);
         $this->registerView((new RouterViewConfiguration('badge'))->setKey('id')->setParent($badges));
-        // Товар: адрес — цепочка алиасов категорий и алиас товара (`/smartfony/flagmany/apple-iphone-16-pro`). Родитель — «список категорий»
-        // (каталог), если такой пункт меню есть, иначе «товары категории»; так же строятся адреса категорий (C40). Ключ родителя — catid.
-        $catalogMenu = $menu->getItems('link', 'index.php?option=com_dharmashop&view=categories&id=0')
-            ?: $menu->getItems('link', 'index.php?option=com_dharmashop&view=categories&id=1');
-        $this->registerView((new RouterViewConfiguration('product'))->setKey('id')->setParent($catalogMenu ? $categories : $category, 'catid'));
+        // Товар: адрес — адрес категории + алиас товара (`/smartfony/flagmany/apple-iphone-16-pro`); ключ родителя — catid (основная категория).
+        $this->registerView((new RouterViewConfiguration('product'))->setKey('id')->setParent($category, 'catid'));
         $this->registerView(new RouterViewConfiguration('cart'));
         parent::__construct($app, $menu);
         $this->attachRule(new MenuRules($this));

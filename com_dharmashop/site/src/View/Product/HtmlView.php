@@ -60,10 +60,12 @@ class HtmlView extends BaseHtmlView
 
         $route = Route::_('index.php?option=com_dharmashop&view=product&id=' . (int) $this->item->id, false);
         $url = preg_match('~^https?://~i', $route) ? $route : rtrim(Uri::root(), '/') . '/' . ltrim($route, '/');
-        // Один адрес на товар: любой другой адрес (старый `/component/dharmashop/product/205`, `?view=product&id=205`) — 301 на основной.
+        // Несемантические адреса (`/component/dharmashop/product/205`, `?option=com_dharmashop&view=product&id=205`) — 301 на ЧПУ.
+        // Адрес через другой пункт меню (штатное поведение Joomla: ветка меню сохраняется) остаётся рабочим, его склеивает canonical.
         $app = Factory::getApplication();
+        $requestUri = Uri::getInstance();
 
-        if ($app->getInput()->getMethod() === 'GET' && rtrim(Uri::getInstance()->getPath(), '/') !== rtrim((string) parse_url($url, PHP_URL_PATH), '/')) {
+        if ($app->getInput()->getMethod() === 'GET' && (str_contains($requestUri->getPath(), '/component/dharmashop/') || $requestUri->hasVar('option'))) {
             $app->redirect($url, 301);
         }
 
@@ -98,14 +100,10 @@ class HtmlView extends BaseHtmlView
      */
     private function prepareBreadcrumbs(): void
     {
-        $menu = Factory::getApplication()->getMenu();
-        $catalog = $menu->getItems('link', 'index.php?option=com_dharmashop&view=categories&id=0')
-            ?: $menu->getItems('link', 'index.php?option=com_dharmashop&view=categories&id=1');
-        $view = $catalog ? 'categories' : 'category';
         $pathway = Factory::getApplication()->getPathway();
 
         foreach ($this->item->category_path as $category) {
-            $pathway->addItem($category->title, Route::_('index.php?option=com_dharmashop&view=' . $view . '&id=' . $category->id, false));
+            $pathway->addItem($category->title, Route::_('index.php?option=com_dharmashop&view=category&id=' . $category->id, false));
         }
 
         $pathway->addItem($this->seo->breadcrumb !== '' ? $this->seo->breadcrumb : (string) $this->item->title, '');
