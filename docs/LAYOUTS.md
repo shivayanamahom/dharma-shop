@@ -238,6 +238,8 @@ C61: editor исключён из данных card в EntityFields до зап�
 
 ## Покупка в карточке и на странице товара (C66)
 
+`default_buy.php` оформлен штатной Bootstrap `card shadow-sm`: в `card-header` наличие и артикул выше цены, в `card-body` компактная цена (`fs-4`), скидка/таймер и покупка. На странице товара общий макет actions получает `stackActions=true`: количество компактно отдельной строкой, кнопка на всю ширину (Bootstrap primary); режим stepper сохраняет прежний виджет/обработчики. Без этого флага карточки каталога/таблица используют прежнюю горизонтальную раскладку. Собственного CSS нет. Класс цены — `dharmaProductPrice`.
+
 `product-card-parts/actions.php` — действия покупки по режиму `cartMode` (`button` / `qty` / `stepper`); в режиме `stepper` контейнер `.dharmaCardActions[data-dharmashop-cart-control]` содержит кнопку (скрыта, если товар уже в корзине) и виджет `product-card-parts/stepper.php` (`.dharmaCardStepper`: убрать/«−», число, «+»). Страница списка выводит один `<template data-dharmashop-stepper-template>` (в конце `default_items.php`), страница товара — в `default_buy.php`. Страница товара: блок покупки `tmpl/product/default_buy.php` (`.dharmaProductBuy`: цена, старая цена/скидка, таймер акции, наличие, артикул, `.dharmaProductBuyActions` с частью `actions`). `default.php` подключает его через `loadTemplate('buy')`; цена больше не размечается в оболочке страницы. Переопределение целого блока: `templates/<шаблон>/html/com_dharmashop/product/default_buy.php` (доступно в «Шаблоны → Переопределения» вместе с галереей).
 
 
