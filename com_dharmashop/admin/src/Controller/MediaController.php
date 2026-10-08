@@ -62,7 +62,7 @@ class MediaController extends BaseController
             if ($params === null) { throw new \RuntimeException('JLIB_APPLICATION_ERROR_ACCESS_FORBIDDEN'); }
             $storage = new FileStorage(JPATH_ROOT, $fieldId, FileStorage::settings((new Registry($params))->toArray()));
             $file = $this->input->files->get('file', [], 'raw');
-            echo new JsonResponse($upload ? $storage->store(is_array($file) ? $file : []) : $storage->inspect($this->input->post->getString('path')));
+            echo new JsonResponse($upload ? $storage->store(is_array($file) ? $file : []) : $storage->inspect(rawurldecode($this->input->post->getString('path'))));
         } catch (\RuntimeException|\InvalidArgumentException $error) {
             echo new JsonResponse(null, Text::_($error->getMessage()), true);
         } catch (\Throwable $error) {

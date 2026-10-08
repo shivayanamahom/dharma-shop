@@ -39,12 +39,14 @@ final class FileStorage
         if (!is_numeric($size) || !is_finite((float) $size) || (float) $size < 0.1 || (float) $size > 1024
             || !preg_match('/^\d+$/D', (string) $count) || (int) $count < 1 || (int) $count > 100
             || !in_array($settings['files_label'] ?? 'caption', ['caption','filename'], true)
+            || !in_array($settings['files_naming'] ?? 'original', ['original','clean'], true)
             || !in_array($settings['files_layout'] ?? 'list', ['list','grid'], true)
             || !in_array((string) ($settings['files_columns'] ?? 3), ['2','3','4','5','6'], true)) {
             throw new \InvalidArgumentException('PLG_DHARMASHOPFIELD_BASIC_FILES_SETTINGS_INVALID');
         }
         return ['files_extensions'=>implode(',', array_unique($extensions)), 'files_max_mb'=>(float) $size,
             'files_max_count'=>(int) $count, 'files_label'=>$settings['files_label'] ?? 'caption',
+            'files_naming'=>$settings['files_naming'] ?? 'original',
             'files_layout'=>$settings['files_layout'] ?? 'list',
             'files_columns'=>(int) ($settings['files_columns'] ?? 3),
             'files_show_size'=>(int) (bool) ($settings['files_show_size'] ?? 1),
@@ -67,8 +69,37 @@ final class FileStorage
     {
         if (!is_scalar($value)) { return ''; }
         $path = explode('#', trim((string) $value), 2)[0];
-        return preg_match('~^images/[^\x00-\x20<>"\'`\\\\:?*|%]+\.[a-z0-9]+$~iuD', $path)
+        return preg_match('~^images/[^\x00-\x1F\x7F#<>"\'`\\\\:?*|%]+\.[a-z0-9]+$~iuD', $path)
             && !str_contains($path, '..') && !str_contains($path, '//') ? $path : '';
+    }
+
+    /** URL path segments are encoded independently; stored paths remain raw for disk/DB use. */
+    public static function urlPath(string $path): string
+    {
+        $path = self::path($path);
+        return $path === '' ? '' : implode('/', array_map('rawurlencode', explode('/', $path)));
+    }
+
+    /** Keep readable names; only remove filesystem/URL delimiters and cap the byte length. */
+    private function filename(string $original): string
+    {
+        if (!mb_check_encoding($original, 'UTF-8')) {
+            throw new \InvalidArgumentException('PLG_DHARMASHOPFIELD_BASIC_FILES_NAME_INVALID');
+        }
+        $extension = pathinfo($original, PATHINFO_EXTENSION);
+        $stem = pathinfo($original, PATHINFO_FILENAME);
+        if (($this->settings['files_naming'] ?? 'original') === 'clean') {
+            $stem = preg_replace('/[^\pL\pN_.()-]+/u', '-', $stem) ?? '';
+            $stem = str_replace('.', '-', $stem);
+            $extension = strtolower($extension);
+        } else {
+            $stem = preg_replace('~[\x00-\x1F\x7F<>"\x27`\\\\/:?*|%#]+~u', '-', $stem) ?? '';
+            $stem = preg_replace('/\.{2,}/', '-', $stem) ?? '';
+        }
+        $stem = trim($stem, '.- ');
+        // Most filesystems allow at most 255 bytes per basename, including extension.
+        $stem = rtrim(mb_strcut($stem !== '' ? $stem : 'file', 0, 255 - strlen($extension) - 1, 'UTF-8'), '. ');
+        return $stem . '.' . $extension;
     }
 
     /** Metadata comes from the disk, never from hidden form inputs. */
@@ -120,24 +151,25 @@ final class FileStorage
         $original = basename(str_replace('\\', '/', (string) ($upload['name'] ?? '')));
         $extension = strtolower(pathinfo($original, PATHINFO_EXTENSION));
         $metadata = $this->validate($upload['tmp_name'], $extension, true);
-        $stem = preg_replace('/[^\pL\pN_.()-]+/u', '-', pathinfo($original, PATHINFO_FILENAME)) ?? '';
-        $stem = trim(str_replace('.', '-', $stem), '.-');
-        $filename = mb_substr($stem !== '' ? $stem : 'file', 0, 120) . '.' . $extension;
+        $filename = $this->filename($original);
         $random = bin2hex(random_bytes(8));
         $base = 'images/dharmashop/files';
         $directory = $base . '/' . $this->fieldId . '/' . date('Y') . '/' . substr($random, 0, 2) . '/' . substr($random, 2, 2);
+        $parentDirectory = $directory;
+        $directory .= '/' . $random;
         // Never follow symlinks while creating the managed storage tree.
         $current = $this->root;
-        foreach (explode('/', $directory) as $part) {
+        foreach (explode('/', $parentDirectory) as $part) {
             $current .= '/' . $part;
             if (is_link($current) || (!is_dir($current) && !mkdir($current, 0755) && !is_dir($current))) { throw new \RuntimeException('COM_DHARMASHOP_UPLOAD_ERROR_STORE'); }
         }
+        if (!mkdir($this->root . '/' . $directory, 0755)) { throw new \RuntimeException('COM_DHARMASHOP_UPLOAD_ERROR_STORE'); }
         $guard = $this->root . '/' . $base . '/.htaccess';
         if (!is_file($guard)) {
             $rules = "Options -ExecCGI -Indexes\nSetHandler none\n<IfModule mod_headers.c>\nHeader set X-Content-Type-Options nosniff\n</IfModule>\n<FilesMatch \"\\.(php[0-9]?|phtml|phar|cgi|pl|py|sh|html?|svg)$\">\nRequire all denied\n</FilesMatch>\n";
             if (file_put_contents($guard, $rules, LOCK_EX) === false) { throw new \RuntimeException('COM_DHARMASHOP_UPLOAD_ERROR_STORE'); }
         }
-        $path = $directory . '/' . $random . '-' . $filename;
+        $path = $directory . '/' . $filename;
         if (!move_uploaded_file($upload['tmp_name'], $this->root . '/' . $path)) { throw new \RuntimeException('COM_DHARMASHOP_UPLOAD_ERROR_STORE'); }
         return ['path'=>$path, 'filename'=>$filename] + $metadata;
     }

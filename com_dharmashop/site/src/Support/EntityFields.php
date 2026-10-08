@@ -114,7 +114,7 @@ final class EntityFields
                 ->where('v.field_id IN (' . implode(',', array_keys($fileFields)) . ')')->order('v.ordering, v.id');
             foreach ($db->setQuery($query)->loadObjectList() as $row) {
                 $path = FileStorage::path($row->path);
-                $url = $path !== '' ? MediaUrl::absolute($path) : '';
+                $url = $path !== '' ? MediaUrl::absolute(FileStorage::urlPath($path)) : '';
                 if ($url === '') { continue; }
                 $field = $fileFields[(int) $row->field_id];
                 $filename = (string) ($row->filename ?: basename($path));
