@@ -32,7 +32,7 @@
 | Карточка товара на странице бейджа | `files_dharmashop_layouts/layouts/badge-product-card/*.php` | `badge_use_category_cards` (по умолчанию «да»), `badge_product_card_layout` | Настройки магазина, бейдж | Реализована так же, как у бренда |
 | Результаты поиска | `site/tmpl/search/*.php` | Позже; повторно использовать карточки товара | Настройки поиска | Запланировано |
 | Фильтр, сортировка, постраничность | `files_dharmashop_layouts/layouts/filter/*.php`, `files_dharmashop_layouts/layouts/pagination/*.php` | Настройки каталога или вида | По мере появления интерфейса | Запланировано |
-| Корзина | `site/tmpl/cart/*.php` | При необходимости | Настройки магазина | Запланировано с корзиной |
+| Корзина | `site/tmpl/cart/*.php` (`default`, `mini` — содержимое боковой панели) | При необходимости | Настройки магазина | Реализовано (C65, C67) |
 | Оформление заказа и результат | `site/tmpl/checkout/*.php`, `site/tmpl/order/*.php` | При необходимости | Настройки магазина | Запланировано с заказами |
 | Кабинет и история заказов | `site/tmpl/orders/*.php` | При необходимости | Настройки покупателя | Запланировано |
 | Общая шапка, меню, подвал | Проект шаблона `dharma_starter` | Это настройки шаблона, не компонента | Стили и макеты шаблона | Отдельный проект |
@@ -91,7 +91,7 @@ SEO и социальные плагины работают через PageSeo. 
 
 `product-card/grid.php` — Bootstrap card `h-100.dharmaCard`: область изображения (при `product_card_images` ≠ 1 — слайдер Swiper `.dharmaCardSlider` с точками и стрелками, C46/C63; без плагина Swiper — карусель Bootstrap `.dharmaCardCarousel`) (`ratio-1x1`, `object-fit-cover`, на всю ширину карточки; без обложки — серая заглушка того же размера) с бейджами товара в левом верхнем углу (`.dharmaCardBadges`, каждый бейдж — ссылка на страницу бейджа, цвет из настройки бейджа; выводятся только бейджи с включённым «Показывать в списках»); тело: основная категория товара (ссылка, `.dharmaCardCategory`), название h3, интро по `showIntro`; футер (`.dharmaCardFooter`, `.dharmaCardPrice`): текущая цена жирно, ниже перечёркнутая обычная цена и размер скидки (если у варианта по умолчанию действует скидка), «Нет в наличии» при нулевом остатке, справа (`.dharmaCardActions`) — виджет количества «−» поле «+» (`.dharmaCardQty`, настройка `product_card_qty`: настройки → категория → пункт меню; по умолчанию выключен; скрипт `qty.js` подключается только при включении, шаг и минимум — из полей товара) и кнопка «В корзину» (`.dharmaCardCart`, значок корзины и текст из настройки `cart_button_text`, `data-dharmashop-add-to-cart` = id товара; действия пока нет — корзина отдельный этап). Кнопка контурная (`btn-outline-primary`): залитая `.btn-primary` в `dharma_starter` прозрачна, пока не определён `--cassiopeia-color-primary`. Цены форматирует общий MoneyFormatter; данные карточек (обычная цена, скидка, бейджи) вид получает одним пакетом `CategoryModel::attachCardData()` — SQL в макете нет. NULL цены — «Цена по запросу». Только Bootstrap-классы, без CSS/inline-стилей/JS. Копии для брендов и бейджей (`brand-product-card`, `badge-product-card`) обновляются вместе с этой карточкой.
 
-Ссылка на товар и корзина пока отсутствуют: соответствующие фронтальные виды/действия ещё не реализованы. list.php/table.php остаются заготовками. Новый grid заменяет ранее описанное пустое содержимое только этого режима; выбор default по-прежнему разрешается в grid. Schema.org товарных карточек пока не добавлена, поскольку публичные маршруты товара ещё впереди.
+Страница товара и корзина реализованы (см. ниже, C65/C66). list.php/table.php остаются заготовками. Новый grid заменяет ранее описанное пустое содержимое только этого режима; выбор default по-прежнему разрешается в grid. Schema.org товарных карточек пока не добавлена, поскольку публичные маршруты товара ещё впереди.
 
 ## Как устроен автосканер
 
@@ -225,3 +225,15 @@ C61: editor исключён из данных card в EntityFields до зап�
 
 `product-card-parts/actions.php` — действия покупки по режиму `cartMode` (`button` / `qty` / `stepper`); в режиме `stepper` контейнер `.dharmaCardActions[data-dharmashop-cart-control]` содержит кнопку (скрыта, если товар уже в корзине) и виджет `product-card-parts/stepper.php` (`.dharmaCardStepper`: убрать/«−», число, «+»). Страница списка выводит один `<template data-dharmashop-stepper-template>` (в конце `default_items.php`), страница товара — в `default_buy.php`. Страница товара: блок покупки `tmpl/product/default_buy.php` (`.dharmaProductBuy`: наличие, артикул, `.dharmaProductBuyActions` с частью `actions`).
 
+
+## Мини-корзина (модуль `mod_dharmashop_cart`, C67)
+
+- **Файлы для переопределения:** `tmpl/default.php` модуля (значок, число, сумма), `tmpl/default_offcanvas.php` (оболочка боковой панели), `components/com_dharmashop/tmpl/cart/mini.php` (содержимое: позиции, итог, кнопки). Стили — `media/mod_dharmashop_cart/css/minicart.css` (ассет `mod_dharmashop_cart.minicart`; отключается настройкой модуля «Подключать стили панели»).
+- **Классы:** `dharmaMiniCartPanel` (offcanvas), `dharmaMiniCart`, `dharmaMiniCartList`, `dharmaMiniCartLine` (+`dharmaMiniCartLineError`), `dharmaMiniCartImage`, `dharmaMiniCartInfo`, `dharmaMiniCartCategory`, `dharmaMiniCartTitle`, `dharmaMiniCartMeta` (артикул, вариант), `dharmaMiniCartMessage`, `dharmaMiniCartBottom`, `dharmaMiniCartQty`, `dharmaMiniCartPrices`, `dharmaMiniCartOldPrice`, `dharmaMiniCartUnitPrice`, `dharmaMiniCartTotal`, `dharmaMiniCartRemove`, `dharmaMiniCartFooter`, `dharmaMiniCartSum`, `dharmaMiniCartActions`, `dharmaMiniCartGo` (кнопка «Корзина»), `dharmaMiniCartCheckout` (кнопка «Оформить заказ»), `dharmaMiniCartClose`, `dharmaMiniCartEmpty`.
+- **CSS-переменные панели** (`--dharma-minicart-*`): `bg`, `card`, `accent`, `accent-text`, `muted`, `border`, `radius`, `z` (1100), `duration` (0,75 с), `easing`.
+- **Поведение:** панель при загрузке переносится в `body` (у шапки сайта свой контекст наложения); содержимое подгружается фрагментом `view=cart&layout=mini&format=raw&mid=<номер модуля>`, настройки показа (фото, категория, артикул, цена за единицу, скидка, кнопка «Оформить заказ», классы кнопок) фрагмент читает у опубликованного модуля.
+- **Страницы cart и checkout — разные шаблоны.** `checkout` появится на этапе заказов; до него кнопка «Оформить заказ» ведёт на несуществующий адрес (её можно выключить в настройках модуля).
+
+## Пункт меню «Товар» (C68)
+
+`tmpl/product/default.xml` — тип пункта «Один товар» (поле `modal_product`: окно выбора `view=products&layout=modal`, `tmpl/products/modal.php` в админке). Страница, открытая через такой пункт, берёт заголовок/описание/роботы из пункта меню, а крошки — только его цепочку.
