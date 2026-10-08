@@ -250,8 +250,8 @@ class ProductModel extends AdminModel
                 'weight_unit' => (string) $params->get('shipping_weight_unit', 'кг'),
                 'dimension_unit' => (string) $params->get('shipping_dimension_unit', 'см'),
             ];
-            // Пустая цена: по настройке магазина считается нулевой («Цена по запросу», заказать можно) либо товар остаётся без цены (в корзину нельзя).
-            if (trim((string) ($variantData['price'] ?? '')) === '' && trim((string) ($variantData['discount'] ?? '')) === '' && (int) $params->get('price_empty_zero', 1) === 1) {
+            // Пустая цена записывается как 0: такой товар покупается («Цена по запросу» или бесплатно — по правилу замены нулевой цены).
+            if (trim((string) ($variantData['price'] ?? '')) === '' && trim((string) ($variantData['discount'] ?? '')) === '') {
                 $variantData['price'] = '0';
             }
             $variantId = $shop->variants()->saveDefault($id, $variantData);
