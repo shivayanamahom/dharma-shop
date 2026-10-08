@@ -36,6 +36,8 @@ trait ListingTrait
     public int $menuId = 0;
     public int $start = 0;
     public bool $catalogMode = false;
+    /** @var array<string, string> колонки характеристик таблицы товаров: алиас => название (по товарам страницы) */
+    public array $fieldColumns = [];
     public ?Pagination $pagination = null;
     public string $cardFolder = 'product-card';
     private MoneyFormatter $money;
@@ -123,6 +125,19 @@ trait ListingTrait
         $this->start = $pagination->limitstart;
         $this->items = $total ? $model->getProducts($this->ordering, $limit, $this->start) : [];
         $model->attachCardData($this->items, $this->cardImagesLimit());
+
+        // Таблица: колонки характеристик — объединение полей, выводимых в карточках товаров этой страницы.
+        $this->fieldColumns = [];
+
+        if ($this->productView === 'table') {
+            foreach ($this->items as $product) {
+                foreach ($product->fields ?? [] as $alias => $field) {
+                    if (!empty($field->show) && !empty($field->values)) {
+                        $this->fieldColumns[(string) $alias] ??= (string) $field->title;
+                    }
+                }
+            }
+        }
         $this->pagination = $total > $limit ? $pagination : null;
 
         if ($this->pagination) {
@@ -224,6 +239,7 @@ trait ListingTrait
         return $layout->render(['item' => $item, 'params' => clone $this->params, 'mode' => $this->productView,
             'cardFolder' => $this->cardFolder, 'cardLayout' => $this->cardLayout,
             'fields' => $item->fields ?? [],
+            'fieldColumns' => $this->fieldColumns,
             'productUrl' => Route::_('index.php?option=com_dharmashop&view=product&id=' . (int) $item->id, false),
             'showIntro' => (int) $this->params->get('product_card_intro', 1) === 1,
             'intro' => $intro,
