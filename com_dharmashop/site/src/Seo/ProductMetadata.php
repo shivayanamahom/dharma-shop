@@ -16,6 +16,7 @@ final readonly class ProductMetadata
         public string $image,
         public ?string $price,
         public string $currency,
+        /** Фактический остаток выбранного варианта; при отключённом учёте — true. */
         public bool $inStock,
     ) {
     }

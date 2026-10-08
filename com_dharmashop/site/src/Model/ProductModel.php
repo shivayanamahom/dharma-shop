@@ -57,9 +57,15 @@ class ProductModel extends BaseDatabaseModel
             ->where('pc.direct = 1')->where('b.extension = ' . $db->quote('com_dharmashop.brand'))
             ->where('b.published = 1')->where('b.access IN (' . $levels . ')')->order('b.id'), 0, 1)->loadResult();
         $item->description = (string) ($item->fulltext ?? '');
-        // Артикул варианта по умолчанию.
-        $item->sku = (string) $db->setQuery($db->createQuery()->select('sku')->from($db->quoteName('#__dharmashop_variants'))
-            ->where('product_id = :sku')->where('state = 1')->order('is_default DESC, ordering, id')->bind(':sku', $id, ParameterType::INTEGER), 0, 1)->loadResult();
+        // SKU и фактическое наличие одного и того же опубликованного варианта, без отдельного запроса остатков.
+        $variant = $db->setQuery($db->createQuery()->select($db->quoteName(['sku', 'stock_tracked', 'stock_total']))
+            ->from($db->quoteName('#__dharmashop_variants'))
+            ->where('product_id = :sku')->where('state = 1')->order('is_default DESC, ordering, id')->bind(':sku', $id, ParameterType::INTEGER), 0, 1)->loadObject();
+        $item->sku = (string) ($variant->sku ?? '');
+        // Нулевой служебный остаток без учёта количества — доступен; учтённый ноль — отсутствует,
+        // даже если отдельное бизнес-правило корзины позволяет принять заказ без остатка.
+        $item->offer_in_stock = $variant !== null
+            && ((int) $variant->stock_tracked === 0 || (float) $variant->stock_total > 0);
         $item->params = new Registry($item->params);
         $item->metadata = new Registry($item->metadata);
         $priceQuery = $db->createQuery()->select($db->quoteName(['vp.price', 'vp.price_final', 'vp.discount_start', 'vp.discount_end']))

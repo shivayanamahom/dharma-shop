@@ -96,7 +96,7 @@ class HtmlView extends BaseHtmlView
                 (string) $this->item->title, (string) $this->item->sku, (string) $this->item->brand_title,
                 ProductValues::introtext($this->text((string) $this->item->introtext)),
                 ImageUrl::resolve((string) $this->item->cover, 'seo.social'), $offerPrice,
-                strtoupper(trim((string) $this->params->get('currency_code', 'RUB'))), (bool) $this->item->in_stock,
+                strtoupper(trim((string) $this->params->get('currency_code', 'RUB'))), (bool) $this->item->offer_in_stock,
             );
         }
         $seo->apply($this->seo, $this->getDocument(), $content);
