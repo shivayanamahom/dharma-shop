@@ -16,14 +16,18 @@ $this->getDocument()->getWebAssetManager()->useScript('keepalive')->useScript('f
     <div class="row">
         <div class="col-lg-9">
             <div class="main-card">
+                <?php echo HTMLHelper::_('uitab.startTabSet', 'shippingTab', ['active' => 'details', 'recall' => true, 'breakpoint' => 768]); ?>
+                <?php echo HTMLHelper::_('uitab.addTab', 'shippingTab', 'details', Text::_('COM_DHARMASHOP_SHIPPING_COMMON')); ?>
                 <fieldset class="options-form">
-                    <legend><?php echo Text::_('COM_DHARMASHOP_SHIPPING_COMMON'); ?></legend>
+                    <legend><?php echo Text::_('COM_DHARMASHOP_SHIPPING_SETTINGS'); ?></legend>
                     <?php echo $this->form->renderField('description'); ?>
+                    <?php foreach (TypeRegistry::current()->all() as $type) : ?>
+                        <?php // Настройки типа показываются по выбранному типу (showon поля plugin). ?>
+                        <?php echo $this->form->renderFieldset('type_' . $type->id()); ?>
+                    <?php endforeach; ?>
                 </fieldset>
-                <?php foreach (TypeRegistry::current()->all() as $type) : ?>
-                    <?php // Настройки типа показываются по выбранному типу (showon поля plugin). ?>
-                    <div><?php echo $this->form->renderFieldset('type_' . $type->id()); ?></div>
-                <?php endforeach; ?>
+                <?php echo HTMLHelper::_('uitab.endTab'); ?>
+                <?php echo HTMLHelper::_('uitab.endTabSet'); ?>
             </div>
         </div>
         <div class="col-lg-3">
