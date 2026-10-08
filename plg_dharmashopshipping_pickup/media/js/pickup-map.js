@@ -46,7 +46,7 @@
     };
 
     // Элемент метки: нулевого размера, точка привязки — координата пункта; содержимое позиционируется классами Bootstrap.
-    const buildMarker = (point, kind, color, selected) => {
+    const buildMarker = (point, kind, color, selected, withAddress) => {
         const fill = COLORS[color] || COLORS.blue;
         const size = selected ? 40 : 32;
         const root = document.createElement('div');
@@ -71,15 +71,15 @@
         root.append(holder);
 
         if (kind === 'label') {
-            // Подпись метки мелким шрифтом (два вложенных `small` Bootstrap): название у всех, адрес — только у выбранной метки,
-            // чтобы подписи не наплывали друг на друга.
+            // Подпись метки (классы Bootstrap): название и, если включено в настройках карты, адрес склада мелким серым текстом.
+            // Рамка выбранной метки — основного цвета. Подпись справа от булавки; название и адрес не переносятся.
             const label = document.createElement('div');
-            label.className = 'position-absolute bottom-0 ms-3 bg-body border rounded shadow-sm px-2 py-1 small lh-sm text-nowrap';
+            label.className = 'position-absolute bottom-0 ms-3 bg-body border rounded-2 shadow-sm px-2 py-1 lh-sm text-nowrap' + (selected ? ' border-primary' : '');
             const name = document.createElement('div');
             name.className = 'small fw-semibold';
             name.textContent = point.name;
             label.append(name);
-            if (selected && point.address) {
+            if (withAddress && point.address) {
                 const address = document.createElement('div');
                 address.className = 'small text-body-secondary';
                 address.textContent = point.address;
@@ -88,7 +88,10 @@
             root.append(label);
         }
 
-        root.title = point.name;
+        // Всплывающая подсказка нужна меткам без подписи; у подписанных она дублирует текст.
+        if (kind !== 'label') {
+            root.title = point.name;
+        }
 
         return root;
     };
@@ -122,9 +125,9 @@
             };
             const render = (key) => config.points.forEach((point) => {
                 const mark = marks.get(point.key);
-                const element = buildMarker(point, config.markerKind, point.key === key ? config.selectedColor : config.markerColor, point.key === key);
+                const element = buildMarker(point, config.markerKind, point.key === key ? config.selectedColor : config.markerColor, point.key === key, config.markerAddress !== false);
                 mark.element.replaceChildren(...element.childNodes);
-                mark.element.title = point.name;
+                if (config.markerKind !== 'label') mark.element.title = point.name;
                 mark.marker.update({ zIndex: point.key === key ? 1000 : 100 });
             });
 
