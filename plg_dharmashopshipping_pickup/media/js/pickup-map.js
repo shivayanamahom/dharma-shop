@@ -3,7 +3,7 @@
  * Конфигурацию отдаёт сервер в data-config контейнера [data-pickup-map] (координаты пунктов — [широта, долгота], как у Яндекса;
  * в API 3 порядок [долгота, широта], переставляем здесь). Карта создаётся, когда контейнер попадает в окно.
  * Метки — свои элементы (булавка, точка, круг, метка с названием); размеры и позиционирование — атрибуты SVG и классы Bootstrap.
- * Выбор пункта (радио [data-shipping-point] в карточке) выделяет метку и сдвигает карту; клик по метке выбирает карточку.
+ * Выбор пункта (радио [data-shipping-point] в карточке) выделяет метку, ставит её по центру и приближает карту; клик по метке выбирает карточку.
  * Тексты выводятся как текст (textContent).
  */
 (() => {
@@ -46,7 +46,7 @@
     };
 
     // Элемент метки: нулевого размера, точка привязки — координата пункта; содержимое позиционируется классами Bootstrap.
-    const buildMarker = (point, kind, color, selected, withAddress) => {
+    const buildMarker = (point, kind, color, selected, addressMode) => {
         const fill = COLORS[color] || COLORS.blue;
         const size = selected ? 40 : 32;
         const root = document.createElement('div');
@@ -71,20 +71,25 @@
         root.append(holder);
 
         if (kind === 'label') {
-            // Подпись метки (классы Bootstrap): название и, если включено в настройках карты, адрес склада мелким серым текстом.
-            // Рамка выбранной метки — основного цвета. Подпись справа от булавки; название и адрес не переносятся.
+            // Подпись метки (классы Bootstrap): цветная точка цвета метки, название и — по настройке карты — адрес склада мелким серым текстом.
+            // Выбранная метка: рамка основного цвета и более заметная тень. Подпись справа от булавки, строки не переносятся.
             const label = document.createElement('div');
-            label.className = 'position-absolute bottom-0 ms-3 bg-body border rounded-2 shadow-sm px-2 py-1 lh-sm text-nowrap' + (selected ? ' border-primary' : '');
+            label.className = 'position-absolute bottom-0 ms-3 d-flex align-items-center gap-2 bg-body border rounded-3 px-3 py-2 lh-sm text-nowrap '
+                + (selected ? 'border-primary shadow' : 'shadow-sm');
+            const dot = svg(10, (s) => s.append(shape('circle', { cx: 12, cy: 12, r: 11, fill })));
+            dot.classList.add('flex-shrink-0');
+            const text = document.createElement('div');
             const name = document.createElement('div');
             name.className = 'small fw-semibold';
             name.textContent = point.name;
-            label.append(name);
-            if (withAddress && point.address) {
+            text.append(name);
+            if (point.address && (addressMode === 'all' || (addressMode === 'active' && selected))) {
                 const address = document.createElement('div');
-                address.className = 'small text-body-secondary';
+                address.className = 'small text-body-secondary mt-1';
                 address.textContent = point.address;
-                label.append(address);
+                text.append(address);
             }
+            label.append(dot, text);
             root.append(label);
         }
 
@@ -125,7 +130,7 @@
             };
             const render = (key) => config.points.forEach((point) => {
                 const mark = marks.get(point.key);
-                const element = buildMarker(point, config.markerKind, point.key === key ? config.selectedColor : config.markerColor, point.key === key, config.markerAddress !== false);
+                const element = buildMarker(point, config.markerKind, point.key === key ? config.selectedColor : config.markerColor, point.key === key, config.markerAddress || 'active');
                 mark.element.replaceChildren(...element.childNodes);
                 if (config.markerKind !== 'label') mark.element.title = point.name;
                 mark.marker.update({ zIndex: point.key === key ? 1000 : 100 });
@@ -156,7 +161,10 @@
                     const target = config.points.find((point) => point.key === key);
                     if (!target) return;
                     render(key);
-                    map.setLocation({ center: lonLat(target.coords), duration: 300 });
+                    // Выбранный пункт: по центру карты и ближе (масштаб из настроек карты; 0 — масштаб не менять).
+                    const location = { center: lonLat(target.coords), duration: 400 };
+                    if (config.selectedZoom) location.zoom = config.selectedZoom;
+                    map.setLocation(location);
                 },
             };
         }).catch((error) => { console.warn('Dharma Shop: карта пунктов недоступна', error); /* пункты остаются в списке */ });

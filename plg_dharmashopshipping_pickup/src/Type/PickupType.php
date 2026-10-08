@@ -72,10 +72,11 @@ final class PickupType implements TypeInterface
             'max_total' => $money($settings['max_total'] ?? 0, 'MAX_TOTAL'),
             'map' => in_array((string) ($settings['map'] ?? ''), self::MAPS, true) ? (string) $settings['map'] : 'none',
             'zoom' => (string) min(19, max(0, (int) ($settings['zoom'] ?? 0))),
+            'zoom_selected' => (string) min(19, max(0, (int) ($settings['zoom_selected'] ?? 15))),
             'map_ratio' => in_array((string) ($settings['map_ratio'] ?? ''), self::RATIOS, true) ? (string) $settings['map_ratio'] : '16x9',
             'yandex_apikey' => trim((string) ($settings['yandex_apikey'] ?? '')),
             'marker_kind' => in_array((string) ($settings['marker_kind'] ?? ''), self::MARKER_KINDS, true) ? (string) $settings['marker_kind'] : 'pin',
-            'marker_address' => (int) ($settings['marker_address'] ?? 1) === 1 ? '1' : '0',
+            'marker_address' => self::markerAddressMode($settings['marker_address'] ?? null),
             'marker_color' => in_array((string) ($settings['marker_color'] ?? ''), self::COLORS, true) ? (string) $settings['marker_color'] : 'blue',
             'marker_selected_color' => in_array((string) ($settings['marker_selected_color'] ?? ''), self::COLORS, true) ? (string) $settings['marker_selected_color'] : 'red',
             'center' => '',
@@ -172,6 +173,18 @@ final class PickupType implements TypeInterface
         }
 
         return $points;
+    }
+
+    /** Адрес в подписи метки: `active` — у выбранной (по умолчанию), `all` — у всех, `none` — не показывать (старые значения 1/0 понимаются). */
+    private static function markerAddressMode(mixed $value): string
+    {
+        $value = (string) $value;
+
+        return match ($value) {
+            'all', '1' => 'all',
+            'none', '0' => 'none',
+            default => 'active',
+        };
     }
 
     /**
@@ -388,8 +401,9 @@ final class PickupType implements TypeInterface
             'zoom' => (int) ($p['zoom'] ?? 0),
             'center' => $center !== null ? [(float) $center[0], (float) $center[1]] : null,
             'active' => $active,
+            'selectedZoom' => (int) ($p['zoom_selected'] ?? 15),
             'markerKind' => in_array((string) ($p['marker_kind'] ?? ''), self::MARKER_KINDS, true) ? (string) $p['marker_kind'] : 'pin',
-            'markerAddress' => (string) ($p['marker_address'] ?? '1') !== '0',
+            'markerAddress' => self::markerAddressMode($p['marker_address'] ?? null),
             'markerColor' => in_array((string) ($p['marker_color'] ?? ''), self::COLORS, true) ? (string) $p['marker_color'] : 'blue',
             'selectedColor' => in_array((string) ($p['marker_selected_color'] ?? ''), self::COLORS, true) ? (string) $p['marker_selected_color'] : 'red',
             'points' => $located,
