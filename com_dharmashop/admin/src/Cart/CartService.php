@@ -213,15 +213,31 @@ final class CartService
     {
         $this->execute('DELETE FROM #__dharmashop_cart_items WHERE id = :i AND cart_id = :c', [':i' => [$itemId, ParameterType::INTEGER], ':c' => [(int) $cart->id, ParameterType::INTEGER]]);
         $removed = $this->db->getAffectedRows() > 0;
-        $this->touch((int) $cart->id);
+        $this->dropIfEmpty($cart);
 
         return $removed;
     }
 
+    /** Очищает корзину; пустая корзина не хранится (следующая создаётся при добавлении товара). */
     public function clear(object $cart): void
     {
         $this->execute('DELETE FROM #__dharmashop_cart_items WHERE cart_id = :c', [':c' => [(int) $cart->id, ParameterType::INTEGER]]);
-        $this->touch((int) $cart->id);
+        $this->dropIfEmpty($cart);
+    }
+
+    /** Удаляет корзину без позиций, иначе только обновляет срок. */
+    private function dropIfEmpty(object $cart): void
+    {
+        $id = (int) $cart->id;
+        $left = (int) $this->db->setQuery($this->db->createQuery()->select('COUNT(*)')->from($this->db->quoteName('#__dharmashop_cart_items'))->where('cart_id = :c')->bind(':c', $id, ParameterType::INTEGER))->loadResult();
+
+        if ($left > 0) {
+            $this->touch($id);
+
+            return;
+        }
+
+        $this->execute('DELETE FROM #__dharmashop_carts WHERE id = :c', [':c' => [$id, ParameterType::INTEGER]]);
     }
 
     /**
@@ -352,11 +368,14 @@ final class CartService
         return $qty >= $min - 1e-9 && $qty < (float) $line->qty - 1e-9 ? round($qty, 3) : null;
     }
 
-    /** Удаляет просроченные корзины (задача очистки). */
+    /** Удаляет просроченные корзины и пустые корзины старше суток (задача очистки). */
     public function purgeExpired(): int
     {
         $now = $this->now();
-        $ids = $this->db->setQuery($this->db->createQuery()->select('id')->from($this->db->quoteName('#__dharmashop_carts'))->where('expires < :now')->bind(':now', $now))->loadColumn();
+        $yesterday = gmdate('Y-m-d H:i:s', strtotime($now . ' UTC') - 86400);
+        $ids = $this->db->setQuery($this->db->createQuery()->select('c.id')->from($this->db->quoteName('#__dharmashop_carts', 'c'))
+            ->where('(c.expires < :now OR (c.modified < :old AND NOT EXISTS (SELECT 1 FROM ' . $this->db->quoteName('#__dharmashop_cart_items') . ' ci WHERE ci.cart_id = c.id)))')
+            ->bind(':now', $now)->bind(':old', $yesterday))->loadColumn();
 
         foreach (array_chunk(array_map('intval', $ids), 500) as $chunk) {
             $list = implode(',', $chunk);
