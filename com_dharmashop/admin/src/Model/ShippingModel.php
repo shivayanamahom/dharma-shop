@@ -77,7 +77,9 @@ class ShippingModel extends AdminModel
 
         if ($item) {
             // AdminModel уже раскладывает params в массив; строку (старые данные) разбираем сами.
-            $item->params = is_array($item->params) ? $item->params : (new Registry((string) $item->params))->toArray();
+            $params = is_array($item->params) ? $item->params : (new Registry((string) $item->params))->toArray();
+            // В форме настройки типа лежат в своей группе params[<тип>]: поля разных типов могут называться одинаково.
+            $item->params = $item->plugin ? [(string) $item->plugin => $params] : [];
         }
 
         return $item;
@@ -105,7 +107,7 @@ class ShippingModel extends AdminModel
         }
 
         try {
-            $settings = $type->normalizeSettings((array) ($data['params'] ?? []));
+            $settings = $type->normalizeSettings((array) (((array) ($data['params'] ?? []))[$type->id()] ?? []));
         } catch (\DomainException $error) {
             $this->setError(Text::_($error->getMessage()));
 

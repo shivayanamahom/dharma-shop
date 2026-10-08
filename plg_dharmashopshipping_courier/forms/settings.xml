@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<form><fields name="params"><fieldset name="type_courier" label="PLG_DHARMASHOPSHIPPING_COURIER_SETTINGS">
+<form><fields name="params"><fields name="courier"><fieldset name="type_courier" label="PLG_DHARMASHOPSHIPPING_COURIER_SETTINGS">
     <field name="price" type="text" label="PLG_DHARMASHOPSHIPPING_COURIER_PRICE" description="PLG_DHARMASHOPSHIPPING_COURIER_PRICE_DESC" showon=".plugin:courier" default="300" filter="string" />
     <field name="free_from" type="text" label="PLG_DHARMASHOPSHIPPING_COURIER_FREE_FROM" description="PLG_DHARMASHOPSHIPPING_COURIER_FREE_FROM_DESC" showon=".plugin:courier" default="0" filter="string" />
     <field name="min_total" type="text" label="PLG_DHARMASHOPSHIPPING_COURIER_MIN_TOTAL" description="PLG_DHARMASHOPSHIPPING_COURIER_MIN_TOTAL_DESC" showon=".plugin:courier" default="0" filter="string" />
@@ -28,4 +28,4 @@
             <field name="options" type="textarea" label="PLG_DHARMASHOPSHIPPING_COURIER_FIELD_OPTIONS" description="PLG_DHARMASHOPSHIPPING_COURIER_FIELD_OPTIONS_DESC" rows="3" showon="type:select" filter="string" />
         </form>
     </field>
-</fieldset></fields></form>
+</fieldset></fields></fields></form>

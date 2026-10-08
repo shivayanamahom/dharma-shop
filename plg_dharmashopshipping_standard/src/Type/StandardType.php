@@ -203,9 +203,17 @@ final class StandardType implements TypeInterface
             }, array_values(array_filter($method->params['fields'], 'is_array')));
         }
 
+        $line = static fn (string $key, string $label, string $type, int $required, string $width, string $placeholder = '', array $options = []): array
+            => ['key' => $key, 'label' => $label, 'type' => $type, 'required' => $required, 'width' => $width, 'placeholder' => $placeholder, 'options' => $options];
+
         return [
-            ['key' => 'gorod', 'label' => Text::_('PLG_DHARMASHOPSHIPPING_STANDARD_DEFAULT_CITY'), 'type' => 'text', 'required' => 1, 'width' => 'half', 'placeholder' => '', 'options' => []],
-            ['key' => 'adres', 'label' => Text::_('PLG_DHARMASHOPSHIPPING_STANDARD_DEFAULT_ADDRESS'), 'type' => 'textarea', 'required' => 1, 'width' => 'full', 'placeholder' => '', 'options' => []],
+            $line('gorod', Text::_('PLG_DHARMASHOPSHIPPING_STANDARD_DEFAULT_CITY'), 'text', 1, 'half'),
+            $line('ulitsa_i_dom', Text::_('PLG_DHARMASHOPSHIPPING_STANDARD_DEFAULT_STREET'), 'text', 1, 'half'),
+            $line('kvartira', Text::_('PLG_DHARMASHOPSHIPPING_STANDARD_DEFAULT_FLAT'), 'text', 0, 'half'),
+            $line('podezd', Text::_('PLG_DHARMASHOPSHIPPING_STANDARD_DEFAULT_ENTRANCE'), 'text', 0, 'half'),
+            $line('etazh', Text::_('PLG_DHARMASHOPSHIPPING_STANDARD_DEFAULT_FLOOR'), 'text', 0, 'half'),
+            $line('domofon', Text::_('PLG_DHARMASHOPSHIPPING_STANDARD_DEFAULT_INTERCOM'), 'text', 0, 'half'),
+            $line('kommentariy', Text::_('PLG_DHARMASHOPSHIPPING_STANDARD_DEFAULT_COMMENT'), 'textarea', 0, 'full'),
         ];
     }
 
