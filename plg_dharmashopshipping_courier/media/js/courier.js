@@ -306,7 +306,8 @@
             const list = lists.get(kind);
             if (!list || root.dataset.suggest !== '1') return;
             const text = field.value.trim();
-            if (text.length < (kind === 'city' ? 2 : 3)) { hide(kind); return; }
+            // Город — от двух символов, улица — от трёх; дом — можно без текста: список домов выбранной улицы.
+            if (kind === 'house' ? (!street.value.trim() || !city.value.trim()) : text.length < (kind === 'city' ? 2 : 3)) { hide(kind); return; }
             try {
                 let result;
                 if (root.dataset.apikey) {
@@ -339,6 +340,8 @@
             field.addEventListener('keydown', (event) => { if (event.key === 'Escape') hide(kind); });
             field.addEventListener('change', calculate);
         });
+        // Поле «Дом»: при входе в него — список домов выбранной улицы (чтобы выбрать существующий).
+        house?.addEventListener('focus', () => suggest('house', house));
         // Расчёт по уже введённому адресу — только когда способ выбран (скрытые способы не тратят запросы геокодера).
         radio.addEventListener('change', () => { if (radio.checked && street.value.trim()) calculate(); });
         if (street.value.trim() && radio.checked) calculate();

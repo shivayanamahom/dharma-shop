@@ -108,6 +108,7 @@ final class CourierType implements TypeInterface
             'warehouses' => array_values(array_unique(array_filter(array_map('intval', (array) ($settings['warehouses'] ?? [])), static fn (int $id): bool => $id > 0))),
             'yandex_apikey' => $key,
             'suggest' => (int) ($settings['suggest'] ?? 1) === 1 ? '1' : '0',
+            'verify_address' => (int) ($settings['verify_address'] ?? 1) === 1 ? '1' : '0',
             'map' => in_array((string) ($settings['map'] ?? ''), ['none', 'yandex'], true) ? (string) $settings['map'] : 'none',
             'marker_kind' => in_array((string) ($settings['marker_kind'] ?? ''), self::MARKER_KINDS, true) ? (string) $settings['marker_kind'] : 'pin',
             'marker_color' => in_array((string) ($settings['marker_color'] ?? ''), self::COLORS, true) ? (string) $settings['marker_color'] : 'blue',
@@ -285,6 +286,17 @@ final class CourierType implements TypeInterface
 
         $result = ['data' => $data, 'rows' => $rows, 'errors' => $errors];
 
+        // Фиксированная цена: если включена проверка адреса, дом должен существовать; недоступность сервиса заказ не блокирует.
+        if (!$errors && !$this->isDistance($method) && $this->apiKey($method) !== '' && (string) ($method->params['verify_address'] ?? '1') === '1') {
+            try {
+                $this->locate($method, (string) $data['city'], (string) $data['street'], (string) $data['house']);
+            } catch (\DomainException $error) {
+                if ($error->getMessage() !== 'PLG_DHARMASHOPSHIPPING_COURIER_ERROR_GEOCODER') {
+                    $result['errors']['house'] = $error->getMessage();
+                }
+            }
+        }
+
         if (!$errors && $this->isDistance($method)) {
             try {
                 $calc = $this->calculate($method, $context, (string) $data['city'], (string) $data['street'], (string) $data['house']);
@@ -295,7 +307,7 @@ final class CourierType implements TypeInterface
                 $result['rows'][] = ['label' => Text::_('PLG_DHARMASHOPSHIPPING_COURIER_ROW_DISTANCE'), 'value' => Text::sprintf('PLG_DHARMASHOPSHIPPING_COURIER_DISTANCE_VALUE', $this->km($calc['distance']))];
                 $result['rows'][] = ['label' => Text::_('PLG_DHARMASHOPSHIPPING_COURIER_ROW_WAREHOUSE'), 'value' => $calc['warehouse']['name']];
             } catch (\DomainException $error) {
-                $result['errors']['street'] = $error->getMessage();
+                $result['errors'][$error->getMessage() === 'PLG_DHARMASHOPSHIPPING_COURIER_ERROR_HOUSE' ? 'house' : 'street'] = $error->getMessage();
             }
         }
 
@@ -319,23 +331,7 @@ final class CourierType implements TypeInterface
             throw new \DomainException('PLG_DHARMASHOPSHIPPING_COURIER_ERROR_NOT_CONFIGURED');
         }
 
-        $query = trim($city . ', ' . $street . ' ' . $house, ', ');
-        $found = null;
-
-        try {
-            foreach ($this->geocoder($key)->search($query, 3, $this->center($warehouses)) as $item) {
-                if (in_array($item['precision'], Geocoder::GOOD_PRECISION, true)) {
-                    $found = $item;
-                    break;
-                }
-            }
-        } catch (\RuntimeException) {
-            throw new \DomainException('PLG_DHARMASHOPSHIPPING_COURIER_ERROR_GEOCODER');
-        }
-
-        if ($found === null) {
-            throw new \DomainException('PLG_DHARMASHOPSHIPPING_COURIER_ERROR_ADDRESS');
-        }
+        $found = $this->locate($method, $city, $street, $house);
 
         $nearest = Distance::nearest($warehouses, $found['coords'][0], $found['coords'][1]);
         $distance = round($nearest['km'] * (float) ($p['km_road_factor'] ?? 1.3), 1);
@@ -360,6 +356,53 @@ final class CourierType implements TypeInterface
             'warehouse' => $warehouses[$nearest['index']],
             'to' => $found['coords'],
         ];
+    }
+
+    /**
+     * Находит адрес в геокодере и проверяет, что такой дом существует: нужен результат-дом (точность exact/number) в указанном городе.
+     * Улица без найденного дома — «такого дома нет»; чужой город или другая страна — не подходит.
+     *
+     * @return  array{text: string, coords: array{0: float, 1: float}, city: string}
+     *
+     * @throws  \DomainException  ключи ошибок: GEOCODER (сервис недоступен), HOUSE (дом не найден), ADDRESS (адрес не найден)
+     */
+    private function locate(Method $method, string $city, string $street, string $house): array
+    {
+        $key = $this->apiKey($method);
+        $query = trim($city . ', ' . $street . ' ' . $house, ', ');
+        $streetOnly = false;
+
+        try {
+            $results = $this->geocoder($key)->search($query, 5, $this->center($this->warehousesOf($method)));
+        } catch (\RuntimeException) {
+            throw new \DomainException('PLG_DHARMASHOPSHIPPING_COURIER_ERROR_GEOCODER');
+        }
+
+        foreach ($results as $item) {
+            if (!$this->sameCity((string) ($item['city'] ?? ''), $city)) {
+                continue;
+            }
+
+            if (($item['kind'] ?? '') === 'house' && in_array($item['precision'], ['exact', 'number'], true)) {
+                return $item;
+            }
+
+            if (($item['kind'] ?? '') === 'street' || ($item['kind'] ?? '') === 'house') {
+                $streetOnly = true;
+            }
+        }
+
+        throw new \DomainException($streetOnly ? 'PLG_DHARMASHOPSHIPPING_COURIER_ERROR_HOUSE' : 'PLG_DHARMASHOPSHIPPING_COURIER_ERROR_ADDRESS');
+    }
+
+    /** Город результата совпадает с введённым (без учёта регистра и «г.»; допускается вхождение, например «Екатеринбург» и «город Екатеринбург»). */
+    private function sameCity(string $found, string $typed): bool
+    {
+        $normalize = static fn (string $value): string => trim((string) preg_replace('/^(г\.?|город)\s+/ui', '', mb_strtolower(trim($value))));
+        $a = $normalize($found);
+        $b = $normalize($typed);
+
+        return $a !== '' && $b !== '' && ($a === $b || str_contains($a, $b) || str_contains($b, $a));
     }
 
     // ---------------------------------------------------------------- динамические запросы
@@ -426,7 +469,7 @@ final class CourierType implements TypeInterface
      */
     private function suggest(Method $method, string $key, string $city, string $text, string $kind, string $street): array
     {
-        if ((string) ($method->params['suggest'] ?? '1') !== '1' || $text === '' || mb_strlen($text) > 200) {
+        if ((string) ($method->params['suggest'] ?? '1') !== '1' || mb_strlen($text) > 200 || ($text === '' && !($kind === 'house' && $street !== ''))) {
             return ['ok' => true, 'items' => []];
         }
 
@@ -438,7 +481,7 @@ final class CourierType implements TypeInterface
         };
 
         // Улица — от трёх символов, номер дома — от одного.
-        if (($kind === 'street' && mb_strlen($text) < 3) || ($kind === 'house' && $text === '')) {
+        if ($kind === 'street' && mb_strlen($text) < 3) {
             return ['ok' => true, 'items' => []];
         }
 

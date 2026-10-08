@@ -56,6 +56,10 @@
         <option value="0">JNO</option>
         <option value="1">JYES</option>
     </field>
+    <field name="verify_address" type="radio" layout="joomla.form.field.radio.switcher" label="PLG_DHARMASHOPSHIPPING_COURIER_VERIFY" description="PLG_DHARMASHOPSHIPPING_COURIER_VERIFY_DESC" showon=".plugin:courier" default="1" filter="integer">
+        <option value="0">JNO</option>
+        <option value="1">JYES</option>
+    </field>
     <field name="map" type="list" label="PLG_DHARMASHOPSHIPPING_COURIER_MAP" description="PLG_DHARMASHOPSHIPPING_COURIER_MAP_DESC" showon=".plugin:courier" default="none" filter="cmd" validate="options">
         <option value="none">PLG_DHARMASHOPSHIPPING_COURIER_MAP_NONE</option>
         <option value="yandex">PLG_DHARMASHOPSHIPPING_COURIER_MAP_YANDEX</option>
