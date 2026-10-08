@@ -7,7 +7,7 @@ use Joomla\CMS\Language\Text;
 $discount = $this->discountTotals();
 $qtyText = static fn (float $qty): string => rtrim(rtrim(number_format($qty, 3, '.', ''), '0'), '.');
 ?>
-<aside class="card shadow-sm sticky-lg-top dharmaCheckoutSummary" aria-labelledby="dharma-checkout-summary-title">
+<aside class="card shadow-sm dharmaCheckoutSummary" aria-labelledby="dharma-checkout-summary-title">
     <div class="card-header bg-body-tertiary p-3">
         <h2 id="dharma-checkout-summary-title" class="fs-6 fw-semibold mb-0"><?php echo Text::_('COM_DHARMASHOP_CHECKOUT_SUMMARY'); ?></h2>
     </div>
