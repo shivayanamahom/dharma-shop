@@ -29,6 +29,8 @@
 		const bar = root.querySelector('.progress-bar');
 		const native = root.querySelector('.dharmashop-gallery__native');
 		const name = root.dataset.name;
+		const isFiles = root.dataset.kind === 'files';
+		const maxCount = parseInt(root.dataset.maxCount || '100', 10);
 		const maxBytes = parseInt(root.dataset.maxBytes || '0', 10);
 		const accept = (root.dataset.accept || '').split(',').filter(Boolean);
 		const cleanPath = (value) => String(value || '').split('#')[0];
@@ -36,6 +38,7 @@
 		// Имена полей по порядку карточек: первая — главное изображение.
 		const renumber = () => {
 			list.querySelectorAll('.dharmashop-gallery__item').forEach((item, index) => {
+				item.draggable = true;
 				item.querySelectorAll('[data-field]').forEach((field) => {
 					field.name = name + '[' + index + '][' + field.dataset.field + ']';
 				});
@@ -44,10 +47,15 @@
 
 		const has = (path) => Array.from(list.querySelectorAll('[data-field="path"]')).some((input) => input.value === path);
 
-		const addItem = (path) => {
-			path = cleanPath(path);
+		const addItem = (data) => {
+			const path = cleanPath(typeof data === 'string' ? data : data.path);
 
 			if (!path || has(path)) {
+				return;
+			}
+
+			if (list.children.length >= maxCount) {
+				showError(root.dataset.errorCount || root.dataset.errorServer);
 				return;
 			}
 
@@ -55,7 +63,12 @@
 			holder.innerHTML = template.innerHTML.trim();
 			const item = holder.firstElementChild;
 			item.querySelector('[data-field="path"]').value = path;
-			item.querySelector('.dharmashop-gallery__thumb').src = root.dataset.root + path.replace(/^\/+/, '');
+			if (isFiles) {
+				item.querySelector('.dharmashop-gallery__filename').textContent = data.filename || path.split('/').pop();
+				item.querySelector('.dharmashop-gallery__details').textContent = (Number(data.bytes || 0) / 1024).toFixed(1) + ' KiB';
+			} else {
+				item.querySelector('.dharmashop-gallery__thumb').src = root.dataset.root + path.replace(/^\/+/, '');
+			}
 			list.appendChild(item);
 			renumber();
 		};
@@ -84,7 +97,7 @@
 
 			const data = new FormData();
 			data.append('file', file);
-			data.append('folder', root.dataset.folder);
+			if (isFiles) { data.append('field_id', root.dataset.fieldId); } else { data.append('folder', root.dataset.folder); }
 			data.append(root.dataset.token, '1');
 
 			const xhr = new XMLHttpRequest();
@@ -110,7 +123,7 @@
 				if (!response || !response.success || !response.data || !response.data.path) {
 					showError((response && response.message) || root.dataset.errorServer);
 				} else {
-					addItem(response.data.path);
+					addItem(isFiles ? response.data : response.data.path);
 				}
 
 				resolve();
@@ -126,7 +139,7 @@
 
 		// Файлы грузятся по очереди, прогресс общий.
 		const uploadAll = async (files) => {
-			files = Array.from(files || []).filter((file) => file && (!file.type || file.type.startsWith('image/') || /\.(avif|webp|png|jpe?g|gif|bmp|svg)$/i.test(file.name)));
+			files = Array.from(files || []).filter((file) => file && (isFiles || !file.type || file.type.startsWith('image/') || /\.(avif|webp|png|jpe?g|gif|bmp|svg)$/i.test(file.name)));
 
 			if (!files.length || busy) {
 				return;
@@ -136,6 +149,7 @@
 			root.classList.add('is-busy');
 
 			for (let i = 0; i < files.length; i++) {
+				if (list.children.length >= maxCount) { showError(root.dataset.errorCount || root.dataset.errorServer); break; }
 				setProgress(i, files.length, 0);
 				await uploadOne(files[i], i, files.length);
 			}
@@ -183,11 +197,11 @@
 			}
 
 			const files = event.clipboardData && event.clipboardData.files ? Array.from(event.clipboardData.files) : [];
-			const images = files.filter((file) => file.type.startsWith('image/'));
+			const images = files.filter((file) => isFiles || file.type.startsWith('image/'));
 
 			if (images.length) {
 				event.preventDefault();
-				uploadAll(images.map((file) => (file.name && !/^image\.(png|jpe?g)$/i.test(file.name) ? file : fromBlob(file, file.type))));
+				uploadAll(images.map((file) => (isFiles || (file.name && !/^image\.(png|jpe?g)$/i.test(file.name)) ? file : fromBlob(file, file.type))));
 			}
 		});
 
@@ -259,7 +273,17 @@
 
 					if (value !== '') {
 						window.clearInterval(timer);
-						addItem(value);
+						if (isFiles) {
+							const data = new FormData();
+							data.append('path', value);
+							data.append('field_id', root.dataset.fieldId);
+							data.append(root.dataset.token, '1');
+							fetch(root.dataset.selectUrl, { method: 'POST', body: data, credentials: 'same-origin' })
+								.then((response) => response.json()).then((response) => {
+									if (response.success && response.data && response.data.path) { addItem(response.data); }
+									else { showError(response.message || root.dataset.errorServer); }
+								}).catch(() => showError(root.dataset.errorServer));
+						} else { addItem(value); }
 						nativeInput.value = '';
 					}
 				}, 300);
@@ -270,6 +294,14 @@
 
 		// Убрать изображение из галереи (файл удаляется с диска при сохранении товара, если больше нигде не используется).
 		list.addEventListener('click', (event) => {
+			const move = event.target.closest('.dharmashop-gallery__up, .dharmashop-gallery__down');
+			if (move) {
+				const item = move.closest('.dharmashop-gallery__item');
+				const up = move.classList.contains('dharmashop-gallery__up');
+				const other = up ? item.previousElementSibling : item.nextElementSibling;
+				if (other) { list.insertBefore(item, up ? other : other.nextSibling); renumber(); }
+				return;
+			}
 			const button = event.target.closest('.dharmashop-gallery__remove');
 
 			if (button) {
@@ -291,7 +323,7 @@
 			dragging = item;
 			item.classList.add('is-dragging');
 			event.dataTransfer.effectAllowed = 'move';
-			event.dataTransfer.setData('text/plain', 'dharmashop-gallery');
+			event.dataTransfer.setData('text/plain', root.id || name);
 		});
 		list.addEventListener('dragover', (event) => {
 			if (!dragging) {
@@ -326,6 +358,8 @@
 	};
 
 	const boot = () => document.querySelectorAll('.dharmashop-gallery').forEach(init);
+
+	document.addEventListener('joomla:updated', boot);
 
 	if (document.readyState === 'loading') {
 		document.addEventListener('DOMContentLoaded', boot);

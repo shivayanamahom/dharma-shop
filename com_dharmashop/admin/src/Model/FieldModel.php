@@ -56,7 +56,7 @@ class FieldModel extends AdminModel
             $item->params['format_card'] = 'comma';
             $item->in_card = 0;
         }
-        if (in_array((string) $item->type, ['editor', 'text'], true)) { $item->filterable = 0; }
+        if (in_array((string) $item->type, ['editor', 'text', 'files'], true)) { $item->filterable = 0; }
         $id = (int) $item->id;
         $db = $this->getDatabase();
         $query = $db->createQuery()->select($db->quoteName(['id','title','alias','image']))->from($db->quoteName('#__dharmashop_field_options'))

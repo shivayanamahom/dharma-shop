@@ -79,7 +79,7 @@ class FieldTable extends Table
         }
         foreach (['required','in_card','in_page','all_categories','filterable'] as $flag) { $this->$flag = (int) (bool) $this->$flag; }
         if ($this->type === 'editor') { $this->in_card = 0; }
-        if (in_array((string) $this->type, ['editor', 'text'], true)) { $this->filterable = 0; }
+        if (in_array((string) $this->type, ['editor', 'text', 'files'], true)) { $this->filterable = 0; }
         $this->ordering = max(1, (int) $this->ordering);
         $this->level = 1;
         $this->is_cover = $this->sortable = 0;
@@ -88,7 +88,7 @@ class FieldTable extends Table
     public function hasValues(int $id): bool
     {
         $db = $this->getDatabase();
-        foreach (['field_values','field_texts','field_media','product_axes','category_field_values','category_field_texts'] as $suffix) {
+        foreach (['field_values','field_texts','field_media','product_axes','category_field_values','category_field_texts','category_field_media'] as $suffix) {
             $query = $db->createQuery()->select('field_id')->from($db->quoteName('#__dharmashop_' . $suffix))
                 ->where('field_id = :id')->bind(':id', $id, ParameterType::INTEGER);
             if ($db->setQuery($query, 0, 1)->loadResult()) { return true; }

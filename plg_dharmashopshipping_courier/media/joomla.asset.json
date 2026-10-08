@@ -7,7 +7,7 @@
 	"assets": [
 		{
 			"name": "plg_dharmashopshipping_courier.courier",
-			"version": "225fbd61ee23",
+			"version": "f213c7fd6850",
 			"type": "script",
 			"uri": "plg_dharmashopshipping_courier/courier.js",
 			"attributes": { "defer": true }

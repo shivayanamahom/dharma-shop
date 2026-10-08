@@ -6,12 +6,14 @@ namespace Dharma\Plugin\DharmaShopShipping\Courier\Geo;
 use Joomla\CMS\Cache\CacheControllerFactoryInterface;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Http\HttpFactory;
+use Joomla\CMS\Uri\Uri;
 
 \defined('_JEXEC') or die;
 
 /**
  * Серверный клиент HTTP Геокодера Яндекса: адрес → координаты и подсказки. Результаты кешируются (сутки), ошибки не кешируются.
- * Ключ тот же, что у карты (JavaScript API и HTTP Геокодер); если он ограничен по адресу сайта (Referer), серверные запросы отклоняются.
+ * Ключ тот же, что у карты (JavaScript API и HTTP Геокодер). Ключ, ограниченный по адресу сайта (HTTP Referer), принимает серверные запросы,
+ * потому что к каждому запросу добавляется заголовок Referer с адресом этого сайта.
  */
 final class Geocoder
 {
@@ -60,7 +62,7 @@ final class Geocoder
             }
         }
 
-        $response = HttpFactory::getHttp(['timeout' => 6])->get(self::URL . '?' . http_build_query($params), [], 6);
+        $response = HttpFactory::getHttp(['timeout' => 6])->get(self::URL . '?' . http_build_query($params), ['Referer' => rtrim(Uri::root(), '/') . '/'], 6);
 
         if ($response->getStatusCode() !== 200) {
             throw new \RuntimeException('Yandex geocoder HTTP ' . $response->getStatusCode());

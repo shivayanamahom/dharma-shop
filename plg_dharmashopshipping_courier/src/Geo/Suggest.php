@@ -6,13 +6,14 @@ namespace Dharma\Plugin\DharmaShopShipping\Courier\Geo;
 use Joomla\CMS\Cache\CacheControllerFactoryInterface;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Http\HttpFactory;
+use Joomla\CMS\Uri\Uri;
 
 \defined('_JEXEC') or die;
 
 /**
  * Клиент «Геосаджеста» Яндекса (подсказки при вводе): города, улицы, дома. Нужен ключ с подключённым сервисом «API Геосаджеста»;
  * если сервис для ключа не включён, запрос отклоняется (RuntimeException) и вызывающий код переходит на подсказки по геокодеру.
- * Ответы кешируются на час.
+ * Серверные запросы идут с заголовком Referer адреса сайта (ключ, ограниченный по Referer, их принимает). Ответы кешируются на час.
  */
 final class Suggest
 {
@@ -58,7 +59,7 @@ final class Suggest
             }
         }
 
-        $response = HttpFactory::getHttp(['timeout' => 5])->get(self::URL . '?' . http_build_query($params), [], 5);
+        $response = HttpFactory::getHttp(['timeout' => 5])->get(self::URL . '?' . http_build_query($params), ['Referer' => rtrim(Uri::root(), '/') . '/'], 5);
 
         if ($response->getStatusCode() !== 200) {
             throw new \RuntimeException('Yandex suggest HTTP ' . $response->getStatusCode());
@@ -92,7 +93,8 @@ final class Suggest
 
             $title = trim((string) ($row['title']['text'] ?? ''));
             $subtitle = trim((string) ($row['subtitle']['text'] ?? ''));
-            $label = trim((string) ($row['address']['formatted_address'] ?? '')) ?: trim($title . ($subtitle !== '' ? ', ' . $subtitle : ''));
+            // Подпись как в списке подсказок Яндекса: «проспект Ленина, 49, Екатеринбург, Свердловская область».
+            $label = trim($title . ($subtitle !== '' ? ', ' . $subtitle : '')) ?: trim((string) ($row['address']['formatted_address'] ?? ''));
 
             if ($label !== '') {
                 $items[] = ['label' => $label, 'city' => $city, 'street' => $street, 'house' => $house, 'title' => $title, 'subtitle' => $subtitle];

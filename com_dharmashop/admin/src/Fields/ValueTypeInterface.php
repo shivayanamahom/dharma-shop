@@ -9,6 +9,6 @@ interface ValueTypeInterface extends TypeInterface
     public function input(object $field, array $options): \SimpleXMLElement;
     public function defaultValue(object $field, array $options): mixed;
     public function decode(object $field, array $rows, ?string $text): mixed;
-    /** @return array{rows: array, text: ?string} Empty rows and null text mean clear. */
+    /** @return array{rows: array, text: ?string, media?: array} For media providers, media is the complete replacement list. */
     public function encode(object $field, array $options, mixed $value): array;
 }

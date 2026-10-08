@@ -53,7 +53,7 @@ class GalleryField extends FormField
                 return $this->getInput();
             }
         };
-        $native->setup(new \SimpleXMLElement('<field name="dharmashop_native_' . $attr($this->fieldname) . '" type="media" types="images" preview="false" />'), '');
+        $native->setup(new \SimpleXMLElement('<field name="dharmashop_native_' . hash('xxh64', $this->id) . '" type="media" types="images" preview="false" />'), '');
 
         $card = function (string $index, string $path, string $description) use ($attr, $root): string {
             $name = $this->name;
@@ -76,7 +76,7 @@ class GalleryField extends FormField
 
         $limits = Text::sprintf('COM_DHARMASHOP_UPLOAD_LIMITS', strtoupper(implode(', ', $uploader->allowedExtensions())), $maxMb ?: '—');
 
-        return '<div class="dharmashop-gallery" data-url="' . $attr('index.php?option=com_dharmashop&task=media.upload&format=json')
+        return '<div id="' . $attr($this->id) . '" class="dharmashop-gallery" data-url="' . $attr('index.php?option=com_dharmashop&task=media.upload&format=json')
             . '" data-token="' . $attr(Session::getFormToken()) . '" data-folder="' . $attr($folder) . '" data-name="' . $attr($this->name)
             . '" data-root="' . $attr($root) . '" data-max-bytes="' . (int) $uploader->maxBytes()
             . '" data-accept="' . $attr(implode(',', $uploader->allowedExtensions()))

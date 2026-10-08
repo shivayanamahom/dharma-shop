@@ -281,7 +281,7 @@
 
 ### Хранение и обновление
 
-У товаров: `field_values` (`option_id/num/str`, теперь также `num_end`) и `field_texts`; редактирование базового товара затрагивает только `variant_id IS NULL`. Галерея `field_media.field_id=0` и значения вариантов не меняются. У категорий: отдельные `category_field_values` с `category_id,field_id,option_id,num,num_end,str` и `category_field_texts` с `category_id,field_id,value`. Значения характеристики не хранятся в JSON. Отдельные category media не создаются, пока нет типа Media.
+У товаров: `field_values` (`option_id/num/str`, теперь также `num_end`) и `field_texts`; редактирование базового товара затрагивает только `variant_id IS NULL`. Галерея `field_media.field_id=0` и значения вариантов не меняются. У категорий: отдельные `category_field_values` с `category_id,field_id,option_id,num,num_end,str` и `category_field_texts` с `category_id,field_id,value`. Значения характеристики не хранятся в JSON. Тип `files` использует media-строки и отдельную `category_field_media`; контракт и настройки — [FILES_FIELD.md](FILES_FIELD.md).
 
 `script.php::upgradeFieldValueStorage()` аддитивно добавляет nullable `num_end` и индекс существующей таблице, создаёт две таблицы категорий. Новая установка использует install SQL; uninstall SQL перечисляет новые таблицы. Версия 0.1.0. Не деинсталлировать пакет ради миграции.
 
@@ -322,3 +322,7 @@ Basic `NativeValue::input()` добавляет нативные `description` �
 В «Отображение → Полная страница» добавлен нативный переключатель «Выводить в интро товара» с пояснением места: рядом с кратким описанием возле галереи, отдельно от карточек каталога и вкладок групп ниже. `params.show_intro` нормализуется компонентом в 0/1; при отсутствии — 0. Старые определения не пересохраняются массово, поэтому все по умолчанию выключены. Настройка видна для target=product при load_page=1; EntityFields проверяет назначение/контекст. Флаг независим от in_page, общий формат format_page, прежние доступ/публикация/применимость сохраняются. Отдельный default_intro.php — в LAYOUTS.md.
 
 Уточнение редактора (2026-10-08): блоки card/page в admin/tmpl/field/edit.php используют явные renderField, а не целый fieldset. Для новых настроек кроме XML требуется добавление вызова туда; show_intro выведен после in_page. Серверный HTML новой формы проверен по HTTP: переключатель присутствует, default=0 и showon указывают на jform[target]/jform[params][load_page].
+
+## 21. Файлы (2026-10-08)
+
+Тип `files` (store=`media`) в базовом провайдере, независимые экземпляры общего загрузчика для товара/категории, лимиты и подписи. Основная галерея `field_id=0` сохраняется. Подробнее: [FILES_FIELD.md](FILES_FIELD.md).

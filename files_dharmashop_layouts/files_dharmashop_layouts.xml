@@ -11,6 +11,7 @@
         <files folder="layouts/fields" target="layouts/components/dharmashop/fields">
             <filename>default.php</filename>
             <filename>value.php</filename>
+            <filename>files.php</filename>
         </files>
         <files folder="layouts/cart" target="layouts/components/dharmashop/cart">
             <filename>unavailable.php</filename>

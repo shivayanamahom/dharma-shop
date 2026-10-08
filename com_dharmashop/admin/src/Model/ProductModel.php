@@ -270,7 +270,7 @@ class ProductModel extends AdminModel
                 $removedFiles = $shop->gallery()->save($id, (array) $data['gallery']);
             }
 
-            $fieldValues->save('product', $id, $preparedFields);
+            $removedFiles = array_merge($removedFiles, $fieldValues->save('product', $id, $preparedFields));
             (new SearchIndexer($db))->rebuild($id);
             $db->transactionCommit();
         } catch (\Throwable $e) {
@@ -377,7 +377,7 @@ class ProductModel extends AdminModel
             }
 
             $files = array_merge($files, $shop->gallery()->deleteForProduct($id));
-            (new FieldValues($db))->deleteEntity('product', $id);
+            $files = array_merge($files, (new FieldValues($db))->deleteEntity('product', $id));
             $shop->variants()->deleteForProduct($id);
             $shop->indexer()->deleteProduct($id);
             $db->setQuery('DELETE FROM #__dharmashop_search WHERE product_id = ' . $id)->execute();

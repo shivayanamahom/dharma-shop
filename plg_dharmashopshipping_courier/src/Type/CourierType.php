@@ -521,6 +521,10 @@ final class CourierType implements TypeInterface
         $displayData['distance_mode'] = $this->isDistance($method);
         $displayData['suggest'] = (string) ($p['suggest'] ?? '1') === '1' && $this->apiKey($method) !== '';
         $displayData['map'] = $this->mapDisplay($method);
+        // Подсказки в браузере (JavaScript API 3: ymaps3.suggest): публичный ключ и центр области складов для смещения результатов.
+        $near = $this->center($this->warehousesOf($method));
+        $displayData['suggest_key'] = $displayData['suggest'] ? $this->apiKey($method) : '';
+        $displayData['suggest_near'] = $near !== null ? $near[0] . ',' . $near[1] : '';
 
         if ($displayData['distance_mode'] || $displayData['suggest'] || $displayData['map']['mode'] !== 'none') {
             $wa = Factory::getApplication()->getDocument()->getWebAssetManager();

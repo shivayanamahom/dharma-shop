@@ -29,7 +29,7 @@ final class TypeRegistry
         if ($this->sealed || !preg_match('/^[a-z][a-z0-9_]{0,49}$/D', $id) || isset($this->types[$id])) {
             throw new \RuntimeException('Invalid or duplicate Dharma Shop field type: ' . $id);
         }
-        if (!in_array($type->store(), ['option', 'number', 'string', 'text', 'range'], true) || !is_file($type->settingsPath())) {
+        if (!in_array($type->store(), ['option', 'number', 'string', 'text', 'range', 'media'], true) || !is_file($type->settingsPath())) {
             throw new \RuntimeException('Invalid Dharma Shop field type definition: ' . $id);
         }
         $this->types[$id] = $type;

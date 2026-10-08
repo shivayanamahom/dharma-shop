@@ -270,12 +270,30 @@ CREATE TABLE IF NOT EXISTS `#__dharmashop_field_media` (
   `variant_id` int unsigned NULL,
   `field_id` int unsigned NOT NULL,
   `path` varchar(500) NOT NULL,
+  `filename` varchar(255) NULL,
+  `bytes` bigint unsigned NULL,
+  `mime` varchar(127) NULL,
   `alt` varchar(255) NULL,
   `title` varchar(255) NULL,
   `ordering` int NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
   KEY `idx_product` (`product_id`, `field_id`, `ordering`),
   KEY `idx_variant` (`variant_id`, `field_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `#__dharmashop_category_field_media` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `category_id` int unsigned NOT NULL,
+  `field_id` int unsigned NOT NULL,
+  `path` varchar(500) NOT NULL,
+  `filename` varchar(255) NULL,
+  `bytes` bigint unsigned NULL,
+  `mime` varchar(127) NULL,
+  `alt` varchar(255) NULL,
+  `title` varchar(255) NULL,
+  `ordering` int NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  KEY `idx_category` (`category_id`, `field_id`, `ordering`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `#__dharmashop_search` (

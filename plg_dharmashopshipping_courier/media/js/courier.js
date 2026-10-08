@@ -1,6 +1,7 @@
 /**
  * Dharma Shop: способ «Курьер» на странице оформления.
- *  - подсказки при вводе города, улицы и дома («Геосаджест» Яндекса, при отказе — геокодер, через `shipping.ajax`); выбор подсказки заполняет город, улицу и дом;
+ *  - подсказки при вводе города, улицы и дома: в браузере через JavaScript API 3 (ymaps3.suggest), при отказе — через сервер (`shipping.ajax`:
+ *    «Геосаджест» Яндекса или геокодер); выбор подсказки заполняет город, улицу и дом;
  *  - расчёт цены по адресу (расстояние от ближайшего склада): обновляет цену способа и итог, строки боковой панели и событием
  *    `dharmashop:shipping-quote` сообщает об этом оформлению;
  *  - карта (Яндекс Карты, JavaScript API 3): склады и точка доставки, ближайший склад выделяется, между ними линия.
@@ -260,13 +261,58 @@
             calculate();
         };
 
+        // Подсказки в браузере: JavaScript API 3 — ymaps3.suggest (нужен ключ с доступом к «API Геосаджеста»; ключ ставится через getDefaultConfig().setApikeys).
+        // Любая ошибка (сервис не разрешён ключу, сеть) — запасной путь через сервер.
+        const near = (root.dataset.near || '').split(',').map(Number);
+        const clientSuggest = async (kind, text) => {
+            await loadMaps(root.dataset.apikey);
+            const maps = window.ymaps3;
+            maps.getDefaultConfig().setApikeys({ suggest: root.dataset.apikey, search: root.dataset.apikey });
+            const cityValue = city ? city.value.trim() : '';
+            const streetValue = street ? street.value.trim() : '';
+            const request = {
+                city: { text, types: ['locality'] },
+                house: { text: [cityValue, (streetValue + ' ' + text).trim()].filter(Boolean).join(', '), types: ['house'] },
+                street: { text: [cityValue, text].filter(Boolean).join(', '), types: ['street', 'house'] },
+            }[kind];
+            const options = { ...request, limit: 7, highlight: false };
+            if (near.length === 2 && near.every(Number.isFinite)) { options.center = [near[1], near[0]]; options.span = [3, 2]; }
+            const found = await maps.suggest(options);
+            const seen = new Set();
+            const items = [];
+            found.forEach((row) => {
+                const parts = { city: '', street: '', house: '' };
+                (row.address?.component || []).forEach((component) => {
+                    const kinds = (component.kind || []).map((value) => String(value).toUpperCase());
+                    if (kinds.includes('LOCALITY')) parts.city = component.name;
+                    else if (kinds.includes('STREET')) parts.street = component.name;
+                    else if (kinds.includes('HOUSE')) parts.house = component.name;
+                });
+                const title = row.title?.text || '';
+                const subtitle = row.subtitle?.text || '';
+                if (kind === 'city') {
+                    const name = parts.city || title;
+                    if (!name || seen.has(name + '|' + subtitle)) return;
+                    seen.add(name + '|' + subtitle);
+                    items.push({ label: name + (subtitle ? ', ' + subtitle : ''), city: name, street: '', house: '' });
+                } else {
+                    items.push({ label: title + (subtitle ? ', ' + subtitle : ''), city: parts.city, street: parts.street, house: parts.house });
+                }
+            });
+            return items;
+        };
+
         const suggest = async (kind, field) => {
             const list = lists.get(kind);
             if (!list || root.dataset.suggest !== '1') return;
             const text = field.value.trim();
             if (text.length < (kind === 'city' ? 2 : 3)) { hide(kind); return; }
             try {
-                const result = await post(root, 'suggest', { kind, text, city: city ? city.value.trim() : '', street: street ? street.value.trim() : '' });
+                let result;
+                if (root.dataset.apikey) {
+                    try { result = { ok: true, items: await clientSuggest(kind, text) }; } catch (error) { result = null; }
+                }
+                if (!result) result = await post(root, 'suggest', { kind, text, city: city ? city.value.trim() : '', street: street ? street.value.trim() : '' });
                 if (field.value.trim() !== text) return;
                 hide(kind);
                 if (!result.ok || !Array.isArray(result.items) || !result.items.length) return;

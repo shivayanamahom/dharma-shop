@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Dharma\Component\DharmaShop\Site\Support;
 
 use Joomla\CMS\Factory;
+use Dharma\Component\DharmaShop\Administrator\Fields\FileStorage;
 use Joomla\CMS\Language\Text;
 use Joomla\Database\DatabaseInterface;
 use Joomla\Registry\Registry;
@@ -105,6 +106,27 @@ final class EntityFields
                 $values[(int) $row->entity_id][(int) $row->field_id][] = (object) ['text' => (string) $row->value, 'image' => '', 'html' => true];
             }
         }
+        $fileFields = array_filter($fields, static fn (object $field): bool => $field->type === 'files');
+        if ($fileFields) {
+            $media = $target === 'product' ? '#__dharmashop_field_media' : '#__dharmashop_category_field_media';
+            $query = $base($media)->select('v.' . $column . ' AS entity_id')
+                ->select($db->quoteName(['v.field_id','v.path','v.title','v.filename','v.bytes','v.mime']))
+                ->where('v.field_id IN (' . implode(',', array_keys($fileFields)) . ')')->order('v.ordering, v.id');
+            foreach ($db->setQuery($query)->loadObjectList() as $row) {
+                $path = FileStorage::path($row->path);
+                $url = $path !== '' ? MediaUrl::absolute($path) : '';
+                if ($url === '') { continue; }
+                $field = $fileFields[(int) $row->field_id];
+                $filename = (string) ($row->filename ?: basename($path));
+                $label = $field->settings->get('files_label', 'caption') === 'caption' && trim((string) $row->title) !== '' ? (string) $row->title : $filename;
+                $values[(int) $row->entity_id][(int) $row->field_id][] = (object) [
+                    'text'=>$label, 'image'=>'', 'html'=>false, 'url'=>$url, 'path'=>$path,
+                    'filename'=>$filename, 'caption'=>(string) $row->title,
+                    'bytes'=>(int) $row->bytes, 'mime'=>(string) $row->mime,
+                    'extension'=>strtoupper(pathinfo($path, PATHINFO_EXTENSION)),
+                ];
+            }
+        }
         foreach ($products as $id => $item) {
             foreach ($fields as $fieldId => $field) {
                 if (empty($values[$id][$fieldId])) { continue; }
@@ -116,6 +138,7 @@ final class EntityFields
                     'show_intro' => $target === 'product' && $context === 'page' && (int) $field->settings->get('show_intro', 0) === 1,
                     'format' => in_array($format, ['comma', 'list', 'image', 'image_title'], true) ? $format : 'comma',
                     'values' => $values[$id][$fieldId],
+                    'file_settings' => $field->type === 'files' ? FileStorage::settings($field->settings->toArray()) : [],
                 ];
             }
         }

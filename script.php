@@ -138,6 +138,8 @@ return new class () implements ServiceProviderInterface {
                         $this->db->setQuery($query)->execute();
                     }
 
+                    require_once JPATH_ADMINISTRATOR . '/components/com_dharmashop/src/Fields/FileStorage.php';
+                    \Dharma\Component\DharmaShop\Administrator\Fields\FileStorage::upgrade($this->db);
                     $this->ensureDefaultCategory();
                     $this->ensureInitialOrderStatus();
                     // При первой установке PSR-4 карта нового компонента может ещё не обновиться.

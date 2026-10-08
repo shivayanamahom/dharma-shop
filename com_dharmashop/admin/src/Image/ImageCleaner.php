@@ -110,7 +110,7 @@ final class ImageCleaner
 
         $pattern = $path . '%';
 
-        foreach (['#__dharmashop_field_media' => 'path', '#__dharmashop_products' => 'cover'] as $table => $column) {
+        foreach (['#__dharmashop_category_field_media' => 'path', '#__dharmashop_field_media' => 'path', '#__dharmashop_products' => 'cover'] as $table => $column) {
             $count = (int) $this->db->setQuery(
                 $this->db->createQuery()->select('COUNT(*)')->from($table)->where($this->db->quoteName($column) . ' LIKE :p')->bind(':p', $pattern)
             )->loadResult();

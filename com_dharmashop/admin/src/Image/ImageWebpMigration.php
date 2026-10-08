@@ -105,7 +105,7 @@ final class ImageWebpMigration
         $queries = [
             'products' => 'SELECT id, cover, params FROM #__dharmashop_products WHERE id > :id ORDER BY id',
             'categories' => 'SELECT id, params FROM #__categories WHERE extension = :extension AND id > :id ORDER BY id',
-            'media' => 'SELECT id, path FROM #__dharmashop_field_media WHERE id > :id ORDER BY id',
+            'media' => 'SELECT id, path FROM #__dharmashop_field_media WHERE mime IS NULL AND id > :id ORDER BY id',
             'settings' => 'SELECT extension_id AS id, params FROM #__extensions WHERE type = :type AND element = :element AND extension_id > :id ORDER BY extension_id',
         ];
         $sql = $queries[$phase] ?? throw new \InvalidArgumentException('Unknown WebP migration phase.');

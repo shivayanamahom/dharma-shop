@@ -310,3 +310,7 @@ C74: результат вынесен в `site/tmpl/checkoutcomplete/default.ph
 Если размеры изображений уже сохранены, новый контекст добавляется строкой «Корзина — уведомление о добавлении» во вкладке «Изображения». Удалённые/отсутствующие строки автоматически не восстанавливаются; без строки остаётся исходный URL, как у других контекстов.
 
 Уточнение 2026-10-08: внизу тоста тонкая линия 2 px (`border-top border-2 border-primary`, `data-dharmashop-cart-toast-progress`). Она плавно сокращается к левому краю через Web Animations API; CSS-файл/inline-стили не добавлялись. Один отсчёт в `cart-toast.js` управляет линией и закрытием, начинается после `shown.bs.toast`, при hover/focus сохраняет оставшееся время и продолжается с него. При 0 секунд линия не выводится. По прямому запросу пользователя линия всегда убывает плавно (`linear`), без ветки `prefers-reduced-motion`; без Web Animations API автозакрытие продолжает работать. Замена/закрытие/уход со страницы освобождают таймер и анимацию.
+
+### Файлы пользовательского поля (2026-10-08)
+
+Макет `components.dharmashop.fields.files`: исходник `files_dharmashop_layouts/layouts/fields/files.php`, установленный `layouts/components/dharmashop/fields/files.php`, переопределение `templates/<template>/html/layouts/components/dharmashop/fields/files.php`. Вызывается из `fields.value` для типа `files`. Данные — `field.values` и `field.file_settings`; ссылки с подписью/именем, необязательными размером и расширением. SQL и изображений в макете нет.

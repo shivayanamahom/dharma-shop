@@ -272,13 +272,18 @@ class CategoryModel extends AdminModel
             $db = $this->getDatabase();
             $db->transactionStart();
             try {
-                $fieldValues->save('category', $id, $preparedFields);
+                $removedFields = $fieldValues->save('category', $id, $preparedFields);
                 $db->transactionCommit();
             } catch (\Throwable $error) {
                 $db->transactionRollback();
                 $this->setError($error->getMessage());
                 return false;
             }
+        }
+
+        if (!empty($removedFields)) {
+            $cleaner = new ImageCleaner($this->getDatabase(), JPATH_ROOT, ComponentHelper::getParams('com_dharmashop'));
+            foreach ($removedFields as $file) { $cleaner->deleteIfUnused($file); }
         }
 
         $this->applyOrderRules($id, $oldOrderParams, $table);
@@ -335,7 +340,7 @@ class CategoryModel extends AdminModel
 
         foreach ($selected as $deletedId) {
             $exists = $db->setQuery($db->createQuery()->select('id')->from('#__categories')->where('id = ' . $deletedId))->loadResult();
-            if (!$exists) { (new FieldValues($db))->deleteEntity('category', $deletedId); }
+            if (!$exists) { $files = array_merge($files, (new FieldValues($db))->deleteEntity('category', $deletedId)); }
         }
 
         // После удаления убираем только свои файлы, на которые больше никто не ссылается (правила — ImageCleaner).

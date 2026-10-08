@@ -19,7 +19,7 @@ final class ImageInventory
         $id = (int) ($cursor['id'] ?? 0);
         $queries = [
             'SELECT id, cover, params FROM #__dharmashop_products WHERE id > :id ORDER BY id',
-            'SELECT id, path FROM #__dharmashop_field_media WHERE id > :id ORDER BY id',
+            'SELECT id, path FROM #__dharmashop_field_media WHERE mime IS NULL AND id > :id ORDER BY id',
             "SELECT id, extension, params FROM #__categories WHERE extension IN ('com_dharmashop','com_dharmashop.brand','com_dharmashop.badge') AND id > :id ORDER BY id",
             'SELECT id, image FROM #__dharmashop_field_options WHERE id > :id ORDER BY id',
         ];

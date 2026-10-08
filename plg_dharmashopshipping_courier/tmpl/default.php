@@ -12,7 +12,7 @@
  * Правила для всех типов доставки (docs/SHIPPING.md): радиокнопка `shipping_method` с data-shipping-radio, data-price-text, data-total-text;
  * поля покупателя — `shipping[<id>][<ключ>]` в блоке data-shipping-extra, у каждого data-summary-label. Город, улица и дом — всегда:
  * [data-courier-city], [data-courier-street] и [data-courier-house] (у каждого свой список подсказок [data-courier-suggest=<ключ>]); контейнер [data-courier]
- * (data-ajax-url, data-method-id, data-suggest, data-distance), статус расчёта — [data-courier-status], карта — [data-courier-map].
+ * (data-ajax-url, data-method-id, data-suggest, data-distance, data-apikey — публичный ключ для подсказок в браузере, data-near — «широта,долгота» центра складов), статус расчёта — [data-courier-status], карта — [data-courier-map].
  * Скрипт плагина обновляет цену способа (data-shipping-option-price, data-price-text/-total-text радио) и событием
  * dharmashop:shipping-quote сообщает об этом оформлению.
  */
@@ -54,7 +54,8 @@ $priceText = $quote->pending ? $displayData['price_text'] : ($quote->free ? $dis
     <?php endif; ?>
     <div class="mt-1 ms-3<?php echo $selected ? '' : ' d-none'; ?>" data-shipping-extra data-courier
         data-ajax-url="<?php echo $esc($displayData['ajax_url'] ?? ''); ?>" data-method-id="<?php echo $id; ?>"
-        data-suggest="<?php echo $displayData['suggest'] ? '1' : '0'; ?>" data-distance="<?php echo $displayData['distance_mode'] ? '1' : '0'; ?>">
+        data-suggest="<?php echo $displayData['suggest'] ? '1' : '0'; ?>" data-distance="<?php echo $displayData['distance_mode'] ? '1' : '0'; ?>"
+        data-apikey="<?php echo $esc($displayData['suggest_key'] ?? ''); ?>" data-near="<?php echo $esc($displayData['suggest_near'] ?? ''); ?>">
         <div class="row g-2">
             <?php // Город, улица, дом — неизменяемые обязательные поля: по ним определяется точка доставки. ?>
             <?php foreach ((array) $displayData['base_fields'] as $base) :

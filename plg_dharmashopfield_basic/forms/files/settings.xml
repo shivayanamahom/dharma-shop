@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form><fields name="params"><fieldset name="type_files" label="COM_DHARMASHOP_FIELD_TYPE_FILES">
+    <field name="files_max_mb" type="number" label="PLG_DHARMASHOPFIELD_BASIC_FILES_MAX_MB" description="PLG_DHARMASHOPFIELD_BASIC_FILES_MAX_MB_DESC" showon=".type:files" default="10" min="0.1" max="1024" step="0.1" filter="float" />
+    <field name="files_extensions" type="text" label="PLG_DHARMASHOPFIELD_BASIC_FILES_EXTENSIONS" description="PLG_DHARMASHOPFIELD_BASIC_FILES_EXTENSIONS_DESC" showon=".type:files" default="pdf,doc,docx,xls,xlsx,ppt,pptx,odt,ods,odp,rtf,txt,csv,zip,jpg,jpeg,png,webp" filter="string" />
+    <field name="files_max_count" type="number" label="PLG_DHARMASHOPFIELD_BASIC_FILES_MAX_COUNT" description="PLG_DHARMASHOPFIELD_BASIC_FILES_MAX_COUNT_DESC" showon=".type:files" default="10" min="1" max="100" step="1" filter="uint" />
+    <field name="files_label" type="list" label="PLG_DHARMASHOPFIELD_BASIC_FILES_LABEL" description="PLG_DHARMASHOPFIELD_BASIC_FILES_LABEL_DESC" showon=".type:files" default="caption" filter="cmd" validate="options"><option value="caption">PLG_DHARMASHOPFIELD_BASIC_FILES_CAPTION</option><option value="filename">PLG_DHARMASHOPFIELD_BASIC_FILES_FILENAME</option></field>
+    <field name="files_show_size" type="radio" label="PLG_DHARMASHOPFIELD_BASIC_FILES_SHOW_SIZE" showon=".type:files" layout="joomla.form.field.radio.switcher" default="1" filter="int" validate="options"><option value="0">JNO</option><option value="1">JYES</option></field>
+    <field name="files_show_extension" type="radio" label="PLG_DHARMASHOPFIELD_BASIC_FILES_SHOW_EXTENSION" showon=".type:files" layout="joomla.form.field.radio.switcher" default="1" filter="int" validate="options"><option value="0">JNO</option><option value="1">JYES</option></field>
+    <field name="files_new_tab" type="radio" label="PLG_DHARMASHOPFIELD_BASIC_FILES_NEW_TAB" showon=".type:files" layout="joomla.form.field.radio.switcher" default="1" filter="int" validate="options"><option value="0">JNO</option><option value="1">JYES</option></field>
+</fieldset></fields></form>

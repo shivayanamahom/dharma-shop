@@ -140,15 +140,34 @@ final class FieldValues
         $query = $base($long)->select($this->db->quoteName(['field_id', 'value']));
         if ($target === 'product') { $query->where('variant_id IS NULL'); }
         $texts = $this->db->setQuery($query)->loadAssocList('field_id', 'value');
+        $media = $target === 'product' ? '#__dharmashop_field_media' : '#__dharmashop_category_field_media';
+        $query = $base($media)->select($this->db->quoteName(['field_id','path','title','filename','bytes','mime']))->order('ordering, id');
+        if ($target === 'product') { $query->where('variant_id IS NULL'); }
+        foreach ($this->db->setQuery($query)->loadObjectList() as $row) { $rows[(int) $row->field_id][] = $row; }
         return [$rows, $texts];
     }
 
     /** Caller owns the relation transaction, after Table::store has finished. */
-    public function save(string $target, int $id, array $prepared): void
+    public function save(string $target, int $id, array $prepared): array
     {
         if ($id <= 0) { throw new \InvalidArgumentException('Invalid field owner.'); }
         [$simple, $long, $column] = $this->tables($target);
+        $removed = [];
+        $media = $target === 'product' ? '#__dharmashop_field_media' : '#__dharmashop_category_field_media';
         foreach ($prepared as $fieldId => $value) {
+            if (array_key_exists('media', $value)) {
+                $query = $this->db->createQuery()->from($this->db->quoteName($media))
+                    ->where($column . ' = ' . $id)->where('field_id = ' . (int) $fieldId);
+                if ($target === 'product') { $query->where('variant_id IS NULL'); }
+                $old = $this->db->setQuery((clone $query)->select('path'))->loadColumn();
+                $this->db->setQuery((clone $query)->delete())->execute();
+                foreach ($value['media'] as $values) {
+                    $row = (object) ([$column=>$id, 'field_id'=>(int) $fieldId] + $values);
+                    $this->db->insertObject($media, $row);
+                }
+                $removed = array_merge($removed, array_diff($old, array_column($value['media'], 'path')));
+                continue;
+            }
             foreach ([$simple, $long] as $table) {
                 $query = $this->db->createQuery()->delete($this->db->quoteName($table))
                     ->where($column . ' = ' . $id)->where('field_id = ' . (int) $fieldId);
@@ -164,15 +183,23 @@ final class FieldValues
                 $this->db->insertObject($long, $row);
             }
         }
+        return $removed;
     }
 
-    public function deleteEntity(string $target, int $id): void
+    public function deleteEntity(string $target, int $id): array
     {
-        if ($id <= 0) { return; }
+        if ($id <= 0) { return []; }
         [$simple, $long, $column] = $this->tables($target);
+        $media = $target === 'product' ? '#__dharmashop_field_media' : '#__dharmashop_category_field_media';
+        $query = $this->db->createQuery()->from($this->db->quoteName($media))->where($column . ' = ' . $id);
+        // Reserved main gallery is owned by GalleryRepository, not by custom fields.
+        if ($target === 'product') { $query->where('field_id > 0'); }
+        $removed = $this->db->setQuery((clone $query)->select('path'))->loadColumn();
+        $this->db->setQuery((clone $query)->delete())->execute();
         foreach ([$simple, $long] as $table) {
             $this->db->setQuery($this->db->createQuery()->delete($this->db->quoteName($table))->where($column . ' = ' . $id))->execute();
         }
+        return $removed;
     }
 
     private function tables(string $target): array
