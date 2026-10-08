@@ -33,7 +33,7 @@
 		<field name="price_result" type="text" label="COM_DHARMASHOP_FIELD_PRICE_RESULT_LABEL" description="COM_DHARMASHOP_FIELD_PRICE_RESULT_DESC" class="readonly" readonly="true" filter="unset" showon="discount!:" />
 		<field name="discount_start" type="calendar" label="COM_DHARMASHOP_FIELD_DISCOUNT_START_LABEL" translateformat="true" showtime="true" filter="user_utc" showon="discount!:" />
 		<field name="discount_end" type="calendar" label="COM_DHARMASHOP_FIELD_DISCOUNT_END_LABEL" translateformat="true" showtime="true" filter="user_utc" showon="discount!:" />
-		<field name="stock_qty" type="number" label="COM_DHARMASHOP_FIELD_STOCK_QTY_LABEL" step="0.001" default="0" />
+		<field name="stock_qty" type="number" label="COM_DHARMASHOP_FIELD_STOCK_QTY_LABEL" description="COM_DHARMASHOP_FIELD_STOCK_QTY_DESC" step="0.001" default="0" showon="stock_tracked:1" />
 		<field name="weight" type="number" label="COM_DHARMASHOP_FIELD_WEIGHT_LABEL" step="0.001" min="0" />
 		<field name="weight_unit" type="unit" unitgroup="weight" validate="options" label="COM_DHARMASHOP_FIELD_WEIGHT_UNIT_LABEL" description="COM_DHARMASHOP_FIELD_WEIGHT_UNIT_DESC" />
 		<field name="length" type="number" label="COM_DHARMASHOP_FIELD_LENGTH_LABEL" step="0.01" min="0" />
@@ -55,7 +55,7 @@
 			<option value="1">JYES</option>
 			<option value="0">JNO</option>
 		</field>
-		<field name="backorder" type="list" label="COM_DHARMASHOP_ORDER_BACKORDER" description="COM_DHARMASHOP_ORDER_BACKORDER_DESC" default="" validate="options">
+		<field name="backorder" type="list" label="COM_DHARMASHOP_ORDER_BACKORDER" description="COM_DHARMASHOP_ORDER_BACKORDER_DESC" default="" validate="options" showon="stock_tracked:1">
 			<option value="">COM_DHARMASHOP_ORDER_INHERIT</option>
 			<option value="1">JYES</option>
 			<option value="0">JNO</option>

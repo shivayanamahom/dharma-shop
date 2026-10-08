@@ -64,7 +64,7 @@ $canAdmin = $this->getCurrentUser()->authorise('core.admin', 'com_dharmashop');
             <div class="col-lg-6">
                 <fieldset class="options-form">
                     <legend><?php echo Text::_('COM_DHARMASHOP_FIELDSET_STOCK'); ?></legend>
-                    <?php foreach (['stock_qty'] as $name) : ?>
+                    <?php foreach (['stock_tracked', 'stock_qty', 'backorder'] as $name) : ?>
                         <?php echo $this->form->renderField($name); ?>
                     <?php endforeach; ?>
                 </fieldset>
@@ -82,10 +82,6 @@ $canAdmin = $this->getCurrentUser()->authorise('core.admin', 'com_dharmashop');
         <fieldset class="options-form">
             <legend><?php echo Text::_('COM_DHARMASHOP_ORDER_BLOCK_QTY'); ?></legend>
             <?php echo $this->form->renderFieldset('order_qty'); ?>
-        </fieldset>
-        <fieldset class="options-form">
-            <legend><?php echo Text::_('COM_DHARMASHOP_ORDER_BLOCK_STOCK'); ?></legend>
-            <?php echo $this->form->renderFieldset('order_stock'); ?>
         </fieldset>
         <?php echo HTMLHelper::_('uitab.endTab'); ?>
 

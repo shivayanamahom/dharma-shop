@@ -84,7 +84,13 @@ class ProductModel extends AdminModel
         // Подсказки «Наследуется: …» у правил оформления заказа по основной категории товара.
         $catid = (int) (is_array($data) ? ($data['catid'] ?? 0) : ($data->catid ?? 0));
         $rules = $this->shop()->orderRules();
-        InheritHints::apply($form, $rules, $rules->forCategory($catid), null, '');
+        $inherited = $rules->forCategory($catid);
+        InheritHints::apply($form, $rules, $inherited, null, '');
+
+        // Количество и «продавать без остатка» — при учёте остатков: свой выбор «Да» либо «Из категории/настроек», если там «Да».
+        $tracking = (int) ($inherited['values']['stock_tracked'] ?? 0) === 1 ? 'stock_tracked!:0' : 'stock_tracked:1';
+        $form->setFieldAttribute('stock_qty', 'showon', $tracking);
+        $form->setFieldAttribute('backorder', 'showon', $tracking);
         SeoHints::apply($form, new SeoSettings(ComponentHelper::getParams('com_dharmashop')), 'product');
 
         parent::preprocessForm($form, $data, $group);
