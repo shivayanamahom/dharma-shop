@@ -252,7 +252,7 @@ trait ListingTrait
             'cardFolder' => $this->cardFolder, 'cardLayout' => $this->cardLayout,
             'fields' => $item->fields ?? [],
             'fieldColumns' => $this->fieldColumns,
-            'productUrl' => Route::_('index.php?option=com_dharmashop&view=product&id=' . (int) $item->id, false),
+            'productUrl' => Route::_('index.php?option=com_dharmashop&view=product&id=' . (int) $item->id . '&catid=' . (int) $item->catid, false),
             'showIntro' => (int) $this->params->get('product_card_intro', 1) === 1,
             'intro' => $intro,
             'priceRange' => $this->formatRange($item->price_min, $item->price_max),

@@ -26,11 +26,14 @@ class Router extends RouterView
 
     private array $categoryCache = [];
     private array $childCache = [];
+    private array $productCache = [];
 
     public function __construct($app, $menu, $categoryFactory, private readonly \Joomla\Database\DatabaseInterface $db)
     {
-        $this->registerView((new RouterViewConfiguration('categories'))->setKey('id')->setNestable());
-        $this->registerView((new RouterViewConfiguration('category'))->setKey('id')->setNestable());
+        $categories = (new RouterViewConfiguration('categories'))->setKey('id')->setNestable();
+        $category = (new RouterViewConfiguration('category'))->setKey('id')->setNestable();
+        $this->registerView($categories);
+        $this->registerView($category);
         // Бренды: список (пункт меню) → страница бренда (вложенная: бренд внутри бренда). Бейджи: список → страница бейджа.
         $brands = new RouterViewConfiguration('brands');
         $this->registerView($brands);
@@ -38,12 +41,30 @@ class Router extends RouterView
         $badges = new RouterViewConfiguration('badges');
         $this->registerView($badges);
         $this->registerView((new RouterViewConfiguration('badge'))->setKey('id')->setParent($badges));
-        $this->registerView((new RouterViewConfiguration('product'))->setKey('id'));
+        // Товар: адрес — цепочка алиасов категорий и алиас товара (`/smartfony/flagmany/apple-iphone-16-pro`). Родитель — «список категорий»
+        // (каталог), если такой пункт меню есть, иначе «товары категории»; так же строятся адреса категорий (C40). Ключ родителя — catid.
+        $catalogMenu = $menu->getItems('link', 'index.php?option=com_dharmashop&view=categories&id=0')
+            ?: $menu->getItems('link', 'index.php?option=com_dharmashop&view=categories&id=1');
+        $this->registerView((new RouterViewConfiguration('product'))->setKey('id')->setParent($catalogMenu ? $categories : $category, 'catid'));
         $this->registerView(new RouterViewConfiguration('cart'));
         parent::__construct($app, $menu);
         $this->attachRule(new MenuRules($this));
         $this->attachRule(new StandardRules($this));
         $this->attachRule(new NomenuRules($this));
+    }
+
+    /** Основная категория товара в запросе (`catid`) нужна для адреса: дополняем её, если ссылку построили только по id товара. */
+    public function preprocess($query)
+    {
+        if (($query['view'] ?? '') === 'product' && !isset($query['catid']) && !empty($query['id'])) {
+            $product = $this->product((int) $query['id']);
+
+            if ($product) {
+                $query['catid'] = (int) $product->catid;
+            }
+        }
+
+        return parent::preprocess($query);
     }
 
     /**
@@ -65,6 +86,17 @@ class Router extends RouterView
      */
     public function parse(&$segments)
     {
+        // Старый адрес товара без категории (`/component/dharmashop/product/205`): страница товара сама перенаправит на основной адрес.
+        if (count($segments) === 2 && $segments[0] === 'product' && ctype_digit((string) $segments[1])) {
+            $product = $this->product((int) $segments[1]);
+
+            if ($product) {
+                $segments = [];
+
+                return ['view' => 'product', 'id' => (int) $product->id, 'catid' => (int) $product->catid];
+            }
+        }
+
         $vars = parent::parse($segments);
 
         if (($vars['view'] ?? '') === 'categories' && (int) ($vars['id'] ?? 0) > 1) {
@@ -72,6 +104,32 @@ class Router extends RouterView
         }
 
         return $vars;
+    }
+
+    public function getProductSegment($id, $query): array
+    {
+        $product = $this->product((int) $id);
+
+        return $product ? [(int) $product->id => (string) $product->alias] : [];
+    }
+
+    /** Товар по алиасу в категории из запроса (алиас уникален внутри основной категории). */
+    public function getProductId($segment, $query): int|false
+    {
+        $category = max(1, (int) ($query['id'] ?? 0));
+        $key = 'alias/' . $category . '/' . $segment;
+
+        if (!array_key_exists($key, $this->productCache)) {
+            $db = $this->db;
+            $alias = (string) $segment;
+            $select = $db->createQuery()->select($db->quoteName('id'))->from($db->quoteName('#__dharmashop_products'))
+                ->where($db->quoteName('catid') . ' = :category')->where($db->quoteName('alias') . ' = :alias')->where($db->quoteName('state') . ' = 1')
+                ->bind(':category', $category, ParameterType::INTEGER)->bind(':alias', $alias);
+            $found = $db->setQuery($select)->loadResult();
+            $this->productCache[$key] = $found ? (int) $found : false;
+        }
+
+        return $this->productCache[$key];
     }
 
     public function getCategoriesSegment($id, $query): array
@@ -162,6 +220,20 @@ class Router extends RouterView
         }
 
         return $this->childCache[$key];
+    }
+
+    private function product(int $id): ?object
+    {
+        $key = 'id/' . $id;
+
+        if (!array_key_exists($key, $this->productCache)) {
+            $query = $this->db->createQuery()->select($this->db->quoteName(['id', 'catid', 'alias']))
+                ->from($this->db->quoteName('#__dharmashop_products'))->where($this->db->quoteName('id') . ' = :id')
+                ->bind(':id', $id, ParameterType::INTEGER);
+            $this->productCache[$key] = $this->db->setQuery($query)->loadObject() ?: null;
+        }
+
+        return $this->productCache[$key];
     }
 
     private function category(int $id, string $extension = self::CATEGORY): ?object

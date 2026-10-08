@@ -60,6 +60,13 @@ class HtmlView extends BaseHtmlView
 
         $route = Route::_('index.php?option=com_dharmashop&view=product&id=' . (int) $this->item->id, false);
         $url = preg_match('~^https?://~i', $route) ? $route : rtrim(Uri::root(), '/') . '/' . ltrim($route, '/');
+        // Один адрес на товар: любой другой адрес (старый `/component/dharmashop/product/205`, `?view=product&id=205`) — 301 на основной.
+        $app = Factory::getApplication();
+
+        if ($app->getInput()->getMethod() === 'GET' && rtrim(Uri::getInstance()->getPath(), '/') !== rtrim((string) parse_url($url, PHP_URL_PATH), '/')) {
+            $app->redirect($url, 301);
+        }
+
         $seo = new PageSeo($this->params);
         $this->seo = $seo->resolve('product', $this->item, ProductValues::build($this->item, new MoneyFormatter($this->params)), new Registry(), $url);
         $seo->apply($this->seo, $this->getDocument());
