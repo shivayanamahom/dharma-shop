@@ -36,7 +36,7 @@ return new class () implements ServiceProviderInterface {
                 private const MIN_PHP = '8.3.0';
 
                 /** Плагины пакета, которые включаем сразу после установки: [группа, элемент]. */
-                private const PLUGINS = [['dharmashop', 'social'], ['dharmashop', 'structureddata'], ['dharmashopfield', 'basic'], ['system', 'dharmashopswiper'], ['system', 'dharmashopfancybox']];
+                private const PLUGINS = [['dharmashopnotify', 'email'], ['dharmashop', 'social'], ['dharmashop', 'structureddata'], ['dharmashopfield', 'basic'], ['system', 'dharmashopswiper'], ['system', 'dharmashopfancybox']];
 
                 /** Обновление не должно включать плагин, отключённый владельцем сайта. */
                 private array $existingPlugins = [];
@@ -139,6 +139,9 @@ return new class () implements ServiceProviderInterface {
                     }
 
                     $this->ensureDefaultCategory();
+                    $this->ensureInitialOrderStatus();
+                    $ddl = file_get_contents(JPATH_ADMINISTRATOR . '/components/com_dharmashop/sql/notifications.mysql.utf8.sql');
+                    $this->db->setQuery($ddl)->execute();
 
                     if ($type === 'install') {
                         $this->ensureDefaultBadges();
@@ -146,6 +149,20 @@ return new class () implements ServiceProviderInterface {
                     }
 
                     return true;
+                }
+
+                /** C73: только пустой справочник, не меняем уже настроенные статусы магазина. */
+                private function ensureInitialOrderStatus(): void
+                {
+                    $db = $this->db;
+                    $table = $db->quoteName('#__dharmashop_statuses');
+                    if ((int) $db->setQuery('SELECT COUNT(*) FROM ' . $table)->loadResult() > 0) return;
+                    $language = $this->app->getLanguage();
+                    $language->load('com_dharmashop', JPATH_ADMINISTRATOR);
+                    $title = Text::_('COM_DHARMASHOP_ORDER_STATUS_NEW');
+                    $query = $db->createQuery()->insert($table)->columns(['title','alias','color','is_default','stock_effect','ordering','state'])
+                        ->values(':title,' . $db->quote('new') . ',' . $db->quote('info') . ',1,0,1,1')->bind(':title',$title);
+                    $db->setQuery($query)->execute();
                 }
 
                 /** C50: аддитивное обновление существующей схемы без деинсталляции и удаления каталога. */

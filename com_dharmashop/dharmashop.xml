@@ -38,6 +38,9 @@
 	<administration>
 		<menu>COM_DHARMASHOP</menu>
 		<submenu>
+			<menu link="option=com_dharmashop&amp;view=orders" view="orders">COM_DHARMASHOP_MENU_ORDERS</menu>
+			<menu link="option=com_dharmashop&amp;view=customers" view="customers">COM_DHARMASHOP_MENU_CUSTOMERS</menu>
+			<menu link="option=com_dharmashop&amp;view=statuses" view="statuses">COM_DHARMASHOP_MENU_STATUSES</menu>
 			<menu link="option=com_dharmashop&amp;view=products" view="products">COM_DHARMASHOP_MENU_PRODUCTS</menu>
 			<menu link="option=com_dharmashop&amp;view=categories&amp;extension=com_dharmashop">COM_DHARMASHOP_MENU_CATEGORIES</menu>
 			<menu link="option=com_dharmashop&amp;view=categories&amp;extension=com_dharmashop.brand">COM_DHARMASHOP_MENU_BRANDS</menu>

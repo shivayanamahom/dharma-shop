@@ -179,7 +179,16 @@ $catLink = function (object $entry) use ($user): string {
                                     </td>
                                     <td class="d-none d-md-table-cell text-center">
                                         <?php if ((int) $item->in_stock === 1) : ?>
-                                            <span class="badge bg-success"><?php echo Text::_('COM_DHARMASHOP_IN_STOCK'); ?></span>
+                                            <span class="badge bg-success">
+                                                <?php echo Text::_('COM_DHARMASHOP_IN_STOCK'); ?><?php
+                                                // У простого товара остаток берём из уже присоединённого варианта.
+                                                // Без учёта остатков ноль означает отсутствие учёта, а не количество товара.
+                                                if ((int) $item->variants_count === 1 && (int) $item->stock_tracked === 1 && $item->stock_qty !== null) {
+                                                    $quantity = rtrim(rtrim(number_format((float) $item->stock_qty, 3, '.', ' '), '0'), '.');
+                                                    echo ': ' . $this->escape($quantity);
+                                                }
+                                                ?>
+                                            </span>
                                         <?php else : ?>
                                             <span class="badge bg-secondary"><?php echo Text::_('COM_DHARMASHOP_OUT_OF_STOCK'); ?></span>
                                         <?php endif; ?>

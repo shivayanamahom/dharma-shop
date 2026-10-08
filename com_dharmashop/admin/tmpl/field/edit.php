@@ -25,8 +25,11 @@ $this->getDocument()->getWebAssetManager()->useScript('keepalive')->useScript('f
                 <legend><?php echo Text::_('COM_DHARMASHOP_FIELD_DISPLAY_' . strtoupper($context)); ?></legend>
                 <?php if (in_array($context, ['card', 'page'], true)) : ?>
                     <?php echo $this->form->renderField('load_' . $context, 'params'); ?>
+                    <?php if ($context === 'card') { echo $this->form->renderField('load_card_editor_disabled', 'params'); } ?>
                     <?php echo $this->form->renderField($context === 'card' ? 'in_card' : 'in_page'); ?>
+                    <?php if ($context === 'card') { echo $this->form->renderField('in_card_editor_disabled'); } ?>
                     <?php echo $this->form->renderField('format_' . $context, 'params'); ?>
+                    <?php if ($context === 'card') { echo $this->form->renderField('format_card_editor_disabled', 'params'); } ?>
                 <?php else : ?>
                     <?php echo $this->form->renderFieldset('display_' . $context); ?>
                 <?php endif; ?>

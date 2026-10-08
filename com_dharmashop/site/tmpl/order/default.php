@@ -1,0 +1,24 @@
+<?php
+\defined('_JEXEC') or die;
+use Joomla\CMS\Language\Text;
+$order = $this->item;
+?>
+<div id="dharma_shop" class="dharmaOrder fs-6">
+    <section class="py-4">
+        <header class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-4">
+            <div>
+                <h1 class="fs-4 mb-1"><?php echo Text::sprintf('COM_DHARMASHOP_ORDER_HEADING', $this->escape($order->number)); ?></h1>
+                <p class="small text-body-secondary mb-0"><?php echo $this->escape($this->details->date); ?></p>
+            </div>
+            <?php if ($order->status_title) : ?><span class="badge bg-light text-dark border fw-normal"><?php echo $this->escape($order->status_title); ?></span><?php endif; ?>
+        </header>
+        <div class="row g-4 align-items-start">
+            <div class="col-12 col-lg-8">
+                <?php echo $this->loadTemplate('items'); ?>
+                <?php echo $this->loadTemplate('contacts'); ?>
+            </div>
+            <div class="col-12 col-lg-4"><?php echo $this->loadTemplate('summary'); ?></div>
+        </div>
+        <a class="btn btn-sm btn-outline-secondary mt-4" href="<?php echo $this->escape($this->catalogUrl); ?>"><?php echo Text::_('COM_DHARMASHOP_CART_CONTINUE'); ?></a>
+    </section>
+</div>

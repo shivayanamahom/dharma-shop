@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form>
+    <field name="name" type="text" label="COM_DHARMASHOP_CHECKOUT_CONSENT_NAME" description="COM_DHARMASHOP_CHECKOUT_FIELD_NAME_DESC" maxlength="64" filter="trim" validate="regex" validate_regex="^[a-z][a-z0-9_]{0,63}$" pattern="[a-z][a-z0-9_]{0,63}" message="COM_DHARMASHOP_CHECKOUT_FIELD_NAME_INVALID" />
+    <field name="text" type="textarea" label="COM_DHARMASHOP_CHECKOUT_CONSENT_TEXT" description="COM_DHARMASHOP_CHECKOUT_CONSENT_TEXT_DESC" required="true" rows="3" maxlength="2000" filter="string" />
+    <field name="url" type="url" label="COM_DHARMASHOP_CHECKOUT_CONSENT_URL" description="COM_DHARMASHOP_CHECKOUT_CONSENT_URL_DESC" relative="true" schemes="http,https" validate="url" filter="string" maxlength="2048" />
+    <field name="link_label" type="text" label="COM_DHARMASHOP_CHECKOUT_CONSENT_LINK_LABEL" description="COM_DHARMASHOP_CHECKOUT_CONSENT_LINK_LABEL_DESC" maxlength="150" filter="string" showon="url!:" />
+    <field name="required" type="radio" label="COM_DHARMASHOP_CHECKOUT_FIELD_REQUIRED" layout="joomla.form.field.radio.switcher" default="1" filter="integer" validate="options"><option value="0">JNO</option><option value="1">JYES</option></field>
+    <field name="enabled" type="radio" label="COM_DHARMASHOP_CHECKOUT_FIELD_ENABLED" layout="joomla.form.field.radio.switcher" default="1" filter="integer" validate="options"><option value="0">JNO</option><option value="1">JYES</option></field>
+</form>

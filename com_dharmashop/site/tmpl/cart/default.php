@@ -8,9 +8,9 @@
 
 use Joomla\CMS\Language\Text;
 ?>
-<div id="dharma_shop" class="dharmaCart">
+<div id="dharma_shop" class="dharmaCart fs-6">
 <section class="py-4">
-    <h1 class="mb-4"><?php echo Text::_('COM_DHARMASHOP_CART_TITLE'); ?></h1>
+    <h1 class="fs-4 mb-4"><?php echo Text::_('COM_DHARMASHOP_CART_TITLE'); ?></h1>
     <div data-dharmashop-cart-messages aria-live="polite"></div>
     <div data-dharmashop-cart-page>
         <?php echo $this->loadTemplate('content'); ?>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form><fieldset name="details" label="COM_DHARMASHOP_STATUS_TITLE">
+    <field name="id" type="hidden" filter="integer" />
+    <field name="title" type="text" label="JGLOBAL_TITLE" required="true" maxlength="255" filter="string" />
+    <field name="alias" type="text" label="JFIELD_ALIAS_LABEL" description="COM_DHARMASHOP_STATUS_ALIAS_DESC" maxlength="190" filter="string" />
+    <field name="color" type="list" label="COM_DHARMASHOP_STATUS_COLOR" default="secondary"><option value="primary">COM_DHARMASHOP_STATUS_COLOR_PRIMARY</option><option value="secondary">COM_DHARMASHOP_STATUS_COLOR_SECONDARY</option><option value="success">COM_DHARMASHOP_STATUS_COLOR_SUCCESS</option><option value="danger">COM_DHARMASHOP_STATUS_COLOR_DANGER</option><option value="warning">COM_DHARMASHOP_STATUS_COLOR_WARNING</option><option value="info">COM_DHARMASHOP_STATUS_COLOR_INFO</option><option value="dark">COM_DHARMASHOP_STATUS_COLOR_DARK</option></field>
+    <field name="is_default" type="radio" layout="joomla.form.field.radio.switcher" label="COM_DHARMASHOP_STATUS_DEFAULT" description="COM_DHARMASHOP_STATUS_DEFAULT_DESC" default="0" filter="integer"><option value="0">JNO</option><option value="1">JYES</option></field>
+    <field name="state" type="list" label="JSTATUS" default="1" filter="integer"><option value="1">JPUBLISHED</option><option value="0">JUNPUBLISHED</option></field>
+    <field name="ordering" type="number" label="JFIELD_ORDERING_LABEL" default="1" min="1" filter="integer" />
+    <field name="customer_message" type="textarea" label="COM_DHARMASHOP_STATUS_CUSTOMER_MESSAGE" description="COM_DHARMASHOP_STATUS_CUSTOMER_MESSAGE_DESC" rows="4" maxlength="2000" filter="string" />
+</fieldset></form>

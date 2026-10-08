@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form>
+    <fieldset name="contacts" label="COM_DHARMASHOP_CUSTOMER_CONTACTS">
+        <field name="id" type="hidden" filter="integer" />
+        <field name="name" type="text" label="COM_DHARMASHOP_CUSTOMER_NAME" maxlength="255" filter="string" />
+        <field name="email" type="email" label="JGLOBAL_EMAIL" maxlength="255" filter="trim" validate="email" />
+        <field name="phone" type="tel" label="COM_DHARMASHOP_CUSTOMER_PHONE" maxlength="50" filter="string" />
+        <field name="note" type="textarea" label="COM_DHARMASHOP_CUSTOMER_NOTE" maxlength="2000" rows="5" filter="string" />
+    </fieldset>
+</form>

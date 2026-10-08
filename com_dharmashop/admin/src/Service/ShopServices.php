@@ -13,6 +13,10 @@ declare(strict_types=1);
 namespace Dharma\Component\DharmaShop\Administrator\Service;
 
 use Dharma\Component\DharmaShop\Administrator\Cart\CartService;
+use Dharma\Component\DharmaShop\Administrator\Customer\CustomerService;
+use Dharma\Component\DharmaShop\Administrator\Order\OrderService;
+use Dharma\Component\DharmaShop\Administrator\Order\OrderStatusService;
+use Dharma\Component\DharmaShop\Administrator\Notification\NotificationService;
 use Dharma\Component\DharmaShop\Administrator\Catalog\GalleryRepository;
 use Dharma\Component\DharmaShop\Administrator\Catalog\Indexer;
 use Dharma\Component\DharmaShop\Administrator\Catalog\ProductRebuilder;
@@ -59,6 +63,10 @@ final class ShopServices
     private ?OrderRules $orderRules = null;
 
     private ?CartService $cart = null;
+    private ?CustomerService $customers = null;
+    private ?OrderService $orders = null;
+    private ?NotificationService $notifications = null;
+    private ?OrderStatusService $orderStatuses = null;
 
     public function __construct(private readonly DatabaseInterface $db)
     {
@@ -122,5 +130,25 @@ final class ShopServices
     public function orderRules(): OrderRules
     {
         return $this->orderRules ??= new OrderRules($this->db, ComponentHelper::getParams('com_dharmashop'));
+    }
+
+    public function customers(): CustomerService
+    {
+        return $this->customers ??= new CustomerService($this->db);
+    }
+
+    public function orders(): OrderService
+    {
+        return $this->orders ??= new OrderService($this->db, $this->cart(), $this->customers(), $this->notifications());
+    }
+
+    public function notifications(): NotificationService
+    {
+        return $this->notifications ??= new NotificationService($this->db);
+    }
+
+    public function orderStatuses(): OrderStatusService
+    {
+        return $this->orderStatuses ??= new OrderStatusService($this->db, $this->notifications());
     }
 }

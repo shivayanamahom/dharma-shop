@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="plugin" group="dharmashopnotify" method="upgrade">
+    <name>PLG_DHARMASHOPNOTIFY_EMAIL</name>
+    <author>Dharma</author>
+    <creationDate>2026-10</creationDate>
+    <copyright>(C) 2026 Dharma</copyright>
+    <license>GNU General Public License version 2 or later</license>
+    <version>0.1.0</version>
+    <description>PLG_DHARMASHOPNOTIFY_EMAIL_DESCRIPTION</description>
+    <namespace path="src">Dharma\Plugin\DharmaShopNotify\Email</namespace>
+    <scriptfile>script.php</scriptfile>
+    <files><folder plugin="email">services</folder><folder>src</folder><folder>tmpl</folder><filename>script.php</filename></files>
+    <languages>
+        <language tag="ru-RU">language/ru-RU/plg_dharmashopnotify_email.ini</language>
+        <language tag="ru-RU">language/ru-RU/plg_dharmashopnotify_email.sys.ini</language>
+        <language tag="en-GB">language/en-GB/plg_dharmashopnotify_email.ini</language>
+        <language tag="en-GB">language/en-GB/plg_dharmashopnotify_email.sys.ini</language>
+    </languages>
+</extension>

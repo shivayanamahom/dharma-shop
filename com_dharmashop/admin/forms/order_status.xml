@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form><fieldset name="status" addfieldprefix="Dharma\Component\DharmaShop\Administrator\Field">
+    <field name="status_id" type="orderstatus" active_only="true" label="JSTATUS" required="true" filter="integer" />
+</fieldset></form>

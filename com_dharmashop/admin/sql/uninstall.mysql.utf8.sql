@@ -30,3 +30,5 @@ DROP TABLE IF EXISTS `#__dharmashop_order_history`;
 DROP TABLE IF EXISTS `#__dharmashop_payments`;
 DROP TABLE IF EXISTS `#__dharmashop_category_field_values`;
 DROP TABLE IF EXISTS `#__dharmashop_category_field_texts`;
+
+DROP TABLE IF EXISTS `#__dharmashop_notifications`;

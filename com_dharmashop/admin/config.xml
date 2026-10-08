@@ -1,18 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
-<config>
+<config addruleprefix="Dharma\Component\DharmaShop\Administrator\Rule">
 	<!-- Разделы настроек магазина (вкладки): Магазин, Каталог, Изображения, SEO, Оформление заказа, Права. Новые разделы добавляются сюда fieldset-ом. -->
 	<fieldset name="shop" label="COM_DHARMASHOP_CONFIG_SHOP" description="COM_DHARMASHOP_CONFIG_SHOP_DESC">
-		<field name="catalog_mode" type="radio" layout="joomla.form.field.radio.switcher" default="0" filter="integer" label="COM_DHARMASHOP_CONFIG_CATALOG_MODE" description="COM_DHARMASHOP_CONFIG_CATALOG_MODE_DESC">
-			<option value="0">JNO</option>
-			<option value="1">JYES</option>
-		</field>
-		<field name="currency_code" type="text" label="COM_DHARMASHOP_CONFIG_CURRENCY_CODE" description="COM_DHARMASHOP_CONFIG_CURRENCY_CODE_DESC" default="RUB" maxlength="3" filter="string" />
-		<field name="currency_symbol" type="text" label="COM_DHARMASHOP_CONFIG_CURRENCY_SYMBOL" default="₽" maxlength="8" filter="string" />
-		<field name="currency_position" type="list" label="COM_DHARMASHOP_CONFIG_CURRENCY_POSITION" default="after" validate="options">
-			<option value="before">COM_DHARMASHOP_CONFIG_CURRENCY_BEFORE</option>
-			<option value="after">COM_DHARMASHOP_CONFIG_CURRENCY_AFTER</option>
-		</field>
-		<field name="currency_decimals" type="integer" label="COM_DHARMASHOP_CONFIG_CURRENCY_DECIMALS" default="0" first="0" last="4" step="1" />
+		<fieldset name="shop_general" label="COM_DHARMASHOP_SHOP_GENERAL">
+			<field name="_settings_search" type="settingssearch" addfieldprefix="Dharma\Component\DharmaShop\Administrator\Field" />
+			<field name="catalog_mode" type="radio" layout="joomla.form.field.radio.switcher" default="0" filter="integer" label="COM_DHARMASHOP_CONFIG_CATALOG_MODE" description="COM_DHARMASHOP_CONFIG_CATALOG_MODE_DESC">
+				<option value="0">JNO</option>
+				<option value="1">JYES</option>
+			</field>
+			<field name="currency_code" type="text" label="COM_DHARMASHOP_CONFIG_CURRENCY_CODE" description="COM_DHARMASHOP_CONFIG_CURRENCY_CODE_DESC" default="RUB" maxlength="3" filter="string" />
+			<field name="currency_symbol" type="text" label="COM_DHARMASHOP_CONFIG_CURRENCY_SYMBOL" default="₽" maxlength="8" filter="string" />
+			<field name="currency_position" type="list" label="COM_DHARMASHOP_CONFIG_CURRENCY_POSITION" default="after" validate="options">
+				<option value="before">COM_DHARMASHOP_CONFIG_CURRENCY_BEFORE</option>
+				<option value="after">COM_DHARMASHOP_CONFIG_CURRENCY_AFTER</option>
+			</field>
+			<field name="currency_decimals" type="integer" label="COM_DHARMASHOP_CONFIG_CURRENCY_DECIMALS" default="0" first="0" last="4" step="1" />
+		</fieldset>
+		<fieldset name="shop_identity" label="COM_DHARMASHOP_SHOP_IDENTITY">
+			<field name="shop_name" type="text" label="COM_DHARMASHOP_SHOP_NAME" description="COM_DHARMASHOP_SHOP_NAME_DESC" filter="string" maxlength="200" />
+			<field name="shop_logo" type="media" label="COM_DHARMASHOP_SHOP_LOGO" description="COM_DHARMASHOP_SHOP_LOGO_DESC" types="images" filter="string" />
+			<field name="shop_email" type="email" label="COM_DHARMASHOP_SHOP_EMAIL" description="COM_DHARMASHOP_SHOP_EMAIL_DESC" validate="email" filter="string" />
+			<field name="shop_phone" type="text" label="COM_DHARMASHOP_SHOP_PHONE" filter="string" maxlength="100" />
+			<field name="shop_address" type="textarea" label="COM_DHARMASHOP_SHOP_ADDRESS" filter="string" rows="3" maxlength="1000" />
+		</fieldset>
 	</fieldset>
 
 	<fieldset name="catalog" label="COM_DHARMASHOP_CONFIG_CATALOG" description="COM_DHARMASHOP_CONFIG_CATALOG_DESC">
@@ -247,7 +257,17 @@
 		<field name="seo_product_breadcrumb" type="text" label="COM_DHARMASHOP_SEO_BREADCRUMB_LABEL" default="{product.title}" filter="string" />
 	</fieldset>
 
-	<fieldset name="order" label="COM_DHARMASHOP_CONFIG_ORDER" description="COM_DHARMASHOP_CONFIG_ORDER_DESC" addfieldprefix="Dharma\Component\DharmaShop\Administrator\Field">
+	<fieldset name="order" label="COM_DHARMASHOP_CONFIG_ORDER" description="COM_DHARMASHOP_CONFIG_CHECKOUT_DESC" addfieldprefix="Dharma\Component\DharmaShop\Administrator\Field">
+		<fieldset name="checkout_access" label="COM_DHARMASHOP_CONFIG_CHECKOUT_ACCESS">
+			<field name="checkout_guest" type="radio" label="COM_DHARMASHOP_CHECKOUT_GUEST" description="COM_DHARMASHOP_CHECKOUT_GUEST_DESC" layout="joomla.form.field.radio.switcher" default="1" filter="integer" validate="options"><option value="0">JNO</option><option value="1">JYES</option></field>
+		</fieldset>
+		<fieldset name="checkout_contacts" label="COM_DHARMASHOP_CONFIG_CHECKOUT_CONTACTS" description="COM_DHARMASHOP_CONFIG_CHECKOUT_CONTACTS_DESC">
+			<field name="checkout_fields" type="checkoutdefinitions" label="COM_DHARMASHOP_CONFIG_CHECKOUT_FIELDS" formsource="administrator/components/com_dharmashop/forms/checkout_contact.xml" multiple="true" layout="joomla.form.field.subform.repeatable" buttons="add,remove,move" max="50" validate="Checkoutdefinitions" />
+		</fieldset>
+		<fieldset name="checkout_agreements" label="COM_DHARMASHOP_CONFIG_CHECKOUT_AGREEMENTS" description="COM_DHARMASHOP_CONFIG_CHECKOUT_AGREEMENTS_DESC">
+			<field name="checkout_consents" type="checkoutdefinitions" label="COM_DHARMASHOP_CONFIG_CHECKOUT_CONSENTS" formsource="administrator/components/com_dharmashop/forms/checkout_consent.xml" multiple="true" layout="joomla.form.field.subform.repeatable" buttons="add,remove,move" max="50" validate="Checkoutdefinitions" />
+		</fieldset>
+		<fieldset name="order_product_rules" label="COM_DHARMASHOP_CONFIG_ORDER_PRODUCT_RULES" description="COM_DHARMASHOP_CONFIG_ORDER_DESC">
 		<field name="order_qty_min" type="number" label="COM_DHARMASHOP_ORDER_QTY_MIN" description="COM_DHARMASHOP_ORDER_QTY_MIN_DESC" default="1" min="0.001" step="0.001" />
 		<field name="order_qty_step" type="number" label="COM_DHARMASHOP_ORDER_QTY_STEP" description="COM_DHARMASHOP_ORDER_QTY_STEP_DESC" default="1" min="0.001" step="0.001" />
 		<field name="order_qty_max" type="number" label="COM_DHARMASHOP_ORDER_QTY_MAX" description="COM_DHARMASHOP_ORDER_QTY_MAX_DESC" default="0" min="0" step="0.001" />
@@ -266,6 +286,27 @@
 			<option value="0">JNO</option>
 			<option value="1">JYES</option>
 		</field>
+		</fieldset>
+	</fieldset>
+
+	<fieldset name="notifications" label="COM_DHARMASHOP_CONFIG_NOTIFICATIONS" description="COM_DHARMASHOP_CONFIG_NOTIFICATIONS_DESC">
+		<fieldset name="notification_email" label="COM_DHARMASHOP_NOTIFY_EMAIL">
+			<field name="notify_email_enabled" type="radio" label="COM_DHARMASHOP_NOTIFY_ENABLED" description="COM_DHARMASHOP_NOTIFY_ENABLED_DESC" default="0" filter="integer" validate="options" layout="joomla.form.field.radio.switcher"><option value="0">JNO</option><option value="1">JYES</option></field>
+			<field name="notify_replyto" type="email" label="COM_DHARMASHOP_NOTIFY_REPLYTO" description="COM_DHARMASHOP_NOTIFY_REPLYTO_DESC" filter="string" validate="email" maxlength="254" />
+		</fieldset>
+		<fieldset name="notification_admin" label="COM_DHARMASHOP_NOTIFY_ADMIN">
+			<field name="notify_admin_system" type="radio" label="COM_DHARMASHOP_NOTIFY_SYSTEM_USERS" description="COM_DHARMASHOP_NOTIFY_SYSTEM_USERS_DESC" default="1" filter="integer" validate="options" layout="joomla.form.field.radio.switcher"><option value="0">JNO</option><option value="1">JYES</option></field>
+			<field name="notify_admin_emails" type="textarea" label="COM_DHARMASHOP_NOTIFY_EXTRA_EMAILS" description="COM_DHARMASHOP_NOTIFY_EXTRA_EMAILS_DESC" rows="4" maxlength="13000" filter="string" validate="Notificationemails" />
+			<field name="notify_admin_created" type="radio" label="COM_DHARMASHOP_NOTIFY_CREATED" default="1" filter="integer" validate="options" layout="joomla.form.field.radio.switcher"><option value="0">JNO</option><option value="1">JYES</option></field>
+			<field name="notify_admin_status" type="radio" label="COM_DHARMASHOP_NOTIFY_STATUS" default="0" filter="integer" validate="options" layout="joomla.form.field.radio.switcher"><option value="0">JNO</option><option value="1">JYES</option></field>
+		</fieldset>
+		<fieldset name="notification_customer" label="COM_DHARMASHOP_NOTIFY_CUSTOMER">
+			<field name="notify_customer_created" type="radio" label="COM_DHARMASHOP_NOTIFY_CREATED" default="1" filter="integer" validate="options" layout="joomla.form.field.radio.switcher"><option value="0">JNO</option><option value="1">JYES</option></field>
+			<field name="notify_customer_status" type="radio" label="COM_DHARMASHOP_NOTIFY_STATUS" default="1" filter="integer" validate="options" layout="joomla.form.field.radio.switcher"><option value="0">JNO</option><option value="1">JYES</option></field>
+			<field name="notify_customer_items" type="radio" label="COM_DHARMASHOP_NOTIFY_ITEMS" default="1" filter="integer" validate="options" layout="joomla.form.field.radio.switcher"><option value="0">JNO</option><option value="1">JYES</option></field>
+			<field name="notify_customer_contacts" type="radio" label="COM_DHARMASHOP_NOTIFY_CONTACTS" default="1" filter="integer" validate="options" layout="joomla.form.field.radio.switcher"><option value="0">JNO</option><option value="1">JYES</option></field>
+			<field name="notify_customer_link" type="radio" label="COM_DHARMASHOP_NOTIFY_LINK" description="COM_DHARMASHOP_NOTIFY_LINK_DESC" default="1" filter="integer" validate="options" layout="joomla.form.field.radio.switcher"><option value="0">JNO</option><option value="1">JYES</option></field>
+		</fieldset>
 	</fieldset>
 
 	<fieldset name="extensions" label="COM_DHARMASHOP_CONFIG_EXTENSIONS" description="COM_DHARMASHOP_CONFIG_EXTENSIONS_DESC" addfieldprefix="Dharma\Component\DharmaShop\Administrator\Field">

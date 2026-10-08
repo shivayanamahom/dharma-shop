@@ -90,7 +90,14 @@
 | `onDharmaShopCartAfterAdd` | **есть (C65)** | После добавления: `cart`, `variant`, `qty` (итоговое количество строки), `item_id`. |
 | `onDharmaShopCartItemValidate` | **есть (C65)** | При чтении строк корзины: `cart`, `line` (объект строки), `error`; задайте `error`, чтобы строка стала недоступной и не вошла в итоги. |
 | `onDharmaShopCartTotals` | **есть (C65)** | `cart`, `lines`, `subtotal`, `adjustments`; плагин дополняет `adjustments` строками `['title' => …, 'amount' => …]` (скидка — отрицательная сумма). |
-| `Checkout…`, `Shipping…`, `Payment…`, `Order…`, `Notify…` | план, этап 5 | оформление, доставка, оплата, заказ |
+| `Checkout…`, `Shipping…`, `Payment…`, прочие `Order…`, `Notify…` | план, этап 5 | кроме реализованных ниже событий C76 |
+| `onDharmaShopOrderNotify` | **есть (C76)** | Группа `dharmashopnotify`; после commit создания/смены статуса и при ручном повторе ошибок. Аргументы `notification: Administrator\Notification\OrderNotification` (readonly снимок order/items/adjustments/contacts, historyId, reason created/status), `settings: Registry`, `retry: bool`. Плагин использует журнал доставки; ошибка канала не отменяет заказ. |
+| `onDharmaShopOrderAfterCreate` | **есть (C76)** | Группа `dharmashop`, только после commit нового заказа, `order_id`, `history_id`; повтор checkout не вызывает. Ошибки обработчиков журналируются. |
+| `onDharmaShopOrderStatusChanged` | **есть (C76)** | Группа `dharmashop`, после commit фактической смены; `order_id`, `history_id`, `previous_status_id`, `status_id`. Не вызывается при сохранении прежнего статуса. |
+
+### Подстановки писем C76
+
+Четыре шаблона `plg_dharmashopnotify_email.order.new.admin/customer`, `.status.admin/customer` в штатных «Шаблонах писем». Теги: `{SITENAME}`, `{ORDER_NUMBER}`, `{ORDER_DATE}`, `{STATUS}`, `{STATUS_MESSAGE}`, `{TOTAL}`, `{ITEMS}`, `{CONTACTS}`, `{ORDER_LINK}`. Это теги Joomla MailTemplate, не HTML-шорткоды витрины. Данные — сохранённый снимок; внутренние комментарии в письмо не входят; с C77 согласия включаются отдельным блоком CONSENTS. Для администрации ссылка ведёт в админку, для покупателя с user_id — на собственный заказ; для гостя пустая. SMTP и отправитель берутся из Joomla.
 | `onDharmaShopMetadataReady` | **есть (C28/C29)** | Группа `dharmashop`; событие Joomla Event с `page` (readonly `Site\Seo\PageMetadata`), `document` (`HtmlDocument`), `settings` (`Registry` настроек магазина), `content` (readonly `Site\Seo\CollectionMetadata` или `null`). `content`: название списка, упорядоченные `items` с `name`/абсолютным `url`, тип элемента (на категории `CollectionPage`). После применения базовых тегов, до рендера страницы; только сайт/HTML. Социальный плагин использует `page`, плагин Schema.org — также `content`, без запросов каталога. |
 | `onDharmaShopCategoryBeforeTitle` | **есть (C31)** | До заголовка страницы категории; общий для `categories` и будущего `category`, различать по `view`. |
 | `onDharmaShopCategoryAfterTitle` | **есть (C31)** | После заголовка страницы категории. |
@@ -149,3 +156,13 @@ public function afterCategory(LayoutRenderEvent $event): void
 - Шаблоны SEO и их значения по умолчанию: `admin/src/Seo/SeoSettings.php`, подсказки — `SeoHints.php`; настройки — `admin/config.xml`, вкладка `seo`.
 - Правила оформления заказа: `admin/src/Order/OrderRules.php`.
 - Точки макетов: `site/src/Support/LayoutHooks.php`, `site/src/Event/LayoutRenderEvent.php`; вызовы — `site/tmpl/categories/default.php`, `category/default.php`, `product/default.php`. Социальный и Schema.org плагины уже входят в пакет; остальные события — по `ARCHITECTURE.md` §6.
+
+### Дополнение C77: оформление email
+
+Уточнение логотипа: `SHOP_LOGO` в текстовых данных остаётся абсолютным URL; в HTML при встраивании локального изображения становится `cid:dharma-shop-logo@dharmashop`, пригодным для src. MIME inline-файл добавляет отправитель. Внешние URL не скачиваются.
+
+Имена в MailTemplate — в верхнем регистре. `SITENAME` для обратной совместимости теперь равно имени магазина (`shop_name`, иначе название Joomla). Новые скалярные теги: `SHOP_NAME`, `SHOP_EMAIL`, `SHOP_PHONE`, `SHOP_ADDRESS`, `SHOP_URL`, `SHOP_LOGO` (абсолютный HTTP(S) URL), `SHOP_CONTACTS` (общая контактная подпись), `SHIPPING_TITLE`, `PAYMENT_TITLE`. Пользовательские строки экранируются в HTML.
+
+`ORDER_DETAILS` — блок номера/даты/статуса; `SHIPPING`, `PAYMENT` — условные блоки названий способов из снимка. В HTML-версии `ITEMS` — таблица, `CONTACTS` — контактный блок, `STATUS_MESSAGE` — сообщение, `ORDER_LINK` — кнопка. В текстовой версии те же имена содержат обычный текст/URL. Пустой выключенный блок даёт пустую строку. Гостевых постоянных ссылок по-прежнему нет. Оболочка `plg_dharmashopnotify_email/tmpl/mail.php` добавляет шапку с названием/логотипом и контактную подпись, не зависит от глобального mail_style Joomla. Тема и обе версии содержимого редактируются в штатных шаблонах писем.
+
+Уточнение C77: `CONSENTS` — отдельный блок фактических согласий из `contacts.consents`, для администрации и покупателя независимо от CONTACTS. Текст и link_label, безопасная ссылка HTTP(S), отметка Да/Нет, accepted_at при наличии. Неотмеченное необязательное согласие явно показывает Нет; отсутствующие старые сведения не выдумываются. Никаких новых отметок при отправке не создаётся.

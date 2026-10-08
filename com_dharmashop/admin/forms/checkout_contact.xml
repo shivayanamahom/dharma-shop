@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<form>
+    <field name="type" type="list" label="COM_DHARMASHOP_CHECKOUT_FIELD_TYPE" default="text" filter="string" validate="options" required="true">
+        <option value="text">COM_DHARMASHOP_CHECKOUT_TYPE_TEXT</option>
+        <option value="tel">COM_DHARMASHOP_CHECKOUT_TYPE_TEL</option>
+        <option value="email">COM_DHARMASHOP_CHECKOUT_TYPE_EMAIL</option>
+        <option value="textarea">COM_DHARMASHOP_CHECKOUT_TYPE_TEXTAREA</option>
+    </field>
+    <field name="name" type="text" label="COM_DHARMASHOP_CHECKOUT_FIELD_NAME" description="COM_DHARMASHOP_CHECKOUT_FIELD_NAME_DESC" maxlength="64" filter="trim" validate="regex" validate_regex="^[a-z][a-z0-9_]{0,63}$" pattern="[a-z][a-z0-9_]{0,63}" message="COM_DHARMASHOP_CHECKOUT_FIELD_NAME_INVALID" />
+    <field name="label" type="text" label="COM_DHARMASHOP_CHECKOUT_FIELD_LABEL" required="true" maxlength="150" filter="string" />
+    <field name="hint" type="text" label="COM_DHARMASHOP_CHECKOUT_FIELD_HINT" maxlength="150" filter="string" />
+    <field name="show_label" type="radio" label="COM_DHARMASHOP_CHECKOUT_FIELD_SHOW_LABEL" description="COM_DHARMASHOP_CHECKOUT_FIELD_SHOW_LABEL_DESC" layout="joomla.form.field.radio.switcher" default="1" filter="integer" validate="options"><option value="0">JNO</option><option value="1">JYES</option></field>
+    <field name="mask" type="text" label="COM_DHARMASHOP_CHECKOUT_PHONE_MASK" description="COM_DHARMASHOP_CHECKOUT_PHONE_MASK_DESC" default="+7 (###) ###-##-##" hint="+7 (###) ###-##-##" maxlength="64" filter="trim" showon="type:tel" />
+    <field name="required" type="radio" label="COM_DHARMASHOP_CHECKOUT_FIELD_REQUIRED" layout="joomla.form.field.radio.switcher" default="0" filter="integer" validate="options"><option value="0">JNO</option><option value="1">JYES</option></field>
+    <field name="enabled" type="radio" label="COM_DHARMASHOP_CHECKOUT_FIELD_ENABLED" layout="joomla.form.field.radio.switcher" default="1" filter="integer" validate="options"><option value="0">JNO</option><option value="1">JYES</option></field>
+</form>

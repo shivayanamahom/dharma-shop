@@ -65,6 +65,7 @@ class ProductsModel extends ListModel
         ]))
             ->select($db->quoteName('c.title', 'category_title'))
             ->select($db->quoteName('v.sku', 'sku'))
+            ->select($db->quoteName(['v.stock_total', 'v.stock_tracked'], ['stock_qty', 'stock_tracked']))
             ->select($db->quoteName(['vp.price', 'vp.price_final', 'vp.discount', 'vp.discount_percent'], ['price_regular', 'price_final', 'discount', 'discount_percent']))
             ->select($db->quoteName('uc.name', 'editor'))
             ->from($db->quoteName('#__dharmashop_products', 'a'))

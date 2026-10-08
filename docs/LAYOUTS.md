@@ -33,11 +33,16 @@
 | Результаты поиска | `site/tmpl/search/*.php` | Позже; повторно использовать карточки товара | Настройки поиска | Запланировано |
 | Фильтр, сортировка, постраничность | `files_dharmashop_layouts/layouts/filter/*.php`, `files_dharmashop_layouts/layouts/pagination/*.php` | Настройки каталога или вида | По мере появления интерфейса | Запланировано |
 | Корзина | `site/tmpl/cart/*.php` (`default`, `mini` — содержимое боковой панели) | При необходимости | Настройки магазина | Реализовано (C65, C67) |
-| Оформление заказа и результат | `site/tmpl/checkout/*.php`, `site/tmpl/order/*.php` | При необходимости | Настройки магазина | Запланировано с заказами |
+| Оформление заказа и результат | `site/tmpl/checkout/*.php`, `site/tmpl/checkoutcomplete/default.php` | Стандартные переопределения | Отдельные пункты меню | Реализовано C71/C73/C74 |
 | Кабинет и история заказов | `site/tmpl/orders/*.php` | При необходимости | Настройки покупателя | Запланировано |
+| Свой заказ | `site/tmpl/order/default.php`, `default_items.php`, `default_contacts.php`, `default_summary.php` | Стандартные переопределения | Тип меню «Заказ» (необязателен) | C75: сохранённый состав, контакты, итоги; проверка владельца/сессии |
 | Общая шапка, меню, подвал | Проект шаблона `dharma_starter` | Это настройки шаблона, не компонента | Стили и макеты шаблона | Отдельный проект |
 
 Папки будущих видов добавляются вместе с самими видами. Типы пунктов меню заданы файлами `default.xml`; список категорий выводится, каркас товаров категории подключён (карточки пока пустые), бренды/бейджи/товар остаются заготовками. Товары бренда/бейджа будут переиспользовать оформление C33, самостоятельные файлы появятся при необходимости.
+
+## Подтверждение и свой заказ (C75)
+
+Контейнер подтверждения `#dharma_shop.dharmaCheckoutComplete`, блоки `dharmaCheckoutSuccess` / `dharmaCheckoutReceipt`. Контейнер заказа `#dharma_shop.dharmaOrder`; блоки `dharmaOrderItems`, `dharmaOrderContacts`, `dharmaOrderSummary`. Оболочка заказа подключает отдельные части items/contacts/summary; сетка Bootstrap 8/4, на узком экране одна колонка. Без CSS/inline-стилей, заголовок fs-4, итог fs-5, остальные элементы fs-6/small. Переопределения в `templates/<template>/html/com_dharmashop/order/` и `checkoutcomplete/`. Данные снимка экранируются; описание товара и служебные заметки не выводятся.
 
 ## Выбор раздела в пункте меню
 
@@ -232,9 +237,19 @@ C61: editor исключён из данных card в EntityFields до зап�
 - **Классы:** `dharmaMiniCartPanel` (offcanvas), `dharmaMiniCart`, `dharmaMiniCartList`, `dharmaMiniCartLine` (+`dharmaMiniCartLineError`), `dharmaMiniCartImage`, `dharmaMiniCartInfo`, `dharmaMiniCartCategory`, `dharmaMiniCartTitle`, `dharmaMiniCartMeta` (артикул, вариант), `dharmaMiniCartMessage`, `dharmaMiniCartBottom`, `dharmaMiniCartQty`, `dharmaMiniCartPrices`, `dharmaMiniCartOldPrice`, `dharmaMiniCartUnitPrice`, `dharmaMiniCartTotal`, `dharmaMiniCartRemove`, `dharmaMiniCartFooter`, `dharmaMiniCartSum`, `dharmaMiniCartActions`, `dharmaMiniCartGo` (кнопка «Корзина»), `dharmaMiniCartCheckout` (кнопка «Оформить заказ»), `dharmaMiniCartClose`, `dharmaMiniCartEmpty`.
 - **CSS-переменные панели** (`--dharma-minicart-*`): `bg`, `card`, `accent`, `accent-text`, `muted`, `border`, `radius`, `z` (1100), `duration` (0,75 с), `easing`.
 - **Поведение:** панель при загрузке переносится в `body` (у шапки сайта свой контекст наложения); содержимое подгружается фрагментом `view=cart&layout=mini&format=raw&mid=<номер модуля>`, настройки показа (фото, категория, артикул, цена за единицу, скидка, кнопка «Оформить заказ», классы кнопок) фрагмент читает у опубликованного модуля.
-- **Страницы cart и checkout — разные шаблоны.** `checkout` появится на этапе заказов; до него кнопка «Оформить заказ» ведёт на несуществующий адрес (её можно выключить в настройках модуля).
+- **Страницы cart и checkout — разные шаблоны.** checkout существует: контакты, согласия, состав и запись заказа (C71/C73).
+
+## Каркас страницы оформления заказа (2026-10-08)
+
+`site/tmpl/checkout/default.php` — контейнер `<div id="dharma_shop" class="dharmaCheckout fs-6">`, заголовок и количество позиций; загружает `default_form.php`. Форма подключает `default_contacts.php` (поля получателя), `default_agreements.php` (согласия) и `default_summary.php` (состав корзины/итоги справа). Переопределения каждой части — `templates/<template>/html/com_dharmashop/checkout/`. Контакты/согласия — включённые определения настроек в заданном порядке; двухколоночные inputs и textarea во всю ширину, флажки сняты. Bootstrap `row g-4`, `col-lg-8/4`, `card shadow-sm`, компактные fs-6/small/fs-5, без CSS. Крючки `dharmaCheckoutForm`, `dharmaCheckoutMain`, `dharmaCheckoutContacts`, `dharmaCheckoutField`, `dharmaCheckoutAgreements`, `dharmaCheckoutSummary`. `checkout.js` — маска `[data-dharmashop-phone-mask]` и защита повторного submit; кнопка отправляет форму штатным POST. Вид загружает корзину через CartSession/CartService, форматирует MoneyFormatter, SQL в макетах нет. `default.xml` — пункт меню «Оформление заказа», URL `index.php?option=com_dharmashop&view=checkout`; отключены кеш/индексация, режим каталога закрыт. C73: запись подключена; default_success.php — результат из сессии, класс dharmaCheckoutSuccess, стандартное переопределение. В оболочке карточка входа при отключённом гостевом доступе. Доставка/оплата далее. C71/C73 / CHECKOUT.md §6–7.
+
+Уточнения checkout C71: настройка show_label скрывает подпись классом visually-hidden, сохраняя связь label/for. Плейсхолдер — hint, при пустом hint и скрытой подписи — название, обязательность отмечена `*`. Маска tel только внутри input, отдельной подписи/aria-describedby маски нет.
+
+C74: результат вынесен в `site/tmpl/checkoutcomplete/default.php`, контейнер `#dharma_shop.dharmaCheckoutComplete`, карточка `dharmaCheckoutSuccess`. Переопределение: `templates/<template>/html/com_dharmashop/checkoutcomplete/default.php`. Metadata default.xml — тип пункта меню «Заказ оформлен», вид checkoutcomplete. Старый completed=1 перенаправляется; default_success.php оставлен для совместимости. Подтверждение только из сессии, без него нейтральное сообщение. Bootstrap без CSS/JS. Назначение модулей отдельно от формы checkout.
 
 ## Страница корзины (C69)
+
+Блок итогов (2026-10-08): `dharmaCartSummary` — Bootstrap card со скруглением и лёгкой тенью, шапкой «Итого», телом расчёта (до скидки, зелёная скидка, корректировки) и футером «К оплате» с суммой и кнопкой во всю ширину. Компактная типографика: базовый `fs-6`, пояснения/строки расчёта `small`, итог `fs-5 lh-sm fw-semibold`, заголовок страницы `fs-4`, цены позиций `fs-6`. Отступы панели — p-3, кнопка оформления — py-2/fs-6, очистка — btn-sm; строки сумм — flex. Без скидок/корректировок пустое тело не выводится. Только классы Bootstrap, без CSS. Одинаковая разметка при загрузке страницы и обновлении фрагмента AJAX.
 
 `tmpl/cart/default.php` — контейнер `<div id="dharma_shop" class="dharmaCart">`, заголовок, `[data-dharmashop-cart-messages]` и `[data-dharmashop-cart-page]`; содержимое — `default_content.php` (его отдаёт и фрагмент `layout=page&format=raw`). Крючки: `dharmaCartList`, `dharmaCartLine`, `dharmaCartQty`, `dharmaCartSummary`, `dharmaCartEmpty`, `dharmaCartForm`. Data-атрибуты скрипта: `data-dharmashop-cartpage-step|qty|remove|clear|stepper`. Только Bootstrap: `row`, `col-lg-8/4`, `card shadow-sm`, `sticky-lg-top`, `input-group`.
 

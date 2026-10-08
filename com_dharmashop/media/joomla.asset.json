@@ -6,6 +6,20 @@
 	"license": "GPL-2.0-or-later",
 	"assets": [
 		{
+			"name": "com_dharmashop.settings-search",
+			"type": "script",
+			"uri": "com_dharmashop/settings-search.js",
+			"attributes": { "defer": true },
+			"dependencies": ["core", "webcomponent.joomla-tab"]
+		},
+		{
+			"name": "com_dharmashop.checkout",
+			"type": "script",
+			"uri": "com_dharmashop/checkout.js",
+			"attributes": { "defer": true },
+			"dependencies": ["core"]
+		},
+		{
 			"name": "com_dharmashop.listing",
 			"type": "script",
 			"uri": "com_dharmashop/listing.js",

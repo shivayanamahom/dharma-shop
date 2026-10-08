@@ -50,6 +50,13 @@ class FieldModel extends AdminModel
         $item = parent::getItem($pk);
         if (!$item) { return false; }
         $item->params = (new Registry($item->params))->toArray();
+        // Effective configuration also covers definitions saved before editor card display was disabled.
+        if ($item->type === 'editor') {
+            $item->params['load_card'] = 0;
+            $item->params['format_card'] = 'comma';
+            $item->in_card = 0;
+        }
+        if (in_array((string) $item->type, ['editor', 'text'], true)) { $item->filterable = 0; }
         $id = (int) $item->id;
         $db = $this->getDatabase();
         $query = $db->createQuery()->select($db->quoteName(['id','title','alias','image']))->from($db->quoteName('#__dharmashop_field_options'))

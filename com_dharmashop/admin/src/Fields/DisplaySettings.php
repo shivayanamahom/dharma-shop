@@ -14,8 +14,9 @@ final class DisplaySettings
     {
         $result = [];
         foreach (['card', 'page'] as $context) {
-            $result['load_' . $context] = (int) (bool) ($settings['load_' . $context] ?? 1);
-            $format = (string) ($settings['format_' . $context] ?? 'comma');
+            $locked = $type === 'editor' && $context === 'card';
+            $result['load_' . $context] = $locked ? 0 : (int) (bool) ($settings['load_' . $context] ?? 1);
+            $format = $locked ? 'comma' : (string) ($settings['format_' . $context] ?? 'comma');
             if (!in_array($format, self::FORMATS, true)) {
                 throw new \InvalidArgumentException('COM_DHARMASHOP_FIELD_SETTINGS_INVALID');
             }
