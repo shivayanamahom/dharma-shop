@@ -16,6 +16,7 @@ use Dharma\Component\DharmaShop\Administrator\Maintenance\MaintenanceService;
 use Joomla\CMS\Form\Form;
 use Joomla\CMS\Helper\ContentHelper;
 use Joomla\CMS\Language\Text;
+use Joomla\CMS\Router\Route;
 use Joomla\CMS\MVC\View\GenericDataException;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Pagination\Pagination;
@@ -122,6 +123,11 @@ class HtmlView extends BaseHtmlView
 
             foreach (MaintenanceService::COMMANDS as $name => $label) {
                 $commandsBar->standardButton('cmd-' . $name, $label, 'products.cmd' . ucfirst($name))->icon('icon-terminal')->listCheck(false);
+            }
+            foreach (['prepare'=>'PREPARE', 'clear'=>'CLEAR'] as $operation=>$label) {
+                $commandsBar->linkButton('images-'.$operation, 'COM_DHARMASHOP_IMAGE_COMMAND_'.$label)
+                    ->url(Route::_('index.php?option=com_dharmashop&view=imagecommands&operation='.$operation, false))
+                    ->icon('icon-images');
             }
         }
 

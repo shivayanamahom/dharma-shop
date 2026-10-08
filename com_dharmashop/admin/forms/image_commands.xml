@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form addfieldprefix="Dharma\Component\DharmaShop\Administrator\Field">
+    <fieldset name="selection">
+        <field name="context" type="imagepresetcontext" label="COM_DHARMASHOP_IMAGE_COMMAND_SELECT" description="COM_DHARMASHOP_IMAGE_COMMAND_SELECT_DESC" default="">
+            <option value="">COM_DHARMASHOP_IMAGE_COMMAND_ALL</option>
+        </field>
+    </fieldset>
+</form>
