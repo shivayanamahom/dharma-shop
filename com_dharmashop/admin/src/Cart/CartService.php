@@ -311,6 +311,24 @@ final class CartService
         return ['count' => (int) ($row->lines_count ?? 0), 'qty' => (float) ($row->qty_sum ?? 0), 'subtotal' => round((float) ($row->subtotal ?? 0), 2)];
     }
 
+    /**
+     * Удаляет корзины по номерам (раздел «Корзины» в админке): сначала позиции, потом корзины; заказы не затрагиваются.
+     *
+     * @param   int[]  $ids
+     */
+    public function deleteCarts(array $ids): int
+    {
+        $ids = array_values(array_unique(array_filter(array_map('intval', $ids))));
+
+        foreach (array_chunk($ids, 500) as $chunk) {
+            $list = implode(',', $chunk);
+            $this->db->setQuery('DELETE FROM ' . $this->db->quoteName('#__dharmashop_cart_items') . ' WHERE cart_id IN (' . $list . ')')->execute();
+            $this->db->setQuery('DELETE FROM ' . $this->db->quoteName('#__dharmashop_carts') . ' WHERE id IN (' . $list . ')')->execute();
+        }
+
+        return count($ids);
+    }
+
     /** Удаляет просроченные корзины (задача очистки). */
     public function purgeExpired(): int
     {

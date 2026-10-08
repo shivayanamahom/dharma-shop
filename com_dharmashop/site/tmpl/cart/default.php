@@ -12,8 +12,16 @@ use Joomla\CMS\Language\Text;
 <section class="py-4">
     <h1 class="fs-4 mb-4"><?php echo Text::_('COM_DHARMASHOP_CART_TITLE'); ?></h1>
     <div data-dharmashop-cart-messages aria-live="polite"></div>
-    <div data-dharmashop-cart-page>
-        <?php echo $this->loadTemplate('content'); ?>
-    </div>
+    <?php if ($this->readOnly) : ?>
+        <?php // Корзина другого посетителя (ссылка из админки): кнопки и поля недоступны (fieldset disabled), скрипты не подключены. ?>
+        <div class="alert alert-info"><?php echo Text::_('COM_DHARMASHOP_CARTS_READONLY'); ?></div>
+        <fieldset disabled class="border-0 p-0 m-0" data-dharmashop-cart-page>
+            <?php echo $this->loadTemplate('content'); ?>
+        </fieldset>
+    <?php else : ?>
+        <div data-dharmashop-cart-page>
+            <?php echo $this->loadTemplate('content'); ?>
+        </div>
+    <?php endif; ?>
 </section>
 </div>

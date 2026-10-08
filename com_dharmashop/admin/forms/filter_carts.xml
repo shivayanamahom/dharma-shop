@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form>
+	<fields name="filter">
+		<field name="search" type="text" label="COM_DHARMASHOP_CARTS_SEARCH" hint="COM_DHARMASHOP_CARTS_SEARCH_HINT" />
+		<field name="kind" type="list" label="COM_DHARMASHOP_CARTS_KIND" onchange="this.form.submit();">
+			<option value="">COM_DHARMASHOP_CARTS_KIND_ALL</option>
+			<option value="user">COM_DHARMASHOP_CARTS_KIND_USER</option>
+			<option value="guest">COM_DHARMASHOP_CARTS_KIND_GUEST</option>
+		</field>
+		<field name="state" type="list" label="COM_DHARMASHOP_CARTS_STATE" onchange="this.form.submit();">
+			<option value="">COM_DHARMASHOP_CARTS_STATE_ALL</option>
+			<option value="active">COM_DHARMASHOP_CARTS_STATE_ACTIVE</option>
+			<option value="expired">COM_DHARMASHOP_CARTS_STATE_EXPIRED</option>
+		</field>
+		<field name="items" type="list" label="COM_DHARMASHOP_CARTS_ITEMS" onchange="this.form.submit();">
+			<option value="">COM_DHARMASHOP_CARTS_ITEMS_ALL</option>
+			<option value="filled">COM_DHARMASHOP_CARTS_ITEMS_FILLED</option>
+			<option value="empty">COM_DHARMASHOP_CARTS_ITEMS_EMPTY</option>
+		</field>
+	</fields>
+	<fields name="list">
+		<field name="fullordering" type="list" label="JGLOBAL_SORT_BY" default="c.modified DESC" onchange="this.form.submit();">
+			<option value="c.modified DESC">COM_DHARMASHOP_CARTS_SORT_MODIFIED_DESC</option>
+			<option value="c.modified ASC">COM_DHARMASHOP_CARTS_SORT_MODIFIED_ASC</option>
+			<option value="c.expires ASC">COM_DHARMASHOP_CARTS_SORT_EXPIRES_ASC</option>
+			<option value="c.created DESC">COM_DHARMASHOP_CARTS_SORT_CREATED_DESC</option>
+			<option value="c.id DESC">JGRID_HEADING_ID_DESC</option>
+		</field>
+		<field name="limit" type="limitbox" default="20" label="JGLOBAL_LIST_LIMIT" onchange="this.form.submit();" />
+	</fields>
+</form>

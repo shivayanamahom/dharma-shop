@@ -26,6 +26,8 @@ class HtmlView extends BaseHtmlView
     public MoneyFormatter $money;
     public string $catalogUrl = '';
     public string $actionUrl = '';
+    /** Просмотр чужой корзины администратором (только чтение, без действий и скриптов). */
+    public bool $readOnly = false;
     /** @var array<string, bool|string> что показывать в мини-корзине и классы кнопок (задаёт модуль корзины) */
     public array $mini = ['image' => true, 'category' => true, 'sku' => false, 'unit' => true, 'discount' => true, 'checkout' => true, 'cart_class' => 'btn btn-outline-primary', 'checkout_class' => 'btn btn-primary'];
 
@@ -80,6 +82,20 @@ class HtmlView extends BaseHtmlView
         $session = new CartSession($app->bootComponent('com_dharmashop')->getServices()->cart(), $app);
         $cart = $session->current();
 
+        // Просмотр корзины по секретному ключу (ссылка из раздела «Корзины» в админке): только чтение и только для администратора магазина;
+        // чужой ключ без права `dharmashop.orders.manage` игнорируется. Адрес с ключом не индексируется и не передаётся в Referer.
+        $key = (string) $app->getInput()->get('cart', '', 'cmd');
+
+        if ($key !== '' && preg_match('/^[a-f0-9]{32}$/', $key) === 1 && $app->getIdentity()->authorise('dharmashop.orders.manage', 'com_dharmashop')) {
+            $viewed = $session->service()->find($key, 0);
+
+            if ($viewed !== null) {
+                $cart = $viewed;
+                $this->readOnly = true;
+                $app->setHeader('Referrer-Policy', 'no-referrer', true);
+            }
+        }
+
         if ($cart !== null) {
             $service = $session->service();
             $this->lines = $service->lines($cart);
@@ -99,7 +115,10 @@ class HtmlView extends BaseHtmlView
             $document = $this->getDocument();
             $wa = $document->getWebAssetManager();
             $wa->getRegistry()->addExtensionRegistryFile('com_dharmashop');
-            $wa->useScript('com_dharmashop.cart-page');
+            if (!$this->readOnly) {
+                $wa->useScript('com_dharmashop.cart-page');
+            }
+
             $document->addScriptOptions('com_dharmashop.cartpage', [
                 'fragmentUrl' => Route::_('index.php?option=com_dharmashop&view=cart&layout=page&format=raw', false),
                 'updateUrl' => Route::_('index.php?option=com_dharmashop&task=cart.update&format=json', false),
