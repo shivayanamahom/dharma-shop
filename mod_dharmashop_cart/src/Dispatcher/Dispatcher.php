@@ -37,8 +37,13 @@ class Dispatcher extends AbstractModuleDispatcher
         $data['count'] = (int) $summary['count'];
         $data['total'] = $summary['count'] > 0 ? $services->money()->price((string) $summary['subtotal']) : $services->money()->format((string) $summary['subtotal']);
         $data['cartUrl'] = Route::_('index.php?option=com_dharmashop&view=cart', false);
-        $data['offcanvas'] = $data['params']->get('click_action', 'link') === 'offcanvas';
-        $data['openOnAdd'] = (int) $data['params']->get('open_on_add', 1) === 1;
+        // Чекаут выводит серверный снимок состава: менять корзину нужно на её странице.
+        // Проверяем разрешённый Joomla маршрут, чтобы правило работало и с SEF/пунктами меню.
+        $input = $app->getInput();
+        $isCheckout = $input->getCmd('option') === 'com_dharmashop' && $input->getCmd('view') === 'checkout';
+        $data['cartDisabled'] = $isCheckout;
+        $data['offcanvas'] = !$isCheckout && $data['params']->get('click_action', 'link') === 'offcanvas';
+        $data['openOnAdd'] = !$isCheckout && (int) $data['params']->get('open_on_add', 1) === 1;
 
         if ($data['offcanvas']) {
             // Боковая панель: скрипт Bootstrap offcanvas и мини-корзина; подключается только в этом режиме.
