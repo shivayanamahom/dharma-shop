@@ -26,8 +26,10 @@ class HtmlView extends BaseHtmlView
     public MoneyFormatter $money;
     public string $catalogUrl = '';
     public string $actionUrl = '';
+    /** Скидка в мини-корзине суммой (true) или процентом: настройка вида скидки в карточке товара. */
+    public bool $discountAmount = false;
     /** @var array<string, bool|string> что показывать в мини-корзине и классы кнопок (задаёт модуль корзины) */
-    public array $mini = ['image' => true, 'category' => true, 'sku' => false, 'unit' => true, 'checkout' => true, 'cart_class' => 'btn btn-outline-primary', 'checkout_class' => 'btn btn-primary'];
+    public array $mini = ['image' => true, 'category' => true, 'sku' => false, 'unit' => true, 'discount' => true, 'checkout' => true, 'cart_class' => 'btn btn-outline-primary', 'checkout_class' => 'btn btn-primary'];
 
     /** Итог для вывода: при включённой замене нулевой цены строки без цены дописываются к сумме («19 940 ₽ + Цена по запросу»). */
     public function totalText(float $amount): string
@@ -54,6 +56,7 @@ class HtmlView extends BaseHtmlView
 
         $app->allowCache(false);
         $this->money = new MoneyFormatter($settings);
+        $this->discountAmount = $settings->get('product_card_discount_display', 'percent') === 'amount';
         $session = new CartSession($app->bootComponent('com_dharmashop')->getServices()->cart(), $app);
         $cart = $session->current();
 

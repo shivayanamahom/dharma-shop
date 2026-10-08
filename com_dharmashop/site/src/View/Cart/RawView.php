@@ -26,6 +26,7 @@ class RawView extends HtmlView
             'category' => (int) $params->get('show_category', 1) === 1,
             'sku' => (int) $params->get('show_sku', 0) === 1,
             'unit' => (int) $params->get('show_unit_price', 1) === 1,
+            'discount' => (int) $params->get('show_discount', 1) === 1,
             'checkout' => (int) $params->get('show_checkout', 1) === 1,
             'cart_class' => $this->classes((string) $params->get('cart_button_class', ''), 'btn btn-outline-primary'),
             'checkout_class' => $this->classes((string) $params->get('checkout_button_class', ''), 'btn btn-primary'),

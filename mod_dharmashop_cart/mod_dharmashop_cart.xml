@@ -46,6 +46,10 @@
 					<option value="0">JNO</option>
 					<option value="1">JYES</option>
 				</field>
+				<field name="show_discount" type="radio" layout="joomla.form.field.radio.switcher" default="1" filter="integer" label="MOD_DHARMASHOP_CART_SHOW_DISCOUNT" description="MOD_DHARMASHOP_CART_SHOW_DISCOUNT_DESC" showon="click_action:offcanvas">
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
 				<field name="show_checkout" type="radio" layout="joomla.form.field.radio.switcher" default="1" filter="integer" label="MOD_DHARMASHOP_CART_SHOW_CHECKOUT" description="MOD_DHARMASHOP_CART_SHOW_CHECKOUT_DESC" showon="click_action:offcanvas">
 					<option value="0">JNO</option>
 					<option value="1">JYES</option>
