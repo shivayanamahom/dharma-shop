@@ -4,7 +4,8 @@
 
 use Joomla\CMS\Layout\FileLayout;
 
-$fields = array_filter((array) ($displayData['fields'] ?? []), static fn (object $field): bool => !empty($field->show) && !empty($field->values));
+$showKey = ($displayData['context'] ?? '') === 'intro' ? 'show_intro' : 'show';
+$fields = array_filter((array) ($displayData['fields'] ?? []), static fn (object $field): bool => !empty($field->{$showKey}) && !empty($field->values));
 if (!$fields) { return; }
 $escape = static fn ($value): string => htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 $valueLayout = new FileLayout('components.dharmashop.fields.value', null, ['component' => 'none', 'client' => 0]);

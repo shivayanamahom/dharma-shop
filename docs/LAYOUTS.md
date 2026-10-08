@@ -236,11 +236,17 @@ C61: editor исключён из данных card в EntityFields до зап�
 
 **Управление слайдерами Swiper (карточки и страница товара).** Стрелки и полоски — разметка и классы Bootstrap, а не стили Swiper: `carousel-control-prev/next` (белая стрелка Bootstrap, `w-auto px-2`) и `carousel-indicators` (белые полоски, активная — класс `active`). Классы пагинации Swiper переименованы в скрипте (`modifierClass`, `bulletClass`, `clickableClass`), поэтому стили Swiper на них не действуют, а своего CSS у компонента нет: вид не зависит от шаблона, достаточно Bootstrap 5. До запуска слайдера элементы скрыты (`d-none`); скрипты `card-slider.js` и `product-gallery.js` убирают его и передают элементы Swiper (`navigation.prevEl/nextEl`, `pagination.el`, `renderBullet`). Миниатюры страницы товара используют только базовые стили Swiper (раскладка слайдов).
 
+## Интро страницы товара
+
+`product/default.php` подключает `default_intro.php` в средней колонке. Переопределение: `templates/<шаблон>/html/com_dharmashop/product/default_intro.php` (видно в штатном создании переопределений). Блок содержит краткое описание `.dharmaIntro` и `.dharmaProductIntroFields` с заполненными полями, у которых включён `params.show_intro`. По умолчанию 0, в том числе для прежних определений без ключа. Без отмеченных значений контейнер характеристик не выводится.
+
+Значения уже загружены в `item->fields`; флаг `show_intro` выдаётся EntityFields только для полной страницы товара и не зависит от `in_page`. Загрузка `load_page` обязательна, формат общий `format_page`. Макет `fields/default` в контексте `intro` фильтрует по `show_intro`, в `card/page` — по прежнему `show`; `fields/value` сохраняет форматы и контекст изображений field.option. Новых SQL/JS/CSS нет. Вкладки ниже используют прежний `in_page`, карточки списков — `in_card`.
+
 ## Вкладки страницы товара
 
 Под тремя колонками `product/default.php` подключает `$this->loadTemplate('tabs')`: файл `tmpl/product/default_tabs.php`, переопределение `templates/<шаблон>/html/com_dharmashop/product/default_tabs.php`. Первая вкладка «Описание» выводит непустой `item->fulltext` через `$this->text()` в `.dharmaFulltext`. Затем — по вкладке на каждую группу с видимыми заполненными полями страницы (`in_page`, `load_page`); поля без группы идут в «Характеристики». Пустые/скрытые группы и пустое описание не создают вкладку, при отсутствии содержимого весь блок отсутствует. Начальная вкладка — первая доступная, без recall.
 
-`Product\HtmlView::$fieldGroups` содержит `group_id => ['title' => string, 'fields' => array<alias, object>]`, порядок сохраняется из `EntityFields`. Загрузчик добавляет `group_id/group_title` в существующий запрос с уже имеющимся JOIN, без дополнительных SQL. Группы показывают общий переопределяемый макет `fields/default`, форматы значений сохраняются. Верхний блок кратких характеристик остаётся на своём месте.
+`Product\HtmlView::$fieldGroups` содержит `group_id => ['title' => string, 'fields' => array<alias, object>]`, порядок сохраняется из `EntityFields`. Загрузчик добавляет `group_id/group_title` в существующий запрос с уже имеющимся JOIN, без дополнительных SQL. Группы показывают общий переопределяемый макет `fields/default`, форматы значений сохраняются. Верхний блок кратких характеристик использует отдельный флаг show_intro (см. выше).
 
 Штатный `HTMLHelper::_('uitab.*')` подключает ресурсы `webcomponent.joomla-tab`: вкладки при ширине >768 px, аккордион при ширине <=768 px. Нового JS/CSS нет. Постоянные классы: `.dharmaProductDetails`, `.dharmaFulltext`, `.dharmaProductFieldGroup[data-group]`; ID набора/вкладок содержат ID товара и группы. Названия групп экранируются с учётом innerHTML внутри компонента Joomla и выводятся обычным текстом.
 

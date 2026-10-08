@@ -22,6 +22,7 @@ final class DisplaySettings
             }
             $result['format_' . $context] = $format;
         }
+        $result['show_intro'] = (int) (bool) ($settings['show_intro'] ?? 0);
         $result['variation'] = $type === 'list' ? (int) (bool) ($settings['variation'] ?? 0) : 0;
         return $result;
     }
