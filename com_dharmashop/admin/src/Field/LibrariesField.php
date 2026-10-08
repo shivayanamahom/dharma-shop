@@ -20,7 +20,8 @@ use Joomla\CMS\Language\Text;
 
 /**
  * Таблица сторонних библиотек (Swiper, Fancybox) со сравнением версий и кнопками «Обновить» / «Откатить» / «Проверить».
- * Кнопки — обычные кнопки формы с formaction на задачи LibrariesController (токен формы настроек); значения в настройки не сохраняются.
+ * Кнопки — обычные кнопки формы с formaction на параметр libraries_action (его принимает DisplayController и передаёт LibrariesController;
+ * параметр task не годится: в теле формы настроек есть пустое поле task, оно перекрывает адрес). Токен — формы настроек; значения в настройки не сохраняются.
  */
 class LibrariesField extends FormField
 {
@@ -35,7 +36,7 @@ class LibrariesField extends FormField
     {
         $updater = new LibraryUpdater();
         $escape = static fn ($value): string => htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-        $action = static fn (string $task, string $key = ''): string => 'index.php?option=com_dharmashop&task=libraries.' . $task . ($key !== '' ? '&library=' . $key : '');
+        $action = static fn (string $task, string $key = ''): string => 'index.php?option=com_dharmashop&libraries_action=' . $task . ($key !== '' ? '&library=' . $key : '');
         $rows = '';
 
         foreach (array_keys($updater->libraries()) as $key) {

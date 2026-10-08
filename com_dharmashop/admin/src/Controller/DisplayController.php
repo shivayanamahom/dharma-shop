@@ -30,6 +30,18 @@ class DisplayController extends BaseController
 
     public function display($cachable = false, $urlparams = [])
     {
+        // Кнопки вкладки «Расширения» лежат внутри формы настроек, а в её теле есть пустое поле task, которое перекрывает task из адреса:
+        // поэтому действие передаётся отдельным параметром и здесь передаётся LibrariesController (токен и права проверяет он).
+        $libraries = $this->input->getCmd('libraries_action');
+
+        if (in_array($libraries, ['update', 'rollback', 'check'], true)) {
+            $controller = $this->factory->createController('Libraries', 'Administrator', [], $this->app, $this->input);
+            $controller->execute($libraries);
+            $controller->redirect();
+
+            return $this;
+        }
+
         $view = $this->input->getCmd('view');
         if (in_array($view, ['fieldgroup', 'field'], true) && $this->input->getCmd('layout') === 'edit') {
             $id = $this->input->getInt('id');
