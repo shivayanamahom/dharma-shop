@@ -16,6 +16,7 @@
 		<file type="plugin" id="social" group="dharmashop">plg_dharmashop_social.zip</file>
 		<file type="plugin" id="structureddata" group="dharmashop">plg_dharmashop_structureddata.zip</file>
 		<file type="plugin" id="dharmashopswiper" group="system">plg_system_dharmashopswiper.zip</file>
+		<file type="plugin" id="dharmashopfancybox" group="system">plg_system_dharmashopfancybox.zip</file>
 	</files>
 	<languages folder="language">
 		<language tag="en-GB">en-GB/pkg_dharmashop.sys.ini</language>

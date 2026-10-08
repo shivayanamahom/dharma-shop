@@ -1,0 +1,33 @@
+{
+	"$schema": "https://developer.joomla.org/schemas/json-schema/web_assets.json",
+	"name": "dharmashop-fancybox",
+	"version": "6.1.15",
+	"description": "Fancybox (Fancyapps UI): лайтбокс галереи товара Dharma Shop",
+	"license": "Fancyapps UI License Agreement (fancyapps.com/pricing)",
+	"assets": [
+		{
+			"name": "dharmashop.fancybox",
+			"type": "script",
+			"uri": "plg_system_dharmashopfancybox/fancybox.umd.js",
+			"attributes": { "defer": true },
+			"package": "dharmashop-fancybox",
+			"version": "6.1.15"
+		},
+		{
+			"name": "dharmashop.fancybox",
+			"type": "style",
+			"uri": "plg_system_dharmashopfancybox/fancybox.css",
+			"package": "dharmashop-fancybox",
+			"version": "6.1.15"
+		},
+		{
+			"name": "dharmashop.fancybox",
+			"type": "preset",
+			"uri": "",
+			"dependencies": [
+				"dharmashop.fancybox#script",
+				"dharmashop.fancybox#style"
+			]
+		}
+	]
+}

@@ -80,7 +80,7 @@ class HtmlView extends BaseHtmlView
 
     /**
      * Галерея: Swiper (плагин «Dharma Shop Swiper» включён и выбран в настройках) или карусель Bootstrap; лайтбокс — Fancybox
-     * через плагин с набором `wtfancybox`, если он есть. Скрипты подключаются только при необходимости.
+     * (плагин «Dharma Shop Fancybox» или, запасным вариантом, WT Fancybox). Скрипты подключаются только при необходимости.
      */
     private function prepareGallery(): void
     {
@@ -93,7 +93,9 @@ class HtmlView extends BaseHtmlView
             $type = 'bootstrap';
         }
 
-        $lightbox = $this->params->get('product_gallery_lightbox', 'none') === 'fancybox' && $registry->exists('preset', 'wtfancybox');
+        // Fancybox: набор нашего плагина «Dharma Shop Fancybox»; если его нет — набор стороннего плагина WT Fancybox (wtfancybox).
+        $fancybox = $registry->exists('preset', 'dharmashop.fancybox') ? 'dharmashop.fancybox' : ($registry->exists('preset', 'wtfancybox') ? 'wtfancybox' : '');
+        $lightbox = $this->params->get('product_gallery_lightbox', 'none') === 'fancybox' && $fancybox !== '';
 
         if (count($this->item->gallery) > 0) {
             if ($type === 'swiper') {
@@ -103,7 +105,7 @@ class HtmlView extends BaseHtmlView
             }
 
             if ($lightbox) {
-                $wa->usePreset('wtfancybox');
+                $wa->usePreset($fancybox);
             }
 
             $wa->useScript('com_dharmashop.product-gallery');
