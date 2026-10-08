@@ -238,7 +238,7 @@ C61: editor исключён из данных card в EntityFields до зап�
 
 ## Покупка в карточке и на странице товара (C66)
 
-`product-card-parts/actions.php` — действия покупки по режиму `cartMode` (`button` / `qty` / `stepper`); в режиме `stepper` контейнер `.dharmaCardActions[data-dharmashop-cart-control]` содержит кнопку (скрыта, если товар уже в корзине) и виджет `product-card-parts/stepper.php` (`.dharmaCardStepper`: убрать/«−», число, «+»). Страница списка выводит один `<template data-dharmashop-stepper-template>` (в конце `default_items.php`), страница товара — в `default_buy.php`. Страница товара: блок покупки `tmpl/product/default_buy.php` (`.dharmaProductBuy`: наличие, артикул, `.dharmaProductBuyActions` с частью `actions`).
+`product-card-parts/actions.php` — действия покупки по режиму `cartMode` (`button` / `qty` / `stepper`); в режиме `stepper` контейнер `.dharmaCardActions[data-dharmashop-cart-control]` содержит кнопку (скрыта, если товар уже в корзине) и виджет `product-card-parts/stepper.php` (`.dharmaCardStepper`: убрать/«−», число, «+»). Страница списка выводит один `<template data-dharmashop-stepper-template>` (в конце `default_items.php`), страница товара — в `default_buy.php`. Страница товара: блок покупки `tmpl/product/default_buy.php` (`.dharmaProductBuy`: цена, старая цена/скидка, таймер акции, наличие, артикул, `.dharmaProductBuyActions` с частью `actions`). `default.php` подключает его через `loadTemplate('buy')`; цена больше не размечается в оболочке страницы. Переопределение целого блока: `templates/<шаблон>/html/com_dharmashop/product/default_buy.php` (доступно в «Шаблоны → Переопределения» вместе с галереей).
 
 
 ## Мини-корзина (модуль `mod_dharmashop_cart`, C67)
