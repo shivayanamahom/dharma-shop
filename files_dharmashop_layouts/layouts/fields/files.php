@@ -19,7 +19,7 @@ $size = static function (int $bytes): string {
                 <div class="card-body d-flex align-items-start gap-3">
                     <svg class="flex-shrink-0 text-body-secondary" width="24" height="28" viewBox="0 0 24 28" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true" focusable="false"><path d="M3 1h11l7 7v19H3z"/><path d="M14 1v7h7M7 14h10M7 18h10M7 22h6"/></svg>
                     <div class="flex-grow-1 text-break">
-                        <a class="fw-semibold" href="<?php echo $escape($file->url); ?>"<?php echo !empty($settings['files_new_tab']) ? ' target="_blank" rel="noopener noreferrer"' : ''; ?>><?php echo $escape($file->text); ?></a>
+                        <a class="fw-semibold stretched-link" href="<?php echo $escape($file->url); ?>"<?php echo !empty($settings['files_new_tab']) ? ' target="_blank" rel="noopener noreferrer"' : ''; ?>><?php echo $escape($file->text); ?></a>
                         <?php if (!empty($settings['files_show_extension']) || (!empty($settings['files_show_size']) && $file->bytes > 0)) : ?>
                             <small class="d-block text-body-secondary mt-1">
                                 <?php echo !empty($settings['files_show_extension']) ? $escape($file->extension) : ''; ?>
