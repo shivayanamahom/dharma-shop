@@ -78,7 +78,7 @@ if ($saveOrder) {
                                 <span class="badge bg-warning text-dark" title="<?php echo $this->escape(Text::_('COM_DHARMASHOP_SHIPPING_TYPE_MISSING_DESC')); ?>"><?php echo $this->escape($item->plugin); ?>: <?php echo Text::_('COM_DHARMASHOP_SHIPPING_TYPE_MISSING'); ?></span>
                             <?php endif; ?>
                         </td>
-                        <td class="text-center"><?php echo Text::_($item->is_default ? 'JYES' : 'JNO'); ?></td>
+                        <td class="text-center"><?php echo HTMLHelper::_('jgrid.isdefault', (int) $item->is_default, $i, 'shippings.', $canChange && ((int) $item->state === 1 || (int) $item->is_default === 1)); ?></td>
                         <td><?php echo $this->escape((string) $item->access_level); ?></td>
                         <td><?php echo (int) $item->id; ?></td>
                     </tr>

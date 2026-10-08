@@ -119,6 +119,39 @@ class ShippingModel extends AdminModel
         return parent::save($data);
     }
 
+    /**
+     * Делает способ единственным способом по умолчанию (или снимает отметку). Назначить можно только опубликованный способ;
+     * остальные снимаются одним UPDATE.
+     */
+    public function setDefault(int $id, bool $default): bool
+    {
+        $table = $this->getTable();
+
+        if ($id < 1 || !$table->load($id)) {
+            $this->setError(Text::_('JERROR_NO_ITEMS_SELECTED'));
+
+            return false;
+        }
+
+        if ($default && (int) $table->state !== 1) {
+            $this->setError(Text::_('COM_DHARMASHOP_SHIPPING_DEFAULT_PUBLISHED'));
+
+            return false;
+        }
+
+        $db = $this->getDatabase();
+        $flag = $default ? 1 : 0;
+        $query = $db->createQuery()->update($db->quoteName('#__dharmashop_shipping_methods'))
+            ->set('is_default = CASE WHEN id = :id THEN :flag ELSE 0 END')
+            ->where('is_default = 1 OR id = :target')
+            ->bind(':id', $id, \Joomla\Database\ParameterType::INTEGER)
+            ->bind(':flag', $flag, \Joomla\Database\ParameterType::INTEGER)
+            ->bind(':target', $id, \Joomla\Database\ParameterType::INTEGER);
+        $db->setQuery($query)->execute();
+
+        return true;
+    }
+
     private function loadPlugin(int $id): string
     {
         $table = $this->getTable();
