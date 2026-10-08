@@ -38,9 +38,10 @@ $ratio = preg_replace('/[^0-9x]/', '', (string) ($displayData['mediaRatio'] ?? '
                         </div>
                     <?php endforeach; ?>
                 </div>
-                <div class="swiper-pagination"></div>
-                <div class="swiper-button-prev" aria-label="<?php echo $escape(Text::_('JPREVIOUS')); ?>"></div>
-                <div class="swiper-button-next" aria-label="<?php echo $escape(Text::_('JNEXT')); ?>"></div>
+                <?php // Стрелки и полоски — классы Bootstrap (carousel-*): вид не зависит от шаблона; до запуска слайдера скрыты (d-none). ?>
+                <div class="carousel-indicators mx-0 d-none" data-dharmashop-slider-pagination></div>
+                <button type="button" class="carousel-control-prev w-auto px-2 d-none" data-dharmashop-slider-prev aria-label="<?php echo $escape(Text::_('JPREVIOUS')); ?>"><span class="carousel-control-prev-icon" aria-hidden="true"></span></button>
+                <button type="button" class="carousel-control-next w-auto px-2 d-none" data-dharmashop-slider-next aria-label="<?php echo $escape(Text::_('JNEXT')); ?>"><span class="carousel-control-next-icon" aria-hidden="true"></span></button>
             </div>
         <?php elseif (count($images) > 1) : ?>
             <?php $carousel = 'dharmaCarousel-' . (int) $item->id; ?>

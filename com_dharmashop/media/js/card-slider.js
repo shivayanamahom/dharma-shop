@@ -9,15 +9,34 @@
 
   let observer = null;
 
+  // Стрелки и полоски — разметка и классы Bootstrap (carousel-control-*, carousel-indicators), а не стили Swiper: вид не зависит от шаблона.
+  // Классы пагинации Swiper переименованы, чтобы его стили на них не действовали; активная полоска получает класс Bootstrap `active`.
+  const controls = (element) => {
+    const pagination = element.querySelector('[data-dharmashop-slider-pagination]');
+    const prev = element.querySelector('[data-dharmashop-slider-prev]');
+    const next = element.querySelector('[data-dharmashop-slider-next]');
+    [pagination, prev, next].forEach((control) => control && control.classList.remove('d-none'));
+
+    return {
+      pagination: pagination ? {
+        el: pagination,
+        clickable: true,
+        bulletClass: 'dharmashop-bullet',
+        bulletActiveClass: 'active',
+        modifierClass: 'dharmashop-pagination-',
+        clickableClass: 'dharmashop-pagination-clickable',
+        horizontalClass: 'dharmashop-pagination-horizontal',
+        renderBullet: (index, className) => '<button type="button" class="' + className + '" data-bs-target aria-label="' + (index + 1) + '"></button>',
+      } : false,
+      navigation: prev && next ? { prevEl: prev, nextEl: next } : false,
+    };
+  };
+
+
   const create = (element) => {
     if (element.dataset.dharmashopCardSliderReady || typeof window.Swiper !== 'function') return;
     element.dataset.dharmashopCardSliderReady = '1';
-    new window.Swiper(element, {
-      spaceBetween: 0,
-      a11y: true,
-      pagination: { el: element.querySelector('.swiper-pagination'), clickable: true },
-      navigation: { nextEl: element.querySelector('.swiper-button-next'), prevEl: element.querySelector('.swiper-button-prev') },
-    });
+    new window.Swiper(element, Object.assign({ spaceBetween: 0, a11y: true }, controls(element)));
   };
 
   const observe = () => {
