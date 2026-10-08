@@ -29,8 +29,8 @@ $heading = $page?->h1 ?? (string) ($this->item->title ?? '');
     <?php echo $hooks->render('beforeContent'); ?>
     <div class="row g-4">
         <div class="col-lg-6 dharmaProductGallery">
-            <?php // Галерея — отдельный макет (product-gallery): правится независимо от страницы. ?>
-            <?php echo (new FileLayout('components.dharmashop.product-gallery.default', null, ['component' => 'none', 'client' => 0]))->render($this->gallery); ?>
+            <?php // Галерея — отдельный файл рядом с default.php (default_gallery.php): правится независимо, виден в «Шаблоны → Переопределения». ?>
+            <?php echo $this->loadTemplate('gallery'); ?>
         </div>
         <div class="col-lg-6 dharmaProductInfo">
     <?php if ($this->price !== '') : ?>

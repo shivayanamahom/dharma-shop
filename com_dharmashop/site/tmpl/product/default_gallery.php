@@ -1,26 +1,27 @@
 <?php
 /**
- * Галерея товара на странице товара: главный слайдер, полоса миниатюр и ссылки для лайтбокса. Отдельный файл — правится независимо
- * от страницы товара. Данные готовит вид, SQL здесь нет.
- *
- * displayData: images (объекты url, alt, title), type (swiper | bootstrap), thumbs (bottom | none), lightbox (bool),
- * loop (bool), id (int, id товара). Инициализацию Swiper и привязку лайтбокса делает media/com_dharmashop/js/product-gallery.js.
+ * Галерея товара (часть страницы товара, `loadTemplate('gallery')`): главный слайдер Swiper и полоса миниатюр, либо карусель Bootstrap;
+ * при включённом лайтбоксе фото обёрнуты ссылками `data-fancybox`. Лежит рядом с default.php, поэтому доступна в админке Joomla
+ * («Шаблоны → Переопределения») и правится независимо от страницы товара. Данные — `$this->gallery` (готовит вид, SQL здесь нет):
+ * images (url, alt, title), type (swiper | bootstrap), thumbs (bottom | none), lightbox, loop, id. Инициализацию делает
+ * media/com_dharmashop/js/product-gallery.js.
  */
 \defined('_JEXEC') or die;
 
 use Joomla\CMS\Language\Text;
 
-$images = array_values((array) ($displayData['images'] ?? []));
+$gallery = $this->gallery;
+$images = array_values((array) ($gallery['images'] ?? []));
 
 if (!$images) {
     return;
 }
 
 $escape = static fn ($value): string => htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-$id = (int) ($displayData['id'] ?? 0);
-$type = ($displayData['type'] ?? 'swiper') === 'bootstrap' ? 'bootstrap' : 'swiper';
-$thumbs = ($displayData['thumbs'] ?? 'bottom') === 'none' ? 'none' : 'bottom';
-$lightbox = !empty($displayData['lightbox']);
+$id = (int) ($gallery['id'] ?? 0);
+$type = ($gallery['type'] ?? 'swiper') === 'bootstrap' ? 'bootstrap' : 'swiper';
+$thumbs = ($gallery['thumbs'] ?? 'bottom') === 'none' ? 'none' : 'bottom';
+$lightbox = !empty($gallery['lightbox']);
 $group = 'dharmaGallery-' . $id;
 $link = static function (object $image, string $content) use ($escape, $lightbox, $group): string {
     return $lightbox
@@ -28,7 +29,7 @@ $link = static function (object $image, string $content) use ($escape, $lightbox
         : $content;
 };
 ?>
-<div class="dharmaGallery" id="<?php echo $escape($group); ?>" data-dharmashop-gallery data-type="<?php echo $type; ?>" data-thumbs="<?php echo $thumbs; ?>" data-loop="<?php echo !empty($displayData['loop']) ? '1' : '0'; ?>" data-lightbox="<?php echo $lightbox ? '1' : '0'; ?>">
+<div class="dharmaGallery" id="<?php echo $escape($group); ?>" data-dharmashop-gallery data-type="<?php echo $type; ?>" data-thumbs="<?php echo $thumbs; ?>" data-loop="<?php echo !empty($gallery['loop']) ? '1' : '0'; ?>" data-lightbox="<?php echo $lightbox ? '1' : '0'; ?>">
     <?php if ($type === 'swiper' && count($images) > 0) : ?>
         <div class="swiper dharmaGalleryMain rounded overflow-hidden">
             <div class="swiper-wrapper">
