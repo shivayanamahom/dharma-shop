@@ -30,7 +30,7 @@ final class PlaceholderCatalog
 
         if ($area === 'product') {
             return [
-                ['label' => 'COM_DHARMASHOP_PH_GROUP_PRODUCT', 'items' => ['product.title', 'product.sku', 'product.category', 'product.brand', 'product.price', 'product.price_min', 'product.price_max', 'product.price_old', 'product.discount', 'product.unit', 'product.stock']],
+                ['label' => 'COM_DHARMASHOP_PH_GROUP_PRODUCT', 'items' => ['product.title', 'product.introtext', 'product.sku', 'product.category', 'product.brand', 'product.price', 'product.price_min', 'product.price_max', 'product.price_old', 'product.discount', 'product.unit', 'product.stock']],
                 ['label' => 'COM_DHARMASHOP_PH_GROUP_GLOBAL', 'items' => ['global.sitename', 'global.currency', 'global.url']],
             ];
         }

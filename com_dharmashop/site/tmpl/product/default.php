@@ -34,7 +34,7 @@ $heading = $page?->h1 ?? (string) ($this->item->title ?? '');
         <div class="col-12 col-md-6 col-xl-5 dharmaProductInfo">
             <?php if (trim((string) ($this->item->introtext ?? '')) !== '') : ?>
                 <?php // HTML краткого описания очищается фильтром формы товара при сохранении. ?>
-                <div class="mb-4 dharmaIntro"><?php echo $this->item->introtext; ?></div>
+                <div class="mb-4 dharmaIntro"><?php echo $this->text((string) $this->item->introtext); ?></div>
             <?php endif; ?>
             <?php // Характеристики подключаются отдельным макетом. ?>
             <?php echo (new FileLayout('components.dharmashop.fields.default', null, ['component' => 'none', 'client' => 0]))->render(['fields' => $this->item->fields ?? [], 'context' => 'page']); ?>

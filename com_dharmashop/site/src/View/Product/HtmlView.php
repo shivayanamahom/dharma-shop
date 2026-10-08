@@ -4,7 +4,9 @@ declare(strict_types=1);
 namespace Dharma\Component\DharmaShop\Site\View\Product;
 
 use Dharma\Component\DharmaShop\Administrator\Pricing\MoneyFormatter;
+use Dharma\Component\DharmaShop\Site\Placeholder\GlobalValues;
 use Dharma\Component\DharmaShop\Site\Placeholder\ProductValues;
+use Dharma\Component\DharmaShop\Site\Placeholder\Renderer;
 use Dharma\Component\DharmaShop\Site\Seo\PageMetadata;
 use Dharma\Component\DharmaShop\Site\Seo\PageSeo;
 use Dharma\Component\DharmaShop\Site\Support\CartAssets;
@@ -99,6 +101,13 @@ class HtmlView extends BaseHtmlView
         }
 
         parent::display($tpl);
+    }
+
+    /** Тексты страницы товара с однократными подстановками; HTML сохраняется, значения экранируются. */
+    public function text(string $html): string
+    {
+        return (new Renderer())->renderHtml($html, ProductValues::build($this->item, new MoneyFormatter($this->params))
+            + GlobalValues::build($this->params));
     }
 
     /**

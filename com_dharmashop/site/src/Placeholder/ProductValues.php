@@ -14,7 +14,6 @@ final class ProductValues
     /** @return array<string, string> */
     public static function build(object $item, MoneyFormatter $money): array
     {
-        $intro = trim(strip_tags((string) ($item->introtext ?? '')));
         $min = $item->price_min ?? null;
         $max = $item->price_max ?? null;
 
@@ -24,7 +23,16 @@ final class ProductValues
             'product.price_max' => $money->price($max !== null ? (string) $max : null),
             'product.unit' => (string) ($item->unit ?? ''),
             'product.stock' => !empty($item->in_stock) ? Text::_('COM_DHARMASHOP_PRODUCT_IN_STOCK') : Text::_('COM_DHARMASHOP_PRODUCT_OUT_OF_STOCK'),
-            'product.introtext' => mb_substr($intro, 0, 200),
+            'product.introtext' => self::introtext((string) ($item->introtext ?? '')),
         ];
+    }
+
+    /** Текст подстановки и предпросмотра: без HTML/сущностей, не более 200 символов. */
+    public static function introtext(string $html): string
+    {
+        $html = (string) preg_replace('~</?(?:p|div|li|h[1-6]|br)\b[^>]*>~i', ' ', $html);
+        $plain = trim((string) preg_replace('/\s+/u', ' ', strip_tags(html_entity_decode($html, ENT_QUOTES | ENT_HTML5, 'UTF-8'))));
+
+        return mb_strlen($plain) > 200 ? rtrim(mb_substr($plain, 0, 199)) . '…' : $plain;
     }
 }

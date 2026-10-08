@@ -14,6 +14,7 @@ namespace Dharma\Component\DharmaShop\Administrator\View\Product;
 
 use Dharma\Component\DharmaShop\Administrator\Seo\PlaceholderCatalog;
 use Dharma\Component\DharmaShop\Administrator\Support\FieldGroupTabs;
+use Dharma\Component\DharmaShop\Site\Placeholder\ProductValues;
 use Joomla\Database\DatabaseInterface;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
@@ -94,10 +95,12 @@ class HtmlView extends BaseHtmlView
             return $catid > 1 ? (string) $db->setQuery('SELECT title FROM #__categories WHERE id = ' . $catid)->loadResult() : '';
         };
         $has = $id > 0;
+        $intro = ProductValues::introtext((string) ($item->introtext ?? ''));
         $effective = $has && $item->price_min !== null ? (float) $item->price_min : null;
         $regular = $has && $item->price !== null ? (float) $item->price : null;
         $values = [
             'product.title' => $has ? (string) $item->title : $none,
+            'product.introtext' => $has && $intro !== '' ? $intro : $none,
             'product.sku' => $has && (string) $item->sku !== '' ? (string) $item->sku : $none,
             'product.category' => ($t = $titleOf((int) ($item->catid ?? 0))) !== '' ? $t : $none,
             'product.brand' => ($t = $titleOf((int) ($item->brand_id ?? 0))) !== '' ? $t : $none,
