@@ -16,6 +16,7 @@ $order = $this->item;
             <div class="col-12 col-lg-8">
                 <?php echo $this->loadTemplate('items'); ?>
                 <?php echo $this->loadTemplate('contacts'); ?>
+                <?php echo $this->loadTemplate('shipping'); ?>
             </div>
             <div class="col-12 col-lg-4"><?php echo $this->loadTemplate('summary'); ?></div>
         </div>

@@ -3,6 +3,7 @@ declare(strict_types=1);
 namespace Dharma\Component\DharmaShop\Site\Controller;
 
 use Dharma\Component\DharmaShop\Administrator\Order\CheckoutFields;
+use Dharma\Component\DharmaShop\Administrator\Shipping\ShippingInputException;
 use Dharma\Component\DharmaShop\Site\Support\CartSession;
 use Dharma\Component\DharmaShop\Site\Support\OrderAccess;
 use Joomla\CMS\Component\ComponentHelper;
@@ -42,6 +43,9 @@ class CheckoutController extends BaseController
         if (!$cart || (int) $cart->id !== (int) ($pending['cart_id'] ?? 0)) {
             $this->setRedirect($url,Text::_('COM_DHARMASHOP_CART_EMPTY'),'warning'); return;
         }
+        // Доставка: id способа и данные по способу; проверку и цену выполняет сервер при создании заказа.
+        $shipping = ['method'=>$this->input->post->getInt('shipping_method'),'input'=>$this->input->post->get('shipping',[],'array')];
+        $this->app->setUserState('com_dharmashop.checkout.shipping',['method'=>$shipping['method'],'input'=>$shipping['input'],'errors'=>[]]);
         $validated = CheckoutFields::validate($settings,$this->input->post->get('recipient',[],'array'),$this->input->post->get('consents',[],'array'));
         if ($validated['errors']) {
             $this->app->setUserState('com_dharmashop.checkout.values',$validated['values']);
@@ -49,7 +53,11 @@ class CheckoutController extends BaseController
             $this->setRedirect($url,Text::_('COM_DHARMASHOP_ORDER_FIELDS_ERROR'),'warning'); return;
         }
         try {
-            $result = $shop->orders()->create($cart,$userId,$key,$validated,$settings);
+            $result = $shop->orders()->create($cart,$userId,$key,$validated,$settings,$shipping);
+        } catch (ShippingInputException $error) {
+            $this->app->setUserState('com_dharmashop.checkout.values',$validated['values']);
+            $this->app->setUserState('com_dharmashop.checkout.shipping',['method'=>$shipping['method'],'input'=>$shipping['input'],'errors'=>$error->errors()]);
+            $this->setRedirect($url,$error->getMessage(),'warning'); return;
         } catch (\DomainException $error) {
             $this->app->setUserState('com_dharmashop.checkout.values',$validated['values']);
             $this->setRedirect($url,$error->getMessage(),'warning'); return;
@@ -61,6 +69,7 @@ class CheckoutController extends BaseController
         }
         $this->app->setUserState('com_dharmashop.checkout.values',null);
         $this->app->setUserState('com_dharmashop.checkout.errors',null);
+        $this->app->setUserState('com_dharmashop.checkout.shipping',null);
         $this->app->setUserState('com_dharmashop.checkout.receipt',$result + ['user_id'=>$userId,'time'=>time()]);
         OrderAccess::remember($this->app, (int) $result['id'], $userId);
         $pending['used'] = true;

@@ -9,7 +9,8 @@ use Joomla\CMS\Router\Route;
     <div class="row g-4 align-items-start">
         <div class="col-lg-8 dharmaCheckoutMain">
             <?php echo $this->loadTemplate('contacts'); ?>
-            <?php // Доставка и оплата будут подключаться здесь отдельными макетами. ?>
+            <?php echo $this->loadTemplate('shipping'); ?>
+            <?php // Оплата будет подключаться здесь отдельным макетом. ?>
             <?php echo $this->loadTemplate('agreements'); ?>
         </div>
         <div class="col-lg-4">

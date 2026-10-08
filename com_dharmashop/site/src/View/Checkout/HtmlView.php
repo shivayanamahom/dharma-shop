@@ -11,6 +11,7 @@ use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Router\Route;
 use Dharma\Component\DharmaShop\Administrator\Pricing\MoneyFormatter;
 use Dharma\Component\DharmaShop\Administrator\Order\CheckoutFields;
+use Dharma\Component\DharmaShop\Administrator\Shipping\Context as ShippingContext;
 use Dharma\Component\DharmaShop\Site\Support\CartSession;
 use Dharma\Component\DharmaShop\Site\Support\CheckoutPrefill;
 use Joomla\Database\DatabaseInterface;
@@ -34,6 +35,12 @@ class HtmlView extends BaseHtmlView
     public array $values = [];
     public array $errors = [];
     public ?array $receipt = null;
+    /** @var array<int, array{title: string, term: string, price_text: string, info: array, html: string}> варианты доставки: id способа => сведения для боковой панели и готовый HTML варианта (макет плагина типа) */
+    public array $shippingOptions = [];
+    public int $shippingSelected = 0;
+    public float $shippingPrice = 0.0;
+    /** Способы доставки включены, но для этой корзины ни один не подходит: заказ оформить нельзя. */
+    public bool $shippingBlocked = false;
 
     public function totalText(float $amount): string
     {
@@ -61,6 +68,64 @@ class HtmlView extends BaseHtmlView
         }
 
         return ['before' => round($before, 2), 'saved' => round($before - $actual, 2)];
+    }
+
+    /** Итог к оплате с учётом доставки выбранного варианта. */
+    public function totalWithShipping(): float
+    {
+        return round((float) $this->totals['total'] + $this->shippingPrice, 2);
+    }
+
+    /** Способы доставки с расчётом сервера: цена и доступность определяются плагином типа; HTML варианта — макет плагина. */
+    private function prepareShipping($app, $settings): void
+    {
+        $valid = array_values(array_filter($this->lines, static fn (object $line): bool => $line->error === ''));
+
+        if (!$valid) {
+            return;
+        }
+
+        $service = $app->bootComponent('com_dharmashop')->getServices()->shipping();
+        $context = new ShippingContext((float) $this->totals['total'], (float) $this->totals['subtotal'], (float) $this->totals['qty'], (int) $this->totals['count'], (string) $settings->get('currency_code', 'RUB'), $valid, $this->values);
+        $options = $service->options($context);
+
+        if (!$options) {
+            $this->shippingBlocked = $service->hasMethods();
+
+            return;
+        }
+
+        $state = (array) $app->getUserState('com_dharmashop.checkout.shipping', []);
+        $chosen = (int) ($state['method'] ?? 0);
+        $this->shippingSelected = isset($options[$chosen]) ? $chosen : $service->defaultId($options);
+        $free = Text::_('COM_DHARMASHOP_SHIPPING_FREE');
+
+        foreach ($options as $id => $option) {
+            $quote = $option['quote'];
+
+            if ($id === $this->shippingSelected) {
+                $this->shippingPrice = $quote->price;
+            }
+
+            $this->shippingOptions[$id] = [
+                'title' => $option['method']->title,
+                'term' => $quote->term,
+                'price_text' => $quote->free ? $free : $this->money->format((string) $quote->price),
+                'info' => $option['info'],
+                'html' => $option['type']->render([
+                    'method' => $option['method'],
+                    'quote' => $quote,
+                    'selected' => $id === $this->shippingSelected,
+                    'id' => $id,
+                    'values' => (array) ($state['input'][$id] ?? []),
+                    'info' => $option['info'],
+                    'errors' => $id === $this->shippingSelected ? (array) ($state['errors'] ?? []) : [],
+                    'price_text' => $this->money->format((string) $quote->price),
+                    'total_text' => $this->totalText(round((float) $this->totals['total'] + $quote->price, 2)),
+                    'free_text' => $free,
+                ]),
+            ];
+        }
     }
 
     public function display($tpl = null): void
@@ -117,6 +182,10 @@ class HtmlView extends BaseHtmlView
             foreach ($this->lines as $line) {
                 $line->url = Route::_('index.php?option=com_dharmashop&view=product&id=' . (int) $line->product_id, false);
             }
+        }
+
+        if (!$this->receipt && !$this->loginRequired) {
+            $this->prepareShipping($app, $settings);
         }
 
         $document = $this->getDocument();

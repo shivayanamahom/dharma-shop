@@ -4,6 +4,8 @@ namespace Dharma\Component\DharmaShop\Administrator\Order;
 
 use Dharma\Component\DharmaShop\Administrator\Cart\CartService;
 use Dharma\Component\DharmaShop\Administrator\Customer\CustomerService;
+use Dharma\Component\DharmaShop\Administrator\Shipping\Context as ShippingContext;
+use Dharma\Component\DharmaShop\Administrator\Shipping\ShippingService;
 use Dharma\Component\DharmaShop\Administrator\Stock\StockService;
 use Dharma\Component\DharmaShop\Administrator\Support\Sql;
 use Dharma\Component\DharmaShop\Administrator\Notification\NotificationService;
@@ -32,7 +34,11 @@ final class OrderService
         return (int) $this->db->insertid();
     }
     /** Ключ заранее проверяется по сессии контроллером; его уникальность защищает повтор POST. */
-    public function create(object $cart, int $userId, string $key, array $validated, Registry $settings): array
+    /**
+     * @param   array{method?: int, input?: array<int|string, array<string, mixed>>}|null  $shipping  выбор доставки из формы: id способа и введённые данные по id;
+     *                                                                                          при наличии включённых способов выбор обязателен (ShippingInputException)
+     */
+    public function create(object $cart, int $userId, string $key, array $validated, Registry $settings, ?array $shipping = null): array
     {
         if ((int) $settings->get('catalog_mode',0) === 1 || ($userId === 0 && (int) $settings->get('checkout_guest',1) !== 1)) {
             throw new \DomainException(Text::_('COM_DHARMASHOP_CHECKOUT_LOGIN_REQUIRED'));
@@ -59,6 +65,16 @@ final class OrderService
             }
             $totals = $this->carts->totals($cart,$lines);
             if (!is_finite($totals['total'])) throw new \DomainException(Text::_('COM_DHARMASHOP_ORDER_INVALID'));
+            // Доставка: способ и цену определяет сервер (плагин типа); сумма из браузера не принимается.
+            $shippingService = new ShippingService($this->db);
+            $selection = null;
+            if ($shippingService->hasMethods()) {
+                $methodId = (int) ($shipping['method'] ?? 0);
+                $context = new ShippingContext((float) $totals['total'],(float) $totals['subtotal'],(float) $totals['qty'],(int) $totals['count'],(string) $settings->get('currency_code','RUB'),$lines,$validated['profile']);
+                $selection = $shippingService->resolve($methodId,$context,(array) ($shipping['input'][$methodId] ?? []));
+                $totals['adjustments'][] = ['type'=>'shipping','code'=>'shipping:' . $selection->method->id,'title'=>$selection->method->title,'amount'=>$selection->quote->price];
+                $totals['total'] = round($totals['total'] + $selection->quote->price,2);
+            }
             $now = Factory::getDate()->toSql();
             $statusId = $this->ensureInitialStatus();
             $customerId = $this->customers->forOrder($userId,$validated['profile'],$now);
@@ -70,7 +86,8 @@ final class OrderService
             $order = (object) ['number'=>null,'secret'=>$key,'kind'=>1,'customer_id'=>$customerId,'user_id'=>$userId ?: null,'status_id'=>$statusId,
                 'currency'=>(string) $settings->get('currency_code','RUB'),'subtotal'=>$totals['subtotal'],'adjustments_total'=>$adjustmentsTotal,'total'=>$totals['total'],
                 'contact_name'=>$profile['name'],'contact_email'=>$profile['email'],'contact_phone'=>$profile['phone'],
-                'contacts'=>json_encode($snapshot,JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),'cart_id'=>(int) $cart->id,'created'=>$now,'created_by'=>$userId];
+                'contacts'=>json_encode($snapshot,JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),'cart_id'=>(int) $cart->id,'created'=>$now,'created_by'=>$userId,
+                'shipping_method_id'=>$selection?->method->id,'shipping_title'=>$selection ? mb_substr($selection->method->title,0,255) : '','shipping_data'=>$selection ? json_encode($selection->snapshot(),JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR) : null];
             $this->db->insertObject('#__dharmashop_orders',$order);
             $id = (int) $this->db->insertid(); $number = str_pad((string) $id,6,'0',STR_PAD_LEFT);
             Sql::exec($this->db,'UPDATE #__dharmashop_orders SET number=:n WHERE id=:id', [':n'=>[$number],':id'=>[$id,ParameterType::INTEGER]]);

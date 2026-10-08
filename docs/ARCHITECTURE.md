@@ -89,7 +89,8 @@ plg_system_dharmashop/            слияние корзины при вход�
 plg_system_dharmashopmenu/        раздел «Dharma Shop» в боковом меню админки после «Компонентов» (onPreprocessMenuItems), без записей в БД
 plg_task_dharmashop/              задачи планировщика: старт/конец скидок, очистка корзин, переиндексация
 plg_dharmashop_imageresize/       C79: размеры по контекстам, производные Joomla Image/GD, кеш с двумя уровнями хеша
-plg_dharmashopshipping_standard/  фиксированная цена, бесплатно от суммы, самовывоз
+plg_dharmashopshipping_standard/  стандартная доставка: цена, бесплатно от суммы, конструктор полей покупателя (C80)
+plg_dharmashopshipping_pickup/    самовывоз: пункт выдачи, контакты, часы работы, карта (C80)
 plg_dharmashoppayment_offline/    «при получении / по счёту» (без онлайн-платежа)
 mod_dharmashop_*/                 модули
 ```
@@ -372,6 +373,8 @@ C71/C73: checkout — отдельный вид и тип меню; части d
 ```
 
 Один плагин может обслуживать несколько записей.
+
+Реализация доставки (C80): `Administrator\Shipping\*` (контракт `TypeInterface`, реестр, `ShippingService`), раздел админки `shippings`, типы — плагины `plg_dharmashopshipping_standard` и `plg_dharmashopshipping_pickup`; снимок выбора — `orders.shipping_data` (JSON: `type`, `title`, `price`, `free`, `term`, `rows`, `data`), цена — строка `order_adjustments` типа `shipping`. Правила для плагинов — `docs/SHIPPING.md`; оплата повторяет схему.
 
 ### 5.11 Служебное
 

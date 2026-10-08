@@ -33,7 +33,7 @@ $qtyText = static fn (float $qty): string => rtrim(rtrim(number_format($qty, 3, 
                     </li>
                 <?php endforeach; ?>
             </ul>
-            <?php if ($discount['saved'] > 0 || $this->totals['adjustments']) : ?>
+            <?php if ($discount['saved'] > 0 || $this->totals['adjustments'] || $this->shippingOptions) : ?>
                 <div class="border-top mt-3 pt-3 d-flex flex-column gap-2">
                     <?php if ($discount['saved'] > 0) : ?>
                         <div class="d-flex justify-content-between gap-3"><span class="text-body-secondary"><?php echo Text::_('COM_DHARMASHOP_CART_BEFORE_DISCOUNT'); ?></span><span class="text-end"><?php echo $this->escape($this->money->format((string) $discount['before'])); ?></span></div>
@@ -42,6 +42,25 @@ $qtyText = static fn (float $qty): string => rtrim(rtrim(number_format($qty, 3, 
                     <?php foreach ($this->totals['adjustments'] as $adjustment) : ?>
                         <div class="d-flex justify-content-between gap-3"><span><?php echo $this->escape($adjustment['title']); ?></span><span class="text-end"><?php echo $this->escape($this->money->format((string) $adjustment['amount'])); ?></span></div>
                     <?php endforeach; ?>
+                    <?php if ($this->shippingOptions) : ?>
+                        <div class="d-flex justify-content-between gap-3"><span><?php echo Text::_('COM_DHARMASHOP_CHECKOUT_SHIPPING_ROW'); ?></span><span class="text-end" data-checkout-shipping-price><?php echo $this->escape($this->shippingPrice > 0 ? $this->money->format((string) $this->shippingPrice) : Text::_('COM_DHARMASHOP_SHIPPING_FREE')); ?></span></div>
+                    <?php endif; ?>
+                </div>
+            <?php endif; ?>
+            <?php if ($this->shippingOptions) : ?>
+                <?php // Сведения выбранного способа доставки (из плагина типа); боковая панель переключает блоки и добавляет введённые покупателем значения. ?>
+                <div class="border-top mt-3 pt-3 dharmaCheckoutShippingSummary" data-checkout-shipping-summary>
+                    <div class="text-body-secondary mb-1"><?php echo Text::_('COM_DHARMASHOP_CHECKOUT_SHIPPING'); ?></div>
+                    <?php foreach ($this->shippingOptions as $optionId => $option) : ?>
+                        <div<?php echo $optionId === $this->shippingSelected ? '' : ' class="d-none"'; ?> data-shipping-details="<?php echo (int) $optionId; ?>">
+                            <div class="fw-semibold text-break"><?php echo $this->escape($option['title']); ?></div>
+                            <?php if ($option['term'] !== '') : ?><div class="text-body-secondary"><?php echo $this->escape($option['term']); ?></div><?php endif; ?>
+                            <?php foreach ($option['info'] as $row) : ?>
+                                <div class="text-break"><span class="text-body-secondary"><?php echo $this->escape($row['label']); ?>:</span> <?php echo nl2br($this->escape($row['value'])); ?></div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endforeach; ?>
+                    <div data-checkout-shipping-input></div>
                 </div>
             <?php endif; ?>
         <?php endif; ?>
@@ -50,10 +69,10 @@ $qtyText = static fn (float $qty): string => rtrim(rtrim(number_format($qty, 3, 
         <?php if ($this->lines) : ?>
             <div class="d-flex flex-wrap justify-content-between align-items-baseline gap-2 mb-3">
                 <span class="small fw-semibold"><?php echo Text::_('COM_DHARMASHOP_CART_TOTAL_SHORT'); ?></span>
-                <span class="fs-5 fw-semibold text-end text-break"><?php echo $this->escape($this->totalText((float) $this->totals['total'])); ?></span>
+                <span class="fs-5 fw-semibold text-end text-break" data-checkout-total><?php echo $this->escape($this->totalText($this->totalWithShipping())); ?></span>
             </div>
         <?php endif; ?>
-        <?php if ($this->lines && !array_filter($this->lines, static fn (object $line): bool => $line->error !== '')) : ?>
+        <?php if ($this->lines && !$this->shippingBlocked && !array_filter($this->lines, static fn (object $line): bool => $line->error !== '')) : ?>
             <button type="submit" class="btn btn-primary bg-primary text-white w-100 mb-2" data-checkout-submit><?php echo Text::_('COM_DHARMASHOP_CHECKOUT_SUBMIT'); ?></button>
         <?php endif; ?>
         <a class="btn btn-sm btn-outline-secondary w-100" href="<?php echo $this->escape($this->cartUrl); ?>"><?php echo Text::_('COM_DHARMASHOP_CHECKOUT_BACK_TO_CART'); ?></a>

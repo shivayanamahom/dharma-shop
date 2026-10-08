@@ -81,6 +81,19 @@ final class MessageData
             $consents[] = ['text'=>$text, 'state'=>$state, 'date'=>$date, 'url'=>$url];
             $plainConsents[] = $text . ': ' . $state . ($date !== '' ? ' (' . $date . ')' : '') . ($url !== '' ? "\n" . $url : '');
         }
+        // Доставка из снимка заказа: способ с ценой, срок и сведения плагина типа (адрес, контакты пункта, введённые покупателем поля).
+        $shippingRows = [];
+        $snapshot = json_decode((string) ($order['shipping_data'] ?? ''), true) ?: [];
+        $shippingTitle = trim((string) ($snapshot['title'] ?? $order['shipping_title'] ?? ''));
+        if ($shippingTitle !== '') {
+            $shippingPrice = array_key_exists('price', $snapshot) ? (!empty($snapshot['free']) || (float) $snapshot['price'] <= 0 ? $language->_('PLG_DHARMASHOPNOTIFY_EMAIL_SHIPPING_FREE') : $money->format((string) $snapshot['price'])) : '';
+            $shippingRows[] = ['label'=>$language->_('PLG_DHARMASHOPNOTIFY_EMAIL_SHIPPING_METHOD'), 'value'=>$shippingTitle . ($shippingPrice !== '' ? ' — ' . $shippingPrice : '')];
+            if (trim((string) ($snapshot['term'] ?? '')) !== '') $shippingRows[] = ['label'=>$language->_('PLG_DHARMASHOPNOTIFY_EMAIL_SHIPPING_TERM'), 'value'=>trim((string) $snapshot['term'])];
+            foreach ((array) ($snapshot['rows'] ?? []) as $row) {
+                $label = trim((string) ($row['label'] ?? '')); $value = trim((string) ($row['value'] ?? ''));
+                if ($label !== '' && $value !== '') $shippingRows[] = ['label'=>$label, 'value'=>$value];
+            }
+        }
         $plain = [
             'SITENAME'=>$shopName, 'SHOP_NAME'=>$shopName, 'SHOP_EMAIL'=>$shopEmail, 'SHOP_PHONE'=>$shopPhone, 'SHOP_ADDRESS'=>$shopAddress,
             'SHOP_URL'=>$root . '/', 'SHOP_LOGO'=>$logo, 'SHOP_CONTACTS'=>implode("\n", array_filter([$shopPhone, $shopEmail, $shopAddress, $root . '/'])),
@@ -92,10 +105,13 @@ final class MessageData
         ];
         $plain['ORDER_DETAILS'] = $labels['ORDER'] . ' №' . $plain['ORDER_NUMBER'] . "\n" . $labels['DATE'] . ': ' . $plain['ORDER_DATE'] . "\n" . $labels['STATUS'] . ': ' . $plain['STATUS'];
         $plain['SHIPPING'] = $plain['SHIPPING_TITLE'] !== '' ? $labels['SHIPPING'] . ': ' . $plain['SHIPPING_TITLE'] : '';
+        if (count($shippingRows) > 1 || ($shippingRows && $plain['SHIPPING_TITLE'] === '')) {
+            $plain['SHIPPING'] = $labels['SHIPPING'] . ":\n" . implode("\n", array_map(static fn (array $row): string => $row['label'] . ': ' . $row['value'], $shippingRows));
+        }
         $plain['PAYMENT'] = $plain['PAYMENT_TITLE'] !== '' ? $labels['PAYMENT'] . ': ' . $plain['PAYMENT_TITLE'] : '';
         $html = $plain;
         $layout = new FileLayout('blocks', dirname(__DIR__, 2) . '/tmpl', ['client'=>'site']);
-        $common = ['labels'=>$labels, 'order'=>$plain, 'items'=>$items, 'adjustments'=>$adjustments, 'contacts'=>$contacts, 'consents'=>$consents];
+        $common = ['labels'=>$labels, 'order'=>$plain, 'items'=>$items, 'adjustments'=>$adjustments, 'contacts'=>$contacts, 'consents'=>$consents, 'shipping'=>$shippingRows];
         foreach (['ORDER_DETAILS','ITEMS','CONTACTS','STATUS_MESSAGE','SHIPPING','PAYMENT','ORDER_LINK','CONSENTS'] as $tag) {
             $html[$tag] = $plain[$tag] !== '' ? $layout->render($common + ['block'=>$tag]) : '';
         }

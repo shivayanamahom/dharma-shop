@@ -57,6 +57,37 @@
     // Restores the form and Bootstrap backdrop when returning via the browser's back/forward cache.
     window.addEventListener('pageshow', reset);
 
+    // Доставка: выбранный вариант обновляет строку «Доставка», итог и сведения в боковой панели (тексты готовит сервер).
+    // Поля покупателя внутри варианта (data-summary-label) дублируются в боковой панели; значения выводятся как текст.
+    const shippingRadios = form.querySelectorAll('[data-shipping-radio]');
+    const inputRows = form.querySelector('[data-checkout-shipping-input]');
+    const syncShipping = () => {
+        const chosen = Array.from(shippingRadios).find((radio) => radio.checked);
+        shippingRadios.forEach((radio) => {
+            radio.closest('[data-shipping-option]')?.querySelectorAll('[data-shipping-extra]').forEach((node) => node.classList.toggle('d-none', !radio.checked));
+            form.querySelector('[data-shipping-details="' + radio.value + '"]')?.classList.toggle('d-none', !radio.checked);
+        });
+        inputRows?.replaceChildren();
+        if (!chosen) return;
+        form.querySelectorAll('[data-checkout-shipping-price]').forEach((node) => { node.textContent = chosen.dataset.priceText || ''; });
+        form.querySelectorAll('[data-checkout-total]').forEach((node) => { node.textContent = chosen.dataset.totalText || ''; });
+        chosen.closest('[data-shipping-option]')?.querySelectorAll('[data-summary-label]').forEach((input) => {
+            const value = input.tagName === 'SELECT' ? (input.selectedOptions[0]?.value ? input.selectedOptions[0].textContent : '') : input.value.trim();
+            if (!value || !inputRows) return;
+            const line = document.createElement('div');
+            line.className = 'text-break';
+            const label = document.createElement('span');
+            label.className = 'text-body-secondary';
+            label.textContent = input.dataset.summaryLabel + ': ';
+            line.append(label, document.createTextNode(value));
+            inputRows.append(line);
+        });
+    };
+    shippingRadios.forEach((radio) => radio.addEventListener('change', syncShipping));
+    form.addEventListener('input', (event) => { if (event.target.closest?.('[data-shipping-extra]')) syncShipping(); });
+    form.addEventListener('change', (event) => { if (event.target.closest?.('[data-shipping-extra]')) syncShipping(); });
+    syncShipping();
+
     form.querySelectorAll('[data-dharmashop-phone-mask]').forEach((input) => {
         const mask = input.dataset.dharmashopPhoneMask;
         const capacity = (mask.match(/#/g) || []).length;

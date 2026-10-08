@@ -38,6 +38,11 @@ $l = $d['labels'];
 </table>
 <?php elseif ($d['block'] === 'STATUS_MESSAGE'): ?>
 <p style="margin:20px 0;padding:14px 16px;background:#f1f6fa;border-left:3px solid #176b9b"><?= nl2br($e($o['STATUS_MESSAGE']), false) ?></p>
+<?php elseif ($d['block'] === 'SHIPPING' && !empty($d['shipping'])): ?>
+<h2 style="margin:24px 0 12px;font-size:17px;color:#26384c"><?= $e($l['SHIPPING']) ?></h2>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px">
+<?php foreach ($d['shipping'] as $row): ?><tr><td valign="top" style="padding:5px 12px 5px 0;color:#637083"><?= $e($row['label']) ?></td><td valign="top" style="padding:5px 0;overflow-wrap:anywhere"><?= nl2br($e($row['value'])) ?></td></tr><?php endforeach; ?>
+</table>
 <?php elseif ($d['block'] === 'SHIPPING' || $d['block'] === 'PAYMENT'): $key = $d['block']; ?>
 <h2 style="margin:24px 0 8px;font-size:17px;color:#26384c"><?= $e($l[$key]) ?></h2><p style="margin:0 0 16px"><?= $e($o[$key . '_TITLE']) ?></p>
 <?php elseif ($d['block'] === 'ORDER_LINK'): ?>
