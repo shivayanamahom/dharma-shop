@@ -10,6 +10,12 @@
 			"type": "script",
 			"uri": "plg_dharmashopshipping_pickup/pickup-map.js",
 			"attributes": { "defer": true }
+		},
+		{
+			"name": "plg_dharmashopshipping_pickup.cards",
+			"type": "script",
+			"uri": "plg_dharmashopshipping_pickup/pickup-cards.js",
+			"attributes": { "defer": true }
 		}
 	]
 }

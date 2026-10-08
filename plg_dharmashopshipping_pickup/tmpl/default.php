@@ -4,7 +4,8 @@
  * Переопределение в шаблоне сайта: templates/<шаблон>/html/plg_dharmashopshipping_pickup/default.php
  *
  * @var  array  $displayData  method (Method), quote (Quote), selected (bool), id (int), errors (array), info (строки describe),
- *                            points (пункты: key, name, address, rows, map_url — ссылка общей карты с центром на пункте), point_selected (ключ выбранного пункта),
+ *                            points (пункты: key, name, address, rows, detail_rows — без адреса, map_url — ссылка общей карты с центром на пункте), point_selected (ключ выбранного пункта),
+ *                            slider (true — карточки в слайдере Swiper),
  *                            map_url (ссылка карты выбранного пункта или ''), map (mode: js|iframe|none, ratio, config — JSON для скрипта карты),
  *                            image_url, price_text, total_text, free_text (строки)
  *
@@ -62,37 +63,67 @@ $priceText = $quote->free ? $displayData['free_text'] : $displayData['price_text
                         loading="lazy" referrerpolicy="no-referrer" allowfullscreen data-shipping-map></iframe>
                 </div>
             <?php endif; ?>
-            <div class="row row-cols-1 row-cols-md-2 g-2"<?php echo $many ? ' role="radiogroup" aria-label="' . $esc(Text::_('PLG_DHARMASHOPSHIPPING_PICKUP_ROW_POINT')) . '"' : ''; ?>>
-                <?php foreach ($points as $point) :
-                    $pointId = 'dharma-shipping-' . $id . '-point-' . $point['key'];
-                    $isActive = $point['key'] === $activePoint;
-                    ?>
-                    <div class="col">
-                        <div class="card h-100 position-relative<?php echo $many && $isActive ? ' border-primary shadow-sm' : ''; ?>" data-shipping-point-card>
-                            <div class="card-body p-3">
-                                <?php if ($many) : ?>
-                                    <div class="form-check mb-1">
-                                        <input class="form-check-input<?php echo isset($errors['point']) ? ' is-invalid' : ''; ?>" type="radio" name="shipping[<?php echo $id; ?>][point]" id="<?php echo $esc($pointId); ?>" value="<?php echo $esc($point['key']); ?>"<?php echo $isActive ? ' checked' : ''; ?>
-                                            data-shipping-point data-summary-label="<?php echo $esc(Text::_('PLG_DHARMASHOPSHIPPING_PICKUP_ROW_POINT')); ?>" data-summary-value="<?php echo $esc($point['name']); ?>" data-summary-rows="<?php echo $esc(json_encode($point['rows'], JSON_UNESCAPED_UNICODE)); ?>" data-map-url="<?php echo $esc($point['map_url']); ?>">
-                                        <label class="form-check-label fw-semibold stretched-link" for="<?php echo $esc($pointId); ?>"><?php echo $esc($point['name']); ?></label>
-                                    </div>
-                                <?php else : ?>
-                                    <div class="fw-semibold mb-1"><?php echo $esc($point['name']); ?></div>
-                                <?php endif; ?>
-                                <?php if ($point['rows']) : ?>
-                                    <dl class="row small mb-0 dharmaShippingInfo">
-                                        <?php foreach ($point['rows'] as $row) : ?>
-                                            <dt class="col-sm-4 fw-normal text-body-secondary"><?php echo $esc($row['label']); ?></dt>
-                                            <dd class="col-sm-8 mb-1 text-break"><?php echo nl2br($esc($row['value'])); ?></dd>
-                                        <?php endforeach; ?>
-                                    </dl>
-                                <?php endif; ?>
+            <?php
+            $slider = !empty($displayData['slider']);
+            $card = static function (array $point) use ($id, $many, $activePoint, $errors, $esc): string {
+                $pointId = 'dharma-shipping-' . $id . '-point-' . $point['key'];
+                $isActive = $point['key'] === $activePoint;
+                ob_start();
+                ?>
+                <div class="card h-100 position-relative<?php echo $many && $isActive ? ' border-primary shadow-sm' : ''; ?>" data-shipping-point-card>
+                    <div class="card-body p-3">
+                        <?php if ($many) : ?>
+                            <div class="form-check mb-1">
+                                <input class="form-check-input<?php echo isset($errors['point']) ? ' is-invalid' : ''; ?>" type="radio" name="shipping[<?php echo $id; ?>][point]" id="<?php echo $esc($pointId); ?>" value="<?php echo $esc($point['key']); ?>"<?php echo $isActive ? ' checked' : ''; ?>
+                                    data-shipping-point data-summary-label="<?php echo $esc(Text::_('PLG_DHARMASHOPSHIPPING_PICKUP_ROW_POINT')); ?>" data-summary-value="<?php echo $esc($point['name']); ?>" data-summary-rows="<?php echo $esc(json_encode($point['rows'], JSON_UNESCAPED_UNICODE)); ?>" data-map-url="<?php echo $esc($point['map_url']); ?>">
+                                <label class="form-check-label fw-semibold stretched-link" for="<?php echo $esc($pointId); ?>"><?php echo $esc($point['name']); ?></label>
                             </div>
+                        <?php else : ?>
+                            <div class="fw-semibold mb-1"><?php echo $esc($point['name']); ?></div>
+                        <?php endif; ?>
+                        <div class="small text-body-secondary text-break"><?php echo $esc($point['address']); ?></div>
+                    </div>
+                </div>
+                <?php
+                return (string) ob_get_clean();
+            };
+            ?>
+            <?php if ($slider) : ?>
+                <?php // Много пунктов: слайдер Swiper (скрипт плагина создаёт его, когда блок виден); стрелки — кнопки Bootstrap. ?>
+                <div class="d-flex justify-content-end gap-1 mb-2">
+                    <button type="button" class="btn btn-sm btn-outline-secondary px-2" data-pickup-prev aria-label="<?php echo $esc(Text::_('PLG_DHARMASHOPSHIPPING_PICKUP_PREV')); ?>">&lsaquo;</button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary px-2" data-pickup-next aria-label="<?php echo $esc(Text::_('PLG_DHARMASHOPSHIPPING_PICKUP_NEXT')); ?>">&rsaquo;</button>
+                </div>
+                <div class="swiper" data-pickup-slider<?php echo $many ? ' role="radiogroup" aria-label="' . $esc(Text::_('PLG_DHARMASHOPSHIPPING_PICKUP_ROW_POINT')) . '"' : ''; ?>>
+                    <div class="swiper-wrapper">
+                        <?php foreach ($points as $point) : ?>
+                            <div class="swiper-slide h-auto"><?php echo $card($point); ?></div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            <?php else : ?>
+                <div class="row row-cols-1 row-cols-md-2 g-2"<?php echo $many ? ' role="radiogroup" aria-label="' . $esc(Text::_('PLG_DHARMASHOPSHIPPING_PICKUP_ROW_POINT')) . '"' : ''; ?>>
+                    <?php foreach ($points as $point) : ?>
+                        <div class="col"><?php echo $card($point); ?></div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+            <?php if (isset($errors['point'])) : ?><div class="invalid-feedback d-block"><?php echo $esc(Text::_($errors['point'])); ?></div><?php endif; ?>
+            <?php // Подробности выбранного пункта: телефон, часы работы, срок, как добраться (виден блок только выбранного пункта). ?>
+            <?php foreach ($points as $point) : ?>
+                <?php if ($point['detail_rows']) : ?>
+                    <div class="card bg-body-tertiary border-0 mt-2<?php echo $many && $point['key'] !== $activePoint ? ' d-none' : ''; ?>" data-shipping-extra<?php echo $many ? ' data-shipping-point-detail="' . $esc($point['key']) . '"' : ''; ?>>
+                        <div class="card-body p-3">
+                            <dl class="row small mb-0 dharmaShippingInfo">
+                                <?php foreach ($point['detail_rows'] as $row) : ?>
+                                    <dt class="col-sm-4 fw-normal text-body-secondary"><?php echo $esc($row['label']); ?></dt>
+                                    <dd class="col-sm-8 mb-1 text-break"><?php echo nl2br($esc($row['value'])); ?></dd>
+                                <?php endforeach; ?>
+                            </dl>
                         </div>
                     </div>
-                <?php endforeach; ?>
-            </div>
-            <?php if (isset($errors['point'])) : ?><div class="invalid-feedback d-block"><?php echo $esc(Text::_($errors['point'])); ?></div><?php endif; ?>
+                <?php endif; ?>
+            <?php endforeach; ?>
         </div>
     <?php endif; ?>
 </div>

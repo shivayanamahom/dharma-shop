@@ -277,6 +277,8 @@ final class PickupType implements TypeInterface
             // Карта одна на способ: у каждого пункта своя ссылка (центр на пункте, остальные пункты — метками).
             $point['map_url'] = $this->mapUrl($displayData['method'], $all, (string) $point['key']);
             $point['rows'] = array_values(array_filter($this->pointRows($point), static fn (array $row): bool => trim($row['value']) !== ''));
+            // В карточке — название и адрес; остальное (телефон, часы, срок, как добраться) — блок ниже у выбранного пункта.
+            $point['detail_rows'] = array_values(array_filter(\array_slice($this->pointRows($point), 1), static fn (array $row): bool => trim($row['value']) !== ''));
             $points[] = $point;
         }
 
@@ -284,6 +286,15 @@ final class PickupType implements TypeInterface
         $displayData['point_selected'] = $active;
         $displayData['map_url'] = (string) (array_column($points, 'map_url', 'key')[$active] ?? '');
         $displayData['map'] = $this->mapDisplay($displayData['method'], $points, $active);
+
+        // Карточки пунктов в слайдере Swiper (его набор регистрирует плагин «Dharma Shop Swiper»), если пунктов три и больше; иначе — сетка.
+        $wa = Factory::getApplication()->getDocument()->getWebAssetManager();
+        $wa->getRegistry()->addRegistryFile('media/plg_dharmashopshipping_pickup/joomla.asset.json');
+        $displayData['slider'] = \count($points) >= 3 && $wa->getRegistry()->exists('preset', 'dharmashop.swiper');
+
+        if ($displayData['slider']) {
+            $wa->usePreset('dharmashop.swiper')->useScript('plg_dharmashopshipping_pickup.cards');
+        }
 
         return (static function (string $__path, array $displayData): string {
             ob_start();
