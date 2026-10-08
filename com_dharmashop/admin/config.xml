@@ -144,9 +144,10 @@
 	<fieldset name="cart" label="COM_DHARMASHOP_CONFIG_CART" description="COM_DHARMASHOP_CONFIG_CART_DESC">
 		<field name="cart_button_text" type="text" label="COM_DHARMASHOP_CONFIG_CART_BUTTON_TEXT" description="COM_DHARMASHOP_CONFIG_CART_BUTTON_TEXT_DESC" hint="COM_DHARMASHOP_CONFIG_CART_BUTTON_TEXT_HINT" filter="string" />
 		<fieldset name="cart_product_card" label="COM_DHARMASHOP_CONFIG_PRODUCT_CARD">
-		<field name="product_card_qty" type="radio" layout="joomla.form.field.radio.switcher" default="0" filter="integer" label="COM_DHARMASHOP_CONFIG_CART_QTY_CARD" description="COM_DHARMASHOP_CONFIG_CART_QTY_CARD_DESC">
-			<option value="0">JNO</option>
-			<option value="1">JYES</option>
+		<field name="product_card_cart_mode" type="list" default="stepper" validate="options" label="COM_DHARMASHOP_CONFIG_CART_MODE_CARD" description="COM_DHARMASHOP_CONFIG_CART_MODE_CARD_DESC">
+			<option value="button">COM_DHARMASHOP_CART_MODE_BUTTON</option>
+			<option value="qty">COM_DHARMASHOP_CART_MODE_QTY</option>
+			<option value="stepper">COM_DHARMASHOP_CART_MODE_STEPPER</option>
 		</field>
 		<field name="product_card_show_discount" type="radio" layout="joomla.form.field.radio.switcher" default="1" filter="integer" label="COM_DHARMASHOP_CONFIG_DISCOUNT_CARD_SHOW" description="COM_DHARMASHOP_CONFIG_DISCOUNT_CARD_SHOW_DESC">
 			<option value="0">JNO</option>
@@ -162,9 +163,10 @@
 		</field>
 		</fieldset>
 		<fieldset name="cart_product_page" label="COM_DHARMASHOP_CONFIG_PRODUCT_PAGE">
-		<field name="product_page_qty" type="radio" layout="joomla.form.field.radio.switcher" default="1" filter="integer" label="COM_DHARMASHOP_CONFIG_CART_QTY_PAGE" description="COM_DHARMASHOP_CONFIG_CART_QTY_PAGE_DESC">
-			<option value="0">JNO</option>
-			<option value="1">JYES</option>
+		<field name="product_page_cart_mode" type="list" default="stepper" validate="options" label="COM_DHARMASHOP_CONFIG_CART_MODE_PAGE" description="COM_DHARMASHOP_CONFIG_CART_MODE_PAGE_DESC">
+			<option value="button">COM_DHARMASHOP_CART_MODE_BUTTON</option>
+			<option value="qty">COM_DHARMASHOP_CART_MODE_QTY</option>
+			<option value="stepper">COM_DHARMASHOP_CART_MODE_STEPPER</option>
 		</field>
 		<field name="product_page_show_discount" type="radio" layout="joomla.form.field.radio.switcher" default="1" filter="integer" label="COM_DHARMASHOP_CONFIG_DISCOUNT_PAGE_SHOW" description="COM_DHARMASHOP_CONFIG_DISCOUNT_PAGE_SHOW_DESC">
 			<option value="0">JNO</option>

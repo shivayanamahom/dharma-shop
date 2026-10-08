@@ -27,3 +27,5 @@ use Joomla\CMS\Language\Text;
     <?php if ($this->pagination) : ?>
         <div class="mt-4" data-dharmashop-pagination><?php echo $this->pagination->getPaginationLinks(); ?></div>
     <?php endif; ?>
+    <?php // Шаблон виджета количества (режим «кнопка → виджет»): cart.js создаёт из него виджет после добавления товара. ?>
+    <?php if ($this->stepperTemplate !== '') : ?><template data-dharmashop-stepper-template><?php echo $this->stepperTemplate; ?></template><?php endif; ?>

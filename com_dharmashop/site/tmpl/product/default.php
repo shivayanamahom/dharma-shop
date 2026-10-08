@@ -52,7 +52,9 @@ $heading = $page?->h1 ?? (string) ($this->item->title ?? '');
             <?php endif; ?>
         </div>
     <?php endif; ?>
-    <?php // Остальные части карточки товара (параметры, корзина) подключаются отдельными макетами. ?>
+    <?php // Блок покупки — отдельный файл рядом со страницей (default_buy.php): наличие, артикул, количество и кнопка «В корзину». ?>
+    <?php echo $this->loadTemplate('buy'); ?>
+    <?php // Остальные части карточки товара (параметры) подключаются отдельными макетами. ?>
     <?php echo (new FileLayout('components.dharmashop.fields.default', null, ['component' => 'none', 'client' => 0]))->render(['fields' => $this->item->fields ?? [], 'context' => 'page']); ?>
         </div>
     </div>

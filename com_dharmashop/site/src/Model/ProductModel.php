@@ -35,7 +35,7 @@ class ProductModel extends BaseDatabaseModel
             ->where('(blocked.published != 1 OR blocked.access NOT IN (' . $levels . '))');
         $query = $db->createQuery()->select($db->quoteName([
                 'p.id', 'p.catid', 'p.title', 'p.alias', 'p.introtext', 'p.fulltext', 'p.cover', 'p.cover_alt',
-                'p.price_min', 'p.price_max', 'p.unit', 'p.in_stock', 'p.metadesc', 'p.metadata', 'p.params',
+                'p.price_min', 'p.price_max', 'p.unit', 'p.qty_min', 'p.qty_step', 'p.in_stock', 'p.metadesc', 'p.metadata', 'p.params',
             ]))
             ->from($db->quoteName('#__dharmashop_products', 'p'))
             ->join('INNER', $db->quoteName('#__categories', 'c') . ' ON c.id = p.catid')
@@ -50,6 +50,9 @@ class ProductModel extends BaseDatabaseModel
         }
 
         $item->description = (string) ($item->fulltext ?? '');
+        // Артикул варианта по умолчанию.
+        $item->sku = (string) $db->setQuery($db->createQuery()->select('sku')->from($db->quoteName('#__dharmashop_variants'))
+            ->where('product_id = :sku')->where('state = 1')->order('is_default DESC, ordering, id')->bind(':sku', $id, ParameterType::INTEGER), 0, 1)->loadResult();
         $item->params = new Registry($item->params);
         $item->metadata = new Registry($item->metadata);
         $priceQuery = $db->createQuery()->select($db->quoteName(['vp.price', 'vp.price_final', 'vp.discount_start', 'vp.discount_end']))

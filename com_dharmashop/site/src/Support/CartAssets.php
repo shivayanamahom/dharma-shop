@@ -22,6 +22,8 @@ final class CartAssets
         $wa->useScript('com_dharmashop.cart');
         $document->addScriptOptions('com_dharmashop.cart', [
             'url' => Route::_('index.php?option=com_dharmashop&task=cart.add&format=json', false),
+            'updateUrl' => Route::_('index.php?option=com_dharmashop&task=cart.update&format=json', false),
+            'removeUrl' => Route::_('index.php?option=com_dharmashop&task=cart.remove&format=json', false),
             'cartUrl' => Route::_('index.php?option=com_dharmashop&view=cart', false),
         ]);
 

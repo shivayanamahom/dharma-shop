@@ -115,10 +115,12 @@ class CartController extends BaseController
         }
 
         $summary = ['count' => 0, 'qty' => 0.0, 'subtotal' => 0.0];
+        $products = [];
         $cart = $session?->current();
 
         if ($cart !== null) {
             $summary = $session->service()->summary($cart);
+            $products = $session->service()->productQuantities($cart);
         }
 
         $money = new MoneyFormatter(ComponentHelper::getParams('com_dharmashop'));
@@ -128,7 +130,7 @@ class CartController extends BaseController
         echo json_encode([
             'success' => $ok,
             'message' => $message,
-            'cart' => $summary + ['subtotalText' => $money->format((string) $summary['subtotal']), 'url' => $cartUrl],
+            'cart' => $summary + ['subtotalText' => $money->format((string) $summary['subtotal']), 'url' => $cartUrl, 'products' => (object) $products],
         ], JSON_UNESCAPED_UNICODE);
         $this->app->close();
     }

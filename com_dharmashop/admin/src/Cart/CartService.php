@@ -140,7 +140,29 @@ final class CartService
         $this->touch((int) $cart->id);
         $this->dispatch('onDharmaShopCartAfterAdd', ['cart' => $cart, 'variant' => $variant, 'qty' => $total, 'item_id' => $itemId]);
 
-        return ['ok' => true, 'item_id' => $itemId];
+        return ['ok' => true, 'item_id' => $itemId, 'qty' => $total];
+    }
+
+    /**
+     * Что из товаров уже в корзине: товар → [строка, количество] (по строкам без дополнительных параметров; у товара с несколькими
+     * вариантами — первая строка и общее количество). Нужно карточкам и странице товара, чтобы вместо кнопки показать виджет количества.
+     *
+     * @return  array<int, array{item: int, qty: float}>
+     */
+    public function productQuantities(object $cart): array
+    {
+        $query = $this->db->createQuery()
+            ->select(['v.product_id', 'MIN(ci.id) AS item_id', 'SUM(ci.qty) AS qty_sum'])
+            ->from($this->db->quoteName('#__dharmashop_cart_items', 'ci'))
+            ->join('INNER', $this->db->quoteName('#__dharmashop_variants', 'v') . ' ON v.id = ci.variant_id')
+            ->where('ci.cart_id = :c')->group('v.product_id')->bind(':c', $cart->id, ParameterType::INTEGER);
+        $result = [];
+
+        foreach ($this->db->setQuery($query)->loadObjectList() as $row) {
+            $result[(int) $row->product_id] = ['item' => (int) $row->item_id, 'qty' => (float) $row->qty_sum];
+        }
+
+        return $result;
     }
 
     /**

@@ -25,6 +25,7 @@
             <filename>media.php</filename>
             <filename>price.php</filename>
             <filename>actions.php</filename>
+            <filename>stepper.php</filename>
         </files>
         <files folder="layouts/brand-card" target="layouts/components/dharmashop/brand-card">
             <filename>default.php</filename>

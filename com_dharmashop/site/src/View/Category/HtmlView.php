@@ -119,7 +119,7 @@ class HtmlView extends BaseHtmlView
             CartAssets::use($this->getDocument());
 
             // Кнопки «−»/«+» виджета количества: скрипт только если виджет включён в карточках.
-            if ((int) $this->params->get('product_card_qty', 0) === 1) {
+            if ($this->cartMode() === 'qty') {
                 $wa->useScript('com_dharmashop.qty');
             }
         }

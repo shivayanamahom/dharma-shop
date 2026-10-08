@@ -8,6 +8,7 @@ use Dharma\Component\DharmaShop\Site\Model\CategoryModel;
 use Dharma\Component\DharmaShop\Site\Placeholder\GlobalValues;
 use Dharma\Component\DharmaShop\Site\Placeholder\ProductValues;
 use Dharma\Component\DharmaShop\Site\Placeholder\Renderer;
+use Dharma\Component\DharmaShop\Site\Support\CartSession;
 use Dharma\Component\DharmaShop\Site\Support\Grid;
 use Dharma\Component\DharmaShop\Site\Support\MediaUrl;
 use Dharma\Component\DharmaShop\Site\Support\Taxonomy;
@@ -36,6 +37,10 @@ trait ListingTrait
     public int $menuId = 0;
     public int $start = 0;
     public bool $catalogMode = false;
+    /** @var array<int, array{item: int, qty: float}> товары, уже лежащие в корзине посетителя (режим «кнопка → виджет») */
+    public array $cartProducts = [];
+    /** HTML шаблона виджета количества: из него cart.js создаёт виджет после добавления */
+    public string $stepperTemplate = '';
     /** @var array<string, string> колонки характеристик таблицы товаров: алиас => название (по товарам страницы) */
     public array $fieldColumns = [];
     public ?Pagination $pagination = null;
@@ -54,7 +59,7 @@ trait ListingTrait
         $taxonomy = $this->taxonomy();
 
         return array_merge(Grid::keys('category'), Grid::keys($taxonomy->gridPrefix()), ['category_layout', 'product_card_layout',
-            'product_card_intro', 'product_card_qty', 'product_card_images', 'category_product_count', 'category_price_range', $taxonomy->cardKey('layout'),
+            'product_card_intro', 'product_card_qty', 'product_card_cart_mode', 'product_card_images', 'category_product_count', 'category_price_range', $taxonomy->cardKey('layout'),
             $taxonomy->cardKey('intro'), $taxonomy->cardKey('count'), $taxonomy->cardKey('prices'), 'list_limit', 'list_ordering',
             'category_default_view', 'subcategory_show_image']);
     }
@@ -125,6 +130,7 @@ trait ListingTrait
         $this->start = $pagination->limitstart;
         $this->items = $total ? $model->getProducts($this->ordering, $limit, $this->start) : [];
         $model->attachCardData($this->items, $this->cardImagesLimit());
+        $this->loadCartState();
 
         // Таблица: колонки характеристик — объединение полей, выводимых в карточках товаров этой страницы.
         $this->fieldColumns = [];
@@ -202,6 +208,46 @@ trait ListingTrait
         return $images;
     }
 
+    /**
+     * Режим покупки в карточке: button (только кнопка), qty (поле количества и кнопка), stepper (кнопка → виджет после добавления).
+     * Настройки → категория → пункт меню; если новая настройка не задана — прежний переключатель «виджет количества» (qty), иначе stepper.
+     */
+    public function cartMode(): string
+    {
+        if ($this->catalogMode) {
+            return 'button';
+        }
+
+        $mode = (string) $this->params->get('product_card_cart_mode', '');
+
+        return in_array($mode, ['button', 'qty', 'stepper'], true) ? $mode : ((int) $this->params->get('product_card_qty', 0) === 1 ? 'qty' : 'stepper');
+    }
+
+    /**
+     * Режим «кнопка → виджет»: какие товары уже в корзине. Один запрос по корзине посетителя (нет cookie корзины — запроса нет);
+     * страница с корзиной не кешируется (состояние персональное). Шаблон виджета выводится один раз на страницу.
+     */
+    private function loadCartState(): void
+    {
+        $this->cartProducts = [];
+        $this->stepperTemplate = '';
+
+        if ($this->cartMode() !== 'stepper') {
+            return;
+        }
+
+        $app = Factory::getApplication();
+        $session = new CartSession($app->bootComponent('com_dharmashop')->getServices()->cart(), $app);
+        $cart = $session->current();
+
+        if ($cart !== null) {
+            $this->cartProducts = $session->service()->productQuantities($cart);
+            $app->allowCache(false);
+        }
+
+        $this->stepperTemplate = (new FileLayout('components.dharmashop.product-card-parts.stepper', null, ['component' => 'none', 'client' => 0]))->render(['qty' => 1, 'step' => 1, 'min' => 1]);
+    }
+
     /** Адрес страницы бейджа (кэшируется: на странице бейджей мало, карточек много). */
     private function badgeRoute(int $id): string
     {
@@ -245,7 +291,9 @@ trait ListingTrait
             'sliderType' => $this->sliderType(),
             'catalogMode' => $this->catalogMode,
             'cartText' => trim((string) ComponentHelper::getParams('com_dharmashop')->get('cart_button_text', '')),
-            'showQty' => !$this->catalogMode && (int) $this->params->get('product_card_qty', 0) === 1]);
+            'cartMode' => $this->cartMode(),
+            'inCartQty' => (float) ($this->cartProducts[(int) $item->id]['qty'] ?? 0),
+            'inCartItem' => (int) ($this->cartProducts[(int) $item->id]['item'] ?? 0)]);
     }
 
     private function mergeDisplay(Registry $source, array $keys): void

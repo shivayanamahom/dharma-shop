@@ -8,6 +8,7 @@ use Dharma\Component\DharmaShop\Site\Placeholder\ProductValues;
 use Dharma\Component\DharmaShop\Site\Seo\PageMetadata;
 use Dharma\Component\DharmaShop\Site\Seo\PageSeo;
 use Dharma\Component\DharmaShop\Site\Support\CartAssets;
+use Dharma\Component\DharmaShop\Site\Support\CartSession;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Layout\FileLayout;
@@ -33,6 +34,9 @@ class HtmlView extends BaseHtmlView
     public bool $showSaleCountdown = false;
     /** @var array<string, mixed> параметры макета галереи: type, thumbs, lightbox, loop, id */
     public array $gallery = [];
+    /** @var array<string, mixed> данные блока покупки (макет product-card-parts/actions): cartMode, inCartQty и др. */
+    public array $buy = [];
+    public string $stepperTemplate = '';
 
     public function display($tpl = null): void
     {
@@ -82,9 +86,7 @@ class HtmlView extends BaseHtmlView
         $this->prepareBreadcrumbs();
 
         // Корзина: в режиме каталога на страницу ничего не подключается.
-        if ((int) $this->params->get('catalog_mode', 0) !== 1) {
-            CartAssets::use($this->getDocument());
-        }
+        $this->prepareBuy();
 
         if ($this->showSaleCountdown) {
             $this->getDocument()->getWebAssetManager()->getRegistry()->addExtensionRegistryFile('com_dharmashop');
@@ -92,6 +94,46 @@ class HtmlView extends BaseHtmlView
         }
 
         parent::display($tpl);
+    }
+
+    /**
+     * Блок покупки: режим (настройка «Режим кнопки на странице товара»: кнопка, поле количества или кнопка → виджет), состояние
+     * товара в корзине и цена. В режиме каталога ничего не выводится и скрипты корзины не подключаются.
+     */
+    private function prepareBuy(): void
+    {
+        $catalog = (int) $this->params->get('catalog_mode', 0) === 1;
+        $mode = $catalog ? 'button' : (string) $this->params->get('product_page_cart_mode', '');
+        $mode = in_array($mode, ['button', 'qty', 'stepper'], true) ? $mode : ((int) $this->params->get('product_page_qty', 1) === 1 ? 'qty' : 'stepper');
+        $inCart = ['item' => 0, 'qty' => 0.0];
+
+        if (!$catalog) {
+            CartAssets::use($this->getDocument());
+
+            if ($mode === 'stepper') {
+                $app = Factory::getApplication();
+                $session = new CartSession($app->bootComponent('com_dharmashop')->getServices()->cart(), $app);
+                $cart = $session->current();
+
+                if ($cart !== null) {
+                    $inCart = $session->service()->productQuantities($cart)[(int) $this->item->id] ?? $inCart;
+                    $app->allowCache(false);
+                }
+
+                $this->stepperTemplate = (new FileLayout('components.dharmashop.product-card-parts.stepper', null, ['component' => 'none', 'client' => 0]))->render(['qty' => 1, 'step' => 1, 'min' => 1]);
+            }
+        }
+
+        $this->buy = [
+            'item' => $this->item,
+            'priceRange' => $this->price,
+            'catalogMode' => $catalog,
+            'cartMode' => $mode,
+            'inCartQty' => (float) $inCart['qty'],
+            'inCartItem' => (int) $inCart['item'],
+            'cartText' => trim((string) $this->params->get('cart_button_text', '')),
+            'justify' => 'start',
+        ];
     }
 
     /**
