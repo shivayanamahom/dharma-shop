@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form addfieldprefix="Dharma\Component\DharmaShop\Administrator\Field">
+    <field name="product_id" type="modal_product" label="COM_DHARMASHOP_SELECT_A_PRODUCT" required="true" filter="integer" select="true" clear="true" unique="true" />
+</form>

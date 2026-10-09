@@ -223,3 +223,7 @@ public function productTabs(LayoutRenderEvent $event): void
 Обновление 2026-10-08: все коды справочника товара подключены в ProductValues; price_min/max скрыты, прежние сохранённые тексты совместимы. `onDharmaShopMetadataReady.content` также принимает ProductMetadata (name/sku/brand/description/image/price/currency/inStock); числовая цена без форматирования либо null. Списки товаров передают CollectionMetadata с itemType=Product. Плагины каталог не читают.
 
 ProductMetadata.inStock (2026-10-08): фактическая доступность выбранного SKU по учёту остатков, а не общий флаг разрешения заказа. Не меняет подстановку product.stock, использующую индекс витрины. Правило и backorder — SEO.md.
+
+### Потребитель событий товара: связанные товары
+
+`plg_system_dharmashoprelated` использует существующие `onDharmaShopProductBefore/After…` и `onDharmaShopProductTabs`; список мест показа соответствует `LayoutHooks::EVENTS['product']`. В `Tabs` передаётся существующий `data.tabset`; плагин добавляет панель нативного UITab. Новые шорткоды и события не вводятся. Настройки, ручной пикер и переопределения — RELATED_PRODUCTS.md.

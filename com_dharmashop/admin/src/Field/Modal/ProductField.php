@@ -53,6 +53,14 @@ class ProductField extends ModalSelectField
         $this->modalTitles['select'] = Text::_('COM_DHARMASHOP_SELECT_A_PRODUCT');
         $this->hint = $this->hint ?: Text::_('COM_DHARMASHOP_SELECT_A_PRODUCT');
 
+        // Опция для повторяемых форм: диалог остаётся штатным, исключения обновляются перед каждым открытием.
+        if ((string) $element['unique'] === 'true') {
+            $this->dataAttributes['data-dharmashop-product-picker'] = 'unique';
+            $wa = Factory::getApplication()->getDocument()->getWebAssetManager();
+            $wa->getRegistry()->addExtensionRegistryFile('com_dharmashop');
+            $wa->useScript('com_dharmashop.product-picker');
+        }
+
         return $result;
     }
 

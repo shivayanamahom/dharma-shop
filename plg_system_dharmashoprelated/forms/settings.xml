@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form>
+    <fieldset name="related_products" label="PLG_SYSTEM_DHARMASHOPRELATED_TAB">
+        <fieldset name="related_general" label="PLG_SYSTEM_DHARMASHOPRELATED_GENERAL">
+            <field name="related_enabled" type="radio" layout="joomla.form.field.radio.switcher" label="JENABLED" default="0" filter="integer" validate="options"><option value="0">JNO</option><option value="1">JYES</option></field>
+            <field name="related_blocks" type="subform" label="PLG_SYSTEM_DHARMASHOPRELATED_BLOCKS" description="PLG_SYSTEM_DHARMASHOPRELATED_BLOCKS_DESC" multiple="true" layout="joomla.form.field.subform.repeatable" groupByFieldset="true" validate="Subform" showon="related_enabled:1" min="0" max="20" />
+        </fieldset>
+    </fieldset>
+</form>

@@ -6,6 +6,14 @@
 	"license": "GPL-2.0-or-later",
 	"assets": [
 		{
+			"name": "com_dharmashop.product-picker",
+			"version": "04cf082c99f2",
+			"type": "script",
+			"uri": "com_dharmashop/product-picker.js",
+			"attributes": { "defer": true },
+			"dependencies": ["modal-content-select-field"]
+		},
+		{
 			"name": "com_dharmashop.settings-search",
 			"version": "ca7d6950f28e",
 			"type": "script",

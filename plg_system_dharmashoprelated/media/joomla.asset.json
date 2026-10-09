@@ -1,0 +1,19 @@
+{
+    "$schema": "https://developer.joomla.org/schemas/json-schema/web_assets.json",
+    "name": "plg_system_dharmashoprelated",
+    "version": "0.1.0",
+    "assets": [
+        {
+            "name": "plg_system_dharmashoprelated.slider",
+            "type": "script",
+            "uri": "plg_system_dharmashoprelated/slider.js",
+            "attributes": {
+                "defer": true
+            },
+            "dependencies": [
+                "dharmashop.swiper"
+            ],
+            "version": "77ce8ddb72d3"
+        }
+    ]
+}

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="plugin" group="dharmashopnotify" method="upgrade">
+    <name>PLG_DHARMASHOPNOTIFY_TELEGRAM</name>
+    <author>Dharma</author>
+    <creationDate>2026-10</creationDate>
+    <copyright>(C) 2026 Dharma</copyright>
+    <license>GNU General Public License version 2 or later</license>
+    <version>0.1.0</version>
+    <description>PLG_DHARMASHOPNOTIFY_TELEGRAM_DESCRIPTION</description>
+    <namespace path="src">Dharma\Plugin\DharmaShopNotify\Telegram</namespace>
+    <files>
+        <folder plugin="telegram">services</folder>
+        <folder>src</folder>
+    </files>
+    <languages>
+        <language tag="ru-RU">language/ru-RU/plg_dharmashopnotify_telegram.ini</language>
+        <language tag="ru-RU">language/ru-RU/plg_dharmashopnotify_telegram.sys.ini</language>
+        <language tag="en-GB">language/en-GB/plg_dharmashopnotify_telegram.ini</language>
+        <language tag="en-GB">language/en-GB/plg_dharmashopnotify_telegram.sys.ini</language>
+    </languages>
+</extension>

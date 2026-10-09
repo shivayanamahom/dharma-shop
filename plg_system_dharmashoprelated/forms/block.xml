@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form addfieldprefix="Dharma\Plugin\System\DharmaShopRelated\Field">
+    <fieldset name="block">
+    <field name="title" type="text" label="JGLOBAL_TITLE" required="true" maxlength="255" filter="string" />
+    <field name="position" type="relatedposition" label="PLG_SYSTEM_DHARMASHOPRELATED_POSITION" default="afterContent" validate="options" />
+    <field name="mode" type="list" label="PLG_SYSTEM_DHARMASHOPRELATED_MODE" default="manual" validate="options"><option value="manual">PLG_SYSTEM_DHARMASHOPRELATED_MANUAL</option><option value="categories">PLG_SYSTEM_DHARMASHOPRELATED_CATEGORIES</option><option value="fields">PLG_SYSTEM_DHARMASHOPRELATED_FIELDS</option></field>
+    <field name="reciprocal" type="radio" label="PLG_SYSTEM_DHARMASHOPRELATED_RECIPROCAL" description="PLG_SYSTEM_DHARMASHOPRELATED_RECIPROCAL_DESC" default="0" filter="integer" validate="options" layout="joomla.form.field.radio.switcher" showon="mode:manual"><option value="0">JNO</option><option value="1">JYES</option></field>
+    <field name="categories" type="relatedcategories" extension="com_dharmashop" label="JCATEGORIES" description="PLG_SYSTEM_DHARMASHOPRELATED_CATEGORIES_DESC" default="current" multiple="true" layout="joomla.form.field.list-fancy-select" showon="mode:categories" validate="options"><option value="current">PLG_SYSTEM_DHARMASHOPRELATED_CURRENT_CATEGORY</option></field>
+    <field name="fields" type="relatedfields" label="PLG_SYSTEM_DHARMASHOPRELATED_MATCH_FIELDS" description="PLG_SYSTEM_DHARMASHOPRELATED_FIELDS_DESC" multiple="true" layout="joomla.form.field.list-fancy-select" showon="mode:fields" validate="options" />
+    <field name="fields_operator" type="list" label="PLG_SYSTEM_DHARMASHOPRELATED_FIELDS_OPERATOR" description="PLG_SYSTEM_DHARMASHOPRELATED_FIELDS_OPERATOR_DESC" default="and" filter="cmd" validate="options" showon="mode:fields"><option value="and">PLG_SYSTEM_DHARMASHOPRELATED_FIELDS_AND</option><option value="or">PLG_SYSTEM_DHARMASHOPRELATED_FIELDS_OR</option></field>
+    <field name="limit" type="number" label="PLG_SYSTEM_DHARMASHOPRELATED_LIMIT" default="4" min="1" max="100" filter="integer" />
+    <field name="layout" type="list" label="PLG_SYSTEM_DHARMASHOPRELATED_LAYOUT" default="grid" validate="options"><option value="grid">PLG_SYSTEM_DHARMASHOPRELATED_GRID</option><option value="list">PLG_SYSTEM_DHARMASHOPRELATED_LIST</option><option value="slider">PLG_SYSTEM_DHARMASHOPRELATED_SLIDER</option></field>
+    <field name="columns" type="integer" label="PLG_SYSTEM_DHARMASHOPRELATED_COLUMNS" first="1" last="6" step="1" default="3" showon="layout:grid" description="PLG_SYSTEM_DHARMASHOPRELATED_COLUMNS_DESC" />
+    <field name="slider_note" type="note" label="PLG_SYSTEM_DHARMASHOPRELATED_SLIDER_SETTINGS" description="PLG_SYSTEM_DHARMASHOPRELATED_SLIDER_DESC" showon="layout:slider" />
+    <field name="slider_columns_xs" type="integer" label="PLG_SYSTEM_DHARMASHOPRELATED_SLIDES_XS" first="1" last="6" step="1" default="1" showon="layout:slider" />
+    <field name="slider_columns_sm" type="integer" label="PLG_SYSTEM_DHARMASHOPRELATED_SLIDES_SM" first="1" last="6" step="1" default="2" showon="layout:slider" />
+    <field name="slider_columns_md" type="integer" label="PLG_SYSTEM_DHARMASHOPRELATED_SLIDES_MD" first="1" last="6" step="1" default="2" showon="layout:slider" />
+    <field name="slider_columns_lg" type="integer" label="PLG_SYSTEM_DHARMASHOPRELATED_SLIDES_LG" first="1" last="6" step="1" default="3" showon="layout:slider" />
+    <field name="slider_columns_xl" type="integer" label="PLG_SYSTEM_DHARMASHOPRELATED_SLIDES_XL" first="1" last="6" step="1" default="4" showon="layout:slider" />
+    <field name="slider_columns_xxl" type="integer" label="PLG_SYSTEM_DHARMASHOPRELATED_SLIDES_XXL" first="1" last="6" step="1" default="4" showon="layout:slider" />
+    <field name="slider_gap" type="number" label="PLG_SYSTEM_DHARMASHOPRELATED_SLIDER_GAP" default="16" min="0" max="64" step="1" filter="integer" showon="layout:slider" />
+    <field name="slider_speed" type="number" label="PLG_SYSTEM_DHARMASHOPRELATED_SLIDER_SPEED" default="400" min="0" max="3000" step="50" filter="integer" showon="layout:slider" />
+    <field name="slider_arrows" type="radio" label="PLG_SYSTEM_DHARMASHOPRELATED_SLIDER_ARROWS" default="1" filter="integer" validate="options" layout="joomla.form.field.radio.switcher" showon="layout:slider"><option value="0">JNO</option><option value="1">JYES</option></field>
+    <field name="slider_pagination" type="radio" label="PLG_SYSTEM_DHARMASHOPRELATED_SLIDER_PAGINATION" default="1" filter="integer" validate="options" layout="joomla.form.field.radio.switcher" showon="layout:slider"><option value="0">JNO</option><option value="1">JYES</option></field>
+    <field name="slider_loop" type="radio" label="PLG_SYSTEM_DHARMASHOPRELATED_SLIDER_LOOP" description="PLG_SYSTEM_DHARMASHOPRELATED_SLIDER_LOOP_DESC" default="0" filter="integer" validate="options" layout="joomla.form.field.radio.switcher" showon="layout:slider"><option value="0">JNO</option><option value="1">JYES</option></field>
+    <field name="slider_autoplay" type="radio" label="PLG_SYSTEM_DHARMASHOPRELATED_SLIDER_AUTOPLAY" description="PLG_SYSTEM_DHARMASHOPRELATED_SLIDER_AUTOPLAY_DESC" default="0" filter="integer" validate="options" layout="joomla.form.field.radio.switcher" showon="layout:slider"><option value="0">JNO</option><option value="1">JYES</option></field>
+    <field name="slider_delay" type="number" label="PLG_SYSTEM_DHARMASHOPRELATED_SLIDER_DELAY" default="5000" min="1000" max="60000" step="100" filter="integer" showon="layout:slider[AND]slider_autoplay:1" />
+    <field name="component_layouts" type="radio" label="PLG_SYSTEM_DHARMASHOPRELATED_COMPONENT_LAYOUTS" description="PLG_SYSTEM_DHARMASHOPRELATED_COMPONENT_LAYOUTS_DESC" default="1" layout="joomla.form.field.radio.switcher" filter="integer" validate="options"><option value="0">JNO</option><option value="1">JYES</option></field>
+    <field name="alias" type="text" label="PLG_SYSTEM_DHARMASHOPRELATED_ALIAS" description="PLG_SYSTEM_DHARMASHOPRELATED_ALIAS_DESC" readonly="true" filter="cmd" />
+    </fieldset>
+</form>

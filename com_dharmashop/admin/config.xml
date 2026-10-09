@@ -105,6 +105,7 @@
                 <option value="list">COM_DHARMASHOP_DISPLAY_VIEW_LIST</option>
                 <option value="table">COM_DHARMASHOP_DISPLAY_VIEW_TABLE</option>
             </field>
+            <field name="table_show_fields" type="radio" label="COM_DHARMASHOP_DISPLAY_TABLE_FIELDS" description="COM_DHARMASHOP_DISPLAY_TABLE_FIELDS_DESC" default="0" filter="integer" layout="joomla.form.field.radio.switcher"><option value="0">JNO</option><option value="1">JYES</option></field>
             <field name="subcategory_show_image" type="radio" label="COM_DHARMASHOP_DISPLAY_SUBCATEGORY_IMAGE" description="COM_DHARMASHOP_DISPLAY_SUBCATEGORY_IMAGE_DESC" layout="joomla.form.field.radio.switcher" default="1" filter="integer"><option value="0">JNO</option><option value="1">JYES</option></field>
             <field name="category_breakpoints" label="COM_DHARMASHOP_DISPLAY_BREAKPOINTS" type="radio" layout="joomla.form.field.radio.switcher" default="0" filter="integer" description="COM_DHARMASHOP_DISPLAY_BREAKPOINTS_DESC"><option value="0">JNO</option><option value="1">JYES</option></field>
             <field name="category_columns" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS" validate="options" default="3" showon="category_breakpoints:0" description="COM_DHARMASHOP_DISPLAY_COLUMNS_DESC"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
@@ -346,6 +347,16 @@
 		<fieldset name="notification_email" label="COM_DHARMASHOP_NOTIFY_EMAIL">
 			<field name="notify_email_enabled" type="radio" label="COM_DHARMASHOP_NOTIFY_ENABLED" description="COM_DHARMASHOP_NOTIFY_ENABLED_DESC" default="0" filter="integer" validate="options" layout="joomla.form.field.radio.switcher"><option value="0">JNO</option><option value="1">JYES</option></field>
 			<field name="notify_replyto" type="email" label="COM_DHARMASHOP_NOTIFY_REPLYTO" description="COM_DHARMASHOP_NOTIFY_REPLYTO_DESC" filter="string" validate="email" maxlength="254" />
+		</fieldset>
+		<fieldset name="notification_telegram" label="COM_DHARMASHOP_NOTIFY_TELEGRAM" addfieldprefix="Dharma\Component\DharmaShop\Administrator\Field">
+			<field name="notify_telegram_enabled" type="radio" label="COM_DHARMASHOP_NOTIFY_TELEGRAM_ENABLED" description="COM_DHARMASHOP_NOTIFY_TELEGRAM_ENABLED_DESC" default="0" filter="integer" validate="options" layout="joomla.form.field.radio.switcher"><option value="0">JNO</option><option value="1">JYES</option></field>
+			<field name="notify_telegram_bot_token" type="text" label="COM_DHARMASHOP_NOTIFY_TELEGRAM_TOKEN" description="COM_DHARMASHOP_NOTIFY_TELEGRAM_TOKEN_DESC" filter="raw" autocomplete="off" spellcheck="false" maxlength="256" />
+			<field name="notify_telegram_chats" type="telegramchats" label="COM_DHARMASHOP_NOTIFY_TELEGRAM_CHATS" description="COM_DHARMASHOP_NOTIFY_TELEGRAM_CHATS_DESC" multiple="true" layout="joomla.form.field.list-fancy-select" />
+			<field name="notify_telegram_created" type="radio" label="COM_DHARMASHOP_NOTIFY_CREATED" default="1" filter="integer" validate="options" layout="joomla.form.field.radio.switcher"><option value="0">JNO</option><option value="1">JYES</option></field>
+			<field name="notify_telegram_status" type="radio" label="COM_DHARMASHOP_NOTIFY_STATUS" default="0" filter="integer" validate="options" layout="joomla.form.field.radio.switcher"><option value="0">JNO</option><option value="1">JYES</option></field>
+			<field name="notify_telegram_items" type="radio" label="COM_DHARMASHOP_NOTIFY_ITEMS" description="COM_DHARMASHOP_NOTIFY_TELEGRAM_ITEMS_DESC" default="1" filter="integer" validate="options" layout="joomla.form.field.radio.switcher"><option value="0">JNO</option><option value="1">JYES</option></field>
+			<field name="notify_telegram_contacts" type="radio" label="COM_DHARMASHOP_NOTIFY_TELEGRAM_CONTACTS" description="COM_DHARMASHOP_NOTIFY_TELEGRAM_CONTACTS_DESC" default="1" filter="integer" validate="options" layout="joomla.form.field.radio.switcher"><option value="0">JNO</option><option value="1">JYES</option></field>
+			<field name="notify_telegram_link" type="radio" label="COM_DHARMASHOP_NOTIFY_TELEGRAM_LINK" description="COM_DHARMASHOP_NOTIFY_TELEGRAM_LINK_DESC" default="1" filter="integer" validate="options" layout="joomla.form.field.radio.switcher"><option value="0">JNO</option><option value="1">JYES</option></field>
 		</fieldset>
 		<fieldset name="notification_admin" label="COM_DHARMASHOP_NOTIFY_ADMIN">
 			<field name="notify_admin_system" type="radio" label="COM_DHARMASHOP_NOTIFY_SYSTEM_USERS" description="COM_DHARMASHOP_NOTIFY_SYSTEM_USERS_DESC" default="1" filter="integer" validate="options" layout="joomla.form.field.radio.switcher"><option value="0">JNO</option><option value="1">JYES</option></field>

@@ -66,6 +66,11 @@ class ProductTable extends Table
 
     public function bind($array, $ignore = ''): bool
     {
+        // Скрытая или отключённая вкладка плагина не должна стирать его параметры.
+        if (isset($array['params']) && is_array($array['params'])) {
+            $array['params'] = array_replace((new Registry($this->params ?? ''))->toArray(), $array['params']);
+        }
+
         foreach (['metadata', 'params'] as $key) {
             if (isset($array[$key]) && is_array($array[$key])) {
                 $array[$key] = (string) new Registry($array[$key]);

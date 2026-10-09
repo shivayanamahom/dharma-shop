@@ -66,7 +66,7 @@ trait ListingTrait
         return array_merge(Grid::keys('category'), Grid::keys($taxonomy->gridPrefix()), ['category_layout', 'product_card_layout',
             'product_card_intro', 'product_card_qty', 'product_card_cart_mode', 'product_card_images', 'category_product_count', 'category_price_range', $taxonomy->cardKey('layout'),
             $taxonomy->cardKey('intro'), $taxonomy->cardKey('count'), $taxonomy->cardKey('prices'), 'list_limit', 'list_ordering',
-            'category_default_view', 'subcategory_show_image', 'category_page_show_image']);
+            'category_default_view', 'table_show_fields', 'subcategory_show_image', 'category_page_show_image']);
     }
 
     /** Собирает параметры, вид и сортировку; возвращает параметры пункта меню этого вида. Товары не читает. */
@@ -194,7 +194,7 @@ trait ListingTrait
         $this->fieldColumns = [];
         $this->fieldColumnShowTitle = [];
 
-        if ($this->productView === 'table') {
+        if ($this->productView === 'table' && (int) $this->params->get('table_show_fields', 0) === 1) {
             foreach ($this->items as $product) {
                 foreach ($product->fields ?? [] as $alias => $field) {
                     if (!empty($field->show) && !empty($field->values)) {

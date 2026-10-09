@@ -29,6 +29,8 @@ $state = $this->getModel()->getState();
 $listOrder = $this->escape((string) $state->get('list.ordering'));
 $listDirn = $this->escape((string) $state->get('list.direction'));
 $function = Factory::getApplication()->getInput()->getCmd('function', 'jSelectProduct');
+$excluded = implode(',', (array) $state->get('picker.exclude', []));
+if ($excluded !== '') { $this->pagination->setAdditionalUrlParam('picker_exclude', $excluded); }
 $stateIcons = [-2 => 'icon-trash', 0 => 'icon-unpublish', 1 => 'icon-publish', 2 => 'icon-archive'];
 ?>
 <div class="container-popup">
@@ -75,6 +77,7 @@ $stateIcons = [-2 => 'icon-trash', 0 => 'icon-unpublish', 1 => 'icon-publish', 2
 
         <input type="hidden" name="task" value="">
         <input type="hidden" name="boxchecked" value="0">
+        <input type="hidden" name="picker_exclude" value="<?php echo $this->escape($excluded); ?>">
         <?php echo HTMLHelper::_('form.token'); ?>
     </form>
 </div>

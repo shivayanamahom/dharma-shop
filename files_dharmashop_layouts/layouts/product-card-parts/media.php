@@ -47,7 +47,7 @@ $ratio = preg_replace('/[^0-9x]/', '', (string) ($displayData['mediaRatio'] ?? '
                 <button type="button" class="carousel-control-next w-auto px-2 d-none" data-dharmashop-slider-next aria-label="<?php echo $escape(Text::_('JNEXT')); ?>"><span class="carousel-control-next-icon" aria-hidden="true"></span></button>
             </div>
         <?php elseif (count($images) > 1) : ?>
-            <?php $carousel = 'dharmaCarousel-' . (int) $item->id; ?>
+            <?php $carousel = 'dharmaCarousel-' . preg_replace('/[^a-zA-Z0-9_-]/', '', (string) ($displayData['instanceId'] ?? (int) $item->id)); ?>
             <div id="<?php echo $carousel; ?>" class="carousel slide <?php echo $rounded; ?> overflow-hidden dharmaCardCarousel" data-bs-ride="false" data-bs-touch="true">
                 <div class="carousel-indicators">
                     <?php foreach ($images as $n => $image) : ?>

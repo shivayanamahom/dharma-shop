@@ -51,6 +51,8 @@ $canAdmin = $this->getCurrentUser()->authorise('core.admin', 'com_dharmashop');
             'tabSet' => 'productTab',
         ], JPATH_ADMINISTRATOR . '/components/com_dharmashop/layouts'); ?>
 
+        <?php echo LayoutHelper::render('extension-tabs', ['form' => $this->form, 'tabSet' => 'productTab'], JPATH_ADMINISTRATOR . '/components/com_dharmashop/layouts'); ?>
+
         <?php echo HTMLHelper::_('uitab.addTab', 'productTab', 'price', Text::_('COM_DHARMASHOP_TAB_PRICE_STOCK')); ?>
         <div class="row">
             <div class="col-lg-6">

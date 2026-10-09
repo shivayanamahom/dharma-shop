@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Dharma\Component\DharmaShop\Administrator\Model;
 
 use Dharma\Component\DharmaShop\Administrator\Support\CategoryTypes;
+use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Model\ListModel;
 use Joomla\Database\ParameterType;
 use Joomla\Database\QueryInterface;
@@ -42,10 +43,20 @@ class ProductsModel extends ListModel
     protected function populateState($ordering = 'a.id', $direction = 'DESC'): void
     {
         parent::populateState($ordering, $direction);
+        // Только диалог пикера. Не сохраняем исключения в сессии общего списка товаров.
+        $input = Factory::getApplication()->getInput();
+        $excluded = [];
+        if ($input->getCmd('layout') === 'modal') {
+            $excluded = array_values(array_unique(array_filter(array_map('intval',
+                array_slice(explode(',', $input->getString('picker_exclude', '')), 0, 101)),
+                static fn (int $id): bool => $id > 0)));
+        }
+        $this->setState('picker.exclude', $excluded);
     }
 
     protected function getStoreId($id = ''): string
     {
+        $id .= ':picker=' . implode(',', $this->getState('picker.exclude', []));
         foreach (['search', 'published', 'catid', 'extra_catid', 'brand_id', 'badge_id', 'category_id', 'in_stock'] as $key) {
             $id .= ':' . $this->getState('filter.' . $key);
         }
@@ -73,6 +84,10 @@ class ProductsModel extends ListModel
             ->join('LEFT', $db->quoteName('#__dharmashop_variants', 'v') . ' ON v.product_id = a.id AND v.is_default = 1')
             ->join('LEFT', $db->quoteName('#__dharmashop_variant_prices', 'vp') . ' ON vp.variant_id = v.id AND vp.price_list_id = 1')
             ->join('LEFT', $db->quoteName('#__users', 'uc') . ' ON uc.id = a.checked_out');
+
+        if ($excluded = $this->getState('picker.exclude', [])) {
+            $query->whereNotIn($db->quoteName('a.id'), $excluded);
+        }
 
         $published = $this->getState('filter.published');
 

@@ -14,6 +14,7 @@
 		<file type="component" id="com_dharmashop">com_dharmashop.zip</file>
 		<file type="plugin" id="basic" group="dharmashopfield">plg_dharmashopfield_basic.zip</file>
 		<file type="plugin" id="email" group="dharmashopnotify">plg_dharmashopnotify_email.zip</file>
+		<file type="plugin" id="telegram" group="dharmashopnotify">plg_dharmashopnotify_telegram.zip</file>
 		<file type="plugin" id="standard" group="dharmashopshipping">plg_dharmashopshipping_standard.zip</file>
 		<file type="plugin" id="courier" group="dharmashopshipping">plg_dharmashopshipping_courier.zip</file>
 		<file type="plugin" id="pickup" group="dharmashopshipping">plg_dharmashopshipping_pickup.zip</file>
@@ -25,6 +26,7 @@
 		<file type="plugin" id="dharmashopswiper" group="system">plg_system_dharmashopswiper.zip</file>
 		<file type="plugin" id="dharmashopfancybox" group="system">plg_system_dharmashopfancybox.zip</file>
 		<file type="plugin" id="dharmashopmenu" group="system">plg_system_dharmashopmenu.zip</file>
+		<file type="plugin" id="dharmashoprelated" group="system">plg_system_dharmashoprelated.zip</file>
 		<file type="module" id="mod_dharmashop_cart" client="site">mod_dharmashop_cart.zip</file>
 		<file type="module" id="mod_dharmashop_search" client="site">mod_dharmashop_search.zip</file>
 		<file type="module" id="mod_dharmashop_filter" client="site">mod_dharmashop_filter.zip</file>
