@@ -12,12 +12,13 @@ declare(strict_types=1);
 
 namespace Dharma\Component\DharmaShop\Administrator\Field\Modal;
 
+use Dharma\Component\DharmaShop\Administrator\Catalog\ProductPicker;
 use Joomla\CMS\Factory;
+use Joomla\CMS\Layout\FileLayout;
 use Joomla\CMS\Form\Field\ModalSelectField;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Session\Session;
 use Joomla\CMS\Uri\Uri;
-use Joomla\Database\ParameterType;
 
 \defined('_JEXEC') or die;
 
@@ -53,35 +54,31 @@ class ProductField extends ModalSelectField
         $this->modalTitles['select'] = Text::_('COM_DHARMASHOP_SELECT_A_PRODUCT');
         $this->hint = $this->hint ?: Text::_('COM_DHARMASHOP_SELECT_A_PRODUCT');
 
+        $wa = Factory::getApplication()->getDocument()->getWebAssetManager();
+        $wa->getRegistry()->addExtensionRegistryFile('com_dharmashop');
+        $wa->useScript('com_dharmashop.product-picker');
+
         // Опция для повторяемых форм: диалог остаётся штатным, исключения обновляются перед каждым открытием.
         if ((string) $element['unique'] === 'true') {
             $this->dataAttributes['data-dharmashop-product-picker'] = 'unique';
-            $wa = Factory::getApplication()->getDocument()->getWebAssetManager();
-            $wa->getRegistry()->addExtensionRegistryFile('com_dharmashop');
-            $wa->useScript('com_dharmashop.product-picker');
         }
 
         return $result;
     }
 
-    /** Название выбранного товара для поля (если товара уже нет — его номер). */
+    protected function getInput()
+    {
+        $input = parent::getInput();
+        $picker = new ProductPicker($this->getDatabase());
+        $item = $picker->selected((int) $this->value, $this->form ? $this->form->getData()->toArray() : []);
+        return (new FileLayout('field.product-picker', JPATH_ADMINISTRATOR . '/components/com_dharmashop/layouts', ['component' => 'com_dharmashop', 'client' => 1]))
+            ->render(['input' => $input, 'product' => $item ? $picker->presentation($item, 'admin.picker.field') : null]);
+    }
+
+    /** The shared batch cache also supplies the native field title. */
     protected function getValueTitle()
     {
-        $value = (int) $this->value ?: 0;
-        $title = '';
-
-        if ($value) {
-            $db = $this->getDatabase();
-            $query = $db->createQuery()->select($db->quoteName('title'))->from($db->quoteName('#__dharmashop_products'))
-                ->where($db->quoteName('id') . ' = :value')->bind(':value', $value, ParameterType::INTEGER);
-
-            try {
-                $title = (string) $db->setQuery($query)->loadResult();
-            } catch (\Throwable $error) {
-                Factory::getApplication()->enqueueMessage($error->getMessage(), 'error');
-            }
-        }
-
-        return $title !== '' ? $title : ($value ?: '');
+        $item = (new ProductPicker($this->getDatabase()))->selected((int) $this->value, $this->form ? $this->form->getData()->toArray() : []);
+        return $item ? $item->title : ((int) $this->value ?: '');
     }
 }

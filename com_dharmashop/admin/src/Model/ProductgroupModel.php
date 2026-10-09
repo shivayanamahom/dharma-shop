@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Dharma\Component\DharmaShop\Administrator\Model;
 
+use Dharma\Component\DharmaShop\Administrator\Catalog\ProductPicker;
 use Dharma\Component\DharmaShop\Administrator\Catalog\GroupService;
 use Dharma\Component\DharmaShop\Administrator\Catalog\GroupTaxonomy;
 use Dharma\Component\DharmaShop\Administrator\Catalog\VariantRepository;
@@ -60,6 +61,8 @@ class ProductgroupModel extends AdminModel
             $form->setFieldAttribute('state', 'disabled', 'true');
             $form->setFieldAttribute('state', 'filter', 'unset');
         }
+        // Preload once before Joomla creates an independent Form for each repeated row.
+        (new ProductPicker($this->getDatabase()))->preload($form->getData()->toArray());
         return $form;
     }
 

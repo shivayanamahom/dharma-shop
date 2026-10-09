@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 \defined('_JEXEC') or die;
 
+use Dharma\Component\DharmaShop\Administrator\Catalog\ProductPicker;
 use Joomla\CMS\Factory;
 use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
@@ -32,6 +33,7 @@ $function = Factory::getApplication()->getInput()->getCmd('function', 'jSelectPr
 $excluded = implode(',', (array) $state->get('picker.exclude', []));
 if ($excluded !== '') { $this->pagination->setAdditionalUrlParam('picker_exclude', $excluded); }
 $stateIcons = [-2 => 'icon-trash', 0 => 'icon-unpublish', 1 => 'icon-publish', 2 => 'icon-archive'];
+$picker = new ProductPicker(Factory::getContainer()->get(\Joomla\Database\DatabaseInterface::class));
 ?>
 <div class="container-popup">
     <form action="<?php echo Route::_('index.php?option=com_dharmashop&view=products&layout=modal&tmpl=component&function=' . $function . '&' . Session::getFormToken() . '=1'); ?>" method="post" name="adminForm" id="adminForm">
@@ -48,17 +50,28 @@ $stateIcons = [-2 => 'icon-trash', 0 => 'icon-unpublish', 1 => 'icon-publish', 2
                 <thead>
                     <tr>
                         <th scope="col" class="w-1 text-center"><?php echo HTMLHelper::_('searchtools.sort', 'JSTATUS', 'a.state', $listDirn, $listOrder); ?></th>
+                        <th scope="col" class="w-1 text-center"><?php echo Text::_('COM_DHARMASHOP_HEADING_IMAGE'); ?></th>
                         <th scope="col"><?php echo HTMLHelper::_('searchtools.sort', 'JGLOBAL_TITLE', 'a.title', $listDirn, $listOrder); ?></th>
+                        <th scope="col" class="text-end"><?php echo HTMLHelper::_('searchtools.sort', 'COM_DHARMASHOP_HEADING_PRICE', 'a.price_min', $listDirn, $listOrder); ?></th>
                         <th scope="col" class="w-1 d-none d-md-table-cell"><?php echo HTMLHelper::_('searchtools.sort', 'JGRID_HEADING_ID', 'a.id', $listDirn, $listOrder); ?></th>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($this->items as $i => $item) : ?>
+                    <?php foreach ($this->items as $i => $item) :
+                        $preview = $picker->presentation($item, 'admin.picker.modal');
+                        $selectedPreview = $picker->presentation($item, 'admin.picker.field');
+                        ?>
                         <tr class="row<?php echo $i % 2; ?>">
                             <td class="text-center"><span class="tbody-icon"><span class="<?php echo $stateIcons[(int) $item->state] ?? 'icon-unpublish'; ?>" aria-hidden="true"></span></span></td>
+                            <td class="text-center align-middle">
+                                <?php if ($preview['image'] !== '') : ?>
+                                    <img src="<?php echo $this->escape($preview['image']); ?>" alt="" width="48" height="48" loading="lazy" decoding="async" class="rounded object-fit-cover">
+                                <?php else : ?><span class="icon-image text-body-secondary" aria-hidden="true"></span><?php endif; ?>
+                            </td>
                             <th scope="row">
                                 <a class="select-link" href="javascript:void(0)" data-content-select data-content-type="com_dharmashop.product"
                                     data-function="<?php echo $this->escape($function); ?>" data-id="<?php echo (int) $item->id; ?>"
+                                    data-picker-product="<?php echo $this->escape(json_encode($selectedPreview, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)); ?>"
                                     data-title="<?php echo $this->escape($item->title); ?>"><?php echo $this->escape($item->title); ?></a>
                                 <div class="small break-word"><?php echo Text::sprintf('JGLOBAL_LIST_ALIAS', $this->escape($item->alias)); ?></div>
                                 <div class="small">
@@ -66,6 +79,12 @@ $stateIcons = [-2 => 'icon-trash', 0 => 'icon-unpublish', 1 => 'icon-publish', 2
                                     <?php if ((string) $item->sku !== '') : ?> · <?php echo Text::_('COM_DHARMASHOP_SKU'); ?>: <?php echo $this->escape($item->sku); ?><?php endif; ?>
                                 </div>
                             </th>
+                            <td class="text-end align-middle">
+                                <div class="fw-bold"><?php echo $this->escape($preview['price']); ?></div>
+                                <?php if ($preview['regular'] !== '') : ?>
+                                    <div class="small text-nowrap"><del class="text-body-secondary"><?php echo $this->escape($preview['regular']); ?></del> <span class="badge bg-danger"><?php echo $this->escape($preview['discount']); ?></span></div>
+                                <?php endif; ?>
+                            </td>
                             <td class="small d-none d-md-table-cell"><?php echo (int) $item->id; ?></td>
                         </tr>
                     <?php endforeach; ?>

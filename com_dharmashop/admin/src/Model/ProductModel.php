@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Dharma\Component\DharmaShop\Administrator\Model;
 
 use Dharma\Component\DharmaShop\Administrator\Image\ImageCleaner;
+use Dharma\Component\DharmaShop\Administrator\Catalog\ProductPicker;
 use Dharma\Component\DharmaShop\Administrator\Catalog\CategoryPositionRules;
 use Dharma\Component\DharmaShop\Administrator\Catalog\SearchIndexer;
 use Dharma\Component\DharmaShop\Administrator\Order\InheritHints;
@@ -78,6 +79,8 @@ class ProductModel extends AdminModel
         if (true) {
             (new FieldValues($this->getDatabase()))->addToForm($form, 'product', $loadData ? $this->loadFormData() : $data, $loadData);
         }
+        // Preload once before Joomla creates an independent Form for each repeated row.
+        (new ProductPicker($this->getDatabase()))->preload($form->getData()->toArray());
         return $form;
     }
 

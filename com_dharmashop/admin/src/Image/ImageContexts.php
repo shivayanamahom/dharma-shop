@@ -51,6 +51,8 @@ final class ImageContexts
         'field.gallery.lightbox' => [1800, 1800],
         'field.video.poster' => [640, 360],
         'admin.product' => [96, 96],
+        'admin.picker.field' => [128, 128],
+        'admin.picker.modal' => [96, 96],
         'admin.category' => [96, 96],
         'email.product' => [128, 128],
         'email.logo' => [320, 160],
@@ -78,7 +80,7 @@ final class ImageContexts
         $configured = [];
         foreach ($rows as $row) { $configured[(string) (((array) $row)['context'] ?? '')] = true; }
         foreach (self::defaults() as $row) {
-            if ((str_starts_with($row['context'], 'module.categories.') || str_starts_with($row['context'], 'field.color.') || $row['context'] === 'group.choice' || str_starts_with($row['context'], 'group.teaser.')) && !isset($configured[$row['context']])) {
+            if ((str_starts_with($row['context'], 'module.categories.') || str_starts_with($row['context'], 'field.color.') || $row['context'] === 'group.choice' || str_starts_with($row['context'], 'group.teaser.') || str_starts_with($row['context'], 'admin.picker.')) && !isset($configured[$row['context']])) {
                 $rows[] = $row;
             }
         }
