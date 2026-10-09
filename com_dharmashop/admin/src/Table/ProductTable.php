@@ -109,6 +109,13 @@ class ProductTable extends Table
         }
 
         $this->variants_mode = 1;
+        foreach (['inherit_intro', 'inherit_full', 'inherit_images'] as $mode) {
+            $this->$mode ??= 'own';
+            if (!in_array($this->$mode, ['own', 'group', 'empty'], true)) {
+                $this->setError(Text::_('COM_DHARMASHOP_GROUP_INHERIT_INVALID'));
+                return false;
+            }
+        }
 
         // Текст для поиска: без тегов, лишние пробелы и пустые строки убираются; пусто — NULL.
         $this->search_text = trim(preg_replace('/[ \t]+/u', ' ', strip_tags((string) $this->search_text)) ?? '');

@@ -34,6 +34,7 @@ class ProductModel extends BaseDatabaseModel
             ->where('blocked.lft <= c.lft')->where('blocked.rgt >= c.rgt')
             ->where('(blocked.published != 1 OR blocked.access NOT IN (' . $levels . '))');
         $query = $db->createQuery()->select($db->quoteName([
+                'p.group_id', 'p.inherit_intro', 'p.inherit_full', 'p.inherit_images',
                 'p.id', 'p.catid', 'p.title', 'p.alias', 'p.introtext', 'p.fulltext', 'p.cover', 'p.cover_alt',
                 'p.price_min', 'p.price_max', 'p.price_zero_free', 'p.unit', 'p.qty_min', 'p.qty_step', 'p.in_stock', 'p.metadesc', 'p.metadata', 'p.params',
             ]))
@@ -56,12 +57,14 @@ class ProductModel extends BaseDatabaseModel
             ->where('pc.product_id = :brand')->bind(':brand', $id, ParameterType::INTEGER)
             ->where('pc.direct = 1')->where('b.extension = ' . $db->quote('com_dharmashop.brand'))
             ->where('b.published = 1')->where('b.access IN (' . $levels . ')')->order('b.id'), 0, 1)->loadResult();
+        $groups = Factory::getApplication()->bootComponent('com_dharmashop')->getServices()->groups();
+        $groups->inherit($item);
         $item->description = (string) ($item->fulltext ?? '');
         $item->price_free = Factory::getApplication()->bootComponent('com_dharmashop')->getServices()->orderRules()->priceIsFree($item);
         // SKU и фактическое наличие одного и того же опубликованного варианта, без отдельного запроса остатков.
-        $variant = $db->setQuery($db->createQuery()->select($db->quoteName(['sku', 'stock_tracked', 'stock_total']))
-            ->from($db->quoteName('#__dharmashop_variants'))
-            ->where('product_id = :sku')->where('state = 1')->order('is_default DESC, ordering, id')->bind(':sku', $id, ParameterType::INTEGER), 0, 1)->loadObject();
+        $variant = Factory::getApplication()->bootComponent('com_dharmashop')->getServices()->variants()->getDefault($id);
+        if (!$variant) { throw new \RuntimeException(Text::_('COM_DHARMASHOP_SKU_INVARIANT')); }
+        if ((int)$variant->state !== 1) { $variant = null; }
         $item->sku = (string) ($variant->sku ?? '');
         // Нулевой служебный остаток без учёта количества — доступен; учтённый ноль — отсутствует,
         // даже если отдельное бизнес-правило корзины позволяет принять заказ без остатка.
@@ -69,12 +72,7 @@ class ProductModel extends BaseDatabaseModel
             && ((int) $variant->stock_tracked === 0 || (float) $variant->stock_total > 0);
         $item->params = new Registry($item->params);
         $item->metadata = new Registry($item->metadata);
-        $priceQuery = $db->createQuery()->select($db->quoteName(['vp.price', 'vp.price_final', 'vp.discount_start', 'vp.discount_end']))
-            ->from($db->quoteName('#__dharmashop_variants', 'v'))
-            ->join('INNER', $db->quoteName('#__dharmashop_variant_prices', 'vp') . ' ON vp.variant_id = v.id')
-            ->where('v.product_id = :product')->bind(':product', $id, ParameterType::INTEGER)
-            ->where('v.state = 1')->where('v.is_default = 1')->where('vp.price_list_id = 1');
-        $price = $db->setQuery($priceQuery)->loadObject();
+        $price = $variant && (int)$variant->is_default === 1 ? $variant : null;
         $item->base_price = null;
         $item->discount_amount = null;
         $item->discount_percent = 0.0;
@@ -117,12 +115,21 @@ class ProductModel extends BaseDatabaseModel
             }
         }
 
+        if (($item->inherit_images ?? 'own') !== 'own') {
+            $item->gallery = [];
+            if ($item->inherit_images === 'group') {
+                foreach ($groups->media((int) $item->group_id) as $row) {
+                    if ($url = MediaUrl::absolute((string) $row['path'])) { $item->gallery[] = (object) ['url'=>$url,'alt'=>$row['alt'] ?: $item->title,'title'=>$row['title'] ?: $row['alt']]; }
+                }
+            }
+        }
         if (!$item->gallery && ($url = MediaUrl::absolute((string) $item->cover))) {
             $alt = (string) $item->cover_alt;
             $description = $alt !== '' ? $alt : (string) $item->title;
             $item->gallery[] = (object) ['url' => $url, 'alt' => $description, 'title' => $description];
         }
 
+        $item->choices = (new \Dharma\Component\DharmaShop\Site\Support\ProductChoices($db))->forProduct($item);
         ProductFields::attach($db, [$item], 'page');
         return $item;
     }

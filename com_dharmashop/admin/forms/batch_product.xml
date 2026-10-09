@@ -2,6 +2,11 @@
 <!-- Окно «Пакетная обработка» товаров. Блок = fieldset внутри группы batch/<операция>; операция — строка в ProductModel::$batch_commands и метод batch<Имя>. -->
 <form>
 	<fields name="batch">
+        <fields name="product_group"><fieldset name="product_group" label="COM_DHARMASHOP_PRODUCT_GROUP" addfieldprefix="Dharma\Component\DharmaShop\Administrator\Field">
+            <field name="value" type="productgroup" label="COM_DHARMASHOP_PRODUCT_GROUP"/>
+            <field name="action" type="list" label="COM_DHARMASHOP_BATCH_ACTION" default="skip" validate="options"><option value="skip">COM_DHARMASHOP_BATCH_ACTION_SKIP</option><option value="set">COM_DHARMASHOP_GROUP_ADD</option><option value="clear">COM_DHARMASHOP_GROUP_EXCLUDE</option></field>
+        </fieldset></fields>
+
 		<fields name="category">
 			<fieldset name="category" label="COM_DHARMASHOP_BATCH_BLOCK_CATEGORY" description="COM_DHARMASHOP_BATCH_BLOCK_CATEGORY_DESC">
 				<field name="value" type="category" label="COM_DHARMASHOP_BATCH_VALUE_CATEGORY" extension="com_dharmashop">

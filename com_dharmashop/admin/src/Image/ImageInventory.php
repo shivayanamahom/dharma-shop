@@ -23,8 +23,9 @@ final class ImageInventory
             'SELECT id, path FROM #__dharmashop_category_field_media WHERE mime IS NULL AND id > :id ORDER BY id',
             "SELECT id, extension, params FROM #__categories WHERE extension IN ('com_dharmashop','com_dharmashop.brand','com_dharmashop.badge') AND id > :id ORDER BY id",
             'SELECT id, image FROM #__dharmashop_field_options WHERE id > :id ORDER BY id',
+            'SELECT id, path FROM #__dharmashop_group_media WHERE id > :id ORDER BY id',
         ];
-        while ($phase < 5) {
+        while ($phase < 6) {
             $row = $this->db->setQuery(Sql::query($this->db, $queries[$phase], [':id'=>[$id, ParameterType::INTEGER]]), 0, 1)->loadAssoc();
             if (!$row) { $cursor = ['phase'=>++$phase, 'id'=>0]; $id = 0; continue; }
             $cursor = ['phase'=>$phase, 'id'=>(int)$row['id']];
@@ -38,11 +39,12 @@ final class ImageInventory
                     : [[$row['path'], (int) $row['field_id'] > 0 ? ['field.gallery.card', 'field.gallery.page', 'field.gallery.lightbox'] : $product]],
                 2 => [[$row['path'], ['field.gallery.card', 'field.gallery.page', 'field.gallery.lightbox']]],
                 3 => $this->category($params, match ($row['extension']) { 'com_dharmashop.brand'=>'brand', 'com_dharmashop.badge'=>'badge', default=>'category' }),
-                4 => [[$row['image'], ['field.option']]],
+                4 => [[$row['image'], ['field.option', 'group.choice']]],
+                5 => [[$row['path'], [...$product, 'seo.social']]],
             };
         }
-        if ($phase === 5) {
-            $cursor = ['phase'=>6, 'id'=>0];
+        if ($phase === 6) {
+            $cursor = ['phase'=>7, 'id'=>0];
             $result = [[$this->settings->get('shop_logo',''), ['email.logo']], [$this->settings->get('seo_default_image',''), ['seo.social']]];
             foreach (['root_category'=>'category', 'root_brand'=>'brand'] as $key=>$kind) {
                 $result = array_merge($result, $this->category((array)$this->settings->get($key, []), $kind));

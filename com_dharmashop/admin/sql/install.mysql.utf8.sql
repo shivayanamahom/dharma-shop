@@ -9,6 +9,11 @@ CREATE TABLE IF NOT EXISTS `#__dharmashop_products` (
   `search_text` text NULL,
   `state` tinyint NOT NULL DEFAULT 0,
   `variants_mode` tinyint unsigned NOT NULL DEFAULT 1,
+  `group_id` int unsigned NULL,
+  `combo_hash` char(64) CHARACTER SET ascii COLLATE ascii_bin NULL,
+  `inherit_intro` varchar(8) NOT NULL DEFAULT 'own',
+  `inherit_full` varchar(8) NOT NULL DEFAULT 'own',
+  `inherit_images` varchar(8) NOT NULL DEFAULT 'own',
   `unit` varchar(20) NULL,
   `qty_min` decimal(12,3) NULL,
   `qty_step` decimal(12,3) NULL,
@@ -33,6 +38,8 @@ CREATE TABLE IF NOT EXISTS `#__dharmashop_products` (
   `modified` datetime NULL,
   `modified_by` int unsigned NOT NULL DEFAULT 0,
   PRIMARY KEY (`id`),
+  KEY `idx_group` (`group_id`, `id`),
+  UNIQUE KEY `uq_group_combo` (`group_id`, `combo_hash`),
   UNIQUE KEY `uq_cat_alias` (`catid`, `alias`),
   KEY `idx_state_created` (`state`, `created`),
   KEY `idx_modified` (`modified`)
@@ -61,6 +68,7 @@ CREATE TABLE IF NOT EXISTS `#__dharmashop_variants` (
   `modified` datetime NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_sku` (`sku`),
+  UNIQUE KEY `uq_product_sku` (`product_id`),
   KEY `idx_product` (`product_id`, `state`, `ordering`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -588,4 +596,26 @@ CREATE TABLE IF NOT EXISTS `#__dharmashop_notifications` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `idx_delivery` (`history_id`, `channel`, `audience`, `recipient_hash`),
   KEY `idx_order` (`order_id`, `history_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `#__dharmashop_product_groups` (
+ `id` int unsigned NOT NULL AUTO_INCREMENT,
+ `title` varchar(255) NOT NULL, `alias` varchar(190) NOT NULL,
+ `display_mode` varchar(8) NOT NULL DEFAULT 'single', `state` tinyint NOT NULL DEFAULT 1,
+ `introtext` text NULL, `fulltext` mediumtext NULL, `cover` varchar(500) NULL, `cover_alt` varchar(255) NULL,
+ `price_min` decimal(15,2) NULL, `price_max` decimal(15,2) NULL,
+ `in_stock` tinyint unsigned NOT NULL DEFAULT 0, `members_count` int unsigned NOT NULL DEFAULT 0,
+ `revision` int unsigned NOT NULL DEFAULT 1,
+ `checked_out` int unsigned NULL, `checked_out_time` datetime NULL,
+ PRIMARY KEY (`id`), UNIQUE KEY `uq_alias` (`alias`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE IF NOT EXISTS `#__dharmashop_group_axes` (
+ `group_id` int unsigned NOT NULL, `field_id` int unsigned NOT NULL, `ordering` smallint unsigned NOT NULL DEFAULT 0,
+ PRIMARY KEY (`group_id`, `field_id`), KEY `idx_field` (`field_id`, `group_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+CREATE TABLE IF NOT EXISTS `#__dharmashop_group_media` (
+ `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+ `group_id` int unsigned NOT NULL, `ordering` smallint unsigned NOT NULL,
+ `path` varchar(500) NOT NULL, `alt` varchar(255) NOT NULL DEFAULT '', `title` varchar(255) NOT NULL DEFAULT '',
+ PRIMARY KEY (`id`), UNIQUE KEY `uq_group_order` (`group_id`, `ordering`), KEY `idx_path` (`path`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

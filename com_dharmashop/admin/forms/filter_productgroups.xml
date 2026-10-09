@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form>
+    <fields name="filter">
+        <field name="search" type="text" label="JSEARCH_FILTER" hint="JSEARCH_FILTER" />
+        <field name="published" type="status" label="JSTATUS">
+            <option value="">JOPTION_SELECT_PUBLISHED</option>
+        </field>
+    </fields>
+    <fields name="list">
+        <field name="fullordering" type="list" default="g.id DESC" onchange="this.form.submit();">
+            <option value="g.id DESC">JGRID_HEADING_ID_DESC</option>
+            <option value="g.title ASC">JGLOBAL_TITLE_ASC</option>
+            <option value="g.title DESC">JGLOBAL_TITLE_DESC</option>
+        </field>
+        <field name="limit" type="limitbox" default="25" onchange="this.form.submit();" />
+    </fields>
+</form>

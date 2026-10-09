@@ -37,6 +37,7 @@ final class ImageContexts
         'module.categories.grid' => [600, 400],
         'module.categories.accordion' => [600, 400],
         'module.categories.slider' => [600, 400],
+        'group.choice' => [96, 96],
         'field.option' => [96, 96],
         'field.color.admin' => [96, 96],
         'field.color.filter' => [96, 96],
@@ -74,7 +75,7 @@ final class ImageContexts
         $configured = [];
         foreach ($rows as $row) { $configured[(string) (((array) $row)['context'] ?? '')] = true; }
         foreach (self::defaults() as $row) {
-            if ((str_starts_with($row['context'], 'module.categories.') || str_starts_with($row['context'], 'field.color.')) && !isset($configured[$row['context']])) {
+            if ((str_starts_with($row['context'], 'module.categories.') || str_starts_with($row['context'], 'field.color.') || $row['context'] === 'group.choice') && !isset($configured[$row['context']])) {
                 $rows[] = $row;
             }
         }

@@ -76,6 +76,8 @@ final class ImageCleaner
     /** Есть ли ссылка на путь в записях магазина. */
     public function isReferenced(string $path): bool
     {
+        if ($this->db->setQuery('SELECT group_id FROM #__dharmashop_group_media WHERE path=' . $this->db->quote($path), 0, 1)->loadResult()) { return true; }
+
         $base = basename($path);
         $like = '%' . str_replace(['%', '_'], ['\\%', '\\_'], $base) . '%';
 

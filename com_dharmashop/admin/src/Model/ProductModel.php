@@ -50,6 +50,7 @@ class ProductModel extends AdminModel
     protected $batch_copymove = '';
 
     protected $batch_commands = [
+        'product_group' => 'batchProductGroup',
         'category' => 'batchMoveCategory',
         'extra_categories' => 'batchExtraCategories',
         'brand' => 'batchBrand',
@@ -218,6 +219,7 @@ class ProductModel extends AdminModel
         }
 
         try {
+            $shop->variants()->assertSingle((int) ($data['id'] ?? 0));
             $shop->variants()->assertSkuAvailable((int) ($data['id'] ?? 0), trim((string) ($data['sku'] ?? '')) ?: null);
         } catch (\RuntimeException $e) {
             $this->setError(Text::_($e->getMessage()));
@@ -228,6 +230,20 @@ class ProductModel extends AdminModel
         $fieldValues = new FieldValues($db);
         try { $preparedFields = $fieldValues->prepare('product', $data); }
         catch (\Throwable $error) { $this->setError($error->getMessage()); return false; }
+        $previous = $isNew ? null : $db->setQuery('SELECT group_id,inherit_intro,inherit_full,inherit_images,cover,cover_alt FROM #__dharmashop_products WHERE id=' . (int)$data['id'])->loadObject();
+        $previousGroup = (int)($previous->group_id ?? 0);
+        // Preserve legacy cover-only records before caching the inherited cover. Restore own cover on switching back.
+        if ($previous && !array_key_exists('gallery',$data) && ($data['inherit_images'] ?? $previous->inherit_images) !== $previous->inherit_images) {
+            $data['gallery'] = $shop->gallery()->load((int)$data['id']);
+            if (!$data['gallery'] && $previous->inherit_images === 'own' && $previous->cover) {
+                $data['gallery'] = [['path'=>$previous->cover,'alt'=>$previous->cover_alt ?? '', 'title'=>'']];
+            }
+        }
+        $targetGroup = array_key_exists('group_id', $data) ? max(0, (int) $data['group_id']) : $previousGroup;
+        try { $shop->groups()->validateProduct((int) ($data['id'] ?? 0), $targetGroup, $preparedFields); }
+        catch (\Throwable $error) { $this->setError(Text::_($error->getMessage())); return false; }
+        // Membership and its hash are stored together with field values, never by Joomla's earlier Table::store().
+        unset($data['group_id'], $data['combo_hash']);
         unset($data['custom_fields'], $data['custom_fields_present']);
 
         if (!parent::save($data)) {
@@ -277,6 +293,7 @@ class ProductModel extends AdminModel
             }
 
             $removedFiles = array_merge($removedFiles, $fieldValues->save('product', $id, $preparedFields));
+            if ($targetGroup > 0 || $previousGroup > 0) { $shop->groups()->assign([$id], $targetGroup); }
             (new SearchIndexer($db))->rebuild($id);
             $shop->facets()->end($facetToken);
             $db->transactionCommit();
@@ -288,6 +305,12 @@ class ProductModel extends AdminModel
                 $this->getTable()->delete($id);
                 $shop->variants()->deleteForProduct($id);
                 $shop->indexer()->deleteProduct($id);
+                $this->setState('product.id', 0);
+            } elseif ($previous) {
+                // These scalar modes were written by the earlier Joomla asset save; restore them on relation failure.
+                $restore = (object) ['id'=>$id];
+                foreach (['inherit_intro','inherit_full','inherit_images','cover','cover_alt'] as $column) { $restore->$column = $previous->$column; }
+                $db->updateObject('#__dharmashop_products', $restore, 'id', true);
             }
 
             $this->setError(Text::_($e->getMessage()) ?: $e->getMessage());
@@ -360,6 +383,8 @@ class ProductModel extends AdminModel
         $db = $this->getDatabase();
         $files = [];
 
+        $affectedGroups = $ids ? $db->setQuery('SELECT DISTINCT group_id FROM #__dharmashop_products WHERE id IN (' . implode(',', $ids) . ') AND group_id IS NOT NULL')->loadColumn() : [];
+
         // SEO-картинка лежит в params, поэтому запоминаем её до удаления карточек.
         foreach ($ids as $id) {
             $json = $db->setQuery($db->createQuery()->select('params')->from('#__dharmashop_products')->where('id = ' . $id))->loadResult();
@@ -393,6 +418,8 @@ class ProductModel extends AdminModel
             $db->setQuery('DELETE FROM #__dharmashop_product_axes WHERE product_id = ' . $id)->execute();
         }
 
+        foreach ($affectedGroups as $group) { $shop->groups()->rebuild((int) $group); }
+
         // Файлы удалённых товаров: только наши и только если на них больше никто не ссылается.
         $this->deleteFiles($files);
 
@@ -409,6 +436,7 @@ class ProductModel extends AdminModel
         }
 
         $this->shop()->indexer()->refreshProducts(array_map('intval', (array) $pks));
+        $this->shop()->groups()->refreshProducts(array_map('intval', (array) $pks));
         $facets->end($facetToken);
 
         return true;
@@ -550,6 +578,33 @@ class ProductModel extends AdminModel
         }
 
         return true;
+    }
+
+    /** Explicitly changes membership; inherited content is retained on removal or transfer. */
+    protected function batchProductGroup($value, $pks, $contexts): bool
+    {
+        $action = $value['action'] ?? 'skip';
+        if ($action === 'skip') { return true; }
+        if (!in_array($action, ['set', 'clear'], true)) {
+            $this->setError(Text::_('COM_DHARMASHOP_GROUP_INVALID'));
+            return false;
+        }
+        $group = $action === 'clear' ? 0 : (int) ($value['value'] ?? 0);
+        if ($action === 'set' && $group < 1) {
+            $this->setError(Text::_('COM_DHARMASHOP_GROUP_NOT_FOUND'));
+            return false;
+        }
+        $db = $this->getDatabase();
+        $db->transactionStart();
+        try {
+            $this->shop()->groups()->assign(array_map('intval', (array) $pks), $group);
+            $db->transactionCommit();
+            return true;
+        } catch (\Throwable $error) {
+            $db->transactionRollback();
+            $this->setError(Text::_($error->getMessage()));
+            return false;
+        }
     }
 
     /** Переносит товары в основную категорию (меняет адрес товара, права наследуются от новой категории). */

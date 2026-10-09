@@ -344,3 +344,7 @@ C74: результат вынесен в `site/tmpl/checkoutcomplete/default.ph
 `Site\Support\ProductCardRenderer` готовит общий displayData для карточек расширений после пакетной загрузки через `CategoryModel::attachCardData`. Дополнительные группы формы товара `extension_*` выводятся нативными вкладками из административного `layouts/extension-tabs.php`. Повторяемая форма выбора товара — `admin/forms/product_selection.xml`, поле строки `product_id` типа `modal_product`.
 
 Макет блока `slider` использует grid-карточки того же источника и контекст `product.related.grid`. Обёртка `tmpl/slider.php` переопределяется в `html/plg_system_dharmashoprelated/slider.php`; общий Swiper подключается через preset `dharmashop.swiper`, инициализатор плагина — через WAM с зависимостью от библиотеки. Настройки: видимые карточки по шести брейкпоинтам Bootstrap, отступ, скорость, стрелки, пагинация, loop, autoplay/интервал. Управление ограничено блоком; при отсутствии библиотеки — сетка. Нового CSS нет; подробности — RELATED_PRODUCTS.md.
+
+## Выбор исполнения группы товаров (C87, 2026-10-09)
+
+`com_dharmashop/site/tmpl/product/default_choices.php` — часть страницы после интро, loadTemplate('choices'); переопределение `html/com_dharmashop/product/default_choices.php`. Класс `dharmaProductChoices`, Bootstrap GET-форма, общий fields/swatch и контекст `group.choice`. Тизера группы пока нет: будущий слот и group.teaser добавляются вместе с группировкой (VARIANTS.md §13).

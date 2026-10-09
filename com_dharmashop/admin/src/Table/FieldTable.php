@@ -73,6 +73,12 @@ class FieldTable extends Table
         } catch (\Throwable $error) {
             $this->setError(Text::_($error->getMessage())); return false;
         }
+        if ($id > 0 && $db->setQuery('SELECT group_id FROM #__dharmashop_group_axes WHERE field_id=' . $id, 0, 1)->loadResult()) {
+            $settings = new Registry($this->params);
+            if (!(int) $settings->get('variation', 0) || (int) $settings->get('multiple', 0)) {
+                $this->setError(Text::_('COM_DHARMASHOP_GROUP_AXIS_USED')); return false;
+            }
+        }
         $this->state = (int) $this->state;
         if (!in_array($this->state, [-2,0,1,2], true) || mb_strlen((string) $this->unit) > 20) {
             $this->setError(Text::_('COM_DHARMASHOP_FIELD_SETTINGS_INVALID')); return false;
@@ -88,7 +94,7 @@ class FieldTable extends Table
     public function hasValues(int $id): bool
     {
         $db = $this->getDatabase();
-        foreach (['field_values','field_texts','field_media','product_axes','category_field_values','category_field_texts','category_field_media'] as $suffix) {
+        foreach (['field_values','field_texts','field_media','product_axes','group_axes','category_field_values','category_field_texts','category_field_media'] as $suffix) {
             $query = $db->createQuery()->select('field_id')->from($db->quoteName('#__dharmashop_' . $suffix))
                 ->where('field_id = :id')->bind(':id', $id, ParameterType::INTEGER);
             if ($db->setQuery($query, 0, 1)->loadResult()) { return true; }

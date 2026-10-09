@@ -36,3 +36,7 @@ DROP TABLE IF EXISTS `#__dharmashop_category_field_media`;
 
 DROP TABLE IF EXISTS `#__dharmashop_notifications`;
 DROP TABLE IF EXISTS `#__dharmashop_warehouses`;
+
+DROP TABLE IF EXISTS `#__dharmashop_group_media`;
+DROP TABLE IF EXISTS `#__dharmashop_group_axes`;
+DROP TABLE IF EXISTS `#__dharmashop_product_groups`;

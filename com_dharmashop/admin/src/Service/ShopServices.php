@@ -122,6 +122,11 @@ final class ShopServices
         return $this->prices ??= new PriceResolver();
     }
 
+    public function groups(): \Dharma\Component\DharmaShop\Administrator\Catalog\GroupService
+    {
+        return new \Dharma\Component\DharmaShop\Administrator\Catalog\GroupService($this->db);
+    }
+
     public function variants(): VariantRepository
     {
         return $this->variants ??= new VariantRepository($this->db, $this->prices());

@@ -46,6 +46,7 @@
 			<menu link="option=com_dharmashop&amp;view=payments" view="payments">COM_DHARMASHOP_MENU_PAYMENT</menu>
 			<menu link="option=com_dharmashop&amp;view=warehouses" view="warehouses">COM_DHARMASHOP_MENU_WAREHOUSES</menu>
 			<menu link="option=com_dharmashop&amp;view=products" view="products">COM_DHARMASHOP_MENU_PRODUCTS</menu>
+			<menu link="option=com_dharmashop&amp;view=productgroups" view="productgroups">COM_DHARMASHOP_MENU_PRODUCTGROUPS</menu>
 			<menu link="option=com_dharmashop&amp;view=categories&amp;extension=com_dharmashop">COM_DHARMASHOP_MENU_CATEGORIES</menu>
 			<menu link="option=com_dharmashop&amp;view=categories&amp;extension=com_dharmashop.brand">COM_DHARMASHOP_MENU_BRANDS</menu>
 			<menu link="option=com_dharmashop&amp;view=categories&amp;extension=com_dharmashop.badge">COM_DHARMASHOP_MENU_BADGES</menu>

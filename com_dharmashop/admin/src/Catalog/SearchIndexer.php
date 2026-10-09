@@ -45,7 +45,7 @@ final class SearchIndexer
         $synonyms = $in('search_in_synonyms', 1);
         $products = $this->db->setQuery(Sql::query(
             $this->db,
-            'SELECT id, title, ' . ($description ? 'introtext, `fulltext`, ' : '') . 'search_text FROM #__dharmashop_products WHERE id BETWEEN :f AND :t',
+            'SELECT p.id, p.title, ' . ($description ? "CASE p.inherit_intro WHEN 'group' THEN g.introtext WHEN 'empty' THEN '' ELSE p.introtext END AS introtext, CASE p.inherit_full WHEN 'group' THEN g.fulltext WHEN 'empty' THEN '' ELSE p.fulltext END AS fulltext, " : '') . 'p.search_text FROM #__dharmashop_products p ' . ($description ? 'LEFT JOIN #__dharmashop_product_groups g ON g.id=p.group_id ' : '') . 'WHERE p.id BETWEEN :f AND :t',
             $params
         ))->loadObjectList();
 

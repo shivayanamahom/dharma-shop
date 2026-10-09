@@ -34,6 +34,21 @@ class ProductsController extends AdminController
         return parent::getModel($name, $prefix, $config);
     }
 
+    /** Open native group form with selected existing products; no mutation before Save. */
+    public function combine(): void
+    {
+        $this->checkToken();
+        $user=$this->app->getIdentity();
+        $ids=array_values(array_unique(array_filter(ArrayHelper::toInteger((array)$this->input->get('cid',[],'array')))));
+        if (!$user->authorise('core.create','com_dharmashop') || !$ids) {
+            $this->setRedirect($this->listUrl(),Text::_('JLIB_APPLICATION_ERROR_ACCESS_FORBIDDEN'),'error');return;
+        }
+        foreach($ids as $id) {if(!$user->authorise('core.edit','com_dharmashop.product.'.$id)) {$this->setRedirect($this->listUrl(),Text::_('JLIB_APPLICATION_ERROR_ACCESS_FORBIDDEN'),'error');return;}}
+        $this->app->setUserState('com_dharmashop.edit.productgroup.data',null);
+        $this->app->setUserState('com_dharmashop.group.selection',$ids);
+        $this->setRedirect(Route::_('index.php?option=com_dharmashop&task=productgroup.add',false));
+    }
+
     private function listUrl(): string
     {
         return Route::_('index.php?option=com_dharmashop&view=products', false);

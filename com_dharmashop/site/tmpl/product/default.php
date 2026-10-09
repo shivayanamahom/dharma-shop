@@ -31,6 +31,7 @@ $heading = $page?->h1 ?? (string) ($this->item->title ?? '');
         <div class="col-12 col-md-6 col-xl-5 dharmaProductInfo">
             <?php echo $this->renderHook('beforeIntro'); ?>
             <?php echo $this->loadTemplate('intro'); ?>
+            <?php echo $this->loadTemplate('choices'); ?>
             <?php echo $this->renderHook('afterIntro'); ?>
         </div>
         <div class="col-12 col-xl-3 dharmaProductPurchase">

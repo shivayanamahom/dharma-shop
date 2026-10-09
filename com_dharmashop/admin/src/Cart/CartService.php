@@ -427,9 +427,9 @@ final class CartService
         }
 
         $query->order('v.is_default DESC, v.ordering, v.id');
-        $row = $this->db->setQuery($query, 0, 1)->loadAssoc();
-
-        return $row ?: null;
+        $rows = $this->db->setQuery($query, 0, 2)->loadAssocList();
+        if (count($rows) > 1) { throw new \RuntimeException('COM_DHARMASHOP_SKU_INVARIANT'); }
+        return $rows[0] ?? null;
     }
 
     private function itemRow(int $cartId, int $itemId): ?array

@@ -38,7 +38,7 @@ final class VariantRepository
     {
         $priceList = $this->priceListId;
         $query = $this->db->createQuery()
-            ->select('v.*, vp.price, vp.discount, vp.discount_percent, vp.discount_start, vp.discount_end, vp.price_final')
+            ->select('v.id, v.product_id, v.title, v.ordering, v.sku, v.state, v.is_default, v.stock_tracked, v.backorder, v.stock_total, v.in_stock, v.weight, v.weight_unit, v.length, v.width, v.height, v.dimension_unit, vp.price, vp.discount, vp.discount_percent, vp.discount_start, vp.discount_end, vp.price_final')
             ->from($this->db->quoteName('#__dharmashop_variants', 'v'))
             ->join('LEFT', '#__dharmashop_variant_prices AS vp ON vp.variant_id = v.id AND vp.price_list_id = :pl')
             ->where('v.product_id = :p')
@@ -46,7 +46,16 @@ final class VariantRepository
             ->bind(':pl', $priceList, ParameterType::INTEGER)
             ->bind(':p', $productId, ParameterType::INTEGER);
 
-        return $this->db->setQuery($query, 0, 1)->loadObject() ?: null;
+        $rows = $this->db->setQuery($query, 0, 2)->loadObjectList();
+        if (count($rows) > 1) { throw new \RuntimeException('COM_DHARMASHOP_SKU_INVARIANT'); }
+        return $rows[0] ?? null;
+    }
+
+    public function assertSingle(int $productId): void
+    {
+        if ($productId > 0 && $this->getDefault($productId) === null) {
+            throw new \RuntimeException('COM_DHARMASHOP_SKU_INVARIANT');
+        }
     }
 
     /**
@@ -60,6 +69,9 @@ final class VariantRepository
      */
     public function saveDefault(int $productId, array $data): int
     {
+        if ($productId < 1 || !$this->db->setQuery('SELECT id FROM #__dharmashop_products WHERE id=' . $productId)->loadResult()) {
+            throw new \RuntimeException('COM_DHARMASHOP_PRODUCT_NOT_FOUND');
+        }
         $priceList = $this->priceListId;
         $existing = $this->getDefault($productId);
         $now = (new Date())->toSql();
@@ -68,6 +80,8 @@ final class VariantRepository
 
         $cols = [
             'sku' => $sku,
+            'is_default' => 1,
+            'state' => 1,
             'stock_tracked' => (int) ($data['stock_tracked'] ?? 0),
             'backorder' => (int) ($data['backorder'] ?? 0),
             'weight' => self::nullableNumber($data['weight'] ?? null),

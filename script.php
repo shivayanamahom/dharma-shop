@@ -95,6 +95,11 @@ return new class () implements ServiceProviderInterface {
                     }
 
                     try {
+                        $tables = $this->db->getTableList();
+                        if (in_array($this->db->replacePrefix('#__dharmashop_products'), $tables, true)) {
+                            $invalid = (int) $this->db->setQuery('SELECT COUNT(*) FROM (SELECT p.id FROM #__dharmashop_products p LEFT JOIN #__dharmashop_variants v ON v.product_id=p.id GROUP BY p.id HAVING COUNT(v.id)<>1) invalid')->loadResult();
+                            if ($invalid) { throw new \RuntimeException('Обновление остановлено: у каждого товара должен быть ровно один служебный SKU.'); }
+                        }
                         $this->upgradeFieldTargets();
                         $this->upgradeFieldGroupTabs();
                         $this->upgradeFieldValueStorage();
@@ -140,6 +145,8 @@ return new class () implements ServiceProviderInterface {
 
                     require_once JPATH_ADMINISTRATOR . '/components/com_dharmashop/src/Fields/FileStorage.php';
                     \Dharma\Component\DharmaShop\Administrator\Fields\FileStorage::upgrade($this->db);
+                    require_once JPATH_ADMINISTRATOR . '/components/com_dharmashop/src/Catalog/GroupStorage.php';
+                    \Dharma\Component\DharmaShop\Administrator\Catalog\GroupStorage::upgrade($this->db);
                     $this->ensureDefaultCategory();
                     $this->ensureInitialOrderStatus();
                     // При первой установке PSR-4 карта нового компонента может ещё не обновиться.
