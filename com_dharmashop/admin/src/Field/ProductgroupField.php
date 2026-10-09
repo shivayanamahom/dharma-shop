@@ -6,7 +6,7 @@ use Joomla\CMS\Form\Field\SqlField;
 /** Native select; groups are definitions, products still use the paginated picker. */
 class ProductgroupField extends SqlField
 {
- protected $type='Productgroup';
+ public $type='Productgroup';
  protected function getOptions()
  {
   $this->keyField='value';$this->valueField='text';
