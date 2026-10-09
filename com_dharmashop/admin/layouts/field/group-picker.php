@@ -12,7 +12,7 @@ $modal = ['popupType' => 'iframe', 'src' => Route::_($data['urls']['select'], fa
         <input type="text" class="form-control js-input-title" id="<?php echo $escape($data['id']); ?>" value="<?php echo $escape($data['valueTitle']); ?>" placeholder="<?php echo $escape(Text::_('COM_DHARMASHOP_GROUP_NONE')); ?>" readonly>
         <?php if (!$locked) : ?>
             <button type="button" class="btn btn-outline-primary" data-button-action="select" data-modal-config="<?php echo $escape(json_encode($modal, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE)); ?>" title="<?php echo $escape(Text::_('COM_DHARMASHOP_GROUP_PICKER_SELECT')); ?>">
-                <span class="icon-layer-group" aria-hidden="true"></span><span class="visually-hidden"><?php echo Text::_('COM_DHARMASHOP_GROUP_PICKER_SELECT'); ?></span>
+                <span class="icon-folder-open" aria-hidden="true"></span><span class="visually-hidden"><?php echo Text::_('COM_DHARMASHOP_GROUP_PICKER_SELECT'); ?></span>
             </button>
             <?php if ($data['canCreate']) : ?>
                 <joomla-toolbar-button task="product.createGroup" form="product-form" form-validation data-show-when-value=""<?php echo $data['value'] ? ' hidden' : ''; ?>>
