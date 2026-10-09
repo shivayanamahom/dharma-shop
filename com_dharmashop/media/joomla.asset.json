@@ -64,6 +64,13 @@
 			"attributes": { "defer": true }
 		},
 		{
+			"name": "com_dharmashop.field-gallery",
+			"version": "a350f2641800",
+			"type": "script",
+			"uri": "com_dharmashop/field-gallery.js",
+			"attributes": { "defer": true }
+		},
+		{
 			"name": "com_dharmashop.product-gallery",
 			"type": "script",
 			"uri": "com_dharmashop/product-gallery.js",

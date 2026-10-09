@@ -57,6 +57,7 @@ class FieldModel extends AdminModel
             $item->in_card = 0;
         }
         if ($item->type === 'gallery') {
+            $item->params = array_replace($item->params, TypeRegistry::current()->get('gallery')->normalizeSettings($item->params));
             $item->params['load_card'] = 0;
             $item->in_card = 0;
         }

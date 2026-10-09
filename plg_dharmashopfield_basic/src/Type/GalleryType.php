@@ -16,20 +16,34 @@ final class GalleryType extends BaseType
     {
         $form = parent::normalizeSettings($settings);
         $count = (string) ($form['gallery_max_count'] ?? 50);
-        $columns = (string) ($form['gallery_columns'] ?? 3);
         $layout = (string) ($form['gallery_layout'] ?? 'grid');
         $caption = (string) ($form['gallery_caption'] ?? '1');
+        $lightbox = (string) ($form['gallery_lightbox'] ?? '1');
         $folder = strtolower(trim((string) ($form['gallery_folder'] ?? 'additional')));
         $folder = preg_replace('/[^a-z0-9_-]+/', '-', $folder) ?? '';
         $folder = trim(substr($folder, 0, 50), '-_');
         if (!preg_match('/^[1-9][0-9]{0,2}$/D', $count) || (int) $count > 100
-            || !in_array($columns, ['2','3','4','5','6'], true)
-            || !in_array($layout, ['grid','list'], true)
-            || !in_array($caption, ['0','1'], true)) {
+            || !in_array($layout, ['grid', 'slider', 'list'], true)
+            || !in_array($caption, ['0', '1'], true)
+            || !in_array($lightbox, ['0', '1'], true)) {
             throw new \InvalidArgumentException('PLG_DHARMASHOPFIELD_BASIC_GALLERY_SETTINGS_INVALID');
         }
-        return ['gallery_max_count'=>(int) $count, 'gallery_layout'=>$layout, 'gallery_columns'=>(int) $columns,
-            'gallery_caption'=>(int) $caption, 'gallery_folder'=>$folder ?: 'additional'];
+        // Read legacy list/columns without changing stored definitions or their frontend arrangement.
+        $legacyColumns = max(1, min(6, (int) ($settings['gallery_columns'] ?? 3)));
+        $defaults = $layout === 'list'
+            ? ['xs'=>1, 'sm'=>1, 'md'=>1, 'lg'=>1, 'xl'=>1, 'xxl'=>1]
+            : ['xs'=>1, 'sm'=>1, 'md'=>2, 'lg'=>2, 'xl'=>$legacyColumns, 'xxl'=>$legacyColumns];
+        $result = ['gallery_max_count'=>(int) $count, 'gallery_layout'=>$layout === 'list' ? 'grid' : $layout,
+            'gallery_caption'=>(int) $caption, 'gallery_lightbox'=>(int) $lightbox, 'gallery_folder'=>$folder ?: 'additional'];
+        foreach ($defaults as $breakpoint => $default) {
+            $key = 'gallery_columns_' . $breakpoint;
+            $columns = (string) ($form[$key] ?? $default);
+            if (!in_array($columns, ['1', '2', '3', '4', '5', '6'], true)) {
+                throw new \InvalidArgumentException('PLG_DHARMASHOPFIELD_BASIC_GALLERY_SETTINGS_INVALID');
+            }
+            $result[$key] = (int) $columns;
+        }
+        return $result;
     }
 
     public function input(object $field, array $options): \SimpleXMLElement

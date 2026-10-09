@@ -13,6 +13,7 @@
             <filename>value.php</filename>
             <filename>files.php</filename>
             <filename>gallery.php</filename>
+            <folder>gallery</folder>
         </files>
         <files folder="layouts/cart" target="layouts/components/dharmashop/cart">
             <filename>unavailable.php</filename>
