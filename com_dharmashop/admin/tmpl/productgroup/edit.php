@@ -10,8 +10,11 @@ $this->getDocument()->getWebAssetManager()->useScript('keepalive')->useScript('f
 <?php echo LayoutHelper::render('joomla.edit.title_alias',$this); ?>
 <div class="row"><div class="col-lg-9"><div class="main-card p-4">
 <?php echo HTMLHelper::_('uitab.startTabSet','groupTabs',['active'=>'details']); ?>
-<?php echo HTMLHelper::_('uitab.addTab','groupTabs','details',Text::_('COM_DHARMASHOP_TAB_MAIN')); ?>
-<fieldset class="options-form"><?php foreach(['axes','members','gallery','introtext','fulltext'] as $name) {echo $this->form->renderField($name);} ?></fieldset>
+<?php echo HTMLHelper::_('uitab.addTab','groupTabs','details',Text::_('COM_DHARMASHOP_GROUP_TAB_PRODUCTS')); ?>
+<fieldset class="options-form"><?php foreach(['axes','members'] as $name) {echo $this->form->renderField($name);} ?></fieldset>
+<?php echo HTMLHelper::_('uitab.endTab'); ?>
+<?php echo HTMLHelper::_('uitab.addTab','groupTabs','content',Text::_('COM_DHARMASHOP_GROUP_TAB_CONTENT')); ?>
+<fieldset class="options-form"><?php echo $this->form->renderFieldset('content'); ?></fieldset>
 <?php echo HTMLHelper::_('uitab.endTab'); ?>
 <?php if($this->item->id): ?>
 <?php echo HTMLHelper::_('uitab.addTab','groupTabs','generation',Text::_('COM_DHARMASHOP_GROUP_GENERATE')); ?>
@@ -19,6 +22,6 @@ $this->getDocument()->getWebAssetManager()->useScript('keepalive')->useScript('f
 <?php echo HTMLHelper::_('uitab.endTab'); ?>
 <?php endif; ?>
 <?php echo HTMLHelper::_('uitab.endTabSet'); ?>
-</div></div><div class="col-lg-3"><fieldset class="options-form form-vertical"><?php echo $this->form->renderFieldset('publishing'); ?></fieldset></div></div>
+</div></div><div class="col-lg-3"><fieldset class="options-form form-vertical mb-3"><legend><?php echo Text::_('COM_DHARMASHOP_SIDEBAR_CATEGORIES'); ?></legend><?php echo $this->form->renderFieldset('taxonomy'); ?></fieldset><fieldset class="options-form form-vertical"><?php echo $this->form->renderFieldset('publishing'); ?></fieldset></div></div>
 <?php echo $this->form->getInput('revision'); ?>
 <input type="hidden" name="task" value=""><?php echo HTMLHelper::_('form.token'); ?></form>

@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Dharma\Component\DharmaShop\Administrator\Model;
 
 use Dharma\Component\DharmaShop\Administrator\Catalog\GroupService;
+use Dharma\Component\DharmaShop\Administrator\Catalog\GroupTaxonomy;
 use Dharma\Component\DharmaShop\Administrator\Catalog\VariantRepository;
 use Dharma\Component\DharmaShop\Administrator\Fields\FieldValues;
 use Dharma\Component\DharmaShop\Administrator\Image\ImageUploader;
@@ -82,6 +83,7 @@ class ProductgroupModel extends AdminModel
         if (!$item) { return $item; }
         $service = new GroupService($this->getDatabase());
         $item->axes = $item->members = $item->gallery = [];
+        foreach ((new GroupTaxonomy($this->getDatabase()))->get((int) $item->id) as $name => $value) { $item->$name = $value; }
         if ($item->id) {
             $item->axes = array_map(static fn($axis) => (int) $axis->id, $service->axes((int) $item->id));
             $item->members = array_map(static fn($product) => ['product_id' => (int) $product->id], $service->members((int) $item->id));
@@ -97,11 +99,15 @@ class ProductgroupModel extends AdminModel
         $started = false;
         $originalId = (int) ($data['id'] ?? 0);
         try {
+            $taxonomyService = new GroupTaxonomy($db);
+            $taxonomy = $taxonomyService->prepare(array_replace($taxonomyService->get($originalId), $data));
+            $data['catid'] = $taxonomy['catid'];
+            $data['brand_id'] = $taxonomy['brand_id'] ?: null;
             $axes = $service->validateAxes((array) ($data['axes'] ?? []));
             $members = array_map(static fn($row) => (int) (((array) $row)['product_id'] ?? 0), (array) ($data['members'] ?? []));
             $media = ImageUploader::filterGallery($data['gallery'] ?? []);
             $revision = (int) ($data['revision'] ?? 0);
-            unset($data['display_mode'], $data['axes'], $data['members'], $data['gallery'], $data['executions'], $data['revision'], $data['generation_catid']);
+            unset($data['extra_catids'], $data['badge_ids'], $data['display_mode'], $data['axes'], $data['members'], $data['gallery'], $data['executions'], $data['revision'], $data['generation_catid']);
             // This table has no asset_id: its Table::store does not take Joomla asset table locks.
             $db->transactionStart();
             $started = true;
@@ -112,6 +118,7 @@ class ProductgroupModel extends AdminModel
             if (!parent::save($data)) { $db->transactionRollback(); return false; }
             $id = (int) $this->getState('productgroup.id');
             $service->configure($id, $axes, $members, $media);
+            $taxonomyService->store($id, $taxonomy);
             $db->transactionCommit();
             Factory::getApplication()->setUserState('com_dharmashop.group.selection', null);
             return true;
@@ -132,7 +139,8 @@ class ProductgroupModel extends AdminModel
         if (!$group) { throw new \RuntimeException('COM_DHARMASHOP_GROUP_NOT_FOUND'); }
         if ((int)($data['revision'] ?? 0) !== (int)$group->revision) { throw new \RuntimeException('COM_DHARMASHOP_GROUP_CHANGED'); }
         $user = $this->getCurrentUser();
-        $catid = (int) ($data['generation_catid'] ?? 0);
+        $taxonomy = (new GroupTaxonomy($db))->get($id);
+        $catid = (int) ($data['generation_catid'] ?? 0) ?: $taxonomy['catid'];
         if (!$catid || !$user->authorise('core.create', 'com_dharmashop.category.' . $catid)
             || !$user->authorise('core.edit', 'com_dharmashop')) {
             throw new \RuntimeException('JLIB_APPLICATION_ERROR_ACCESS_FORBIDDEN');
@@ -164,6 +172,7 @@ class ProductgroupModel extends AdminModel
             $hashes[$hash] = true;
             $product = [
                 'id' => 0, 'catid' => $catid, 'title' => $title, 'alias' => '', 'state' => 0, 'sku' => $sku,
+                'extra_catids' => array_values(array_diff($taxonomy['extra_catids'], [$catid])), 'brand_id' => $taxonomy['brand_id'], 'badge_ids' => $taxonomy['badge_ids'],
                 'price' => $row['price'] ?? '', 'stock_qty' => $row['stock_qty'] ?? 0, 'stock_tracked' => 1,
                 'group_id' => $id, 'inherit_intro' => 'group', 'inherit_full' => 'group', 'inherit_images' => 'group',
                 'custom_fields' => $fields, 'custom_fields_present' => $markers,
