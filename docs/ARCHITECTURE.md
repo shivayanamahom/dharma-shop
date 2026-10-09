@@ -42,7 +42,7 @@
 | События | `onDharmaShop*` (классы — `Dharma\Component\DharmaShop\Administrator\Event\…`) |
 | Группы плагинов | `dharmashop` (интеграции), `dharmashopfield`, `dharmashopshipping`, `dharmashoppayment`, `dharmashopnotify` |
 | Пространство имён плагинов | `Dharma\Plugin\DharmaShopShipping\Standard` и т. п. |
-| Модули | `mod_dharmashop_categories`, `_search`, `_filter`, `_cart`, `_products` |
+| Модули | `mod_dharmashop_categories`, `_search`, `_filter` (архитектура и план — `FILTER.md`, C84), `_cart`, `_products` |
 | Языковые ключи | `COM_DHARMASHOP_*`, `PLG_DHARMASHOPSHIPPING_STANDARD_*` |
 | Права | `dharmashop.*` в `access.xml` |
 
