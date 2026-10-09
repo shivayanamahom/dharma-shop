@@ -19,11 +19,12 @@ final class ImageInventory
         $id = (int) ($cursor['id'] ?? 0);
         $queries = [
             'SELECT id, cover, params FROM #__dharmashop_products WHERE id > :id ORDER BY id',
-            'SELECT id, path FROM #__dharmashop_field_media WHERE mime IS NULL AND id > :id ORDER BY id',
+            'SELECT id, path, field_id FROM #__dharmashop_field_media WHERE mime IS NULL AND id > :id ORDER BY id',
+            'SELECT id, path FROM #__dharmashop_category_field_media WHERE mime IS NULL AND id > :id ORDER BY id',
             "SELECT id, extension, params FROM #__categories WHERE extension IN ('com_dharmashop','com_dharmashop.brand','com_dharmashop.badge') AND id > :id ORDER BY id",
             'SELECT id, image FROM #__dharmashop_field_options WHERE id > :id ORDER BY id',
         ];
-        while ($phase < 4) {
+        while ($phase < 5) {
             $row = $this->db->setQuery(Sql::query($this->db, $queries[$phase], [':id'=>[$id, ParameterType::INTEGER]]), 0, 1)->loadAssoc();
             if (!$row) { $cursor = ['phase'=>++$phase, 'id'=>0]; $id = 0; continue; }
             $cursor = ['phase'=>$phase, 'id'=>(int)$row['id']];
@@ -32,13 +33,14 @@ final class ImageInventory
             $product = array_values(array_filter(array_keys(ImageContexts::SIZES), static fn($c) => str_starts_with($c,'product.') || str_starts_with($c,'cart.') || str_starts_with($c,'search.') || str_starts_with($c,'module.products.') || in_array($c,['admin.product','email.product'],true)));
             return match ($phase) {
                 0 => [[$row['cover'], [...$product, 'seo.social']], [$params['meta_image'] ?? '', ['seo.social']]],
-                1 => [[$row['path'], $product]],
-                2 => $this->category($params, match ($row['extension']) { 'com_dharmashop.brand'=>'brand', 'com_dharmashop.badge'=>'badge', default=>'category' }),
-                3 => [[$row['image'], ['field.option']]],
+                1 => [[$row['path'], (int) $row['field_id'] > 0 ? ['field.gallery.card', 'field.gallery.page', 'field.gallery.lightbox'] : $product]],
+                2 => [[$row['path'], ['field.gallery.card', 'field.gallery.page', 'field.gallery.lightbox']]],
+                3 => $this->category($params, match ($row['extension']) { 'com_dharmashop.brand'=>'brand', 'com_dharmashop.badge'=>'badge', default=>'category' }),
+                4 => [[$row['image'], ['field.option']]],
             };
         }
-        if ($phase === 4) {
-            $cursor = ['phase'=>5, 'id'=>0];
+        if ($phase === 5) {
+            $cursor = ['phase'=>6, 'id'=>0];
             $result = [[$this->settings->get('shop_logo',''), ['email.logo']], [$this->settings->get('seo_default_image',''), ['seo.social']]];
             foreach (['root_category'=>'category', 'root_brand'=>'brand'] as $key=>$kind) {
                 $result = array_merge($result, $this->category((array)$this->settings->get($key, []), $kind));

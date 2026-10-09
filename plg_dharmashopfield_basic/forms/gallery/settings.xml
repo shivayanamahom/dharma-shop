@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form><fields name="params"><fieldset name="type_gallery" label="COM_DHARMASHOP_FIELD_TYPE_GALLERY">
+    <field name="gallery_max_count" type="number" label="PLG_DHARMASHOPFIELD_BASIC_GALLERY_MAX_COUNT" description="PLG_DHARMASHOPFIELD_BASIC_GALLERY_MAX_COUNT_DESC" showon=".type:gallery" default="50" min="1" max="100" step="1" filter="uint" />
+    <field name="gallery_layout" type="list" label="PLG_DHARMASHOPFIELD_BASIC_GALLERY_LAYOUT" description="PLG_DHARMASHOPFIELD_BASIC_GALLERY_LAYOUT_DESC" showon=".type:gallery" default="grid" filter="cmd" validate="options"><option value="grid">PLG_DHARMASHOPFIELD_BASIC_GALLERY_LAYOUT_GRID</option><option value="list">PLG_DHARMASHOPFIELD_BASIC_GALLERY_LAYOUT_LIST</option></field>
+    <field name="gallery_columns" type="list" label="PLG_DHARMASHOPFIELD_BASIC_GALLERY_COLUMNS" description="PLG_DHARMASHOPFIELD_BASIC_GALLERY_COLUMNS_DESC" showon=".type:gallery[AND]gallery_layout:grid" default="3" filter="uint" validate="options"><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+    <field name="gallery_caption" type="radio" label="PLG_DHARMASHOPFIELD_BASIC_GALLERY_CAPTION" description="PLG_DHARMASHOPFIELD_BASIC_GALLERY_CAPTION_DESC" showon=".type:gallery" layout="joomla.form.field.radio.switcher" default="1" filter="int" validate="options"><option value="0">JNO</option><option value="1">JYES</option></field>
+    <field name="gallery_folder" type="text" label="PLG_DHARMASHOPFIELD_BASIC_GALLERY_FOLDER" description="PLG_DHARMASHOPFIELD_BASIC_GALLERY_FOLDER_DESC" showon=".type:gallery" default="additional" filter="string" maxlength="50" />
+</fieldset></fields></form>

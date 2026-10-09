@@ -12,7 +12,7 @@
 
 ## Правила
 
-Поля поддерживают `field.show_title` (по умолчанию true), подготовленный из `params.show_title_card/page`. Интро наследует page. Общий `fields/default` визуально скрывает выключенный заголовок и отдаёт значению всю ширину; для файлов видимый заголовок размещается над карточками. Табличный список сохраняет семантический заголовок колонки, скрывая его текст. Макет `fields/files.php` учитывает `field.file_settings.files_layout=list/grid` и `files_columns=2…6`: карточки в столбик или адаптивная сетка (одна колонка на телефоне, до двух на среднем экране). Оба макета переопределяются в `templates/<template>/html/layouts/components/dharmashop/fields/`. Новых SQL/JS/CSS нет.
+Поля поддерживают `field.show_title` (по умолчанию true), подготовленный из `params.show_title_card/page`. Интро наследует page. Общий `fields/default` визуально скрывает выключенный заголовок и отдаёт значению всю ширину; для файлов и галерей заголовок размещается над карточками. Табличный список сохраняет семантический заголовок колонки, скрывая его текст. `fields/files.php` использует `field.file_settings`; `fields/gallery.php` — `field.gallery_settings.gallery_layout=list/grid`, `gallery_columns=2…6` и `gallery_caption`. Оба макета переопределяются в `templates/<template>/html/layouts/components/dharmashop/fields/`.
 
 1. `administrator/components/com_dharmashop/tmpl` содержит экраны админки и никогда не используется как список витринных макетов.
 2. Страницы лежат в `com_dharmashop/site/tmpl/` и устанавливаются в `/components/com_dharmashop/tmpl/`. Подключаемые карточки лежат в `files_dharmashop_layouts/layouts/` и устанавливаются в `/layouts/components/dharmashop/` (C32).
@@ -316,3 +316,9 @@ C74: результат вынесен в `site/tmpl/checkoutcomplete/default.ph
 ### Файлы пользовательского поля (2026-10-08)
 
 Макет `components.dharmashop.fields.files`: исходник `files_dharmashop_layouts/layouts/fields/files.php`, установленный `layouts/components/dharmashop/fields/files.php`, переопределение `templates/<template>/html/layouts/components/dharmashop/fields/files.php`. Вызывается из `fields.value` для типа `files`. Данные — `field.values` и `field.file_settings`; ссылки с подписью/именем, необязательными размером и расширением. SQL и изображений в макете нет.
+
+### Дополнительная галерея поля (2026-10-09)
+
+Тип `gallery` использует общий `GalleryField` и отдельный маршрут `media.uploadFieldGallery`. Он проверяет, что выбранное поле опубликовано, имеет тип `gallery`/`store=media` и доступно текущему редактору. Основная галерея остаётся в `field_media.field_id=0`, значения новых галерей — только с положительным ID поля; файлы продолжают использовать собственный `uploadFile` и непустой MIME. Загрузка пишет в `images/<общая папка>/field-galleries/<field id>/<gallery_folder>/<год>/`; подпапка поля очищается до безопасного латинского имени. Форматы, имена, WebP и базовый путь берутся из общих настроек изображений. Витрина передаёт превью и увеличенный вариант через `ImageUrl::resolve`.
+
+Макет `components.dharmashop.fields.gallery`: `files_dharmashop_layouts/layouts/fields/gallery.php`, переопределение `templates/<template>/html/layouts/components/dharmashop/fields/gallery.php`. Данные изображения — `text`, `image`, `url`; настройки — `field.gallery_settings`. Сетка или список, подписи включаются отдельно; ссылка оборачивает изображение. Для расширения контекста сохраняйте общий `ImageUrl::resolve`.

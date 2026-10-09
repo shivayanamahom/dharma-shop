@@ -30,6 +30,7 @@
 		const native = root.querySelector('.dharmashop-gallery__native');
 		const name = root.dataset.name;
 		const isFiles = root.dataset.kind === 'files';
+		const isFieldGallery = root.dataset.kind === 'field-gallery';
 		const maxCount = parseInt(root.dataset.maxCount || '100', 10);
 		const maxBytes = parseInt(root.dataset.maxBytes || '0', 10);
 		const accept = (root.dataset.accept || '').split(',').filter(Boolean);
@@ -97,11 +98,13 @@
 
 			const data = new FormData();
 			data.append('file', file);
-			if (isFiles) {
+			if (isFiles || isFieldGallery) {
 				data.append('field_id', root.dataset.fieldId);
-				data.append('entity_id', root.dataset.entityId || '0');
-				const title = root.closest('form')?.querySelector('[name="jform[title]"]');
-				data.append('entity_title', title ? title.value : '');
+				if (isFiles) { data.append('entity_id', root.dataset.entityId || '0'); }
+				if (isFiles) {
+					const title = root.closest('form')?.querySelector('[name="jform[title]"]');
+					data.append('entity_title', title ? title.value : '');
+				}
 			} else { data.append('folder', root.dataset.folder); }
 			data.append(root.dataset.token, '1');
 

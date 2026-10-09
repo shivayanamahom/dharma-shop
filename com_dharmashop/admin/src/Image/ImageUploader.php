@@ -73,6 +73,11 @@ final class ImageUploader
     /** Подпапка внутри корневой по настройке «Структура папок»: тип/год (по умолчанию), тип/год/месяц, тип, одна папка. */
     private function subFolder(string $folder): string
     {
+        // Preserve per-field isolation even when the shop is configured to store other uploads flat.
+        if (str_starts_with($folder, 'field-galleries/')) {
+            return $folder . '/' . date('Y');
+        }
+
         return match ((string) $this->shopParams?->get('image_folder_mode', 'type_year')) {
             'type_year_month' => $folder . '/' . date('Y') . '/' . date('m'),
             'type' => $folder,
@@ -130,7 +135,7 @@ final class ImageUploader
      *
      * @throws  \RuntimeException  с языковым ключом сообщения
      */
-    public function store(array $file, string $folder): array
+    public function store(array $file, string $folder, ?string $fieldScope = null): array
     {
         $error = (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE);
 
@@ -185,7 +190,14 @@ final class ImageUploader
             }
         }
 
-        $folder = in_array($folder, self::FOLDERS, true) ? $folder : 'common';
+        if ($folder === 'field-galleries' && $fieldScope !== null
+            && preg_match('/^[1-9][0-9]{0,8}\/[a-z0-9_-]{1,50}$/D', $fieldScope)) {
+            // Each custom gallery gets its own folder below the shared image root.
+            // The scope is constructed from the validated field ID and its sanitized setting.
+            $folder .= '/' . $fieldScope;
+        } else {
+            $folder = in_array($folder, self::FOLDERS, true) ? $folder : 'common';
+        }
         $sub = $this->subFolder($folder);
         $relative = self::baseFolder($this->shopParams) . ($sub !== '' ? '/' . $sub : '');
         $directory = rtrim($this->root, '/') . '/' . $relative;

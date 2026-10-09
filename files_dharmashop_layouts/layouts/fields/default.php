@@ -16,10 +16,11 @@ $isCard = ($displayData['context'] ?? '') === 'card';
         <?php
         $showTitle = $field->show_title ?? true;
         $isFiles = ($field->type ?? '') === 'files';
-        $titleClass = !$showTitle ? 'visually-hidden' : ($isFiles ? 'col-12 mb-2' : ($isCard ? 'col-7' : 'col-12 col-sm-5 col-lg-4'));
-        $valueClass = !$showTitle || $isFiles ? 'col-12' : ($isCard ? 'col-5' : 'col-12 col-sm-7 col-lg-8');
+        $isGallery = ($field->type ?? '') === 'gallery';
+        $titleClass = !$showTitle ? 'visually-hidden' : (($isFiles || $isGallery) ? 'col-12 mb-2' : ($isCard ? 'col-7' : 'col-12 col-sm-5 col-lg-4'));
+        $valueClass = !$showTitle || $isFiles || $isGallery ? 'col-12' : ($isCard ? 'col-5' : 'col-12 col-sm-7 col-lg-8');
         ?>
-        <div class="row g-0 py-2<?php echo $isFiles ? '' : ' border-top'; ?> dharmaField" data-field="<?php echo $escape($field->alias); ?>">
+        <div class="row g-0 py-2<?php echo ($isFiles || $isGallery) ? '' : ' border-top'; ?> dharmaField" data-field="<?php echo $escape($field->alias); ?>">
             <dt class="<?php echo $titleClass; ?> pe-3 fw-normal text-body-secondary text-break"><?php echo $escape($field->title); ?></dt>
             <dd class="<?php echo $valueClass; ?> mb-0 fw-medium text-break"><?php echo $valueLayout->render(['field' => $field]); ?></dd>
         </div>

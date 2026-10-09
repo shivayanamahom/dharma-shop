@@ -10,6 +10,10 @@ if ($field->type === 'files') {
     echo (new \Joomla\CMS\Layout\FileLayout('components.dharmashop.fields.files', null, ['component'=>'none','client'=>0]))->render($displayData);
     return;
 }
+if ($field->type === 'gallery') {
+    echo (new \Joomla\CMS\Layout\FileLayout('components.dharmashop.fields.gallery', null, ['component'=>'none','client'=>0]))->render($displayData);
+    return;
+}
 $values = (array) $field->values;
 $format = (string) $field->format;
 $escape = static fn ($value): string => htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');

@@ -43,6 +43,9 @@ class GalleryField extends FormField
         $uploader = new ImageUploader(ComponentHelper::getParams('com_media'), JPATH_ROOT, ComponentHelper::getParams('com_dharmashop'));
         $attr = static fn (string $v): string => htmlspecialchars($v, ENT_QUOTES, 'UTF-8');
         $folder = (string) ($this->element['folder'] ?: 'common');
+        $fieldId = max(0, (int) ($this->element['field_id'] ?? 0));
+        $isFieldGallery = $fieldId > 0;
+        $maxCount = max(1, min(100, (int) ($this->element['max_count'] ?? 100)));
         $maxMb = $uploader->maxBytes() > 0 ? round($uploader->maxBytes() / 1048576, 1) : 0;
         $items = ImageUploader::filterGallery($this->value);
         $root = Uri::root();
@@ -55,13 +58,13 @@ class GalleryField extends FormField
         };
         $native->setup(new \SimpleXMLElement('<field name="dharmashop_native_' . hash('xxh64', $this->id) . '" type="media" types="images" preview="false" />'), '');
 
-        $card = function (string $index, string $path, string $description) use ($attr, $root): string {
+        $card = function (string $index, string $path, string $description) use ($attr, $root, $isFieldGallery): string {
             $name = $this->name;
 
             return '<li class="dharmashop-gallery__item" draggable="true">'
                 . '<input type="hidden" data-field="path" name="' . $attr($name) . '[' . $index . '][path]" value="' . $attr($path) . '">'
                 . '<div class="dharmashop-gallery__frame"><img class="dharmashop-gallery__thumb" src="' . ($path !== '' ? $attr($root . ltrim($path, '/')) : '') . '" alt="" loading="lazy" draggable="false">'
-                . '<span class="dharmashop-gallery__main">' . $attr(Text::_('COM_DHARMASHOP_GALLERY_MAIN')) . '</span>'
+                . ($isFieldGallery ? '' : '<span class="dharmashop-gallery__main">' . $attr(Text::_('COM_DHARMASHOP_GALLERY_MAIN')) . '</span>')
                 . '<span class="dharmashop-gallery__handle" title="' . $attr(Text::_('COM_DHARMASHOP_GALLERY_DRAG')) . '" aria-hidden="true"><span class="icon-ellipsis-v"></span><span class="icon-ellipsis-v"></span></span>'
                 . '<button type="button" class="dharmashop-gallery__remove btn btn-sm btn-danger" title="' . $attr(Text::_('COM_DHARMASHOP_UPLOAD_REMOVE')) . '"><span class="icon-times" aria-hidden="true"></span><span class="visually-hidden">' . $attr(Text::_('COM_DHARMASHOP_UPLOAD_REMOVE')) . '</span></button></div>'
                 . '<input type="text" class="form-control form-control-sm" data-field="alt" name="' . $attr($name) . '[' . $index . '][alt]" value="' . $attr($description) . '" maxlength="255" placeholder="' . $attr(Text::_('COM_DHARMASHOP_GALLERY_DESCRIPTION')) . '" aria-label="' . $attr(Text::_('COM_DHARMASHOP_GALLERY_DESCRIPTION')) . '">'
@@ -76,11 +79,13 @@ class GalleryField extends FormField
 
         $limits = Text::sprintf('COM_DHARMASHOP_UPLOAD_LIMITS', strtoupper(implode(', ', $uploader->allowedExtensions())), $maxMb ?: '—');
 
-        return '<div id="' . $attr($this->id) . '" class="dharmashop-gallery" data-url="' . $attr('index.php?option=com_dharmashop&task=media.upload&format=json')
-            . '" data-token="' . $attr(Session::getFormToken()) . '" data-folder="' . $attr($folder) . '" data-name="' . $attr($this->name)
+        return '<div id="' . $attr($this->id) . '" class="dharmashop-gallery"' . ($isFieldGallery ? ' data-kind="field-gallery" data-field-id="' . $fieldId . '" data-entity-id="' . (int) $this->form->getValue('id', null, 0) . '"' : '')
+            . ' data-url="' . $attr($isFieldGallery ? 'index.php?option=com_dharmashop&task=media.uploadFieldGallery&format=json' : 'index.php?option=com_dharmashop&task=media.upload&format=json')
+            . '" data-token="' . $attr(Session::getFormToken()) . '" data-folder="' . $attr($folder) . '" data-name="' . $attr($this->name) . '" data-max-count="' . $maxCount
             . '" data-root="' . $attr($root) . '" data-max-bytes="' . (int) $uploader->maxBytes()
             . '" data-accept="' . $attr(implode(',', $uploader->allowedExtensions()))
             . '" data-error-type="' . $attr(Text::sprintf('COM_DHARMASHOP_UPLOAD_ERROR_TYPE_LIST', implode(', ', $uploader->allowedExtensions())))
+            . '" data-error-count="' . $attr(Text::_($isFieldGallery ? 'PLG_DHARMASHOPFIELD_BASIC_GALLERY_COUNT_INVALID' : 'COM_DHARMASHOP_UPLOAD_ERROR_SERVER'))
             . '" data-error-size="' . $attr(Text::sprintf('COM_DHARMASHOP_UPLOAD_ERROR_SIZE_LIMIT', $maxMb))
             . '" data-error-paste-unsupported="' . $attr(Text::_('COM_DHARMASHOP_UPLOAD_ERROR_PASTE_UNSUPPORTED'))
             . '" data-error-paste-empty="' . $attr(Text::_('COM_DHARMASHOP_UPLOAD_ERROR_PASTE_EMPTY'))

@@ -5,6 +5,9 @@ namespace Dharma\Component\DharmaShop\Site\Support;
 
 use Joomla\CMS\Factory;
 use Dharma\Component\DharmaShop\Administrator\Fields\FileStorage;
+use Dharma\Component\DharmaShop\Administrator\Fields\TypeRegistry;
+use Dharma\Component\DharmaShop\Administrator\Image\ImageUrl;
+use Dharma\Component\DharmaShop\Administrator\Image\ImageUploader;
 use Joomla\CMS\Language\Text;
 use Joomla\Database\DatabaseInterface;
 use Joomla\Registry\Registry;
@@ -106,25 +109,35 @@ final class EntityFields
                 $values[(int) $row->entity_id][(int) $row->field_id][] = (object) ['text' => (string) $row->value, 'image' => '', 'html' => true];
             }
         }
-        $fileFields = array_filter($fields, static fn (object $field): bool => $field->type === 'files');
-        if ($fileFields) {
+        $mediaFields = array_filter($fields, static fn (object $field): bool => in_array($field->type, ['files','gallery'], true));
+        if ($mediaFields) {
             $media = $target === 'product' ? '#__dharmashop_field_media' : '#__dharmashop_category_field_media';
             $query = $base($media)->select('v.' . $column . ' AS entity_id')
-                ->select($db->quoteName(['v.field_id','v.path','v.title','v.filename','v.bytes','v.mime']))
-                ->where('v.field_id IN (' . implode(',', array_keys($fileFields)) . ')')->order('v.ordering, v.id');
+                ->select($db->quoteName(['v.field_id','v.path','v.alt','v.title','v.filename','v.bytes','v.mime']))
+                ->where('v.field_id IN (' . implode(',', array_keys($mediaFields)) . ')')->order('v.ordering, v.id');
             foreach ($db->setQuery($query)->loadObjectList() as $row) {
-                $path = FileStorage::path($row->path);
-                $url = $path !== '' ? MediaUrl::absolute(FileStorage::urlPath($path)) : '';
-                if ($url === '') { continue; }
-                $field = $fileFields[(int) $row->field_id];
-                $filename = (string) ($row->filename ?: basename($path));
-                $label = $field->settings->get('files_label', 'caption') === 'caption' && trim((string) $row->title) !== '' ? (string) $row->title : $filename;
-                $values[(int) $row->entity_id][(int) $row->field_id][] = (object) [
-                    'text'=>$label, 'image'=>'', 'html'=>false, 'url'=>$url, 'path'=>$path,
-                    'filename'=>$filename, 'caption'=>(string) $row->title,
-                    'bytes'=>(int) $row->bytes, 'mime'=>(string) $row->mime,
-                    'extension'=>strtoupper(pathinfo($path, PATHINFO_EXTENSION)),
-                ];
+                $field = $mediaFields[(int) $row->field_id];
+                if ($field->type === 'gallery') {
+                    $path = ImageUploader::filterPath($row->path);
+                    if ($path === '') { continue; }
+                    $imageContext = $context === 'card' ? 'field.gallery.card' : 'field.gallery.page';
+                    $values[(int) $row->entity_id][(int) $row->field_id][] = (object) [
+                        'text'=>(string) ($row->alt ?: $row->title ?: ''), 'image'=>ImageUrl::resolve($path, $imageContext),
+                        'url'=>ImageUrl::resolve($path, 'field.gallery.lightbox'), 'html'=>false,
+                    ];
+                } else {
+                    $path = FileStorage::path($row->path);
+                    $url = $path !== '' ? MediaUrl::absolute(FileStorage::urlPath($path)) : '';
+                    if ($url === '') { continue; }
+                    $filename = (string) ($row->filename ?: basename($path));
+                    $label = $field->settings->get('files_label', 'caption') === 'caption' && trim((string) $row->title) !== '' ? (string) $row->title : $filename;
+                    $values[(int) $row->entity_id][(int) $row->field_id][] = (object) [
+                        'text'=>$label, 'image'=>'', 'html'=>false, 'url'=>$url, 'path'=>$path,
+                        'filename'=>$filename, 'caption'=>(string) $row->title,
+                        'bytes'=>(int) $row->bytes, 'mime'=>(string) $row->mime,
+                        'extension'=>strtoupper(pathinfo($path, PATHINFO_EXTENSION)),
+                    ];
+                }
             }
         }
         foreach ($products as $id => $item) {
@@ -140,6 +153,7 @@ final class EntityFields
                     'format' => in_array($format, ['comma', 'list', 'image', 'image_title'], true) ? $format : 'comma',
                     'values' => $values[$id][$fieldId],
                     'file_settings' => $field->type === 'files' ? FileStorage::settings($field->settings->toArray()) : [],
+                    'gallery_settings' => $field->type === 'gallery' ? TypeRegistry::current()->get('gallery')->normalizeSettings($field->settings->toArray()) : [],
                 ];
             }
         }

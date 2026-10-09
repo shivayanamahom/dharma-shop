@@ -141,7 +141,7 @@ final class FieldValues
         if ($target === 'product') { $query->where('variant_id IS NULL'); }
         $texts = $this->db->setQuery($query)->loadAssocList('field_id', 'value');
         $media = $target === 'product' ? '#__dharmashop_field_media' : '#__dharmashop_category_field_media';
-        $query = $base($media)->select($this->db->quoteName(['field_id','path','title','filename','bytes','mime']))->order('ordering, id');
+        $query = $base($media)->select($this->db->quoteName(['field_id','path','alt','title','filename','bytes','mime']))->order('ordering, id');
         if ($target === 'product') { $query->where('variant_id IS NULL'); }
         foreach ($this->db->setQuery($query)->loadObjectList() as $row) { $rows[(int) $row->field_id][] = $row; }
         return [$rows, $texts];
