@@ -7,6 +7,8 @@ use Dharma\Component\DharmaShop\Administrator\Filter\FilterDefinition;
 use Dharma\Component\DharmaShop\Administrator\Filter\FilterState;
 use Dharma\Component\DharmaShop\Site\Search\ProductSearch;
 use Dharma\Component\DharmaShop\Site\Support\SaleCountdown;
+use Dharma\Component\DharmaShop\Site\Support\GroupListing;
+use Dharma\Component\DharmaShop\Site\Support\GroupCardRenderer;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
 use Dharma\Component\DharmaShop\Site\Support\ProductFields;
@@ -36,6 +38,17 @@ class CategoryModel extends CategoriesModel
 
     /** Индекс витрины для подсказки `FORCE INDEX` страницы списка (выбирает планировщик фильтра; null — выбор оптимизатора). */
     private ?string $indexHint = null;
+    private ?GroupListing $groupListing = null;
+
+    public function groupsEnabled(): bool
+    {
+        return ComponentHelper::getParams('com_dharmashop')->get('category_listing_mode', 'products') === 'groups_products';
+    }
+
+    private function groupListing(): GroupListing
+    {
+        return $this->groupListing ??= new GroupListing($this->getDatabase());
+    }
 
     /** Число найденных товаров с фильтром упёрлось в потолок подсчёта (показывать «N+»). */
     public bool $totalCapped = false;
@@ -53,7 +66,7 @@ class CategoryModel extends CategoriesModel
         $this->searchFuzzy = false;
 
         if ((int) ComponentHelper::getParams('com_dharmashop')->get('search_fuzzy', 1) === 1) {
-            $this->searchFuzzy = (int) $this->getDatabase()->setQuery($this->productsQuery()->select('COUNT(*)'))->loadResult() === 0;
+            $this->searchFuzzy = (int) $this->getDatabase()->setQuery($this->productsQuery(forListing: $this->groupsEnabled())->select('COUNT(*)'))->loadResult() === 0;
         }
 
         return $this->searchFuzzy;
@@ -207,16 +220,20 @@ class CategoryModel extends CategoriesModel
     {
         $db = $this->getDatabase();
 
+        $grouped = $this->groupsEnabled();
+        $query = $this->productsQuery(forListing: $grouped);
+        $unit = $grouped ? GroupListing::unit() : 'p.id';
+
         // С фильтром точный подсчёт редкого условия по широкой категории дорог: считаем до потолка (по умолчанию 10 001), дальше — «N+».
         if (!$this->getFilterState()->isEmpty()) {
             $cap = max(100, (int) ComponentHelper::getParams('com_dharmashop')->get('filter_count_cap', 10001));
-            $found = count($db->setQuery($this->productsQuery()->select('1'), 0, $cap + 1)->loadColumn());
+            $found = count($db->setQuery($query->select('DISTINCT ' . $unit), 0, $cap + 1)->loadColumn());
             $this->totalCapped = $found > $cap;
 
             return min($found, $cap);
         }
 
-        return (int) $db->setQuery($this->productsQuery()->select('COUNT(*)'))->loadResult();
+        return (int) $db->setQuery($query->select($grouped ? 'COUNT(DISTINCT ' . $unit . ')' : 'COUNT(*)'))->loadResult();
     }
 
     /**
@@ -230,15 +247,17 @@ class CategoryModel extends CategoriesModel
         $ordering = in_array($ordering, static::SORTS, true) ? $ordering : static::SORTS[0];
         $db = $this->getDatabase();
         [$column, $direction] = $this->sortExpression($ordering);
-        $sort = $db->quoteName($column);
+        $grouped = $this->groupsEnabled();
+        $sort = $grouped ? $this->groupSortExpression($ordering) : $db->quoteName($column);
         // Форма запроса по плотности условий фильтра (замеры F0): плотное условие — обход индекса сортировки с ранней остановкой.
         $state = $this->getFilterState();
-        $this->indexHint = $state->isEmpty() || $this->getQueryText() !== '' ? null
+        $this->indexHint = $grouped || $state->isEmpty() || $this->getQueryText() !== '' ? null
             : Factory::getApplication()->bootComponent('com_dharmashop')->getServices()->filter()->planner()
                 ->indexHint($state, $this->getFilterDefinition(), (int) $this->getParent()->id, $ordering, max(0, $start), $limit);
-        $query = $this->productsQuery()
+        $candidates = $this->productsQuery(forListing: $grouped);
+        $query = ($grouped ? $this->groupListing()->representatives($candidates, $sort, $direction) : clone $candidates)
             ->select($db->quoteName(['p.id', 'p.catid', 'p.title', 'p.alias', 'p.cover', 'p.cover_alt',
-                'p.introtext', 'p.price_min', 'p.price_max', 'p.price_zero_free', 'p.in_stock', 'p.unit', 'p.qty_min', 'p.qty_step', 'p.params']))
+                'p.introtext', 'p.group_id', 'p.price_min', 'p.price_max', 'p.price_zero_free', 'p.in_stock', 'p.unit', 'p.qty_min', 'p.qty_step', 'p.params']))
             ->select($db->quoteName('c.title', 'category_title'))
             ->order($sort . ' ' . $direction)->order('p.id ' . $direction);
         $items = $db->setQuery($query, max(0, $start), $limit)->loadObjectList();
@@ -251,6 +270,8 @@ class CategoryModel extends CategoriesModel
             $item->price_free = $rules->priceIsFree($item);
         }
 
+        if ($grouped) { $this->groupListing()->attach($items, $candidates, $rules); }
+
         return $items;
     }
 
@@ -262,6 +283,7 @@ class CategoryModel extends CategoriesModel
      */
     public function attachCardData(array $items, int $imagesLimit = 1): void
     {
+        $items = array_values(array_filter($items, static fn(object $item): bool => !GroupCardRenderer::isGroup($item)));
         if (!$items) {
             return;
         }
@@ -375,18 +397,38 @@ class CategoryModel extends CategoriesModel
         return [$column, in_array($ordering, ['price_desc', 'new'], true) ? 'DESC' : 'ASC'];
     }
 
+    /** SQL from a closed list; a group's representative is its first matching member under this order. */
+    private function groupSortExpression(string $ordering): string
+    {
+        return match ($ordering) {
+            'title' => 'COALESCE(lg.title,p.title)',
+            'price_asc' => 'p.price_min',
+            'price_desc' => 'p.price_max',
+            'new' => 'p.created',
+            'relevance' => $this->getQueryText() !== '' ? 'm.score' : ((int) $this->getParent()->id > 0 ? 'COALESCE(pc.sort_order,p.id)' : 'p.id'),
+            default => (int) $this->getParent()->id > 0 ? 'COALESCE(pc.sort_order,p.id)' : 'p.id',
+        };
+    }
+
     /** Итоги всей категории (по индексу, с потолком); цены нужны только если включены настройками. Корень цен не имеет. */
     public function getProductStats(bool $prices): object
     {
         $category = (int) $this->getParent()->id;
+        if ($this->groupsEnabled()) {
+            $query = $this->productsQuery(forListing: true)->select('MIN(p.price_min) AS price_min,MAX(p.price_max) AS price_max');
+            $range = $prices ? $this->getDatabase()->setQuery($query)->loadObject() : null;
+            $count = $this->getTotal();
+            return (object) ['product_count' => (string) $count . ($this->totalCapped ? '+' : ''), 'price_min' => $range->price_min ?? null, 'price_max' => $range->price_max ?? null];
+        }
         $range = $prices ? $this->getPriceRange($category) : ['min' => null, 'max' => null];
 
         return (object) ['product_count' => $this->getCountLabel($category), 'price_min' => $range['min'], 'price_max' => $range['max']];
     }
 
-    protected function productsQuery(?FilterState $filterOverride = null): QueryInterface
+    protected function productsQuery(?FilterState $filterOverride = null, bool $forListing = false): QueryInterface
     {
         $category = (int) $this->getParent()->id;
+        $grouped = $forListing && $this->groupsEnabled();
         $db = $this->getDatabase();
         $levels = implode(',', array_map('intval', $this->getCurrentUser()->getAuthorisedViewLevels()) ?: [0]);
         $query = $db->createQuery()->from($db->quoteName('#__dharmashop_products', 'p'))
@@ -394,8 +436,13 @@ class CategoryModel extends CategoriesModel
             ->where('p.state = 1')->where('c.extension = ' . $db->quote('com_dharmashop'))
             ->where('c.published = 1')->where('c.access IN (' . $levels . ')');
         if ($category > 0) {
-            $query->join('INNER', $db->quoteName('#__dharmashop_product_categories', 'pc') . ($this->indexHint !== null ? ' FORCE INDEX (' . $this->indexHint . ')' : '') . ' ON pc.product_id = p.id')
-                ->where('pc.catid = :category')->where('pc.state = 1')->bind(':category', $category, ParameterType::INTEGER);
+            if ($grouped) {
+                $query->join('LEFT', $db->quoteName('#__dharmashop_product_categories', 'pc') . ' ON pc.product_id=p.id AND pc.catid=:category AND pc.state=1')
+                    ->bind(':category', $category, ParameterType::INTEGER);
+            } else {
+                $query->join('INNER', $db->quoteName('#__dharmashop_product_categories', 'pc') . ($this->indexHint !== null ? ' FORCE INDEX (' . $this->indexHint . ')' : '') . ' ON pc.product_id = p.id')
+                    ->where('pc.catid = :category')->where('pc.state = 1')->bind(':category', $category, ParameterType::INTEGER);
+            }
         }
         // Закрытый или снятый предок основной категории также скрывает товар.
         $blocked = $db->createQuery()->select('blocked.id')->from($db->quoteName('#__categories', 'blocked'))
@@ -403,13 +450,16 @@ class CategoryModel extends CategoriesModel
             ->where('blocked.lft <= c.lft')->where('blocked.rgt >= c.rgt')
             ->where('(blocked.published != 1 OR blocked.access NOT IN (' . $levels . '))');
         $query->where('NOT EXISTS (' . $blocked . ')');
+        if ($grouped) {
+            $this->groupListing()->applyContext($query, $category, $this->taxonomy()->extension, $this->getCurrentUser()->getAuthorisedViewLevels());
+        }
 
         // Фильтр: условия выбора посетителя (поля, цена, бренд, бейджи, наличие) поверх состава списка.
         $filterState = $filterOverride ?? $this->getFilterState();
 
         if (!$filterState->isEmpty()) {
             Factory::getApplication()->bootComponent('com_dharmashop')->getServices()->filter()->query()
-                ->apply($query, $filterState, $this->getFilterDefinition(), $category > 0);
+                ->apply($query, $filterState, $this->getFilterDefinition(), $category > 0 && !$grouped);
         }
 
         // Поиск на странице списка (категория, бренд, бейдж, каталог): состав ограничивает поисковый индекс.

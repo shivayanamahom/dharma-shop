@@ -96,7 +96,7 @@ class HtmlView extends BaseHtmlView
             $entries = [];
             foreach ($this->items as $product) {
                 $route = Route::_('index.php?option=com_dharmashop&view=product&id=' . (int) $product->id . '&catid=' . (int) $product->catid, false);
-                $entries[] = ['name' => (string) $product->title,
+                $entries[] = ['name' => (string) ($product->listing_group->title ?? $product->title),
                     'url' => preg_match('~^https?://~i', $route) ? $route : rtrim(Uri::root(), '/') . '/' . ltrim($route, '/')];
             }
             $content = new CollectionMetadata($this->seo->h1 ?: (string) $this->item->title, $entries, 'Product');
