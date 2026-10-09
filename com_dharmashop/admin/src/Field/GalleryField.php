@@ -44,6 +44,11 @@ class GalleryField extends FormField
         $attr = static fn (string $v): string => htmlspecialchars($v, ENT_QUOTES, 'UTF-8');
         $folder = (string) ($this->element['folder'] ?: 'common');
         $fieldId = max(0, (int) ($this->element['field_id'] ?? 0));
+        // Joomla may omit custom XML attributes while building nested custom fields;
+        // the generated name still carries the stable f_<id> key.
+        if ($fieldId < 1 && preg_match('/\[f_(\d+)\]/', (string) $this->name, $matches)) {
+            $fieldId = (int) $matches[1];
+        }
         $isFieldGallery = $fieldId > 0;
         $maxCount = max(1, min(100, (int) ($this->element['max_count'] ?? 100)));
         $maxMb = $uploader->maxBytes() > 0 ? round($uploader->maxBytes() / 1048576, 1) : 0;

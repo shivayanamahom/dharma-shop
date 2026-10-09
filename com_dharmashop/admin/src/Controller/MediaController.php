@@ -50,11 +50,13 @@ class MediaController extends BaseController
             if (!$user->authorise('core.create', 'com_dharmashop') && !$user->authorise('core.edit', 'com_dharmashop')) { throw new \RuntimeException('JLIB_APPLICATION_ERROR_ACCESS_FORBIDDEN'); }
             TypeRegistry::current()->get('gallery');
             $fieldId = $this->input->post->getInt('field_id');
+            if ($fieldId < 1) { throw new \RuntimeException('JLIB_APPLICATION_ERROR_ACCESS_FORBIDDEN'); }
             $db = Factory::getContainer()->get(DatabaseInterface::class);
             $levels = array_map('intval', $user->getAuthorisedViewLevels()) ?: [0];
             $query = $db->createQuery()->select($db->quoteName(['f.params', 'f.target']))->from($db->quoteName('#__dharmashop_fields', 'f'))
                 ->join('LEFT', $db->quoteName('#__dharmashop_fieldgroups', 'g') . ' ON g.id = f.group_id')
-                ->where('f.id = ' . $fieldId)->where('f.state = 1')->where('f.level = 1')
+                ->where('f.id = :field_id')->bind(':field_id', $fieldId, \Joomla\Database\ParameterType::INTEGER)
+                ->where('f.state = 1')->where('f.level = 1')
                 ->where('f.type = ' . $db->quote('gallery'))->where('f.store = ' . $db->quote('media'))
                 ->where('f.access IN (' . implode(',', $levels) . ')')
                 ->where('(f.group_id = 0 OR (g.state = 1 AND g.target = f.target))');
