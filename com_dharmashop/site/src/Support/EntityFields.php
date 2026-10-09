@@ -39,8 +39,8 @@ final class EntityFields
             ->where('f.access IN (' . implode(',', $levels) . ')')->where('(f.group_id = 0 OR (g.state = 1 AND g.target = f.target))')
             ->order('COALESCE(g.ordering, 0), f.group_id, f.ordering, f.id');
         $fields = [];
-        // Editor content belongs to the full page, including legacy definitions with load_card=1.
-        if ($context === 'card') { $query->where('f.type <> ' . $db->quote('editor')); }
+        // Editor content and additional galleries belong to the full page, including legacy definitions with load_card=1.
+        if ($context === 'card') { $query->where('f.type NOT IN (' . $db->quote('editor') . ', ' . $db->quote('gallery') . ')'); }
         foreach ($db->setQuery($query)->loadObjectList() as $field) {
             $settings = new Registry($field->params);
             if ((int) $settings->get('load_' . $context, 1) !== 1) { continue; }

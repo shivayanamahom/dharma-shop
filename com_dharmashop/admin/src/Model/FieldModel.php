@@ -56,6 +56,10 @@ class FieldModel extends AdminModel
             $item->params['format_card'] = 'comma';
             $item->in_card = 0;
         }
+        if ($item->type === 'gallery') {
+            $item->params['load_card'] = 0;
+            $item->in_card = 0;
+        }
         if (in_array((string) $item->type, ['editor', 'text', 'files', 'gallery'], true)) { $item->filterable = 0; }
         $id = (int) $item->id;
         $db = $this->getDatabase();
@@ -111,6 +115,10 @@ class FieldModel extends AdminModel
         }
         $type = (string) ($data['type'] ?? ($existing->type ?? 'text'));
         if (in_array($type, ['editor', 'text', 'files', 'gallery'], true)) { $data['filterable'] = 0; }
+        if ($type === 'gallery') {
+            $data['params']['load_card'] = 0;
+            $data['in_card'] = 0;
+        }
         try {
             $options = [];
             $seen = [];
