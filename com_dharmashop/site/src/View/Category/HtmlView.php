@@ -55,8 +55,9 @@ class HtmlView extends BaseHtmlView
         $settings = ComponentHelper::getParams('com_dharmashop');
         $active = $app->getMenu()->getActive();
         $this->showHeading = (int) $menu->get('show_page_heading', 1) === 1;
-        $this->image = MediaUrl::absolute((string) $this->item->params->get('image', ''));
         $taxonomy = $this->taxonomy();
+        $showCategoryImage = $taxonomy->area !== 'category' || (int) $this->params->get('category_page_show_image', 0) === 1;
+        $this->image = $showCategoryImage ? MediaUrl::absolute((string) $this->item->params->get('image', '')) : '';
         $this->setLayout($this->existingLayout((string) $this->params->get('category_layout', 'default'), 'components/com_dharmashop/tmpl/' . $taxonomy->pageView));
         $this->subcategoryGridClasses = Grid::classes($this->params, $taxonomy->gridPrefix());
         $this->subcategoryLayout = $this->existingLayout((string) $this->params->get($taxonomy->cardKey('layout'), 'default'), 'layouts/components/dharmashop/' . $taxonomy->cardFolder());

@@ -2,7 +2,7 @@
 declare(strict_types=1);
 namespace Dharma\Plugin\DharmaShopField\Basic\Extension;
 use Dharma\Component\DharmaShop\Administrator\Fields\TypeRegistry;
-use Dharma\Plugin\DharmaShopField\Basic\Type\{CheckboxType, ListType, TextType, EditorType, NumberType, RangeType, FilesType, GalleryType};
+use Dharma\Plugin\DharmaShopField\Basic\Type\{CheckboxType, ListType, TextType, EditorType, NumberType, RangeType, FilesType, GalleryType, VideoType};
 use Joomla\CMS\Plugin\CMSPlugin;
 use Joomla\Event\EventInterface;
 use Joomla\Event\SubscriberInterface;
@@ -15,7 +15,7 @@ final class Basic extends CMSPlugin implements SubscriberInterface
     {
         $registry = $event->getArgument('registry');
         if (!$registry instanceof TypeRegistry) { return; }
-        foreach ([new CheckboxType(), new ListType(), new TextType(), new EditorType(), new NumberType(), new RangeType(), new FilesType(), new GalleryType()] as $type) {
+        foreach ([new CheckboxType(), new ListType(), new TextType(), new EditorType(), new NumberType(), new RangeType(), new FilesType(), new GalleryType(), new VideoType()] as $type) {
             $registry->register($type);
         }
     }

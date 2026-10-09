@@ -31,6 +31,7 @@
 		const name = root.dataset.name;
 		const isFiles = root.dataset.kind === 'files';
 		const isFieldGallery = root.dataset.kind === 'field-gallery';
+		const isVideo = root.dataset.kind === 'video';
 		const maxCount = parseInt(root.dataset.maxCount || '100', 10);
 		const maxBytes = parseInt(root.dataset.maxBytes || '0', 10);
 		const accept = (root.dataset.accept || '').split(',').filter(Boolean);
@@ -49,9 +50,29 @@
 		const has = (path) => Array.from(list.querySelectorAll('[data-field="path"]')).some((input) => input.value === path);
 
 		const addItem = (data) => {
-			const path = cleanPath(typeof data === 'string' ? data : data.path);
+			data = typeof data === 'string' ? { path: data } : (data || {});
+			const path = isVideo && data.source !== 'local' ? String(data.url || data.path || '') : cleanPath(data.path);
 
-			if (!path || has(path)) {
+			if (!path) {
+				return;
+			}
+
+			const existing = Array.from(list.querySelectorAll('[data-field="path"]'))
+				.find((input) => input.value === path)?.closest('.dharmashop-gallery__item');
+			if (existing) {
+				// Fill missing metadata when a service link is added again; keep edited captions.
+				const title = existing.querySelector('[data-field="title"]');
+				if (isVideo && data.title && title && !title.value.trim()) { title.value = data.title; }
+				if (isVideo && data.poster) {
+					const poster = existing.querySelector('.dharmashop-video__poster');
+					const icon = existing.querySelector('.dharmashop-video__icon');
+					existing.querySelector('[data-field="poster"]').value = data.poster;
+					if (poster) {
+						poster.src = root.dataset.root + data.poster.replace(/^\/+/, '');
+						poster.hidden = false;
+					}
+					if (icon) { icon.hidden = true; }
+				}
 				return;
 			}
 
@@ -67,6 +88,22 @@
 			if (isFiles) {
 				item.querySelector('.dharmashop-gallery__filename').textContent = data.filename || path.split('/').pop();
 				item.querySelector('.dharmashop-gallery__details').textContent = (Number(data.bytes || 0) / 1024).toFixed(1) + ' KiB';
+			} else if (isVideo) {
+				item.querySelector('[data-field="path"]').value = data.source === 'local' || !data.source ? data.path || '' : data.url || path;
+				item.querySelector('[data-field="poster"]').value = data.poster || '';
+				item.querySelector('[data-field="mime"]').value = data.mime || (data.source && data.source !== 'local' ? 'application/vnd.dharmashop.video.' + data.source : '');
+				item.querySelector('[data-field="source"]').value = data.source || 'local';
+				item.querySelector('[data-field="url"]').value = data.source && data.source !== 'local' ? data.url || path : '';
+				item.querySelector('[data-field="title"]').value = data.title || data.filename || '';
+				const heading = item.querySelector('.dharmashop-gallery__filename');
+				heading.textContent = data.source && data.source !== 'local' ? data.serviceName || data.source.toUpperCase() : data.filename || path.split('/').pop();
+				const poster = item.querySelector('.dharmashop-video__poster');
+				const icon = item.querySelector('.dharmashop-video__icon');
+				if (data.poster && poster) {
+					poster.src = root.dataset.root + data.poster.replace(/^\/+/, '');
+					poster.hidden = false;
+					if (icon) icon.hidden = true;
+				}
 			} else {
 				item.querySelector('.dharmashop-gallery__thumb').src = root.dataset.root + path.replace(/^\/+/, '');
 			}
@@ -98,10 +135,10 @@
 
 			const data = new FormData();
 			data.append('file', file);
-			if (isFiles || isFieldGallery) {
+			if (isFiles || isFieldGallery || isVideo) {
 				data.append('field_id', root.dataset.fieldId);
-				if (isFiles) { data.append('entity_id', root.dataset.entityId || '0'); }
-				if (isFiles) {
+				if (isFiles || isVideo) { data.append('entity_id', root.dataset.entityId || '0'); }
+				if (isFiles || isVideo) {
 					const title = root.closest('form')?.querySelector('[name="jform[title]"]');
 					data.append('entity_title', title ? title.value : '');
 				}
@@ -131,7 +168,7 @@
 				if (!response || !response.success || !response.data || !response.data.path) {
 					showError((response && response.message) || root.dataset.errorServer);
 				} else {
-					addItem(isFiles ? response.data : response.data.path);
+					addItem(isFiles || isVideo ? response.data : response.data.path);
 				}
 
 				resolve();
@@ -147,7 +184,9 @@
 
 		// Файлы грузятся по очереди, прогресс общий.
 		const uploadAll = async (files) => {
-			files = Array.from(files || []).filter((file) => file && (isFiles || !file.type || file.type.startsWith('image/') || /\.(avif|webp|png|jpe?g|gif|bmp|svg)$/i.test(file.name)));
+			files = Array.from(files || []).filter((file) => file && (isFiles || (isVideo
+				? (file.type.startsWith('video/') || /\.(mp4|webm|ogv)$/i.test(file.name))
+				: (!file.type || file.type.startsWith('image/') || /\.(avif|webp|png|jpe?g|gif|bmp|svg)$/i.test(file.name)))));
 
 			if (!files.length || busy) {
 				return;
@@ -177,6 +216,45 @@
 		const choose = root.querySelector('.dharmashop-gallery__choose');
 		const pasteButton = root.querySelector('.dharmashop-gallery__paste');
 		const server = root.querySelector('.dharmashop-gallery__server');
+		const addVideo = root.querySelector('.dharmashop-video__add');
+		if (isVideo && addVideo) {
+			const providerSelect = root.querySelector('.dharmashop-video__provider');
+			const videoUrlInput = root.querySelector('.dharmashop-video__url');
+			const detectProvider = (value) => {
+				try {
+					const host = new URL(value).hostname.toLowerCase().replace(/^www\./, '');
+					if (['youtube.com', 'm.youtube.com', 'youtu.be', 'youtube-nocookie.com'].includes(host)) { return 'youtube'; }
+					if (host === 'rutube.ru' || host.endsWith('.rutube.ru') || host === 'rutube.com' || host.endsWith('.rutube.com')) { return 'rutube'; }
+					if (['vk.com', 'm.vk.com', 'vkvideo.ru'].includes(host)) { return 'vk'; }
+				} catch (e) { /* Keep the manually selected provider until a valid URL is entered. */ }
+				return '';
+			};
+			const syncProvider = () => {
+				const detected = detectProvider(videoUrlInput.value.trim());
+				if (detected) { providerSelect.value = detected; }
+			};
+			videoUrlInput.addEventListener('input', syncProvider);
+			videoUrlInput.addEventListener('change', syncProvider);
+			addVideo.addEventListener('click', async () => {
+				const url = videoUrlInput.value.trim();
+				syncProvider();
+				const provider = providerSelect.value;
+				if (!url) { showError(root.dataset.errorUrl || root.dataset.errorServer); return; }
+				const payload = new FormData();
+				payload.append('field_id', root.dataset.fieldId);
+				payload.append('provider', provider);
+				payload.append('url', url);
+				payload.append(root.dataset.token, '1');
+				addVideo.disabled = true;
+				try {
+					const response = await fetch(root.dataset.resolveUrl, { method: 'POST', body: payload, credentials: 'same-origin' }).then((result) => result.json());
+					if (!response || !response.success || !response.data || !response.data.url) { showError((response && response.message) || root.dataset.errorServer); return; }
+					addItem({ ...response.data, source: provider, mime: 'application/vnd.dharmashop.video.' + provider });
+					root.querySelector('.dharmashop-video__url').value = '';
+				} catch (e) { showError(root.dataset.errorServer); }
+				finally { addVideo.disabled = false; }
+			});
+		}
 		const isMac = /Mac|iPhone|iPad/i.test(navigator.platform || navigator.userAgent);
 
 		if (isMac && pasteButton) {
@@ -281,7 +359,7 @@
 
 					if (value !== '') {
 						window.clearInterval(timer);
-						if (isFiles) {
+						if (isFiles || isVideo) {
 							const data = new FormData();
 							data.append('path', value);
 							data.append('field_id', root.dataset.fieldId);

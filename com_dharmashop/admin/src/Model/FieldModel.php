@@ -56,12 +56,12 @@ class FieldModel extends AdminModel
             $item->params['format_card'] = 'comma';
             $item->in_card = 0;
         }
-        if ($item->type === 'gallery') {
-            $item->params = array_replace($item->params, TypeRegistry::current()->get('gallery')->normalizeSettings($item->params));
+        if (in_array($item->type, ['gallery','video'], true)) {
+            $item->params = array_replace($item->params, TypeRegistry::current()->get($item->type)->normalizeSettings($item->params));
             $item->params['load_card'] = 0;
             $item->in_card = 0;
         }
-        if (in_array((string) $item->type, ['editor', 'text', 'files', 'gallery'], true)) { $item->filterable = 0; }
+        if (in_array((string) $item->type, ['editor', 'text', 'files', 'gallery','video'], true)) { $item->filterable = 0; }
         $id = (int) $item->id;
         $db = $this->getDatabase();
         $query = $db->createQuery()->select($db->quoteName(['id','title','alias','image']))->from($db->quoteName('#__dharmashop_field_options'))
@@ -115,8 +115,8 @@ class FieldModel extends AdminModel
             }
         }
         $type = (string) ($data['type'] ?? ($existing->type ?? 'text'));
-        if (in_array($type, ['editor', 'text', 'files', 'gallery'], true)) { $data['filterable'] = 0; }
-        if ($type === 'gallery') {
+        if (in_array($type, ['editor', 'text', 'files', 'gallery','video'], true)) { $data['filterable'] = 0; }
+        if (in_array($type, ['gallery','video'], true)) {
             $data['params']['load_card'] = 0;
             $data['in_card'] = 0;
         }

@@ -152,7 +152,7 @@ class CategoryModel extends AdminModel
             // Настройки списка товаров общие для всех трёх типов.
             $form->removeField('categories_layout', 'params');
             $form->removeField('category_card_layout', 'params');
-            foreach (['category_card_intro', 'category_card_count', 'category_card_prices',
+            foreach (['category_card_intro', 'category_card_count', 'category_card_prices', 'category_page_show_image',
                 'categories_columns', 'categories_breakpoints', 'categories_columns_xs', 'categories_columns_sm',
                 'categories_columns_md', 'categories_columns_lg', 'categories_columns_xl', 'categories_columns_xxl'] as $field) {
                 $form->removeField($field, 'params');

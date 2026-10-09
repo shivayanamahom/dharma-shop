@@ -8,6 +8,8 @@ use Dharma\Component\DharmaShop\Administrator\Fields\FileStorage;
 use Dharma\Component\DharmaShop\Administrator\Fields\TypeRegistry;
 use Dharma\Component\DharmaShop\Administrator\Image\ImageUrl;
 use Dharma\Component\DharmaShop\Administrator\Image\ImageUploader;
+use Dharma\Plugin\DharmaShopField\Basic\Type\VideoProvider;
+use Dharma\Plugin\DharmaShopField\Basic\Type\VideoType;
 use Joomla\CMS\Language\Text;
 use Joomla\Database\DatabaseInterface;
 use Joomla\Registry\Registry;
@@ -39,8 +41,8 @@ final class EntityFields
             ->where('f.access IN (' . implode(',', $levels) . ')')->where('(f.group_id = 0 OR (g.state = 1 AND g.target = f.target))')
             ->order('COALESCE(g.ordering, 0), f.group_id, f.ordering, f.id');
         $fields = [];
-        // Editor content and additional galleries belong to the full page, including legacy definitions with load_card=1.
-        if ($context === 'card') { $query->where('f.type NOT IN (' . $db->quote('editor') . ', ' . $db->quote('gallery') . ')'); }
+        // Long media and editor values belong to the full page, including legacy definitions with load_card=1.
+        if ($context === 'card') { $query->where('f.type NOT IN (' . implode(',', array_map([$db, 'quote'], ['editor','gallery','video'])) . ')'); }
         foreach ($db->setQuery($query)->loadObjectList() as $field) {
             $settings = new Registry($field->params);
             if ((int) $settings->get('load_' . $context, 1) !== 1) { continue; }
@@ -109,7 +111,7 @@ final class EntityFields
                 $values[(int) $row->entity_id][(int) $row->field_id][] = (object) ['text' => (string) $row->value, 'image' => '', 'html' => true];
             }
         }
-        $mediaFields = array_filter($fields, static fn (object $field): bool => in_array($field->type, ['files','gallery'], true));
+        $mediaFields = array_filter($fields, static fn (object $field): bool => in_array($field->type, ['files','gallery','video'], true));
         if ($mediaFields) {
             $media = $target === 'product' ? '#__dharmashop_field_media' : '#__dharmashop_category_field_media';
             $query = $base($media)->select('v.' . $column . ' AS entity_id')
@@ -124,6 +126,30 @@ final class EntityFields
                     $values[(int) $row->entity_id][(int) $row->field_id][] = (object) [
                         'text'=>(string) ($row->alt ?: $row->title ?: ''), 'image'=>ImageUrl::resolve($path, $imageContext),
                         'url'=>ImageUrl::resolve($path, 'field.gallery.lightbox'), 'html'=>false,
+                    ];
+                } elseif ($field->type === 'video') {
+                    $mime = (string) ($row->mime ?? '');
+                    $provider = preg_match('~^application/vnd\\.dharmashop\\.video\\.(youtube|rutube|vk)$~D', $mime, $match) ? $match[1] : '';
+                    if ($provider !== '') {
+                        try { $video = VideoProvider::parse((string) $row->path, $provider); }
+                        catch (\Throwable) { continue; }
+                        $url = $video['embed'];
+                        $type = 'iframe';
+                    } elseif (str_starts_with($mime, 'video/') || in_array($mime, ['application/mp4','application/ogg'], true)) {
+                        $path = FileStorage::path($row->path);
+                        if ($path === '') { continue; }
+                        $url = MediaUrl::absolute(FileStorage::urlPath($path));
+                        $video = ['provider'=>'local'];
+                        $type = 'video';
+                    } else { continue; }
+                    if ($url === '') { continue; }
+                    $poster = ImageUploader::filterPath((string) ($row->alt ?? ''));
+                    $values[(int) $row->entity_id][(int) $row->field_id][] = (object) [
+                        'text'=>(string) ($row->title ?: $field->title),
+                        'image'=>$poster !== '' ? ImageUrl::resolve($poster, 'field.video.poster') : '',
+                        'url'=>$url, 'embed'=>$url, 'provider'=>$video['provider'], 'player_type'=>$type,
+                        'poster'=>$poster !== '' ? ImageUrl::resolve($poster, 'field.video.poster') : '',
+                        'mime'=>$mime, 'filename'=>(string) ($row->filename ?? ''), 'bytes'=>(int) ($row->bytes ?? 0), 'html'=>false,
                     ];
                 } else {
                     $path = FileStorage::path($row->path);
@@ -154,6 +180,7 @@ final class EntityFields
                     'values' => $values[$id][$fieldId],
                     'file_settings' => $field->type === 'files' ? FileStorage::settings($field->settings->toArray()) : [],
                     'gallery_settings' => $field->type === 'gallery' ? TypeRegistry::current()->get('gallery')->normalizeSettings($field->settings->toArray()) : [],
+                    'video_settings' => $field->type === 'video' ? VideoType::currentSettings($field->settings->toArray()) : [],
                 ];
             }
         }

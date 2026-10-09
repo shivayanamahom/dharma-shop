@@ -48,6 +48,7 @@
 | `module.products.list` | Будущий модуль товаров: список | 240 × 240 |
 | `module.products.table` | Будущий модуль товаров: таблица | 112 × 112 |
 | `field.option` | Картинки вариантов дополнительных полей | 96 × 96 |
+| `field.video.poster` | Обложки видеогалерей | 640 × 360 |
 | `admin.product`, `admin.category` | Миниатюры списков админки | 96 × 96 |
 | `email.product` | Фото товара в письме (вывод 64 px) | 128 × 128 |
 | `email.logo` | Логотип магазина в письме | 320 × 160 |
@@ -127,3 +128,5 @@ ImageInventory включает seo.social для обложек товаров,
 ## Дополнительная галерея полей (2026-10-09)
 
 Тип поля `gallery` регистрирует контексты `field.gallery.card` (240×180), `field.gallery.page` (600×450) и `field.gallery.lightbox` (1800×1800). Макет витрины вызывает `ImageUrl::resolve` для превью и увеличенного изображения. `ImageInventory` включает строки `field_media` с `field_id > 0` и `mime IS NULL`, а также `category_field_media` с `mime IS NULL`, во все три контекста; основная галерея товара с `field_id=0` сохраняет прежние продуктовые контексты. Файлы документов с MIME не обрабатываются.
+
+Тип `video` использует контекст `field.video.poster` (640×360) для сохранённых API-обложек роликов. Обложки лежат в `field_media.alt`, получаются только из разрешённых API и хранятся локально под `field-video-posters`; общий `ImageUploader` применяет общие ограничения и WebP. `ImageInventory` выбирает только строки с `mime LIKE 'application/vnd.dharmashop.video.%'` и передаёт путь обложки в общий ресайзер. Локальные видео не попадают в список источников изображений.

@@ -72,7 +72,8 @@
             <field name="category_card_count" label="COM_DHARMASHOP_DISPLAY_SHOW_COUNT" type="list" default="" validate="options" description="COM_DHARMASHOP_DISPLAY_SHOW_COUNT_DESC"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option><option value="0">JNO</option><option value="1">JYES</option></field>
             <field name="category_card_prices" label="COM_DHARMASHOP_DISPLAY_SHOW_PRICES" type="list" default="" validate="options" description="COM_DHARMASHOP_DISPLAY_SHOW_PRICES_DESC"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option><option value="0">JNO</option><option value="1">JYES</option></field>
 		</fieldset>
-		<fieldset name="dharmashop_display_products" label="COM_DHARMASHOP_DISPLAY_PRODUCTS">
+        <fieldset name="dharmashop_display_products" label="COM_DHARMASHOP_DISPLAY_PRODUCTS">
+            <field name="category_page_show_image" type="list" label="COM_DHARMASHOP_DISPLAY_CATEGORY_PAGE_IMAGE" description="COM_DHARMASHOP_DISPLAY_CATEGORY_PAGE_IMAGE_DESC" default="" validate="options"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option><option value="0">JNO</option><option value="1">JYES</option></field>
             <field name="category_layout" type="layout" layoutgroup="category" label="COM_DHARMASHOP_DISPLAY_PRODUCT_PAGE_LAYOUT" description="COM_DHARMASHOP_LAYOUT_CATEGORY_DESC" default="" validate="options">
 				<option value="">COM_DHARMASHOP_LAYOUT_INHERIT</option>
 			</field>

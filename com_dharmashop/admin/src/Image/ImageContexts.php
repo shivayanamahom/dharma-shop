@@ -36,6 +36,7 @@ final class ImageContexts
         'field.gallery.card' => [240, 180],
         'field.gallery.page' => [600, 450],
         'field.gallery.lightbox' => [1800, 1800],
+        'field.video.poster' => [640, 360],
         'admin.product' => [96, 96],
         'admin.category' => [96, 96],
         'email.product' => [128, 128],

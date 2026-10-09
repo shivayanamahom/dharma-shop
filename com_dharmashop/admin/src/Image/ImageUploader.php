@@ -49,7 +49,7 @@ final class ImageUploader
     public const DEFAULT_BASE = 'dharmashop';
 
     /** Допустимые типы подпапок (атрибут folder поля): произвольные имена папок создавать нельзя. */
-    public const FOLDERS = ['categories', 'icons', 'seo', 'products', 'gallery', 'common'];
+    public const FOLDERS = ['categories', 'icons', 'seo', 'products', 'gallery', 'common', 'field-video-posters'];
 
     /** Предел площади изображения (пикселей): защита от «бомб» распаковки при последующей обработке. */
     private const MAX_PIXELS = 80000000;
@@ -74,7 +74,7 @@ final class ImageUploader
     private function subFolder(string $folder): string
     {
         // Preserve per-field isolation even when the shop is configured to store other uploads flat.
-        if (str_starts_with($folder, 'field-galleries/')) {
+        if (str_starts_with($folder, 'field-galleries/') || str_starts_with($folder, 'field-video-posters/')) {
             return $folder . '/' . date('Y');
         }
 
@@ -135,7 +135,7 @@ final class ImageUploader
      *
      * @throws  \RuntimeException  с языковым ключом сообщения
      */
-    public function store(array $file, string $folder, ?string $fieldScope = null): array
+    public function store(array $file, string $folder, ?string $fieldScope = null, bool $uploaded = true): array
     {
         $error = (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE);
 
@@ -143,7 +143,7 @@ final class ImageUploader
             throw new \RuntimeException('COM_DHARMASHOP_UPLOAD_ERROR_SIZE');
         }
 
-        if ($error !== UPLOAD_ERR_OK || empty($file['tmp_name']) || !is_uploaded_file($file['tmp_name'])) {
+        if ($error !== UPLOAD_ERR_OK || empty($file['tmp_name']) || ($uploaded ? !is_uploaded_file($file['tmp_name']) : !is_file($file['tmp_name']))) {
             throw new \RuntimeException('COM_DHARMASHOP_UPLOAD_ERROR_NO_FILE');
         }
 
@@ -190,9 +190,9 @@ final class ImageUploader
             }
         }
 
-        if ($folder === 'field-galleries' && $fieldScope !== null
+        if (in_array($folder, ['field-galleries', 'field-video-posters'], true) && $fieldScope !== null
             && preg_match('/^[1-9][0-9]{0,8}\/[a-z0-9_-]{1,50}$/D', $fieldScope)) {
-            // Each custom gallery gets its own folder below the shared image root.
+            // Each custom gallery/video poster gets isolated field storage under the shared image root.
             // The scope is constructed from the validated field ID and its sanitized setting.
             $folder .= '/' . $fieldScope;
         } else {
@@ -238,7 +238,7 @@ final class ImageUploader
             $saved = match (true) {
                 $svgClean !== null => file_put_contents($target, $svgClean) !== false,
                 $convertedFile !== null => @copy($convertedFile, $target),
-                default => move_uploaded_file($file['tmp_name'], $target),
+                default => $uploaded ? move_uploaded_file($file['tmp_name'], $target) : copy($file['tmp_name'], $target),
             };
 
             if (!$saved) {
@@ -254,6 +254,24 @@ final class ImageUploader
             if ($convertedFile !== null && is_file($convertedFile)) {
                 @unlink($convertedFile);
             }
+        }
+    }
+
+    /** Store a bounded, already-fetched image after the same MIME, dimensions and polyglot checks as uploads. */
+    public function storeGenerated(string $bytes, string $filename, string $folder, ?string $fieldScope = null): array
+    {
+        if ($bytes === '' || strlen($bytes) > 10 * 1048576 || !preg_match('/^[a-z0-9_-]{1,80}\\.(?:jpg|jpeg|png|webp)$/iD', $filename)) {
+            throw new \RuntimeException('COM_DHARMASHOP_UPLOAD_ERROR_TYPE');
+        }
+        $temporary = tempnam(sys_get_temp_dir(), 'dharmashop-poster-');
+        if ($temporary === false || file_put_contents($temporary, $bytes, LOCK_EX) !== strlen($bytes)) {
+            if (is_string($temporary)) { @unlink($temporary); }
+            throw new \RuntimeException('COM_DHARMASHOP_UPLOAD_ERROR_STORE');
+        }
+        try {
+            return $this->store(['error'=>UPLOAD_ERR_OK, 'tmp_name'=>$temporary, 'name'=>$filename, 'size'=>strlen($bytes)], $folder, $fieldScope, false);
+        } finally {
+            @unlink($temporary);
         }
     }
 

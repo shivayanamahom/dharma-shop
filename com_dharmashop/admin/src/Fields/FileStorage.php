@@ -26,15 +26,21 @@ final class FileStorage
         'zip'=>['application/zip','application/x-zip-compressed'],
         '7z'=>['application/x-7z-compressed'], 'rar'=>['application/x-rar','application/vnd.rar'],
         'jpg'=>['image/jpeg'], 'jpeg'=>['image/jpeg'], 'png'=>['image/png'], 'webp'=>['image/webp'],
+        'mp4'=>['video/mp4','application/mp4'], 'webm'=>['video/webm'], 'ogv'=>['video/ogg','application/ogg'],
     ];
     public const DEFAULT_EXTENSIONS = 'pdf,doc,docx,xls,xlsx,ppt,pptx,odt,ods,odp,rtf,txt,csv,zip,jpg,jpeg,png,webp';
+    private const VIDEO_EXTENSIONS = ['mp4', 'webm', 'ogv'];
 
-    public function __construct(private readonly string $root, private readonly int $fieldId, private readonly array $settings) {}
+    public function __construct(private readonly string $root, private readonly int $fieldId, private readonly array $settings,
+        private readonly string $base = 'files', private readonly bool $respectMediaLimit = true) {
+        if (!in_array($base, ['files','videos'], true)) { throw new \InvalidArgumentException('Invalid media storage.'); }
+    }
 
     public static function settings(array $settings): array
     {
         $extensions = preg_split('/[\s,;]+/', strtolower(trim((string) ($settings['files_extensions'] ?? self::DEFAULT_EXTENSIONS))), -1, PREG_SPLIT_NO_EMPTY);
-        if (!$extensions || array_diff($extensions, array_keys(self::MIME))) { throw new \InvalidArgumentException('PLG_DHARMASHOPFIELD_BASIC_FILES_SETTINGS_INVALID'); }
+        $fileExtensions = array_diff(array_keys(self::MIME), self::VIDEO_EXTENSIONS);
+        if (!$extensions || array_diff($extensions, $fileExtensions)) { throw new \InvalidArgumentException('PLG_DHARMASHOPFIELD_BASIC_FILES_SETTINGS_INVALID'); }
         $size = $settings['files_max_mb'] ?? 10;
         $count = $settings['files_max_count'] ?? 10;
         if (!is_numeric($size) || !is_finite((float) $size) || (float) $size < 0.1 || (float) $size > 1024
@@ -57,12 +63,30 @@ final class FileStorage
 
     public function maxBytes(bool $upload = false): int
     {
+        if (!$this->respectMediaLimit) {
+            // Video files follow PHP request limits; saved videos remain valid
+            // if those server limits are changed later.
+            return $upload ? self::phpUploadLimit() : 0;
+        }
         $bytes = (int) round((float) $this->settings['files_max_mb'] * 1048576);
         if ($upload) {
             $server = (new ImageUploader(ComponentHelper::getParams('com_media'), $this->root))->maxBytes();
             if ($server > 0) { $bytes = min($bytes, $server); }
         }
         return $bytes;
+    }
+
+    private static function phpUploadLimit(): int
+    {
+        $limits = [];
+        foreach (['upload_max_filesize','post_max_size'] as $name) {
+            $value = trim((string) ini_get($name));
+            if ($value === '') { continue; }
+            $unit = strtolower(substr($value, -1));
+            $number = (float) $value;
+            $limits[] = (int) ($number * match ($unit) { 'g'=>1073741824, 'm'=>1048576, 'k'=>1024, default=>1 });
+        }
+        return $limits ? max(0, min($limits)) : 0;
     }
 
     /** Relative local paths only; realpath is checked separately. */
@@ -107,6 +131,9 @@ final class FileStorage
     public function inspect(mixed $value): array
     {
         $path = self::path($value);
+        if ($path === '' || !str_contains('/' . $path, '/' . $this->base . '/')) {
+            throw new \InvalidArgumentException('PLG_DHARMASHOPFIELD_BASIC_FILES_PATH_INVALID');
+        }
         $images = realpath($this->root . '/images');
         $file = $path !== '' ? realpath($this->root . '/' . $path) : false;
         if (!$images || !$file || !str_starts_with($file, $images . DIRECTORY_SEPARATOR) || !is_file($file)) {
@@ -114,7 +141,7 @@ final class FileStorage
         }
         $metadata = $this->validate($file, strtolower(pathinfo($path, PATHINFO_EXTENSION)), false);
         $filename = basename($path);
-        if (preg_match('~^images/dharmashop/files/\d+/\d{4}/[a-f0-9]{2}/[a-f0-9]{2}/[a-f0-9]{16}-(.+)$~uD', $path, $match)) { $filename = $match[1]; }
+        if (preg_match('~^images/.+/' . preg_quote($this->base, '~') . '/.+/\d+/([^/]+)$~uD', $path, $match)) { $filename = $match[1]; }
         return ['path'=>$path, 'filename'=>$filename] + $metadata;
     }
 
@@ -124,7 +151,8 @@ final class FileStorage
             throw new \InvalidArgumentException('PLG_DHARMASHOPFIELD_BASIC_FILES_TYPE_INVALID');
         }
         $bytes = filesize($file);
-        if ($bytes === false || $bytes <= 0 || $bytes > $this->maxBytes($upload)) { throw new \InvalidArgumentException('PLG_DHARMASHOPFIELD_BASIC_FILES_SIZE_INVALID'); }
+        $maxBytes = $this->maxBytes($upload);
+        if ($bytes === false || $bytes <= 0 || ($maxBytes > 0 && $bytes > $maxBytes)) { throw new \InvalidArgumentException('PLG_DHARMASHOPFIELD_BASIC_FILES_SIZE_INVALID'); }
         $mime = (string) (new \finfo(FILEINFO_MIME_TYPE))->file($file);
         if (!in_array($mime, self::MIME[$extension], true)) { throw new \InvalidArgumentException('PLG_DHARMASHOPFIELD_BASIC_FILES_TYPE_INVALID'); }
         // OOXML/ODF containers must match their extension; do not unpack archives.
@@ -153,7 +181,7 @@ final class FileStorage
         $extension = strtolower(pathinfo($original, PATHINFO_EXTENSION));
         $metadata = $this->validate($upload['tmp_name'], $extension, true);
         $filename = $this->filename($original);
-        $base = 'images/dharmashop/files';
+        $base = 'images/dharmashop/' . $this->base;
         if (!in_array($owner['target'] ?? '', ['product', 'category'], true)) { throw new \InvalidArgumentException('COM_DHARMASHOP_UPLOAD_ERROR_STORE'); }
         $slug = static function (string $value, string $fallback): string {
             $value = OutputFilter::stringURLSafe($value);

@@ -21,6 +21,18 @@ if [ -d "$S/files_dharmashop_layouts/layouts" ]; then
   rsync -a --exclude .DS_Store "$S/files_dharmashop_layouts/layouts/" "$T/layouts/components/dharmashop/"
 fi
 [ -d "$S/com_dharmashop/media" ] && $R "$S/com_dharmashop/media/" "$T/media/com_dharmashop/" || true
+# Базовый плагин типов полей: формы и PHP-типы должны совпадать с компонентом,
+# иначе динамический список в редакторе не увидит новые типы.
+P="$S/plg_dharmashopfield_basic"
+if [ -d "$P" ]; then
+  mkdir -p "$T/plugins/dharmashopfield/basic"
+  for d in src services forms; do $R "$P/$d/" "$T/plugins/dharmashopfield/basic/$d/"; done
+  cp "$P/basic.xml" "$T/plugins/dharmashopfield/basic/"
+  for l in ru-RU en-GB; do
+    mkdir -p "$T/administrator/language/$l"
+    cp "$P/language/$l/"*.ini "$T/administrator/language/$l/"
+  done
+fi
 # Модуль корзины: код, media и языковые файлы (как при установке пакета).
 M="$S/mod_dharmashop_cart"
 if [ -d "$M" ]; then

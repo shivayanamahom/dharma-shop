@@ -19,7 +19,7 @@ final class ImageInventory
         $id = (int) ($cursor['id'] ?? 0);
         $queries = [
             'SELECT id, cover, params FROM #__dharmashop_products WHERE id > :id ORDER BY id',
-            'SELECT id, path, field_id FROM #__dharmashop_field_media WHERE mime IS NULL AND id > :id ORDER BY id',
+            "SELECT id, path, field_id, alt, mime FROM #__dharmashop_field_media WHERE (mime IS NULL OR mime LIKE 'application/vnd.dharmashop.video.%') AND id > :id ORDER BY id",
             'SELECT id, path FROM #__dharmashop_category_field_media WHERE mime IS NULL AND id > :id ORDER BY id',
             "SELECT id, extension, params FROM #__categories WHERE extension IN ('com_dharmashop','com_dharmashop.brand','com_dharmashop.badge') AND id > :id ORDER BY id",
             'SELECT id, image FROM #__dharmashop_field_options WHERE id > :id ORDER BY id',
@@ -33,7 +33,9 @@ final class ImageInventory
             $product = array_values(array_filter(array_keys(ImageContexts::SIZES), static fn($c) => str_starts_with($c,'product.') || str_starts_with($c,'cart.') || str_starts_with($c,'search.') || str_starts_with($c,'module.products.') || in_array($c,['admin.product','email.product'],true)));
             return match ($phase) {
                 0 => [[$row['cover'], [...$product, 'seo.social']], [$params['meta_image'] ?? '', ['seo.social']]],
-                1 => [[$row['path'], (int) $row['field_id'] > 0 ? ['field.gallery.card', 'field.gallery.page', 'field.gallery.lightbox'] : $product]],
+                1 => str_starts_with((string) ($row['mime'] ?? ''), 'application/vnd.dharmashop.video.')
+                    ? [[$row['alt'] ?? '', ['field.video.poster']]]
+                    : [[$row['path'], (int) $row['field_id'] > 0 ? ['field.gallery.card', 'field.gallery.page', 'field.gallery.lightbox'] : $product]],
                 2 => [[$row['path'], ['field.gallery.card', 'field.gallery.page', 'field.gallery.lightbox']]],
                 3 => $this->category($params, match ($row['extension']) { 'com_dharmashop.brand'=>'brand', 'com_dharmashop.badge'=>'badge', default=>'category' }),
                 4 => [[$row['image'], ['field.option']]],

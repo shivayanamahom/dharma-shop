@@ -78,8 +78,8 @@ class FieldTable extends Table
             $this->setError(Text::_('COM_DHARMASHOP_FIELD_SETTINGS_INVALID')); return false;
         }
         foreach (['required','in_card','in_page','all_categories','filterable'] as $flag) { $this->$flag = (int) (bool) $this->$flag; }
-        if ($this->type === 'editor') { $this->in_card = 0; }
-        if (in_array((string) $this->type, ['editor', 'text', 'files'], true)) { $this->filterable = 0; }
+        if (in_array((string) $this->type, ['editor','gallery','video'], true)) { $this->in_card = 0; }
+        if (in_array((string) $this->type, ['editor', 'text', 'files','gallery','video'], true)) { $this->filterable = 0; }
         $this->ordering = max(1, (int) $this->ordering);
         $this->level = 1;
         $this->is_cover = $this->sortable = 0;
