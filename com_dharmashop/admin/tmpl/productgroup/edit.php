@@ -11,7 +11,7 @@ $this->getDocument()->getWebAssetManager()->useScript('keepalive')->useScript('f
 <div class="row"><div class="col-lg-9"><div class="main-card p-4">
 <?php echo HTMLHelper::_('uitab.startTabSet','groupTabs',['active'=>'details']); ?>
 <?php echo HTMLHelper::_('uitab.addTab','groupTabs','details',Text::_('COM_DHARMASHOP_TAB_MAIN')); ?>
-<fieldset class="options-form"><?php foreach(['display_mode','axes','members','gallery','introtext','fulltext'] as $name) {echo $this->form->renderField($name);} ?></fieldset>
+<fieldset class="options-form"><?php foreach(['axes','members','gallery','introtext','fulltext'] as $name) {echo $this->form->renderField($name);} ?></fieldset>
 <?php echo HTMLHelper::_('uitab.endTab'); ?>
 <?php if($this->item->id): ?>
 <?php echo HTMLHelper::_('uitab.addTab','groupTabs','generation',Text::_('COM_DHARMASHOP_GROUP_GENERATE')); ?>

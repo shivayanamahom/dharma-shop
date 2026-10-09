@@ -347,4 +347,13 @@ C74: результат вынесен в `site/tmpl/checkoutcomplete/default.ph
 
 ## Выбор исполнения группы товаров (C87, 2026-10-09)
 
-`com_dharmashop/site/tmpl/product/default_choices.php` — часть страницы после интро, loadTemplate('choices'); переопределение `html/com_dharmashop/product/default_choices.php`. Класс `dharmaProductChoices`, Bootstrap GET-форма, общий fields/swatch и контекст `group.choice`. Тизера группы пока нет: будущий слот и group.teaser добавляются вместе с группировкой (VARIANTS.md §13).
+`com_dharmashop/site/tmpl/product/default_choices.php` — часть страницы после интро, loadTemplate('choices'); переопределение `html/com_dharmashop/product/default_choices.php`. Класс `dharmaProductChoices`, Bootstrap GET-форма, общий fields/swatch и контекст `group.choice`. Макеты тизера группы добавлены ниже; подключение выборки групп остаётся этапом фильтра.
+
+
+## Карточки группы в смешанной выдаче (C87, 2026-10-09)
+
+Слот group_card: files_dharmashop_layouts/layouts/group-card/{default,grid,list,table}.php → layouts/components/dharmashop/group-card/. Части group-card-parts/{media,details,actions}.php. Переопределения в html/layouts/components/dharmashop/ с теми же папками; default и каждая часть переопределяются независимо. Файлы зарегистрированы в манифесте файлового расширения.
+
+Общий productView (GET product_view) выбирает grid/list/table для обычного товара и группы на одной странице. ListingTrait::renderProduct распознаёт listing_type=group и передаёт listing_group в GroupCardRenderer; маркер приходит из будущей выборки Claude. Без маркера товар остаётся обычным, даже если состоит в группе. Макет grid/list возвращает одну карточку для существующей .col, table — tr с названием, теми же дополнительными колонками и ценой/кнопкой. Товарные значения представителя в колонках группы не показываются.
+
+Постоянные классы: dharmaGroupCard, dharmaGroupCardList, dharmaGroupCardRow, dharmaGroupImage, dharmaGroupCount, dharmaGroupChoices, dharmaGroupFooter, dharmaGroupPrice, dharmaGroupChoose; data-dharmashop-group содержит ID группы. Только Bootstrap, без нового CSS/JS. Кнопка «Выбрать исполнение» ведёт на URL доступного представителя. Контексты group.teaser.grid/list/table для изображения и group.choice для образцов; данные цен/числа/опций подготовлены пакетно и ограничены текущим контекстом, SQL в JLayout отсутствует. Настройка products/groups_products управляет составом выдачи, product_view — её видом; это независимые настройки.

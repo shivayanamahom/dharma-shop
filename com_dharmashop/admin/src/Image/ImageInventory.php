@@ -31,7 +31,7 @@ final class ImageInventory
             $cursor = ['phase'=>$phase, 'id'=>(int)$row['id']];
             $params = json_decode((string)($row['params'] ?? ''), true);
             if (!is_array($params)) $params = [];
-            $product = array_values(array_filter(array_keys(ImageContexts::SIZES), static fn($c) => str_starts_with($c,'product.') || str_starts_with($c,'cart.') || str_starts_with($c,'search.') || str_starts_with($c,'module.products.') || in_array($c,['admin.product','email.product'],true)));
+            $product = array_values(array_filter(array_keys(ImageContexts::SIZES), static fn($c) => str_starts_with($c,'product.') || str_starts_with($c,'cart.') || str_starts_with($c,'search.') || str_starts_with($c,'module.products.') || str_starts_with($c,'group.teaser.') || in_array($c,['admin.product','email.product'],true)));
             return match ($phase) {
                 0 => [[$row['cover'], [...$product, 'seo.social']], [$params['meta_image'] ?? '', ['seo.social']]],
                 1 => str_starts_with((string) ($row['mime'] ?? ''), 'application/vnd.dharmashop.video.')

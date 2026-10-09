@@ -26,13 +26,14 @@ class ProductgroupTable extends Table
     {
         $this->title = trim(strip_tags((string) $this->title));
         $this->alias = ApplicationHelper::stringURLSafe(trim((string) $this->alias) ?: $this->title);
+        // Legacy non-null column; public listing mode belongs to component settings.
         $this->display_mode ??= 'single';
         $this->state ??= 1;
         $this->revision = max(1, (int) $this->revision);
         $this->in_stock = (int) $this->in_stock;
         $this->members_count = (int) $this->members_count;
         if (!$this->title || !$this->alias || mb_strlen($this->title) > 255 || mb_strlen($this->alias) > 190
-            || !in_array($this->display_mode, ['single', 'all'], true) || !in_array((int) $this->state, [-2, 0, 1, 2], true)) {
+            || !in_array((int) $this->state, [-2, 0, 1, 2], true)) {
             $this->setError(Text::_('COM_DHARMASHOP_GROUP_INVALID'));
             return false;
         }

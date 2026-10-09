@@ -17,7 +17,7 @@ final class GroupService
 
     public function get(int $id): ?object
     {
-        return $id > 0 ? ($this->db->setQuery('SELECT id,title,alias,display_mode,state,introtext,`fulltext`,cover,cover_alt,price_min,price_max,in_stock,members_count,revision FROM #__dharmashop_product_groups WHERE id=' . $id)->loadObject() ?: null) : null;
+        return $id > 0 ? ($this->db->setQuery('SELECT id,title,alias,state,introtext,`fulltext`,cover,cover_alt,price_min,price_max,in_stock,members_count,revision FROM #__dharmashop_product_groups WHERE id=' . $id)->loadObject() ?: null) : null;
     }
 
     public function axes(int $id): array

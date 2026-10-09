@@ -196,6 +196,7 @@ trait ListingTrait
 
         if ($this->productView === 'table' && (int) $this->params->get('table_show_fields', 0) === 1) {
             foreach ($this->items as $product) {
+                if (\Dharma\Component\DharmaShop\Site\Support\GroupCardRenderer::isGroup($product)) { continue; }
                 foreach ($product->fields ?? [] as $alias => $field) {
                     if (!empty($field->show) && !empty($field->values)) {
                         $this->fieldColumns[(string) $alias] ??= (string) $field->title;
@@ -321,6 +322,9 @@ trait ListingTrait
 
     public function renderProduct(object $item): string
     {
+        if (\Dharma\Component\DharmaShop\Site\Support\GroupCardRenderer::isGroup($item)) {
+            return (new \Dharma\Component\DharmaShop\Site\Support\GroupCardRenderer())->render($item, $this->params, $this->productView, $this->fieldColumns);
+        }
         // Единая точка сборки карточки: в default.php позже подключаются отдельные части (слайдер, цена, действия и т. п.).
         $layout = new FileLayout('components.dharmashop.product-card.default', null, ['component' => 'none', 'client' => 0]);
         $intro = (string) $item->introtext;

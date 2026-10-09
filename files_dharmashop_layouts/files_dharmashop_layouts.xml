@@ -30,6 +30,17 @@
             <filename>list.php</filename>
             <filename>table.php</filename>
         </files>
+        <files folder="layouts/group-card" target="layouts/components/dharmashop/group-card">
+            <filename>default.php</filename>
+            <filename>grid.php</filename>
+            <filename>list.php</filename>
+            <filename>table.php</filename>
+        </files>
+        <files folder="layouts/group-card-parts" target="layouts/components/dharmashop/group-card-parts">
+            <filename>media.php</filename>
+            <filename>details.php</filename>
+            <filename>actions.php</filename>
+        </files>
         <files folder="layouts/product-card-parts" target="layouts/components/dharmashop/product-card-parts">
             <filename>media.php</filename>
             <filename>price.php</filename>

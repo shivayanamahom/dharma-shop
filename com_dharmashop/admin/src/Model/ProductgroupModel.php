@@ -101,7 +101,7 @@ class ProductgroupModel extends AdminModel
             $members = array_map(static fn($row) => (int) (((array) $row)['product_id'] ?? 0), (array) ($data['members'] ?? []));
             $media = ImageUploader::filterGallery($data['gallery'] ?? []);
             $revision = (int) ($data['revision'] ?? 0);
-            unset($data['axes'], $data['members'], $data['gallery'], $data['executions'], $data['revision'], $data['generation_catid']);
+            unset($data['display_mode'], $data['axes'], $data['members'], $data['gallery'], $data['executions'], $data['revision'], $data['generation_catid']);
             // This table has no asset_id: its Table::store does not take Joomla asset table locks.
             $db->transactionStart();
             $started = true;

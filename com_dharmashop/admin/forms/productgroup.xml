@@ -4,7 +4,6 @@
  <fieldset name="details">
   <field name="title" type="text" label="JGLOBAL_TITLE" required="true" filter="string" maxlength="255"/>
   <field name="alias" type="text" label="JFIELD_ALIAS_LABEL" filter="string" maxlength="190"/>
-  <field name="display_mode" type="list" label="COM_DHARMASHOP_GROUP_DISPLAY" description="COM_DHARMASHOP_GROUP_DISPLAY_PENDING" default="single" validate="options"><option value="single">COM_DHARMASHOP_GROUP_SINGLE</option><option value="all">COM_DHARMASHOP_GROUP_ALL</option></field>
   <field name="axes" type="choiceaxes" label="COM_DHARMASHOP_GROUP_AXES" description="COM_DHARMASHOP_GROUP_AXIS_INVALID" multiple="true" required="true" filter="int_array" layout="joomla.form.field.list-fancy-select"/>
   <field name="members" type="subform" validate="Subform" multiple="true" max="500" layout="joomla.form.field.subform.repeatable" label="COM_DHARMASHOP_GROUP_MEMBERS">
    <form><fieldset name="row" addfieldprefix="Dharma\Component\DharmaShop\Administrator\Field"><field name="product_id" type="modal_product" label="COM_DHARMASHOP_SELECT_A_PRODUCT" unique="true" filter="int" required="true"/></fieldset></form>
