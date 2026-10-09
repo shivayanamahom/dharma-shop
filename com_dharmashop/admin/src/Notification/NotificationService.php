@@ -22,7 +22,7 @@ final class NotificationService
         try {
             $query = $this->db->createQuery()->select([
                 'h.id AS history_id', 'h.created AS event_date', 'h.status_id', 'o.id', 'o.number', 'o.secret', 'o.user_id', 'o.customer_id', 'o.currency',
-                'o.created', 'o.total', 'o.subtotal', 'o.contact_name', 'o.contact_email', 'o.contacts', 'o.shipping_title', 'o.shipping_data', 'o.payment_title',
+                'o.created', 'o.total', 'o.subtotal', 'o.contact_name', 'o.contact_email', 'o.contacts', 'o.shipping_title', 'o.shipping_data', 'o.payment_title', 'o.payment_data', 'o.payment_status',
                 's.title AS status_title', 's.customer_message AS status_message',
             ])->from($this->db->quoteName('#__dharmashop_order_history', 'h'))
                 ->join('INNER', $this->db->quoteName('#__dharmashop_orders', 'o') . ' ON o.id=h.order_id')

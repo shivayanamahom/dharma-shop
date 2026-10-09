@@ -80,6 +80,7 @@ class ShippingModel extends AdminModel
             $params = is_array($item->params) ? $item->params : (new Registry((string) $item->params))->toArray();
             // В форме настройки типа лежат в своей группе params[<тип>]: поля разных типов могут называться одинаково.
             $item->params = $item->plugin ? [(string) $item->plugin => $params] : [];
+            $item->payment_ids = array_values(array_filter(array_map('intval', explode(',', (string) ($item->payment_ids ?? '')))));
         }
 
         return $item;
@@ -87,7 +88,7 @@ class ShippingModel extends AdminModel
 
     public function save($data)
     {
-        $data = array_intersect_key((array) $data, array_flip(['id', 'title', 'alias', 'plugin', 'description', 'image', 'params', 'is_default', 'state', 'access', 'ordering']));
+        $data = array_intersect_key((array) $data, array_flip(['id', 'title', 'alias', 'plugin', 'description', 'image', 'params', 'payment_ids', 'is_default', 'state', 'access', 'ordering']));
         $id   = (int) ($data['id'] ?? 0);
 
         if (!$this->getCurrentUser()->authorise('core.edit.state', $this->option)) {
@@ -115,6 +116,8 @@ class ShippingModel extends AdminModel
         }
 
         $data['params'] = (new Registry($settings))->toString();
+        // Доступная оплата: список id из формы хранится строкой «1,3»; пусто — любая.
+        $data['payment_ids'] = implode(',', array_values(array_unique(array_filter(array_map('intval', (array) ($data['payment_ids'] ?? []))))));
 
         return parent::save($data);
     }

@@ -15,7 +15,7 @@
 		},
 		{
 			"name": "com_dharmashop.checkout",
-			"version": "912774759f80",
+			"version": "315235613e9d",
 			"type": "script",
 			"uri": "com_dharmashop/checkout.js",
 			"attributes": { "defer": true },

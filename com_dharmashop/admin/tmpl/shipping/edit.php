@@ -105,6 +105,11 @@ $this->getDocument()->getWebAssetManager()->useScript('keepalive')->useScript('f
                 <legend><?php echo Text::_('COM_DHARMASHOP_SHIPPING_TYPE'); ?></legend>
                 <?php echo $this->form->renderFieldset('identity'); ?>
             </fieldset>
+            <fieldset class="options-form form-vertical mb-3">
+                <legend><?php echo Text::_('COM_DHARMASHOP_SHIPPING_PAYMENTS_LEGEND'); ?></legend>
+                <?php echo $this->form->renderFieldset('payments'); ?>
+                <p class="small text-muted"><a href="<?php echo Route::_('index.php?option=com_dharmashop&view=payments'); ?>" target="_blank" rel="noopener"><?php echo Text::_('COM_DHARMASHOP_SHIPPING_PAYMENTS_MANAGE'); ?></a></p>
+            </fieldset>
             <fieldset class="options-form form-vertical">
                 <legend><?php echo Text::_('JGLOBAL_FIELDSET_PUBLISHING'); ?></legend>
                 <?php echo $this->form->renderFieldset('publishing'); ?>

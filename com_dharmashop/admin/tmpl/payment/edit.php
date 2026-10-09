@@ -1,0 +1,68 @@
+<?php
+
+/**
+ * Dharma Shop — универсальный лёгкий интернет-магазин для Joomla 6+.
+ *
+ * @package    com_dharmashop
+ * @copyright  (C) 2026 Dharma. Все права защищены.
+ * @license    GNU General Public License версии 2 или новее; см. LICENSE.txt
+ */
+
+declare(strict_types=1);
+
+\defined('_JEXEC') or die;
+
+use Dharma\Component\DharmaShop\Administrator\Payment\TypeRegistry;
+use Joomla\CMS\HTML\HTMLHelper;
+use Joomla\CMS\Language\Text;
+use Joomla\CMS\Layout\LayoutHelper;
+use Joomla\CMS\Router\Route;
+
+$this->getDocument()->getWebAssetManager()->useScript('keepalive')->useScript('form.validate');
+?>
+<form action="<?php echo Route::_('index.php?option=com_dharmashop&view=payment&layout=edit&id=' . (int) $this->item->id); ?>" method="post" name="adminForm" id="payment-form" class="form-validate">
+    <?php echo LayoutHelper::render('joomla.edit.title_alias', $this); ?>
+    <div class="row">
+        <div class="col-lg-9">
+            <div class="main-card">
+                <?php echo HTMLHelper::_('uitab.startTabSet', 'paymentTab', ['active' => 'details', 'recall' => true, 'breakpoint' => 768]); ?>
+                <?php echo HTMLHelper::_('uitab.addTab', 'paymentTab', 'details', Text::_('COM_DHARMASHOP_PAYMENT_COMMON')); ?>
+                <fieldset class="options-form">
+                    <legend><?php echo Text::_('COM_DHARMASHOP_PAYMENT_SETTINGS'); ?></legend>
+                    <?php echo $this->form->renderField('image'); ?>
+                    <?php echo $this->form->renderField('description'); ?>
+                </fieldset>
+                <?php // Настройки типа: каждый fieldset `type_<id>` и `type_<id>_*` формы плагина — отдельный блок; блок виден при выбранном типе (showon поля plugin). ?>
+                <?php foreach (TypeRegistry::current()->all() as $type) : ?>
+                    <?php foreach ($this->form->getFieldsets() as $setName => $fieldset) : ?>
+                        <?php if ($setName !== 'type_' . $type->id() && !str_starts_with($setName, 'type_' . $type->id() . '_')) { continue; } ?>
+                        <div data-showon='[{"field":"jform[plugin]","values":["<?php echo $this->escape($type->id()); ?>"],"sign":"=","op":""}]'>
+                            <fieldset class="options-form">
+                                <?php if (!empty($fieldset->label)) : ?><legend><?php echo Text::_($fieldset->label); ?></legend><?php endif; ?>
+                                <?php echo $this->form->renderFieldset($setName); ?>
+                            </fieldset>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endforeach; ?>
+                <?php echo HTMLHelper::_('uitab.endTab'); ?>
+                <?php echo HTMLHelper::_('uitab.endTabSet'); ?>
+            </div>
+        </div>
+        <div class="col-lg-3">
+            <fieldset class="options-form form-vertical mb-3">
+                <legend><?php echo Text::_('COM_DHARMASHOP_PAYMENT_TYPE'); ?></legend>
+                <?php echo $this->form->renderFieldset('identity'); ?>
+            </fieldset>
+            <fieldset class="options-form form-vertical mb-3">
+                <legend><?php echo Text::_('COM_DHARMASHOP_PAYMENT_AFTER'); ?></legend>
+                <?php echo $this->form->renderFieldset('after_payment'); ?>
+            </fieldset>
+            <fieldset class="options-form form-vertical">
+                <legend><?php echo Text::_('JGLOBAL_FIELDSET_PUBLISHING'); ?></legend>
+                <?php echo $this->form->renderFieldset('publishing'); ?>
+            </fieldset>
+        </div>
+    </div>
+    <input type="hidden" name="task" value="">
+    <?php echo HTMLHelper::_('form.token'); ?>
+</form>

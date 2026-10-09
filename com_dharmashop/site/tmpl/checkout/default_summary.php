@@ -63,6 +63,21 @@ $qtyText = static fn (float $qty): string => rtrim(rtrim(number_format($qty, 3, 
                     <div data-checkout-shipping-input></div>
                 </div>
             <?php endif; ?>
+            <?php if ($this->paymentOptions) : ?>
+                <?php // Выбранный способ оплаты и его сведения (из плагина типа); боковая панель переключает блоки по выбору. ?>
+                <div class="border-top mt-3 pt-3 dharmaCheckoutPaymentSummary" data-checkout-payment-summary>
+                    <div class="text-body-secondary mb-1"><?php echo Text::_('COM_DHARMASHOP_CHECKOUT_PAYMENT'); ?></div>
+                    <?php foreach ($this->paymentOptions as $optionId => $option) : ?>
+                        <div<?php echo $optionId === $this->paymentSelected ? '' : ' class="d-none"'; ?> data-payment-details="<?php echo (int) $optionId; ?>">
+                            <div class="fw-semibold text-break"><?php echo $this->escape($option['title']); ?></div>
+                            <?php foreach ($option['info'] as $row) : ?>
+                                <div class="text-break"><span class="text-body-secondary"><?php echo $this->escape($row['label']); ?>:</span> <?php echo nl2br($this->escape($row['value'])); ?></div>
+                            <?php endforeach; ?>
+                        </div>
+                    <?php endforeach; ?>
+                    <div data-checkout-payment-input></div>
+                </div>
+            <?php endif; ?>
         <?php endif; ?>
     </div>
     <div class="card-footer bg-body p-3">
@@ -72,7 +87,7 @@ $qtyText = static fn (float $qty): string => rtrim(rtrim(number_format($qty, 3, 
                 <span class="fs-5 fw-semibold text-end text-break" data-checkout-total><?php echo $this->escape($this->totalText($this->totalWithShipping())); ?></span>
             </div>
         <?php endif; ?>
-        <?php if ($this->lines && !$this->shippingBlocked && !array_filter($this->lines, static fn (object $line): bool => $line->error !== '')) : ?>
+        <?php if ($this->lines && !$this->shippingBlocked && !$this->paymentBlocked && !array_filter($this->lines, static fn (object $line): bool => $line->error !== '')) : ?>
             <button type="submit" class="btn btn-primary bg-primary text-white w-100 mb-2" data-checkout-submit><?php echo Text::_('COM_DHARMASHOP_CHECKOUT_SUBMIT'); ?></button>
         <?php endif; ?>
         <a class="btn btn-sm btn-outline-secondary w-100" href="<?php echo $this->escape($this->cartUrl); ?>"><?php echo Text::_('COM_DHARMASHOP_CHECKOUT_BACK_TO_CART'); ?></a>

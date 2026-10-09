@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form addfieldprefix="Dharma\Component\DharmaShop\Administrator\Field">
+    <fieldset name="details">
+        <field name="id" type="hidden" filter="integer" />
+        <field name="title" type="text" label="JGLOBAL_TITLE" required="true" maxlength="255" filter="string" class="input-large-text" />
+        <field name="alias" type="text" label="JFIELD_ALIAS_LABEL" description="COM_DHARMASHOP_PAYMENT_ALIAS_DESC" maxlength="190" filter="string" />
+        <field name="image" type="imageupload" filter="Dharma\Component\DharmaShop\Administrator\Image\ImageUploader::filterPath" folder="payment" label="COM_DHARMASHOP_PAYMENT_IMAGE" description="COM_DHARMASHOP_PAYMENT_IMAGE_DESC" />
+        <field name="description" type="textarea" label="COM_DHARMASHOP_PAYMENT_DESCRIPTION" description="COM_DHARMASHOP_PAYMENT_DESCRIPTION_DESC" rows="4" maxlength="5000" filter="string" />
+    </fieldset>
+    <fieldset name="identity">
+        <field name="plugin" type="paymenttype" label="COM_DHARMASHOP_PAYMENT_TYPE" description="COM_DHARMASHOP_PAYMENT_TYPE_DESC" required="true" filter="cmd">
+            <option value="">COM_DHARMASHOP_PAYMENT_TYPE_SELECT</option>
+        </field>
+    </fieldset>
+    <fieldset name="after_payment">
+        <field name="paid_status_id" type="orderstatus" active_only="true" label="COM_DHARMASHOP_PAYMENT_PAID_STATUS" description="COM_DHARMASHOP_PAYMENT_PAID_STATUS_DESC" default="" filter="integer">
+            <option value="">COM_DHARMASHOP_PAYMENT_PAID_STATUS_KEEP</option>
+        </field>
+    </fieldset>
+    <fieldset name="publishing">
+        <field name="state" type="list" label="JSTATUS" default="1" filter="integer" validate="options">
+            <option value="1">JPUBLISHED</option>
+            <option value="0">JUNPUBLISHED</option>
+        </field>
+        <field name="is_default" type="radio" layout="joomla.form.field.radio.switcher" label="COM_DHARMASHOP_PAYMENT_DEFAULT" description="COM_DHARMASHOP_PAYMENT_DEFAULT_DESC" default="0" filter="integer">
+            <option value="0">JNO</option>
+            <option value="1">JYES</option>
+        </field>
+        <field name="access" type="accesslevel" label="JFIELD_ACCESS_LABEL" default="1" filter="uint" />
+        <field name="ordering" type="number" label="JFIELD_ORDERING_LABEL" default="0" min="0" filter="integer" />
+    </fieldset>
+</form>

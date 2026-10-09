@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form><fields name="params"><fields name="standard"><fieldset name="type_standard" label="PLG_DHARMASHOPPAYMENT_STANDARD_SETTINGS">
+    <field name="instruction" type="textarea" label="PLG_DHARMASHOPPAYMENT_STANDARD_INSTRUCTION" description="PLG_DHARMASHOPPAYMENT_STANDARD_INSTRUCTION_DESC" showon=".plugin:standard" rows="4" maxlength="2000" filter="string" default="Оплата при получении заказа: наличными или банковской картой." />
+    <field name="min_total" type="text" label="PLG_DHARMASHOPPAYMENT_STANDARD_MIN_TOTAL" description="PLG_DHARMASHOPPAYMENT_STANDARD_MIN_TOTAL_DESC" showon=".plugin:standard" default="0" filter="string" />
+    <field name="max_total" type="text" label="PLG_DHARMASHOPPAYMENT_STANDARD_MAX_TOTAL" description="PLG_DHARMASHOPPAYMENT_STANDARD_MAX_TOTAL_DESC" showon=".plugin:standard" default="0" filter="string" />
+</fieldset></fields></fields></form>

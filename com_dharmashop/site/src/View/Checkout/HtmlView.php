@@ -12,6 +12,7 @@ use Joomla\CMS\Router\Route;
 use Dharma\Component\DharmaShop\Administrator\Pricing\MoneyFormatter;
 use Dharma\Component\DharmaShop\Administrator\Order\CheckoutFields;
 use Dharma\Component\DharmaShop\Administrator\Image\ImageUrl;
+use Dharma\Component\DharmaShop\Administrator\Payment\Context as PaymentContext;
 use Dharma\Component\DharmaShop\Administrator\Shipping\Context as ShippingContext;
 use Dharma\Component\DharmaShop\Site\Support\CartSession;
 use Dharma\Component\DharmaShop\Site\Support\CheckoutPrefill;
@@ -46,6 +47,15 @@ class HtmlView extends BaseHtmlView
     public bool $shippingBlocked = false;
     /** @var array<string, mixed> данные плитки способа для default_shipping_tile.php */
     public array $shippingTile = [];
+    /** @var array<int, array{id: int, selected: bool, visible: bool, image_url: string, title: string, info: array, html: string}> способы оплаты: id => данные плитки и готовый HTML панели (макет плагина типа) */
+    public array $paymentOptions = [];
+    public int $paymentSelected = 0;
+    /** Способы оплаты есть, но для этой суммы заказа ни один не подходит: заказ оформить нельзя. */
+    public bool $paymentBlocked = false;
+    /** JSON «id доставки → id разрешённых способов оплаты» (пусто — любые): скрипт оформления скрывает недоступную оплату при смене доставки. */
+    public string $paymentMap = '{}';
+    /** @var array<string, mixed> данные плитки способа оплаты для default_payment_tile.php */
+    public array $paymentTile = [];
 
     public function totalText(float $amount): string
     {
@@ -142,6 +152,61 @@ class HtmlView extends BaseHtmlView
         }
     }
 
+    /** Способы оплаты: доступность по сумме заказа (с доставкой) и выбранной доставке; HTML панели — макет плагина типа. */
+    private function preparePayment($app, $settings): void
+    {
+        $valid = array_values(array_filter($this->lines, static fn (object $line): bool => $line->error === ''));
+
+        if (!$valid || (!$this->shippingOptions && $this->shippingBlocked)) {
+            return;
+        }
+
+        $service = $app->bootComponent('com_dharmashop')->getServices()->payments();
+
+        if (!$service->hasMethods()) {
+            return;
+        }
+
+        $map = $service->allowedByShipping();
+        $context = new PaymentContext($this->totalWithShipping(), (float) $this->totals['subtotal'], (float) $this->totals['qty'], (int) $this->totals['count'], (string) $settings->get('currency_code', 'RUB'), $valid, $this->values, $this->shippingSelected);
+        // Все способы, подходящие по сумме: какие из них доступны для выбранной доставки, решает карта и скрипт (при смене доставки без перезагрузки).
+        $options = $service->options($context);
+
+        if (!$options) {
+            $this->paymentBlocked = true;
+
+            return;
+        }
+
+        $this->paymentMap = (string) json_encode((object) array_map(static fn (array $ids): array => array_values($ids), $map), JSON_UNESCAPED_UNICODE);
+        $allowed = (array) ($map[$this->shippingSelected] ?? []);
+        $visible = $allowed === [] ? array_keys($options) : array_values(array_intersect(array_keys($options), $allowed));
+        $state = (array) $app->getUserState('com_dharmashop.checkout.payment', []);
+        $chosen = (int) ($state['method'] ?? 0);
+        $this->paymentSelected = in_array($chosen, $visible, true) ? $chosen : $service->defaultId(array_intersect_key($options, array_flip($visible)));
+
+        foreach ($options as $id => $option) {
+            $this->paymentOptions[$id] = [
+                'id' => $id,
+                'selected' => $id === $this->paymentSelected,
+                'visible' => in_array($id, $visible, true),
+                'image_url' => $option['method']->image !== '' ? ImageUrl::resolve($option['method']->image, 'payment.option') : '',
+                'title' => $option['method']->title,
+                'info' => $option['info'],
+                'html' => $option['type']->render([
+                    'method' => $option['method'],
+                    'selected' => $id === $this->paymentSelected,
+                    'id' => $id,
+                    'values' => (array) ($state['input'][$id] ?? []),
+                    'errors' => $id === $this->paymentSelected ? (array) ($state['errors'] ?? []) : [],
+                    'info' => $option['info'],
+                    'image_url' => $option['method']->image !== '' ? ImageUrl::resolve($option['method']->image, 'payment.option') : '',
+                    'ajax_url' => Route::_('index.php?option=com_dharmashop&task=payment.ajax&format=json', false),
+                ]),
+            ];
+        }
+    }
+
     public function display($tpl = null): void
     {
         $app = Factory::getApplication();
@@ -200,6 +265,7 @@ class HtmlView extends BaseHtmlView
 
         if (!$this->receipt && !$this->loginRequired) {
             $this->prepareShipping($app, $settings);
+            $this->preparePayment($app, $settings);
         }
 
         $document = $this->getDocument();

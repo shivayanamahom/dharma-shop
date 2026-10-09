@@ -36,7 +36,7 @@ return new class () implements ServiceProviderInterface {
                 private const MIN_PHP = '8.3.0';
 
                 /** Плагины пакета, которые включаем сразу после установки: [группа, элемент]. */
-                private const PLUGINS = [['dharmashop', 'imageresize'], ['dharmashopnotify', 'email'], ['dharmashop', 'social'], ['dharmashop', 'structureddata'], ['dharmashopfield', 'basic'], ['dharmashopshipping', 'standard'], ['dharmashopshipping', 'courier'], ['dharmashopshipping', 'pickup'], ['system', 'dharmashopswiper'], ['system', 'dharmashopfancybox'], ['system', 'dharmashopmenu']];
+                private const PLUGINS = [['dharmashop', 'imageresize'], ['dharmashopnotify', 'email'], ['dharmashop', 'social'], ['dharmashop', 'structureddata'], ['dharmashopfield', 'basic'], ['dharmashopshipping', 'standard'], ['dharmashopshipping', 'courier'], ['dharmashopshipping', 'pickup'], ['dharmashoppayment', 'standard'], ['dharmashoppayment', 'sandbox'], ['system', 'dharmashopswiper'], ['system', 'dharmashopfancybox'], ['system', 'dharmashopmenu']];
 
                 /** Обновление не должно включать плагин, отключённый владельцем сайта. */
                 private array $existingPlugins = [];

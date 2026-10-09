@@ -129,6 +129,54 @@
     form.addEventListener('change', (event) => { if (event.target.closest?.('[data-shipping-extra]')) syncShipping(); });
     syncShipping();
 
+    // Оплата: плитки-вкладки; доступность по выбранной доставке (карта id доставки → разрешённые способы оплаты, пусто — любые),
+    // панель выбранного способа и его сведения в боковой панели. Отключённая радиокнопка в запрос не попадает: сервер всё равно проверяет выбор.
+    const paymentRadios = form.querySelectorAll('[data-payment-radio]');
+    let paymentMap = {};
+    try { paymentMap = JSON.parse(form.querySelector('[data-payment-map]')?.dataset.paymentMap || '{}') || {}; } catch (error) { paymentMap = {}; }
+    const paymentInputRows = form.querySelector('[data-checkout-payment-input]');
+    const paymentOptionOf = (radio) => form.querySelector('[data-payment-option][data-method-id="' + radio.value + '"]');
+    const syncPayment = () => {
+        if (!paymentRadios.length) return;
+        const shipping = Array.from(shippingRadios).find((radio) => radio.checked)?.value;
+        const allowed = (paymentMap[shipping] || []).map(String);
+        let visible = 0;
+        paymentRadios.forEach((radio) => {
+            const ok = allowed.length === 0 || allowed.includes(radio.value);
+            radio.disabled = !ok;
+            radio.closest('.col')?.classList.toggle('d-none', !ok);
+            if (!ok) radio.checked = false;
+            if (ok) visible += 1;
+        });
+        if (visible && !Array.from(paymentRadios).some((radio) => radio.checked)) {
+            const first = Array.from(paymentRadios).find((radio) => !radio.disabled);
+            if (first) first.checked = true;
+        }
+        form.querySelector('[data-payment-none]')?.classList.toggle('d-none', visible > 0);
+        const chosen = Array.from(paymentRadios).find((radio) => radio.checked && !radio.disabled);
+        paymentRadios.forEach((radio) => {
+            paymentOptionOf(radio)?.classList.toggle('d-none', radio !== chosen);
+            form.querySelector('[data-payment-details="' + radio.value + '"]')?.classList.toggle('d-none', radio !== chosen);
+        });
+        paymentInputRows?.replaceChildren();
+        if (!chosen) return;
+        paymentOptionOf(chosen)?.querySelectorAll('[data-summary-label]').forEach((input) => {
+            const value = input.tagName === 'SELECT' ? (input.selectedOptions[0]?.value ? input.selectedOptions[0].textContent : '') : input.value.trim();
+            if (!value || !paymentInputRows) return;
+            const line = document.createElement('div');
+            line.className = 'text-break';
+            const caption = document.createElement('span');
+            caption.className = 'text-body-secondary';
+            caption.textContent = input.dataset.summaryLabel + ': ';
+            line.append(caption, document.createTextNode(value));
+            paymentInputRows.append(line);
+        });
+    };
+    paymentRadios.forEach((radio) => radio.addEventListener('change', syncPayment));
+    shippingRadios.forEach((radio) => radio.addEventListener('change', syncPayment));
+    form.addEventListener('input', (event) => { if (event.target.closest?.('[data-payment-option]')) syncPayment(); });
+    syncPayment();
+
     form.querySelectorAll('[data-dharmashop-phone-mask]').forEach((input) => {
         const mask = input.dataset.dharmashopPhoneMask;
         const capacity = (mask.match(/#/g) || []).length;

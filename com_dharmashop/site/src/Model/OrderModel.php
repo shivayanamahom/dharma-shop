@@ -32,7 +32,7 @@ class OrderModel extends BaseDatabaseModel
         $db = $this->getDatabase();
         $query = $db->createQuery()->select([
             'o.id', 'o.number', 'o.currency', 'o.subtotal', 'o.adjustments_total', 'o.total',
-            'o.contacts', 'o.shipping_title', 'o.shipping_data', 'o.payment_title', 'o.created', 's.title AS status_title',
+            'o.contacts', 'o.shipping_title', 'o.shipping_data', 'o.payment_title', 'o.payment_data', 'o.payment_method_id', 'o.payment_status', 'o.created', 's.title AS status_title',
         ])->from($db->quoteName('#__dharmashop_orders', 'o'))
             ->join('LEFT', $db->quoteName('#__dharmashop_statuses', 's') . ' ON s.id = o.status_id')
             ->where('o.id = :id')->bind(':id', $id, ParameterType::INTEGER);
@@ -51,6 +51,8 @@ class OrderModel extends BaseDatabaseModel
         unset($order->contacts);
         $order->shipping = json_decode((string) $order->shipping_data, true) ?: [];
         unset($order->shipping_data);
+        $order->payment = json_decode((string) $order->payment_data, true) ?: [];
+        unset($order->payment_data);
         foreach ([
             'items' => ['#__dharmashop_order_items', ['title', 'sku', 'unit', 'qty', 'price', 'total', 'params']],
             'adjustments' => ['#__dharmashop_order_adjustments', ['type', 'title', 'amount']],

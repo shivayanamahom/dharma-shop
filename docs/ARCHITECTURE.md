@@ -371,7 +371,9 @@ C71/C73: checkout — отдельный вид и тип меню; части d
 ```
 #__dharmashop_shipping_methods  id, title, alias UNIQUE, plugin (element плагина группы dharmashopshipping),
                                 description, params (JSON настроек плагина), is_default, state, access, ordering, checked_out*
-#__dharmashop_payment_methods   то же; plugin — группы dharmashoppayment
+#__dharmashop_payment_methods   то же; plugin — группы dharmashoppayment; + paid_status_id (статус заказа после оплаты, C83)
+#__dharmashop_shipping_methods  + payment_ids varchar(255): «1,3» — разрешённая оплата для этого способа доставки (пусто — любая)
+#__dharmashop_orders            + payment_status (none|pending|paid|failed|cancelled), paid (время оплаты)
 ```
 
 Один плагин может обслуживать несколько записей.

@@ -13,7 +13,7 @@ mkdir -p dist
 rm -f "$out"
 
 # Список расширений пакета (папка = имя zip). Добавляйте сюда новые плагины и модули.
-EXTENSIONS=(plg_dharmashop_imageresize files_dharmashop_layouts com_dharmashop plg_dharmashopfield_basic plg_dharmashopnotify_email plg_dharmashopshipping_standard plg_dharmashopshipping_courier plg_dharmashopshipping_pickup plg_dharmashop_social plg_dharmashop_structureddata plg_system_dharmashopswiper plg_system_dharmashopfancybox plg_system_dharmashopmenu mod_dharmashop_cart mod_dharmashop_search)
+EXTENSIONS=(plg_dharmashop_imageresize files_dharmashop_layouts com_dharmashop plg_dharmashopfield_basic plg_dharmashopnotify_email plg_dharmashopshipping_standard plg_dharmashopshipping_courier plg_dharmashopshipping_pickup plg_dharmashoppayment_standard plg_dharmashoppayment_sandbox plg_dharmashop_social plg_dharmashop_structureddata plg_system_dharmashopswiper plg_system_dharmashopfancybox plg_system_dharmashopmenu mod_dharmashop_cart mod_dharmashop_search)
 
 for ext in "${EXTENSIONS[@]}"; do
   (cd "$ext" && zip -r -q "$stage/$ext.zip" . -x '*.DS_Store')

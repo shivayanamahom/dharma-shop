@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form><fields name="params"><fields name="sandbox"><fieldset name="type_sandbox" label="PLG_DHARMASHOPPAYMENT_SANDBOX_SETTINGS">
+    <field name="instruction" type="textarea" label="PLG_DHARMASHOPPAYMENT_SANDBOX_INSTRUCTION" description="PLG_DHARMASHOPPAYMENT_SANDBOX_INSTRUCTION_DESC" showon=".plugin:sandbox" rows="3" maxlength="1000" filter="string" default="Тестовая оплата: деньги не списываются. После оформления откроется страница оплаты, где можно выбрать результат." />
+</fieldset></fields></fields></form>

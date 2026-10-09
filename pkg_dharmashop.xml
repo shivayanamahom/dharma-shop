@@ -17,6 +17,8 @@
 		<file type="plugin" id="standard" group="dharmashopshipping">plg_dharmashopshipping_standard.zip</file>
 		<file type="plugin" id="courier" group="dharmashopshipping">plg_dharmashopshipping_courier.zip</file>
 		<file type="plugin" id="pickup" group="dharmashopshipping">plg_dharmashopshipping_pickup.zip</file>
+		<file type="plugin" id="standard" group="dharmashoppayment">plg_dharmashoppayment_standard.zip</file>
+		<file type="plugin" id="sandbox" group="dharmashoppayment">plg_dharmashoppayment_sandbox.zip</file>
 		<file type="plugin" id="imageresize" group="dharmashop">plg_dharmashop_imageresize.zip</file>
 		<file type="plugin" id="social" group="dharmashop">plg_dharmashop_social.zip</file>
 		<file type="plugin" id="structureddata" group="dharmashop">plg_dharmashop_structureddata.zip</file>

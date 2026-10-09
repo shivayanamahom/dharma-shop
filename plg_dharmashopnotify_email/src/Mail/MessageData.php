@@ -95,6 +95,19 @@ final class MessageData
                 if ($label !== '' && $value !== '') $shippingRows[] = ['label'=>$label, 'value'=>$value];
             }
         }
+        // Оплата из снимка заказа: способ, статус оплаты (если платёж идёт на сайте) и сведения типа (инструкция, реквизиты).
+        $paymentRows = [];
+        $paymentSnapshot = json_decode((string) ($order['payment_data'] ?? ''), true) ?: [];
+        $paymentTitle = trim((string) ($paymentSnapshot['title'] ?? $order['payment_title'] ?? ''));
+        if ($paymentTitle !== '') {
+            $paymentRows[] = ['label'=>$language->_('PLG_DHARMASHOPNOTIFY_EMAIL_PAYMENT_METHOD'), 'value'=>$paymentTitle];
+            $paymentStatus = (string) ($order['payment_status'] ?? 'none');
+            if ($paymentStatus !== 'none' && $paymentStatus !== '') $paymentRows[] = ['label'=>$language->_('PLG_DHARMASHOPNOTIFY_EMAIL_PAYMENT_STATUS'), 'value'=>$language->_('PLG_DHARMASHOPNOTIFY_EMAIL_PAYMENT_STATUS_' . strtoupper($paymentStatus))];
+            foreach ((array) ($paymentSnapshot['rows'] ?? []) as $row) {
+                $label = trim((string) ($row['label'] ?? '')); $value = trim((string) ($row['value'] ?? ''));
+                if ($label !== '' && $value !== '') $paymentRows[] = ['label'=>$label, 'value'=>$value];
+            }
+        }
         $plain = [
             'SITENAME'=>$shopName, 'SHOP_NAME'=>$shopName, 'SHOP_EMAIL'=>$shopEmail, 'SHOP_PHONE'=>$shopPhone, 'SHOP_ADDRESS'=>$shopAddress,
             'SHOP_URL'=>$root . '/', 'SHOP_LOGO'=>$logo, 'SHOP_CONTACTS'=>implode("\n", array_filter([$shopPhone, $shopEmail, $shopAddress, $root . '/'])),
@@ -110,9 +123,12 @@ final class MessageData
             $plain['SHIPPING'] = $labels['SHIPPING'] . ":\n" . implode("\n", array_map(static fn (array $row): string => $row['label'] . ': ' . $row['value'], $shippingRows));
         }
         $plain['PAYMENT'] = $plain['PAYMENT_TITLE'] !== '' ? $labels['PAYMENT'] . ': ' . $plain['PAYMENT_TITLE'] : '';
+        if (count($paymentRows) > 1) {
+            $plain['PAYMENT'] = $labels['PAYMENT'] . ":\n" . implode("\n", array_map(static fn (array $row): string => $row['label'] . ': ' . $row['value'], $paymentRows));
+        }
         $html = $plain;
         $layout = new FileLayout('blocks', dirname(__DIR__, 2) . '/tmpl', ['client'=>'site']);
-        $common = ['labels'=>$labels, 'order'=>$plain, 'items'=>$items, 'adjustments'=>$adjustments, 'contacts'=>$contacts, 'consents'=>$consents, 'shipping'=>$shippingRows];
+        $common = ['labels'=>$labels, 'order'=>$plain, 'items'=>$items, 'adjustments'=>$adjustments, 'contacts'=>$contacts, 'consents'=>$consents, 'shipping'=>$shippingRows, 'payment'=>$paymentRows];
         foreach (['ORDER_DETAILS','ITEMS','CONTACTS','STATUS_MESSAGE','SHIPPING','PAYMENT','ORDER_LINK','CONSENTS'] as $tag) {
             $html[$tag] = $plain[$tag] !== '' ? $layout->render($common + ['block'=>$tag]) : '';
         }

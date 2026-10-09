@@ -12,6 +12,9 @@
             <option value="">COM_DHARMASHOP_SHIPPING_TYPE_SELECT</option>
         </field>
     </fieldset>
+    <fieldset name="payments">
+        <field name="payment_ids" type="paymentselect" multiple="true" label="COM_DHARMASHOP_SHIPPING_PAYMENTS" description="COM_DHARMASHOP_SHIPPING_PAYMENTS_DESC" class="form-select" size="6" filter="int_array" />
+    </fieldset>
     <fieldset name="publishing">
         <field name="state" type="list" label="JSTATUS" default="1" filter="integer" validate="options">
             <option value="1">JPUBLISHED</option>

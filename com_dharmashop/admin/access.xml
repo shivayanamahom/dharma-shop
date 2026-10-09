@@ -11,6 +11,7 @@
 		<action name="dharmashop.orders.manage" title="COM_DHARMASHOP_ACTION_ORDERS_MANAGE" description="COM_DHARMASHOP_ACTION_ORDERS_MANAGE_DESC" />
 		<action name="dharmashop.orders.status" title="COM_DHARMASHOP_ACTION_ORDERS_STATUS" description="COM_DHARMASHOP_ACTION_ORDERS_STATUS_DESC" />
 		<action name="dharmashop.warehouses.manage" title="COM_DHARMASHOP_ACTION_WAREHOUSES_MANAGE" description="COM_DHARMASHOP_ACTION_WAREHOUSES_MANAGE_DESC" />
+		<action name="dharmashop.payment.manage" title="COM_DHARMASHOP_ACTION_PAYMENT_MANAGE" description="COM_DHARMASHOP_ACTION_PAYMENT_MANAGE_DESC" />
 		<action name="dharmashop.shipping.manage" title="COM_DHARMASHOP_ACTION_SHIPPING_MANAGE" description="COM_DHARMASHOP_ACTION_SHIPPING_MANAGE_DESC" />
 		<action name="dharmashop.customers.view" title="COM_DHARMASHOP_ACTION_CUSTOMERS_VIEW" description="COM_DHARMASHOP_ACTION_CUSTOMERS_VIEW_DESC" />
 	</section>

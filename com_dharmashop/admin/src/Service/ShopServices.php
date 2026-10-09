@@ -27,6 +27,7 @@ use Dharma\Component\DharmaShop\Administrator\Order\OrderRules;
 use Dharma\Component\DharmaShop\Administrator\Pricing\MoneyFormatter;
 use Dharma\Component\DharmaShop\Administrator\Pricing\PriceResolver;
 use Dharma\Component\DharmaShop\Administrator\Pricing\SaleScheduler;
+use Dharma\Component\DharmaShop\Administrator\Payment\PaymentService;
 use Dharma\Component\DharmaShop\Administrator\Shipping\ShippingService;
 use Dharma\Component\DharmaShop\Administrator\Stock\StockService;
 use Dharma\Component\DharmaShop\Administrator\Warehouse\WarehouseService;
@@ -70,6 +71,7 @@ final class ShopServices
     private ?NotificationService $notifications = null;
     private ?OrderStatusService $orderStatuses = null;
     private ?ShippingService $shipping = null;
+    private ?PaymentService $payments = null;
     private ?WarehouseService $warehouses = null;
 
     public function __construct(private readonly DatabaseInterface $db)
@@ -79,6 +81,11 @@ final class ShopServices
     public function warehouses(): WarehouseService
     {
         return $this->warehouses ??= new WarehouseService($this->db);
+    }
+
+    public function payments(): PaymentService
+    {
+        return $this->payments ??= new PaymentService($this->db, $this->orderStatuses(), $this->notifications());
     }
 
     public function shipping(): ShippingService

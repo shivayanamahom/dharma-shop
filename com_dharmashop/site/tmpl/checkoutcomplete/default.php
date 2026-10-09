@@ -16,6 +16,21 @@ use Joomla\CMS\Language\Text;
                                 <h1 class="fs-4 mb-0"><?php echo Text::sprintf('COM_DHARMASHOP_CHECKOUT_SUCCESS', $this->escape($this->order->number)); ?></h1>
                             </div>
                             <p class="text-body-secondary mb-4"><?php echo Text::_('COM_DHARMASHOP_CHECKOUT_SUCCESS_TEXT'); ?></p>
+                            <?php // Оплата: способ и сведения из снимка (инструкция), кнопка — если платёж ещё не завершён. ?>
+                            <?php
+                            $payment = (array) ($this->order->payment ?? []);
+                            $payRows = array_filter((array) ($payment['rows'] ?? []), static fn ($row) => is_array($row) && trim((string) ($row['value'] ?? '')) !== '');
+                            $payStatus = (string) ($this->order->payment_status ?? 'none');
+                            ?>
+                            <?php if (!empty($payment['title'])) : ?>
+                                <div class="bg-body-tertiary rounded p-3 mb-4 small dharmaCheckoutPayment">
+                                    <div class="fw-semibold mb-1"><?php echo Text::_('COM_DHARMASHOP_ORDER_PAYMENT'); ?>: <?php echo $this->escape((string) $payment['title']); ?></div>
+                                    <?php foreach ($payRows as $row) : ?><div class="text-break"><?php echo nl2br($this->escape((string) $row['value'])); ?></div><?php endforeach; ?>
+                                    <?php if (in_array($payStatus, ['pending', 'failed', 'cancelled'], true)) : ?>
+                                        <a class="btn btn-primary bg-primary text-white btn-sm mt-2" href="<?php echo $this->escape(\Joomla\CMS\Router\Route::_('index.php?option=com_dharmashop&view=payment&id=' . (int) $this->order->id, false)); ?>"><?php echo Text::_('COM_DHARMASHOP_PAYMENT_PAY_NOW'); ?></a>
+                                    <?php endif; ?>
+                                </div>
+                            <?php endif; ?>
                             <div class="d-flex flex-wrap gap-2">
                                 <a class="btn btn-outline-primary btn-sm" href="<?php echo $this->escape($this->orderUrl); ?>"><?php echo Text::_('COM_DHARMASHOP_ORDER_OPEN'); ?></a>
                                 <a class="btn btn-outline-secondary btn-sm" href="<?php echo $this->escape($this->catalogUrl); ?>"><?php echo Text::_('COM_DHARMASHOP_CART_CONTINUE'); ?></a>

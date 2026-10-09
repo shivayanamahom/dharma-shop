@@ -416,6 +416,7 @@ CREATE TABLE IF NOT EXISTS `#__dharmashop_shipping_methods` (
   `description` text NULL,
   `image` varchar(500) NOT NULL DEFAULT '',
   `params` text NULL,
+  `payment_ids` varchar(255) NOT NULL DEFAULT '',
   `is_default` tinyint unsigned NOT NULL DEFAULT 0,
   `state` tinyint NOT NULL DEFAULT 1,
   `access` int unsigned NOT NULL DEFAULT 1,
@@ -426,6 +427,7 @@ CREATE TABLE IF NOT EXISTS `#__dharmashop_shipping_methods` (
   UNIQUE KEY `uq_alias` (`alias`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- Способы оплаты (C83): тип-плагин dharmashoppayment; paid_status_id — статус заказа после успешной оплаты.
 CREATE TABLE IF NOT EXISTS `#__dharmashop_payment_methods` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `title` varchar(255) NOT NULL,
@@ -434,6 +436,7 @@ CREATE TABLE IF NOT EXISTS `#__dharmashop_payment_methods` (
   `description` text NULL,
   `image` varchar(500) NOT NULL DEFAULT '',
   `params` text NULL,
+  `paid_status_id` int unsigned NULL,
   `is_default` tinyint unsigned NOT NULL DEFAULT 0,
   `state` tinyint NOT NULL DEFAULT 1,
   `access` int unsigned NOT NULL DEFAULT 1,
@@ -467,6 +470,8 @@ CREATE TABLE IF NOT EXISTS `#__dharmashop_orders` (
   `payment_method_id` int unsigned NULL,
   `payment_title` varchar(255) NOT NULL DEFAULT '',
   `payment_data` text NULL,
+  `payment_status` varchar(20) NOT NULL DEFAULT 'none',
+  `paid` datetime NULL,
   `cart_id` int unsigned NULL,
   `created` datetime NOT NULL,
   `created_by` int unsigned NOT NULL DEFAULT 0,
