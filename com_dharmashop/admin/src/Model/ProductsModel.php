@@ -46,9 +46,12 @@ class ProductsModel extends ListModel
         // Только диалог пикера. Не сохраняем исключения в сессии общего списка товаров.
         $input = Factory::getApplication()->getInput();
         $excluded = [];
+        $members = $input->getCmd('layout') === 'modal' && $input->getBool('picker_members');
+        $this->setState('picker.members', $members);
+        $this->setState('picker.group', $members ? max(0, $input->getInt('picker_group')) : 0);
         if ($input->getCmd('layout') === 'modal') {
             $excluded = array_values(array_unique(array_filter(array_map('intval',
-                array_slice(explode(',', $input->getString('picker_exclude', '')), 0, 101)),
+                array_slice(explode(',', $input->getString('picker_exclude', '')), 0, $members ? 500 : 101)),
                 static fn (int $id): bool => $id > 0)));
         }
         $this->setState('picker.exclude', $excluded);
@@ -56,6 +59,7 @@ class ProductsModel extends ListModel
 
     protected function getStoreId($id = ''): string
     {
+        $id .= ':members=' . (int) $this->getState('picker.members') . ':group=' . (int) $this->getState('picker.group');
         $id .= ':picker=' . implode(',', $this->getState('picker.exclude', []));
         foreach (['search', 'published', 'catid', 'extra_catid', 'brand_id', 'badge_id', 'category_id', 'in_stock'] as $key) {
             $id .= ':' . $this->getState('filter.' . $key);
@@ -87,6 +91,10 @@ class ProductsModel extends ListModel
 
         if ($excluded = $this->getState('picker.exclude', [])) {
             $query->whereNotIn($db->quoteName('a.id'), $excluded);
+        }
+
+        if ($this->getState('picker.members')) {
+            $query->where('(a.group_id IS NULL OR a.group_id=0 OR a.group_id=' . (int) $this->getState('picker.group') . ')');
         }
 
         $published = $this->getState('filter.published');

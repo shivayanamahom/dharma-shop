@@ -52,6 +52,7 @@ final class ImageContexts
         'field.video.poster' => [640, 360],
         'admin.product' => [96, 96],
         'admin.picker.field' => [128, 128],
+        'admin.picker.member' => [128, 128],
         'admin.picker.modal' => [96, 96],
         'admin.picker.group' => [96, 96],
         'admin.category' => [96, 96],

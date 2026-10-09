@@ -9,6 +9,11 @@
   };
   const update = (field) => {
     const id = Number(field.querySelector('.js-input-value')?.value);
+    // Newly selected group rows receive their preview before their first change event.
+    try {
+      const selected = JSON.parse(field.dataset.pickerProduct || 'null');
+      if (Number(selected?.id) === id && !products.has(id)) products.set(id, selected);
+    } catch { /* Empty templates have no product payload. */ }
     const product = products.get(id);
     const preview = field.querySelector('[data-picker-preview]');
     if (!preview) return;
@@ -79,7 +84,7 @@
     }
     const config = JSON.parse(button.dataset.modalConfig);
     const url = new URL(config.src, window.location.origin);
-    url.searchParams.set('picker_exclude', [...selected].slice(0, 101).join(','));
+    url.searchParams.set('picker_exclude', [...selected].slice(0, url.searchParams.get('picker_members') === '1' ? 500 : 101).join(','));
     // Start each newly opened picker at page one after the exclusion set changes.
     url.searchParams.set('limitstart', '0');
     config.src = url.toString();

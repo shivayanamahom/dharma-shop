@@ -30,6 +30,8 @@ use Joomla\CMS\Uri\Uri;
 class ProductField extends ModalSelectField
 {
     protected $type = 'Modal_Product';
+    protected string $previewLayout = 'field.product-picker';
+    protected string $imageContext = 'admin.picker.field';
 
     public function setup(\SimpleXMLElement $element, $value, $group = null)
     {
@@ -71,8 +73,8 @@ class ProductField extends ModalSelectField
         $input = parent::getInput();
         $picker = new ProductPicker($this->getDatabase());
         $item = $picker->selected((int) $this->value, $this->form ? $this->form->getData()->toArray() : []);
-        return (new FileLayout('field.product-picker', JPATH_ADMINISTRATOR . '/components/com_dharmashop/layouts', ['component' => 'com_dharmashop', 'client' => 1]))
-            ->render(['input' => $input, 'product' => $item ? $picker->presentation($item, 'admin.picker.field') : null]);
+        return (new FileLayout($this->previewLayout, JPATH_ADMINISTRATOR . '/components/com_dharmashop/layouts', ['component' => 'com_dharmashop', 'client' => 1]))
+            ->render(['input' => $input, 'product' => $item ? $picker->presentation($item, $this->imageContext) : null]);
     }
 
     /** The shared batch cache also supplies the native field title. */

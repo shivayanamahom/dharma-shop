@@ -7,11 +7,19 @@
 	"assets": [
 		{
 			"name": "com_dharmashop.product-picker",
-			"version": "3ef7142a8818",
+			"version": "b4dae484a3d9",
 			"type": "script",
 			"uri": "com_dharmashop/product-picker.js",
 			"attributes": { "defer": true },
 			"dependencies": ["modal-content-select-field"]
+		},
+		{
+			"name": "com_dharmashop.group-members",
+			"version": "e4aacf1aa6ee",
+			"type": "script",
+			"uri": "com_dharmashop/group-members.js",
+			"attributes": { "type": "module" },
+			"dependencies": ["com_dharmashop.product-picker", "webcomponent.field-subform", "joomla.dialog"]
 		},
 		{
 			"name": "com_dharmashop.settings-search",

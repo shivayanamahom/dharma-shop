@@ -35,7 +35,7 @@ final class GroupTaxonomy
         $ids = static fn(array $values): array => array_values(array_unique(array_filter(array_map('intval', $values), static fn(int $id): bool => $id > 0)));
         $extra = array_values(array_diff($ids((array) ($data['extra_catids'] ?? [])), [$main]));
         $badges = $ids((array) ($data['badge_ids'] ?? []));
-        $wanted = [$main => CategoryTypes::CATEGORY];
+        $wanted = [$main => $main === 1 ? 'system' : CategoryTypes::CATEGORY];
         foreach ($extra as $id) { $wanted[$id] = CategoryTypes::CATEGORY; }
         foreach ($badges as $id) {
             if (isset($wanted[$id])) { throw new \RuntimeException('COM_DHARMASHOP_GROUP_TAXONOMY_INVALID'); }
@@ -45,7 +45,7 @@ final class GroupTaxonomy
             if ($brand < 1 || isset($wanted[$brand])) { throw new \RuntimeException('COM_DHARMASHOP_GROUP_TAXONOMY_INVALID'); }
             $wanted[$brand] = CategoryTypes::BRAND;
         }
-        $actual = $this->db->setQuery('SELECT id,extension FROM #__categories WHERE id IN (' . implode(',', array_keys($wanted)) . ')')->loadAssocList('id', 'extension');
+        $actual = $this->db->setQuery('SELECT id,extension FROM #__categories WHERE id IN (' . implode(',', array_keys($wanted)) . ') AND (id<>1 OR (parent_id=0 AND level=0))')->loadAssocList('id', 'extension');
         foreach ($wanted as $id => $extension) {
             if (($actual[$id] ?? null) !== $extension) { throw new \RuntimeException('COM_DHARMASHOP_GROUP_TAXONOMY_INVALID'); }
         }
@@ -58,7 +58,8 @@ final class GroupTaxonomy
         $this->db->setQuery('DELETE FROM #__dharmashop_group_categories WHERE group_id=' . $id)->execute();
         $direct = array_values(array_unique(array_filter(array_merge([$taxonomy['catid'], $taxonomy['brand_id']], $taxonomy['extra_catids'], $taxonomy['badge_ids']))));
         foreach ($direct as $catid) {
-            $this->db->insertObject('#__dharmashop_group_categories', (object) ['group_id' => $id, 'catid' => $catid, 'is_main' => (int) ($catid === $taxonomy['catid'])]);
+            $record = (object) ['group_id' => $id, 'catid' => $catid, 'is_main' => (int) ($catid === $taxonomy['catid'])];
+            $this->db->insertObject('#__dharmashop_group_categories', $record);
         }
     }
 }

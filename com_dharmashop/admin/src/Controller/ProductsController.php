@@ -46,7 +46,7 @@ class ProductsController extends AdminController
         foreach($ids as $id) {if(!$user->authorise('core.edit','com_dharmashop.product.'.$id)) {$this->setRedirect($this->listUrl(),Text::_('JLIB_APPLICATION_ERROR_ACCESS_FORBIDDEN'),'error');return;}}
         $this->app->setUserState('com_dharmashop.edit.productgroup.data',null);
         $this->app->setUserState('com_dharmashop.group.selection',$ids);
-        $this->setRedirect(Route::_('index.php?option=com_dharmashop&task=productgroup.add',false));
+        $this->setRedirect(Route::_('index.php?option=com_dharmashop&task=productgroup.add&from_products=1',false));
     }
 
     private function listUrl(): string

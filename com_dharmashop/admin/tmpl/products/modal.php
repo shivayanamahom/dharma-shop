@@ -32,6 +32,12 @@ $listDirn = $this->escape((string) $state->get('list.direction'));
 $function = Factory::getApplication()->getInput()->getCmd('function', 'jSelectProduct');
 $excluded = implode(',', (array) $state->get('picker.exclude', []));
 if ($excluded !== '') { $this->pagination->setAdditionalUrlParam('picker_exclude', $excluded); }
+$members = (bool) $state->get('picker.members');
+$groupId = (int) $state->get('picker.group');
+if ($members) {
+    $this->pagination->setAdditionalUrlParam('picker_members', 1);
+    $this->pagination->setAdditionalUrlParam('picker_group', $groupId);
+}
 $stateIcons = [-2 => 'icon-trash', 0 => 'icon-unpublish', 1 => 'icon-publish', 2 => 'icon-archive'];
 $picker = new ProductPicker(Factory::getContainer()->get(\Joomla\Database\DatabaseInterface::class));
 ?>
@@ -59,7 +65,7 @@ $picker = new ProductPicker(Factory::getContainer()->get(\Joomla\Database\Databa
                 <tbody>
                     <?php foreach ($this->items as $i => $item) :
                         $preview = $picker->presentation($item, 'admin.picker.modal');
-                        $selectedPreview = $picker->presentation($item, 'admin.picker.field');
+                        $selectedPreview = $picker->presentation($item, $members ? 'admin.picker.member' : 'admin.picker.field');
                         ?>
                         <tr class="row<?php echo $i % 2; ?>">
                             <td class="text-center"><span class="tbody-icon"><span class="<?php echo $stateIcons[(int) $item->state] ?? 'icon-unpublish'; ?>" aria-hidden="true"></span></span></td>
@@ -97,6 +103,10 @@ $picker = new ProductPicker(Factory::getContainer()->get(\Joomla\Database\Databa
         <input type="hidden" name="task" value="">
         <input type="hidden" name="boxchecked" value="0">
         <input type="hidden" name="picker_exclude" value="<?php echo $this->escape($excluded); ?>">
+        <?php if ($members) : ?>
+            <input type="hidden" name="picker_members" value="1">
+            <input type="hidden" name="picker_group" value="<?php echo $groupId; ?>">
+        <?php endif; ?>
         <?php echo HTMLHelper::_('form.token'); ?>
     </form>
 </div>

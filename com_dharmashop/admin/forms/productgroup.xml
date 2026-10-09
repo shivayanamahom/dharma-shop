@@ -5,8 +5,8 @@
   <field name="title" type="text" label="JGLOBAL_TITLE" required="true" filter="string" maxlength="255"/>
   <field name="alias" type="text" label="JFIELD_ALIAS_LABEL" filter="string" maxlength="190"/>
   <field name="axes" type="choiceaxes" label="COM_DHARMASHOP_GROUP_AXES" description="COM_DHARMASHOP_GROUP_AXIS_INVALID" multiple="true" required="true" filter="int_array" layout="joomla.form.field.list-fancy-select"/>
-  <field name="members" type="subform" validate="Subform" multiple="true" max="500" layout="joomla.form.field.subform.repeatable" label="COM_DHARMASHOP_GROUP_MEMBERS">
-   <form><fieldset name="row" addfieldprefix="Dharma\Component\DharmaShop\Administrator\Field"><field name="product_id" type="modal_product" label="COM_DHARMASHOP_SELECT_A_PRODUCT" unique="true" filter="int" required="true"/></fieldset></form>
+  <field name="members" type="subform" class="dharma-group-members" validate="Subform" multiple="true" max="500" layout="joomla.form.field.subform.repeatable" label="COM_DHARMASHOP_GROUP_MEMBERS">
+   <form><fieldset name="row" addfieldprefix="Dharma\Component\DharmaShop\Administrator\Field"><field name="product_id" type="modal_groupmember" label="COM_DHARMASHOP_SELECT_A_PRODUCT" unique="true" filter="int" required="true"/></fieldset></form>
   </field>
  </fieldset>
  <fieldset name="content">
@@ -15,7 +15,7 @@
   <field name="fulltext" type="editor" label="COM_DHARMASHOP_FIELD_FULLTEXT_LABEL" filter="\Joomla\CMS\Component\ComponentHelper::filterText"/>
  </fieldset>
  <fieldset name="taxonomy" addfieldprefix="Joomla\Component\Categories\Administrator\Field">
-		<field name="catid" type="categoryedit" label="COM_DHARMASHOP_FIELD_CATEGORY_LABEL" description="COM_DHARMASHOP_GROUP_CATEGORY_DESC" extension="com_dharmashop" required="true" addfieldprefix="Joomla\Component\Categories\Administrator\Field" default="" />
+		<field name="catid" type="categoryedit" label="COM_DHARMASHOP_FIELD_CATEGORY_LABEL" description="COM_DHARMASHOP_GROUP_CATEGORY_DESC" extension="com_dharmashop" required="true" addfieldprefix="Joomla\Component\Categories\Administrator\Field" default=""><option value="">JOPTION_SELECT_CATEGORY</option><option value="1">COM_DHARMASHOP_GROUP_CATEGORY_ROOT</option></field>
 		<field name="extra_catids" type="category" label="COM_DHARMASHOP_FIELD_EXTRA_CATEGORIES_LABEL" description="COM_DHARMASHOP_GROUP_EXTRA_CATEGORIES_DESC" extension="com_dharmashop" multiple="true" layout="joomla.form.field.list-fancy-select" />
 		<field name="brand_id" type="category" label="COM_DHARMASHOP_FIELD_BRAND_LABEL" description="COM_DHARMASHOP_GROUP_BRAND_DESC" extension="com_dharmashop.brand">
 			<option value="">COM_DHARMASHOP_FIELD_BRAND_NONE</option>
@@ -23,5 +23,5 @@
 		<field name="badge_ids" type="category" label="COM_DHARMASHOP_FIELD_BADGES_LABEL" description="COM_DHARMASHOP_GROUP_BADGES_DESC" extension="com_dharmashop.badge" multiple="true" layout="joomla.form.field.list-fancy-select" />
  </fieldset>
  <fieldset name="publishing"><field name="id" type="number" label="JGLOBAL_FIELD_ID_LABEL" default="0" readonly="true" filter="int"/><field name="state" type="list" label="JSTATUS" default="1" validate="options"><option value="1">JPUBLISHED</option><option value="0">JUNPUBLISHED</option><option value="2">JARCHIVED</option><option value="-2">JTRASHED</option></field></fieldset>
- <fieldset name="generation"><field name="generation_catid" type="category" extension="com_dharmashop" label="COM_DHARMASHOP_FIELD_CATEGORY_LABEL" description="COM_DHARMASHOP_GROUP_GENERATION_CATEGORY_DESC"/></fieldset>
+ <fieldset name="generation"><field name="generation_catid" type="category" extension="com_dharmashop" label="COM_DHARMASHOP_FIELD_CATEGORY_LABEL" description="COM_DHARMASHOP_GROUP_GENERATION_CATEGORY_DESC"><option value="">JOPTION_SELECT_CATEGORY</option></field></fieldset>
 </form>

@@ -4,7 +4,9 @@ use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Layout\LayoutHelper;
 use Joomla\CMS\Router\Route;
-$this->getDocument()->getWebAssetManager()->useScript('keepalive')->useScript('form.validate');
+$wa = $this->getDocument()->getWebAssetManager();
+$wa->getRegistry()->addExtensionRegistryFile('com_dharmashop');
+$wa->useScript('keepalive')->useScript('form.validate')->useScript('com_dharmashop.group-members');
 ?>
 <form action="<?php echo Route::_('index.php?option=com_dharmashop&view=productgroup&layout=edit&id='.(int)$this->item->id); ?>" method="post" name="adminForm" id="productgroup-form" class="form-validate">
 <?php echo LayoutHelper::render('joomla.edit.title_alias',$this); ?>

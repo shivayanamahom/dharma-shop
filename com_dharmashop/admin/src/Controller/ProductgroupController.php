@@ -20,6 +20,22 @@ class ProductgroupController extends FormController
     protected $option = 'com_dharmashop';
     protected $text_prefix = 'COM_DHARMASHOP';
     protected $view_list = 'productgroups';
+    public function add()
+    {
+        $result = parent::add();
+        if ($result && !$this->input->getBool('from_products')) {
+            $this->app->setUserState('com_dharmashop.group.selection', null);
+        }
+        return $result;
+    }
+
+    public function cancel($key = null)
+    {
+        $result = parent::cancel($key);
+        if ($result) { $this->app->setUserState('com_dharmashop.group.selection', null); }
+        return $result;
+    }
+
     public function generate(): void
     {
         $this->checkToken();

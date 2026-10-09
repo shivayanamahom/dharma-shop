@@ -75,6 +75,7 @@ class ProductgroupModel extends AdminModel
             if ($data && !$data->id) {
                 $ids = (array) $app->getUserState('com_dharmashop.group.selection', []);
                 $data->members = array_map(static fn($id) => ['product_id' => (int) $id], $ids);
+                $data->catid = $ids ? (int) $this->getDatabase()->setQuery('SELECT catid FROM #__dharmashop_products WHERE id=' . (int) reset($ids))->loadResult() : '';
             }
         }
         return $data;

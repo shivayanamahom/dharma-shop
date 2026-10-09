@@ -160,7 +160,8 @@ final class GroupService
         $this->db->setQuery('UPDATE #__dharmashop_products SET combo_hash=NULL WHERE id IN (' . $list . ')')->execute();
         foreach ($ids as $id) {
             $hash = $byId[$id] ?? null;
-            $this->db->updateObject('#__dharmashop_products', (object) ['id'=>$id, 'group_id'=>$groupId ?: null, 'combo_hash'=>$hash], 'id', true);
+            $record = (object) ['id'=>$id, 'group_id'=>$groupId ?: null, 'combo_hash'=>$hash];
+            $this->db->updateObject('#__dharmashop_products', $record, 'id', true);
         }
         foreach ($groups as $group) {
             $this->syncImages($group);
@@ -181,14 +182,19 @@ final class GroupService
         foreach (array_diff($old, $members) as $removed) { $this->assign([(int) $removed], 0); }
         $this->db->setQuery('UPDATE #__dharmashop_products SET combo_hash=NULL WHERE group_id=' . $id)->execute();
         $this->db->setQuery('DELETE FROM #__dharmashop_group_axes WHERE group_id=' . $id)->execute();
-        foreach ($axes as $order => $axis) { $this->db->insertObject('#__dharmashop_group_axes', (object) ['group_id'=>$id,'field_id'=>$axis,'ordering'=>$order]); }
+        foreach ($axes as $order => $axis) {
+            $record = (object) ['group_id'=>$id,'field_id'=>$axis,'ordering'=>$order];
+            $this->db->insertObject('#__dharmashop_group_axes', $record);
+        }
         if ($members) { $this->assign($members, $id, false); }
         $this->db->setQuery('DELETE FROM #__dharmashop_group_media WHERE group_id=' . $id)->execute();
         foreach ($media as $order=>$row) {
-            $this->db->insertObject('#__dharmashop_group_media', (object) ['group_id'=>$id,'ordering'=>$order,'path'=>$row['path'],'alt'=>$row['alt'] ?? '', 'title'=>$row['title'] ?? '']);
+            $record = (object) ['group_id'=>$id,'ordering'=>$order,'path'=>$row['path'],'alt'=>$row['alt'] ?? '', 'title'=>$row['title'] ?? ''];
+            $this->db->insertObject('#__dharmashop_group_media', $record);
         }
         $first = $media[0] ?? null;
-        $this->db->updateObject('#__dharmashop_product_groups', (object) ['id'=>$id,'cover'=>$first['path'] ?? null,'cover_alt'=>$first['alt'] ?? null], 'id', true);
+        $record = (object) ['id'=>$id,'cover'=>$first['path'] ?? null,'cover_alt'=>$first['alt'] ?? null];
+        $this->db->updateObject('#__dharmashop_product_groups', $record, 'id', true);
         $this->syncImages($id);
         $this->db->setQuery('UPDATE #__dharmashop_product_groups SET revision=revision+1 WHERE id=' . $id)->execute();
         $this->rebuild($id);
