@@ -53,6 +53,7 @@ final class ImageContexts
         'admin.product' => [96, 96],
         'admin.picker.field' => [128, 128],
         'admin.picker.modal' => [96, 96],
+        'admin.picker.group' => [96, 96],
         'admin.category' => [96, 96],
         'email.product' => [128, 128],
         'email.logo' => [320, 160],

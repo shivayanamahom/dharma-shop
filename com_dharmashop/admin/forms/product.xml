@@ -23,14 +23,14 @@
 	</fieldset>
 
     <fieldset name="product_group" label="COM_DHARMASHOP_PRODUCT_GROUP" addfieldprefix="Dharma\Component\DharmaShop\Administrator\Field">
-        <field name="group_id" type="productgroup" label="COM_DHARMASHOP_PRODUCT_GROUP" description="COM_DHARMASHOP_PRODUCT_GROUP_DESC" />
-        <field name="inherit_intro" type="list" label="COM_DHARMASHOP_INHERIT_INTRO" default="own" validate="options" showon="group_id!:0">
+        <field name="group_id" type="modal_productgroup" create_group="true" label="COM_DHARMASHOP_GROUP_PICKER_LABEL" description="COM_DHARMASHOP_GROUP_PICKER_DESC" filter="uint" />
+        <field name="inherit_intro" type="list" label="COM_DHARMASHOP_INHERIT_INTRO" default="own" validate="options" showon="group_id!:">
             <option value="own">COM_DHARMASHOP_INHERIT_OWN</option><option value="group">COM_DHARMASHOP_INHERIT_GROUP</option><option value="empty">COM_DHARMASHOP_INHERIT_EMPTY</option>
         </field>
-        <field name="inherit_full" type="list" label="COM_DHARMASHOP_INHERIT_FULL" default="own" validate="options" showon="group_id!:0">
+        <field name="inherit_full" type="list" label="COM_DHARMASHOP_INHERIT_FULL" default="own" validate="options" showon="group_id!:">
             <option value="own">COM_DHARMASHOP_INHERIT_OWN</option><option value="group">COM_DHARMASHOP_INHERIT_GROUP</option><option value="empty">COM_DHARMASHOP_INHERIT_EMPTY</option>
         </field>
-        <field name="inherit_images" type="list" label="COM_DHARMASHOP_INHERIT_IMAGES" default="own" validate="options" showon="group_id!:0">
+        <field name="inherit_images" type="list" label="COM_DHARMASHOP_INHERIT_IMAGES" default="own" validate="options" showon="group_id!:">
             <option value="own">COM_DHARMASHOP_INHERIT_OWN</option><option value="group">COM_DHARMASHOP_INHERIT_GROUP</option><option value="empty">COM_DHARMASHOP_INHERIT_EMPTY</option>
         </field>
     </fieldset>

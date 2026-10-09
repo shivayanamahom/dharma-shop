@@ -10,6 +10,9 @@ declare(strict_types=1);
 
 namespace Dharma\Component\DharmaShop\Administrator\View\Productgroups;
 
+use Dharma\Component\DharmaShop\Administrator\Image\ImageUrl;
+use Dharma\Component\DharmaShop\Administrator\Pricing\MoneyFormatter;
+use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Form\Form;
 use Joomla\CMS\Helper\ContentHelper;
 use Joomla\CMS\Language\Text;
@@ -41,6 +44,21 @@ class HtmlView extends BaseHtmlView
             throw new GenericDataException(implode("\n", $errors), 500);
         }
 
+        if ($this->getLayout() !== 'modal') {
+            $this->addToolbar();
+        } else {
+            $money = new MoneyFormatter(ComponentHelper::getParams('com_dharmashop'));
+            foreach ($this->items as $item) {
+                $item->picker_image = $item->cover ? ImageUrl::resolve($item->cover, 'admin.picker.group') : '';
+                $item->picker_price = $item->price_min === null ? Text::_('COM_DHARMASHOP_PRICE_ON_REQUEST') : $money->range($item->price_min, $item->price_max);
+            }
+        }
+        parent::display($tpl);
+    }
+
+    protected function addToolbar(): void
+    {
+        $model = $this->getModel();
         $canDo = ContentHelper::getActions('com_dharmashop');
         $toolbar = Toolbar::getInstance();
         ToolbarHelper::title(Text::_('COM_DHARMASHOP_PRODUCTGROUPS_TITLE'), 'layer-group');
@@ -69,6 +87,5 @@ class HtmlView extends BaseHtmlView
             $toolbar->preferences('com_dharmashop');
         }
 
-        parent::display($tpl);
     }
 }

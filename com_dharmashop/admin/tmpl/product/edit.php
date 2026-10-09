@@ -53,10 +53,6 @@ $canAdmin = $this->getCurrentUser()->authorise('core.admin', 'com_dharmashop');
 
         <?php echo LayoutHelper::render('extension-tabs', ['form' => $this->form, 'tabSet' => 'productTab'], JPATH_ADMINISTRATOR . '/components/com_dharmashop/layouts'); ?>
 
-        <?php echo HTMLHelper::_('uitab.addTab', 'productTab', 'product-group', Text::_('COM_DHARMASHOP_PRODUCT_GROUP')); ?>
-        <fieldset class="options-form"><?php echo $this->form->renderFieldset('product_group'); ?></fieldset>
-        <?php echo HTMLHelper::_('uitab.endTab'); ?>
-
         <?php echo HTMLHelper::_('uitab.addTab', 'productTab', 'price', Text::_('COM_DHARMASHOP_TAB_PRICE_STOCK')); ?>
         <div class="row">
             <div class="col-lg-6">
@@ -126,6 +122,11 @@ $canAdmin = $this->getCurrentUser()->authorise('core.admin', 'com_dharmashop');
             <fieldset class="options-form form-vertical mb-3">
                 <legend><?php echo Text::_('COM_DHARMASHOP_SIDEBAR_CATEGORIES'); ?></legend>
                 <?php foreach (['catid', 'extra_catids', 'brand_id', 'badge_ids'] as $name) : ?>
+                    <?php echo $this->form->renderField($name); ?>
+                <?php endforeach; ?>
+                <hr>
+                <?php echo $this->form->renderField('group_id'); ?>
+                <?php foreach (['inherit_intro', 'inherit_full', 'inherit_images'] as $name) : ?>
                     <?php echo $this->form->renderField($name); ?>
                 <?php endforeach; ?>
             </fieldset>

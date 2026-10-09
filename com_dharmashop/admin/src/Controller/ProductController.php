@@ -13,6 +13,8 @@ declare(strict_types=1);
 namespace Dharma\Component\DharmaShop\Administrator\Controller;
 
 use Joomla\CMS\MVC\Controller\FormController;
+use Joomla\CMS\MVC\Model\BaseDatabaseModel;
+use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 
 \defined('_JEXEC') or die;
@@ -48,6 +50,34 @@ class ProductController extends FormController
 
         return $user->authorise('core.edit.own', 'com_dharmashop.product.' . $recordId)
             && (int) ($data['created_by'] ?? 0) === (int) $user->id;
+    }
+
+    /** Save the entire product through Joomla before opening a prefilled, unsaved group. */
+    public function createGroup(): void
+    {
+        $this->checkToken();
+        $raw = (array) $this->input->post->get('jform', [], 'array');
+        if (!$this->app->getIdentity()->authorise('core.create', 'com_dharmashop')) {
+            throw new \RuntimeException(Text::_('JLIB_APPLICATION_ERROR_ACCESS_FORBIDDEN'), 403);
+        }
+        if ((int) ($raw['group_id'] ?? 0) > 0) {
+            $this->app->setUserState('com_dharmashop.edit.product.data', $raw);
+            $this->setRedirect(Route::_('index.php?option=com_dharmashop&view=product&layout=edit&id=' . $this->input->getInt('id'), false), Text::_('COM_DHARMASHOP_GROUP_PICKER_ALREADY'), 'warning');
+            return;
+        }
+        parent::save();
+    }
+
+    protected function postSaveHook(BaseDatabaseModel $model, $validData = [])
+    {
+        parent::postSaveHook($model, $validData);
+        if (strtolower($this->getTask()) !== 'creategroup') { return; }
+        $id = (int) $model->getState('product.id');
+        $seed = ['id' => 0, 'title' => $validData['title'], 'state' => 0, 'axes' => [], 'members' => [['product_id' => $id]], 'revision' => 0];
+        foreach (['catid', 'extra_catids', 'brand_id', 'badge_ids'] as $name) { $seed[$name] = $validData[$name] ?? []; }
+        $this->app->setUserState('com_dharmashop.group.selection', null);
+        $this->app->setUserState('com_dharmashop.edit.productgroup.data', $seed);
+        $this->setRedirect(Route::_('index.php?option=com_dharmashop&view=productgroup&layout=edit', false));
     }
 
     /** Пакетная обработка выбранных товаров (окно «Пакетная обработка» на списке). */
