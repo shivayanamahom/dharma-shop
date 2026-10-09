@@ -30,6 +30,7 @@ final class DharmaShopMenu extends CMSPlugin implements SubscriberInterface
         ],
         [
             ['COM_DHARMASHOP_MENU_PRODUCTS', 'index.php?option=com_dharmashop&view=products'],
+            ['COM_DHARMASHOP_MENU_PRODUCTGROUPS', 'index.php?option=com_dharmashop&view=productgroups'],
             ['COM_DHARMASHOP_MENU_CATEGORIES', 'index.php?option=com_dharmashop&view=categories&extension=com_dharmashop'],
             ['COM_DHARMASHOP_MENU_BRANDS', 'index.php?option=com_dharmashop&view=categories&extension=com_dharmashop.brand'],
             ['COM_DHARMASHOP_MENU_BADGES', 'index.php?option=com_dharmashop&view=categories&extension=com_dharmashop.badge'],
