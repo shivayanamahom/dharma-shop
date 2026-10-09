@@ -20,8 +20,8 @@ use Joomla\CMS\Log\Log;
 
 /**
  * Фильтр товаров (C84). Форма — обычный GET на страницу списка: работает без JavaScript. Данные готовит `FilterHelper` по настройкам модуля;
- * скрипты (AJAX, ползунок, offcanvas и др.) подключаются только если соответствующая возможность включена настройкой — сейчас таких нет,
- * страница получает чистую форму без дополнительных ресурсов.
+ * скрипты (AJAX, ползунок, offcanvas и др.) подключаются только если соответствующая возможность включена настройкой: сейчас — `filter.js`
+ * при включённом AJAX или применении сразу; иначе страница получает чистую форму без дополнительных ресурсов.
  */
 class Dispatcher extends AbstractModuleDispatcher
 {
@@ -35,6 +35,19 @@ class Dispatcher extends AbstractModuleDispatcher
         } catch (\Throwable $error) {
             Log::add('Filter module: ' . $error::class . ': ' . $error->getMessage() . ' @ ' . basename($error->getFile()) . ':' . $error->getLine(), Log::ERROR, 'com_dharmashop');
             $data['filter'] = null;
+        }
+
+        // Скрипт — только если включено AJAX или применение сразу (без них форма работает обычной отправкой и ничего не подключает).
+        $params = $data['params'];
+
+        if ($data['filter'] && ((int) $params->get('ajax', 0) === 1 || (string) $params->get('apply_mode', 'button') === 'instant')) {
+            try {
+                $wa = $this->getApplication()->getDocument()->getWebAssetManager();
+                $wa->getRegistry()->addExtensionRegistryFile('mod_dharmashop_filter');
+                $wa->useScript('mod_dharmashop_filter.filter');
+            } catch (\Throwable $error) {
+                Log::add('Filter module assets: ' . $error::class . ': ' . $error->getMessage(), Log::ERROR, 'com_dharmashop');
+            }
         }
 
         return $data;

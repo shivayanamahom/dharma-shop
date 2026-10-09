@@ -26,6 +26,11 @@ $number = static fn (int $n): string => number_format($n, 0, ',', "\u{00A0}");
 $totalText = $number((int) $filter['total']) . ($filter['totalCapped'] ? '+' : '');
 $applyText = trim((string) $params->get('apply_text', '')) !== '' ? (string) $params->get('apply_text') : Text::_('MOD_DHARMASHOP_FILTER_APPLY_DEFAULT');
 $applyText = str_replace('{count}', $totalText, $applyText);
+// Поведение для скрипта (подключается Dispatcher-ом только при включённых AJAX/«сразу»).
+$instant = (string) $params->get('apply_mode', 'button') === 'instant';
+$dataAttributes = (int) $params->get('ajax', 0) === 1 || $instant
+    ? ' data-ajax="' . ((int) $params->get('ajax', 0) === 1 ? 1 : 0) . '" data-apply="' . ($instant ? 'instant' : 'button') . '" data-delay="' . max(200, min(3000, (int) $params->get('instant_delay', 700))) . '"'
+    : '';
 // Макеты значений лежат в modules/mod_dharmashop_filter/layouts; переопределение — templates/<шаблон>/html/layouts/mod_dharmashop_filter/control/<имя>.php.
 $layout = static function (string $name, array $data): string {
     $file = new FileLayout('mod_dharmashop_filter.control.' . $name);
@@ -34,7 +39,7 @@ $layout = static function (string $name, array $data): string {
     return $file->render($data);
 };
 ?>
-<form action="<?php echo $escape($filter['action']); ?>" method="get" class="dharmaFilter dharmaFilter-<?php echo $horizontal ? 'horizontal' : 'vertical'; ?> <?php echo $sfx; ?>" id="dharmashop-filter-<?php echo $id; ?>" data-dharmashop-filter>
+<form action="<?php echo $escape($filter['action']); ?>" method="get" class="dharmaFilter dharmaFilter-<?php echo $horizontal ? 'horizontal' : 'vertical'; ?> <?php echo $sfx; ?>" id="dharmashop-filter-<?php echo $id; ?>" data-dharmashop-filter<?php echo $dataAttributes; ?>>
     <?php foreach ($filter['hidden'] as $name => $value) : ?>
         <input type="hidden" name="<?php echo $escape($name); ?>" value="<?php echo $escape($value); ?>">
     <?php endforeach; ?>

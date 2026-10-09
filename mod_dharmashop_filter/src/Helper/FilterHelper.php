@@ -353,7 +353,10 @@ final class FilterHelper
             $query['filter'] = $filter;
         }
 
-        return $action . ($query ? (str_contains($action, '?') ? '&' : '?') . http_build_query($query, '', '&', PHP_QUERY_RFC3986) : '');
+        // Списки значений — `[]`, а не `[0]`, `[1]` (как отправляет форма и как требует канонический адрес).
+        $string = $query ? (string) preg_replace('/%5B\d+%5D/', '%5B%5D', http_build_query($query, '', '&', PHP_QUERY_RFC3986)) : '';
+
+        return $action . ($string !== '' ? (str_contains($action, '?') ? '&' : '?') . $string : '');
     }
 
     /**

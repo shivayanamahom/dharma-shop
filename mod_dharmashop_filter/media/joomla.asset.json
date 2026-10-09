@@ -4,5 +4,15 @@
 	"version": "0.1.0",
 	"description": "Dharma Shop: фильтр товаров — скрипты подключаются только по включённым настройкам модуля",
 	"license": "GPL-2.0-or-later",
-	"assets": []
+	"assets": [
+		{
+			"name": "mod_dharmashop_filter.filter",
+			"type": "script",
+			"uri": "mod_dharmashop_filter/filter.js",
+			"version": "fe57b7066c10",
+			"attributes": {
+				"defer": true
+			}
+		}
+	]
 }
