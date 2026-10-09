@@ -209,11 +209,21 @@ final class SearchText
         }
 
         $found = [];
+        $short = 0;
 
         foreach ($combos as [$candidate]) {
-            if (mb_strlen($candidate) >= 3 && $candidate !== $pure && $candidate !== $word && !in_array($candidate, $found, true)) {
-                $found[] = $candidate;
+            $length = mb_strlen($candidate);
+
+            if ($length < 3 || $candidate === $pure || $candidate === $word || in_array($candidate, $found, true)) {
+                continue;
             }
+
+            // Трёхбуквенное начало совпадает со многими словами каталога (дорогой широкий поиск): таких вариантов не больше двух.
+            if ($length === 3 && ++$short > 2) {
+                continue;
+            }
+
+            $found[] = $candidate;
         }
 
         return array_slice($found, 0, $limit);
