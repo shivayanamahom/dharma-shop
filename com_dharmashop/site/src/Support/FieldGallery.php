@@ -43,6 +43,8 @@ final class FieldGallery
             'id'=>'dharmaFieldGallery-' . (int) $field->id . '-' . bin2hex(random_bytes(5)),
             'layout'=>$slider ? 'slider' : 'grid', 'columns'=>$columns,
             'lightbox'=>$lightbox, 'caption'=>(int) ($settings['gallery_caption'] ?? 1) === 1,
+            'fit'=>in_array($settings['gallery_fit'] ?? '', ['cover', 'contain', 'original'], true) ? $settings['gallery_fit'] : 'cover',
+            'ratio'=>in_array($settings['gallery_ratio'] ?? '', ['1x1', '4x3', '16x9'], true) ? $settings['gallery_ratio'] : '4x3',
         ];
     }
 }

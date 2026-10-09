@@ -19,13 +19,17 @@ final class GalleryType extends BaseType
         $layout = (string) ($form['gallery_layout'] ?? 'grid');
         $caption = (string) ($form['gallery_caption'] ?? '1');
         $lightbox = (string) ($form['gallery_lightbox'] ?? '1');
+        $fit = (string) ($form['gallery_fit'] ?? 'cover');
+        $ratio = (string) ($form['gallery_ratio'] ?? '4x3');
         $folder = strtolower(trim((string) ($form['gallery_folder'] ?? 'additional')));
         $folder = preg_replace('/[^a-z0-9_-]+/', '-', $folder) ?? '';
         $folder = trim(substr($folder, 0, 50), '-_');
         if (!preg_match('/^[1-9][0-9]{0,2}$/D', $count) || (int) $count > 100
             || !in_array($layout, ['grid', 'slider', 'list'], true)
             || !in_array($caption, ['0', '1'], true)
-            || !in_array($lightbox, ['0', '1'], true)) {
+            || !in_array($lightbox, ['0', '1'], true)
+            || !in_array($fit, ['cover', 'contain', 'original'], true)
+            || !in_array($ratio, ['1x1', '4x3', '16x9'], true)) {
             throw new \InvalidArgumentException('PLG_DHARMASHOPFIELD_BASIC_GALLERY_SETTINGS_INVALID');
         }
         // Read legacy list/columns without changing stored definitions or their frontend arrangement.
@@ -34,7 +38,8 @@ final class GalleryType extends BaseType
             ? ['xs'=>1, 'sm'=>1, 'md'=>1, 'lg'=>1, 'xl'=>1, 'xxl'=>1]
             : ['xs'=>1, 'sm'=>1, 'md'=>2, 'lg'=>2, 'xl'=>$legacyColumns, 'xxl'=>$legacyColumns];
         $result = ['gallery_max_count'=>(int) $count, 'gallery_layout'=>$layout === 'list' ? 'grid' : $layout,
-            'gallery_caption'=>(int) $caption, 'gallery_lightbox'=>(int) $lightbox, 'gallery_folder'=>$folder ?: 'additional'];
+            'gallery_caption'=>(int) $caption, 'gallery_lightbox'=>(int) $lightbox, 'gallery_folder'=>$folder ?: 'additional',
+            'gallery_fit'=>$fit, 'gallery_ratio'=>$ratio];
         foreach ($defaults as $breakpoint => $default) {
             $key = 'gallery_columns_' . $breakpoint;
             $columns = (string) ($form[$key] ?? $default);
