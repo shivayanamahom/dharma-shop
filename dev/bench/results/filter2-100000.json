@@ -1,0 +1,1038 @@
+{
+    "n": 100000,
+    "date": "2026-10-09T01:31:21+00:00",
+    "rows": [
+        {
+            "group": "forms",
+            "name": "бренд частый (≈18%) \/ root(1) \/ order \/ A",
+            "ms": 64.87,
+            "max": 66.68,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "бренд частый (≈18%) \/ root(1) \/ order \/ F",
+            "ms": 3.5,
+            "max": 3.71,
+            "plan": ""
+        },
+        {
+            "group": "forms",
+            "name": "бренд частый (≈18%) \/ root(1) \/ order \/ D",
+            "ms": 65.01,
+            "max": 65.19,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "бренд частый (≈18%) \/ root(1) \/ price \/ A",
+            "ms": 65.68,
+            "max": 66.96,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "бренд частый (≈18%) \/ root(1) \/ price \/ F",
+            "ms": 3.51,
+            "max": 3.56,
+            "plan": ""
+        },
+        {
+            "group": "forms",
+            "name": "бренд частый (≈18%) \/ root(1) \/ price \/ D",
+            "ms": 65.78,
+            "max": 66.35,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "бренд частый (≈18%) \/ L1(2) \/ order \/ A",
+            "ms": 62.63,
+            "max": 63.54,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "бренд частый (≈18%) \/ L1(2) \/ order \/ F",
+            "ms": 3.43,
+            "max": 3.54,
+            "plan": ""
+        },
+        {
+            "group": "forms",
+            "name": "бренд частый (≈18%) \/ L1(2) \/ order \/ D",
+            "ms": 33.1,
+            "max": 33.32,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "бренд частый (≈18%) \/ L2(12) \/ order \/ A",
+            "ms": 4.4,
+            "max": 4.48,
+            "plan": "F"
+        },
+        {
+            "group": "forms",
+            "name": "бренд частый (≈18%) \/ L2(12) \/ order \/ F",
+            "ms": 3.25,
+            "max": 3.3,
+            "plan": ""
+        },
+        {
+            "group": "forms",
+            "name": "бренд частый (≈18%) \/ L2(12) \/ order \/ D",
+            "ms": 12.72,
+            "max": 12.76,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "бренд средний \/ root(1) \/ order \/ A",
+            "ms": 52.35,
+            "max": 53.53,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "бренд средний \/ root(1) \/ order \/ F",
+            "ms": 2.84,
+            "max": 2.88,
+            "plan": ""
+        },
+        {
+            "group": "forms",
+            "name": "бренд средний \/ root(1) \/ order \/ D",
+            "ms": 49.76,
+            "max": 50.09,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "бренд средний \/ root(1) \/ price \/ A",
+            "ms": 53.3,
+            "max": 53.58,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "бренд средний \/ root(1) \/ price \/ F",
+            "ms": 2.72,
+            "max": 2.78,
+            "plan": ""
+        },
+        {
+            "group": "forms",
+            "name": "бренд средний \/ root(1) \/ price \/ D",
+            "ms": 50,
+            "max": 50.26,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "бренд средний \/ L1(2) \/ order \/ A",
+            "ms": 49.75,
+            "max": 51.47,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "бренд средний \/ L1(2) \/ order \/ F",
+            "ms": 2.71,
+            "max": 2.73,
+            "plan": ""
+        },
+        {
+            "group": "forms",
+            "name": "бренд средний \/ L1(2) \/ order \/ D",
+            "ms": 21.96,
+            "max": 22.36,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "бренд средний \/ L2(12) \/ order \/ A",
+            "ms": 3.63,
+            "max": 3.67,
+            "plan": "F"
+        },
+        {
+            "group": "forms",
+            "name": "бренд средний \/ L2(12) \/ order \/ F",
+            "ms": 2.38,
+            "max": 2.42,
+            "plan": ""
+        },
+        {
+            "group": "forms",
+            "name": "бренд средний \/ L2(12) \/ order \/ D",
+            "ms": 7.94,
+            "max": 8,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "материал (≈8%) \/ root(1) \/ order \/ A",
+            "ms": 38.18,
+            "max": 38.47,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "материал (≈8%) \/ root(1) \/ order \/ F",
+            "ms": 2.24,
+            "max": 2.34,
+            "plan": ""
+        },
+        {
+            "group": "forms",
+            "name": "материал (≈8%) \/ root(1) \/ order \/ D",
+            "ms": 37.08,
+            "max": 37.33,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "материал (≈8%) \/ root(1) \/ price \/ A",
+            "ms": 38.56,
+            "max": 40.07,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "материал (≈8%) \/ root(1) \/ price \/ F",
+            "ms": 1.95,
+            "max": 2,
+            "plan": ""
+        },
+        {
+            "group": "forms",
+            "name": "материал (≈8%) \/ root(1) \/ price \/ D",
+            "ms": 38.54,
+            "max": 38.86,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "материал (≈8%) \/ L1(2) \/ order \/ A",
+            "ms": 37.42,
+            "max": 37.85,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "материал (≈8%) \/ L1(2) \/ order \/ F",
+            "ms": 2.02,
+            "max": 2.03,
+            "plan": ""
+        },
+        {
+            "group": "forms",
+            "name": "материал (≈8%) \/ L1(2) \/ order \/ D",
+            "ms": 16.55,
+            "max": 16.66,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "материал (≈8%) \/ L2(12) \/ order \/ A",
+            "ms": 2.89,
+            "max": 3.03,
+            "plan": "F"
+        },
+        {
+            "group": "forms",
+            "name": "материал (≈8%) \/ L2(12) \/ order \/ F",
+            "ms": 1.55,
+            "max": 1.57,
+            "plan": ""
+        },
+        {
+            "group": "forms",
+            "name": "материал (≈8%) \/ L2(12) \/ order \/ D",
+            "ms": 5.89,
+            "max": 6.17,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "материал×страна (≈0,4%) \/ root(1) \/ order \/ A",
+            "ms": 3.52,
+            "max": 3.6,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "материал×страна (≈0,4%) \/ root(1) \/ order \/ F",
+            "ms": 4.6,
+            "max": 4.67,
+            "plan": ""
+        },
+        {
+            "group": "forms",
+            "name": "материал×страна (≈0,4%) \/ root(1) \/ order \/ D",
+            "ms": 7.21,
+            "max": 7.3,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "материал×страна (≈0,4%) \/ root(1) \/ price \/ A",
+            "ms": 3.56,
+            "max": 3.62,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "материал×страна (≈0,4%) \/ root(1) \/ price \/ F",
+            "ms": 5.6,
+            "max": 5.64,
+            "plan": ""
+        },
+        {
+            "group": "forms",
+            "name": "материал×страна (≈0,4%) \/ root(1) \/ price \/ D",
+            "ms": 7.31,
+            "max": 7.39,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "материал×страна (≈0,4%) \/ L1(2) \/ order \/ A",
+            "ms": 3.52,
+            "max": 3.55,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "материал×страна (≈0,4%) \/ L1(2) \/ order \/ F",
+            "ms": 4.58,
+            "max": 4.62,
+            "plan": ""
+        },
+        {
+            "group": "forms",
+            "name": "материал×страна (≈0,4%) \/ L1(2) \/ order \/ D",
+            "ms": 4.5,
+            "max": 4.71,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "материал×страна (≈0,4%) \/ L2(12) \/ order \/ A",
+            "ms": 3.34,
+            "max": 3.36,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "материал×страна (≈0,4%) \/ L2(12) \/ order \/ F",
+            "ms": 3.38,
+            "max": 3.45,
+            "plan": ""
+        },
+        {
+            "group": "forms",
+            "name": "материал×страна (≈0,4%) \/ L2(12) \/ order \/ D",
+            "ms": 3.72,
+            "max": 3.75,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "бренд×материал×цвет \/ root(1) \/ order \/ A",
+            "ms": 89.49,
+            "max": 90.58,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "бренд×материал×цвет \/ root(1) \/ order \/ F",
+            "ms": 13.32,
+            "max": 13.5,
+            "plan": ""
+        },
+        {
+            "group": "forms",
+            "name": "бренд×материал×цвет \/ root(1) \/ order \/ D",
+            "ms": 52.02,
+            "max": 52.41,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "бренд×материал×цвет \/ root(1) \/ price \/ A",
+            "ms": 43.41,
+            "max": 43.62,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "бренд×материал×цвет \/ root(1) \/ price \/ F",
+            "ms": 12.96,
+            "max": 13.78,
+            "plan": ""
+        },
+        {
+            "group": "forms",
+            "name": "бренд×материал×цвет \/ root(1) \/ price \/ D",
+            "ms": 52.85,
+            "max": 53.19,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "бренд×материал×цвет \/ L1(2) \/ order \/ A",
+            "ms": 45.02,
+            "max": 46.56,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "бренд×материал×цвет \/ L1(2) \/ order \/ F",
+            "ms": 13.12,
+            "max": 13.2,
+            "plan": ""
+        },
+        {
+            "group": "forms",
+            "name": "бренд×материал×цвет \/ L1(2) \/ order \/ D",
+            "ms": 23.44,
+            "max": 23.75,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "бренд×материал×цвет \/ L2(12) \/ order \/ A",
+            "ms": 7.69,
+            "max": 7.79,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "бренд×материал×цвет \/ L2(12) \/ order \/ F",
+            "ms": 6.68,
+            "max": 6.87,
+            "plan": ""
+        },
+        {
+            "group": "forms",
+            "name": "бренд×материал×цвет \/ L2(12) \/ order \/ D",
+            "ms": 8.67,
+            "max": 8.73,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "частый×материал×страна \/ root(1) \/ order \/ A",
+            "ms": 25.72,
+            "max": 25.95,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "частый×материал×страна \/ root(1) \/ order \/ F",
+            "ms": 7.71,
+            "max": 7.84,
+            "plan": ""
+        },
+        {
+            "group": "forms",
+            "name": "частый×материал×страна \/ root(1) \/ order \/ D",
+            "ms": 14.79,
+            "max": 15,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "частый×материал×страна \/ root(1) \/ price \/ A",
+            "ms": 26.25,
+            "max": 26.83,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "частый×материал×страна \/ root(1) \/ price \/ F",
+            "ms": 8.07,
+            "max": 8.26,
+            "plan": ""
+        },
+        {
+            "group": "forms",
+            "name": "частый×материал×страна \/ root(1) \/ price \/ D",
+            "ms": 14.86,
+            "max": 15.05,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "частый×материал×страна \/ L1(2) \/ order \/ A",
+            "ms": 26.51,
+            "max": 27.2,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "частый×материал×страна \/ L1(2) \/ order \/ F",
+            "ms": 8.39,
+            "max": 8.66,
+            "plan": ""
+        },
+        {
+            "group": "forms",
+            "name": "частый×материал×страна \/ L1(2) \/ order \/ D",
+            "ms": 8.38,
+            "max": 8.59,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "частый×материал×страна \/ L2(12) \/ order \/ A",
+            "ms": 6.25,
+            "max": 6.48,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "частый×материал×страна \/ L2(12) \/ order \/ F",
+            "ms": 7.32,
+            "max": 7.51,
+            "plan": ""
+        },
+        {
+            "group": "forms",
+            "name": "частый×материал×страна \/ L2(12) \/ order \/ D",
+            "ms": 6.23,
+            "max": 6.46,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "редкий: цвет×размер×тег \/ root(1) \/ order \/ A",
+            "ms": 65.2,
+            "max": 66,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "редкий: цвет×размер×тег \/ root(1) \/ order \/ F",
+            "ms": 19.38,
+            "max": 19.5,
+            "plan": ""
+        },
+        {
+            "group": "forms",
+            "name": "редкий: цвет×размер×тег \/ root(1) \/ order \/ D",
+            "ms": 64.16,
+            "max": 113.6,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "редкий: цвет×размер×тег \/ root(1) \/ price \/ A",
+            "ms": 66.56,
+            "max": 67,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "редкий: цвет×размер×тег \/ root(1) \/ price \/ F",
+            "ms": 19.7,
+            "max": 19.76,
+            "plan": ""
+        },
+        {
+            "group": "forms",
+            "name": "редкий: цвет×размер×тег \/ root(1) \/ price \/ D",
+            "ms": 46.26,
+            "max": 46.69,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "редкий: цвет×размер×тег \/ L1(2) \/ order \/ A",
+            "ms": 46.78,
+            "max": 47.4,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "редкий: цвет×размер×тег \/ L1(2) \/ order \/ F",
+            "ms": 19.09,
+            "max": 21.87,
+            "plan": ""
+        },
+        {
+            "group": "forms",
+            "name": "редкий: цвет×размер×тег \/ L1(2) \/ order \/ D",
+            "ms": 22.23,
+            "max": 22.74,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "редкий: цвет×размер×тег \/ L2(12) \/ order \/ A",
+            "ms": 6.32,
+            "max": 6.39,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "редкий: цвет×размер×тег \/ L2(12) \/ order \/ F",
+            "ms": 1.8,
+            "max": 1.86,
+            "plan": ""
+        },
+        {
+            "group": "forms",
+            "name": "редкий: цвет×размер×тег \/ L2(12) \/ order \/ D",
+            "ms": 6.6,
+            "max": 6.63,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "цена широкая \/ root(1) \/ order \/ A",
+            "ms": 408,
+            "max": 413.13,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "цена широкая \/ root(1) \/ order \/ F",
+            "ms": 3.66,
+            "max": 3.68,
+            "plan": ""
+        },
+        {
+            "group": "forms",
+            "name": "цена широкая \/ root(1) \/ order \/ D",
+            "ms": 411.8,
+            "max": 413.68,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "цена широкая \/ root(1) \/ price \/ A",
+            "ms": 433.31,
+            "max": 508.02,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "цена широкая \/ root(1) \/ price \/ F",
+            "ms": 0.89,
+            "max": 0.94,
+            "plan": ""
+        },
+        {
+            "group": "forms",
+            "name": "цена широкая \/ root(1) \/ price \/ D",
+            "ms": 459.85,
+            "max": 500.21,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "цена широкая \/ L1(2) \/ order \/ A",
+            "ms": 3.84,
+            "max": 3.86,
+            "plan": ""
+        },
+        {
+            "group": "forms",
+            "name": "цена широкая \/ L1(2) \/ order \/ F",
+            "ms": 3.5,
+            "max": 3.65,
+            "plan": ""
+        },
+        {
+            "group": "forms",
+            "name": "цена широкая \/ L1(2) \/ order \/ D",
+            "ms": 3.81,
+            "max": 3.85,
+            "plan": ""
+        },
+        {
+            "group": "forms",
+            "name": "цена широкая \/ L2(12) \/ order \/ A",
+            "ms": 1.08,
+            "max": 1.11,
+            "plan": ""
+        },
+        {
+            "group": "forms",
+            "name": "цена широкая \/ L2(12) \/ order \/ F",
+            "ms": 1.05,
+            "max": 1.09,
+            "plan": ""
+        },
+        {
+            "group": "forms",
+            "name": "цена широкая \/ L2(12) \/ order \/ D",
+            "ms": 1.14,
+            "max": 1.2,
+            "plan": ""
+        },
+        {
+            "group": "forms",
+            "name": "цена узкая + бренд \/ root(1) \/ order \/ A",
+            "ms": 52.92,
+            "max": 53.9,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "цена узкая + бренд \/ root(1) \/ order \/ F",
+            "ms": 5.56,
+            "max": 5.66,
+            "plan": ""
+        },
+        {
+            "group": "forms",
+            "name": "цена узкая + бренд \/ root(1) \/ order \/ D",
+            "ms": 28.1,
+            "max": 28.17,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "цена узкая + бренд \/ root(1) \/ price \/ A",
+            "ms": 52.65,
+            "max": 53.19,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "цена узкая + бренд \/ root(1) \/ price \/ F",
+            "ms": 2.67,
+            "max": 2.79,
+            "plan": ""
+        },
+        {
+            "group": "forms",
+            "name": "цена узкая + бренд \/ root(1) \/ price \/ D",
+            "ms": 28.21,
+            "max": 28.31,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "цена узкая + бренд \/ L1(2) \/ order \/ A",
+            "ms": 4.23,
+            "max": 4.39,
+            "plan": ""
+        },
+        {
+            "group": "forms",
+            "name": "цена узкая + бренд \/ L1(2) \/ order \/ F",
+            "ms": 5.59,
+            "max": 5.65,
+            "plan": ""
+        },
+        {
+            "group": "forms",
+            "name": "цена узкая + бренд \/ L1(2) \/ order \/ D",
+            "ms": 10.15,
+            "max": 10.98,
+            "plan": "FT"
+        },
+        {
+            "group": "forms",
+            "name": "цена узкая + бренд \/ L2(12) \/ order \/ A",
+            "ms": 1.98,
+            "max": 2.01,
+            "plan": ""
+        },
+        {
+            "group": "forms",
+            "name": "цена узкая + бренд \/ L2(12) \/ order \/ F",
+            "ms": 1.9,
+            "max": 1.97,
+            "plan": ""
+        },
+        {
+            "group": "forms",
+            "name": "цена узкая + бренд \/ L2(12) \/ order \/ D",
+            "ms": 7.88,
+            "max": 7.93,
+            "plan": "FT"
+        },
+        {
+            "group": "count",
+            "name": "бренд частый (≈18%) \/ root \/ A",
+            "ms": 37.96,
+            "max": 38.53,
+            "plan": ""
+        },
+        {
+            "group": "count",
+            "name": "бренд частый (≈18%) \/ root \/ D",
+            "ms": 39.13,
+            "max": 39.35,
+            "plan": ""
+        },
+        {
+            "group": "count",
+            "name": "материал×страна (≈0,4%) \/ root \/ A",
+            "ms": 3.58,
+            "max": 3.61,
+            "plan": "T"
+        },
+        {
+            "group": "count",
+            "name": "материал×страна (≈0,4%) \/ root \/ D",
+            "ms": 7.37,
+            "max": 7.47,
+            "plan": ""
+        },
+        {
+            "group": "count",
+            "name": "бренд×материал×цвет \/ root \/ A",
+            "ms": 89.38,
+            "max": 89.97,
+            "plan": "T"
+        },
+        {
+            "group": "count",
+            "name": "бренд×материал×цвет \/ root \/ D",
+            "ms": 52.92,
+            "max": 53.41,
+            "plan": "T"
+        },
+        {
+            "group": "count",
+            "name": "редкий: цвет×размер×тег \/ root \/ A",
+            "ms": 64.75,
+            "max": 65.18,
+            "plan": ""
+        },
+        {
+            "group": "count",
+            "name": "редкий: цвет×размер×тег \/ root \/ D",
+            "ms": 46.27,
+            "max": 46.35,
+            "plan": ""
+        },
+        {
+            "group": "cov",
+            "name": "бренд×материал×цвет \/ root(1) \/ order \/ A (idx_cov)",
+            "ms": 16.32,
+            "max": 16.68,
+            "plan": "FT"
+        },
+        {
+            "group": "cov",
+            "name": "бренд×материал×цвет \/ root(1) \/ order \/ F (idx_cov)",
+            "ms": 13.6,
+            "max": 13.77,
+            "plan": ""
+        },
+        {
+            "group": "cov",
+            "name": "бренд×материал×цвет \/ root(1) \/ order \/ D (idx_cov)",
+            "ms": 25.14,
+            "max": 27.72,
+            "plan": "FT"
+        },
+        {
+            "group": "cov",
+            "name": "бренд×материал×цвет \/ L2(12) \/ order \/ A (idx_cov)",
+            "ms": 7.77,
+            "max": 7.99,
+            "plan": "FT"
+        },
+        {
+            "group": "cov",
+            "name": "бренд×материал×цвет \/ L2(12) \/ order \/ F (idx_cov)",
+            "ms": 4.47,
+            "max": 4.72,
+            "plan": ""
+        },
+        {
+            "group": "cov",
+            "name": "бренд×материал×цвет \/ L2(12) \/ order \/ D (idx_cov)",
+            "ms": 8.76,
+            "max": 8.97,
+            "plan": "FT"
+        },
+        {
+            "group": "cov",
+            "name": "частый×материал×страна \/ root(1) \/ order \/ A (idx_cov)",
+            "ms": 11.92,
+            "max": 12.53,
+            "plan": "FT"
+        },
+        {
+            "group": "cov",
+            "name": "частый×материал×страна \/ root(1) \/ order \/ F (idx_cov)",
+            "ms": 7.85,
+            "max": 8,
+            "plan": ""
+        },
+        {
+            "group": "cov",
+            "name": "частый×материал×страна \/ root(1) \/ order \/ D (idx_cov)",
+            "ms": 13.99,
+            "max": 14.24,
+            "plan": "FT"
+        },
+        {
+            "group": "cov",
+            "name": "частый×материал×страна \/ L2(12) \/ order \/ A (idx_cov)",
+            "ms": 6.04,
+            "max": 6.13,
+            "plan": "FT"
+        },
+        {
+            "group": "cov",
+            "name": "частый×материал×страна \/ L2(12) \/ order \/ F (idx_cov)",
+            "ms": 7.48,
+            "max": 7.54,
+            "plan": ""
+        },
+        {
+            "group": "cov",
+            "name": "частый×материал×страна \/ L2(12) \/ order \/ D (idx_cov)",
+            "ms": 6.18,
+            "max": 6.3,
+            "plan": "FT"
+        },
+        {
+            "group": "cov",
+            "name": "редкий: цвет×размер×тег \/ root(1) \/ order \/ A (idx_cov)",
+            "ms": 47.86,
+            "max": 48.09,
+            "plan": "FT"
+        },
+        {
+            "group": "cov",
+            "name": "редкий: цвет×размер×тег \/ root(1) \/ order \/ F (idx_cov)",
+            "ms": 19.44,
+            "max": 19.73,
+            "plan": ""
+        },
+        {
+            "group": "cov",
+            "name": "редкий: цвет×размер×тег \/ root(1) \/ order \/ D (idx_cov)",
+            "ms": 20.99,
+            "max": 21.66,
+            "plan": "FT"
+        },
+        {
+            "group": "cov",
+            "name": "редкий: цвет×размер×тег \/ L2(12) \/ order \/ A (idx_cov)",
+            "ms": 5.76,
+            "max": 5.81,
+            "plan": "FT"
+        },
+        {
+            "group": "cov",
+            "name": "редкий: цвет×размер×тег \/ L2(12) \/ order \/ F (idx_cov)",
+            "ms": 1.85,
+            "max": 1.94,
+            "plan": ""
+        },
+        {
+            "group": "cov",
+            "name": "редкий: цвет×размер×тег \/ L2(12) \/ order \/ D (idx_cov)",
+            "ms": 6.14,
+            "max": 6.19,
+            "plan": "FT"
+        },
+        {
+            "group": "cov",
+            "name": "материал×страна (≈0,4%) \/ root(1) \/ order \/ A (idx_cov)",
+            "ms": 3.79,
+            "max": 3.86,
+            "plan": "FT"
+        },
+        {
+            "group": "cov",
+            "name": "материал×страна (≈0,4%) \/ root(1) \/ order \/ F (idx_cov)",
+            "ms": 4.7,
+            "max": 4.82,
+            "plan": ""
+        },
+        {
+            "group": "cov",
+            "name": "материал×страна (≈0,4%) \/ root(1) \/ order \/ D (idx_cov)",
+            "ms": 7.88,
+            "max": 8.6,
+            "plan": "FT"
+        },
+        {
+            "group": "cov",
+            "name": "материал×страна (≈0,4%) \/ L2(12) \/ order \/ A (idx_cov)",
+            "ms": 3.86,
+            "max": 4.18,
+            "plan": "FT"
+        },
+        {
+            "group": "cov",
+            "name": "материал×страна (≈0,4%) \/ L2(12) \/ order \/ F (idx_cov)",
+            "ms": 3.61,
+            "max": 3.68,
+            "plan": ""
+        },
+        {
+            "group": "cov",
+            "name": "материал×страна (≈0,4%) \/ L2(12) \/ order \/ D (idx_cov)",
+            "ms": 3.76,
+            "max": 4.13,
+            "plan": "FT"
+        },
+        {
+            "group": "cov-only",
+            "name": "бренд×материал×цвет \/ root(1) \/ order \/ A (только idx_cov)",
+            "ms": 17.24,
+            "max": 17.27,
+            "plan": "FT"
+        },
+        {
+            "group": "cov-only",
+            "name": "бренд×материал×цвет \/ root(1) \/ order \/ D (только idx_cov)",
+            "ms": 25.7,
+            "max": 25.77,
+            "plan": "FT"
+        },
+        {
+            "group": "cov-only",
+            "name": "редкий: цвет×размер×тег \/ root(1) \/ order \/ A (только idx_cov)",
+            "ms": 46.81,
+            "max": 47.81,
+            "plan": "FT"
+        },
+        {
+            "group": "cov-only",
+            "name": "редкий: цвет×размер×тег \/ root(1) \/ order \/ D (только idx_cov)",
+            "ms": 20.23,
+            "max": 20.97,
+            "plan": "FT"
+        }
+    ],
+    "density": {
+        "бренд частый (≈18%)": 0.18259,
+        "бренд средний": 0.10488,
+        "материал (≈8%)": 0.0835,
+        "материал×страна (≈0,4%)": 0.00411,
+        "бренд×материал×цвет": 0.00647,
+        "частый×материал×страна": 0.00153,
+        "редкий: цвет×размер×тег": 0.01509,
+        "цена широкая": 0.9,
+        "цена узкая + бренд": 0.00524
+    },
+    "consistency": "ok",
+    "table_before_mb": {
+        "data": 83.6,
+        "index": 408.6
+    },
+    "table_after_mb": {
+        "data": 83.6,
+        "index": 408.6
+    },
+    "table_cov_only_mb": {
+        "data": 83.6,
+        "index": 328.9
+    }
+}

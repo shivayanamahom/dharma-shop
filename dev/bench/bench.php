@@ -90,12 +90,12 @@ if ($cmd === 'generate' || $cmd === 'all') {
     // Товары.
     $adj = "ELT(1 + " . r('a', 'i', 10) . ", 'Красный','Синий','Большой','Малый','Классический','Современный','Лёгкий','Прочный','Складной','Универсальный')";
     $noun = "ELT(1 + " . r('n', 'i', 10) . ", 'диван','стол','стул','шкаф','кровать','комод','кресло','тумба','полка','стеллаж')";
-    run($db, "INSERT INTO bn_products (id, catid, title, alias, introtext, `fulltext`, state, featured, variants_mode, unit, created, created_by)
+    run($db, "INSERT INTO bn_products (id, catid, title, alias, introtext, `fulltext`, state, variants_mode, unit, created, created_by)
         SELECT i,
           112 + LEAST(999, FLOOR(POW(" . r('c', 'i', 1000000) . " / 1000000, 1.8) * 1000)),
           CONCAT($adj, ' ', $noun, ' ', i), CONCAT('product-', i),
           REPEAT('Краткое описание товара. ', 8), REPEAT('Полное описание товара с подробностями. ', 25),
-          IF(" . r('s', 'i', 100) . " < 95, 1, 0), IF(" . r('f', 'i', 50) . " = 0, 1, 0),
+          IF(" . r('s', 'i', 100) . " < 95, 1, 0),
           IF(" . r('m', 'i', 100) . " < 40, 2, 1), 'шт',
           DATE_ADD('2023-10-01', INTERVAL " . r('d', 'i', 1095 * 86400) . " SECOND), 1
         FROM bn_seq");
@@ -111,11 +111,11 @@ if ($cmd === 'generate' || $cmd === 'all') {
         ) x");
 
     // Цены: у 10 % скидка, у 1 % «по запросу».
-    run($db, "INSERT INTO bn_variant_prices (variant_id, price_list_id, price, sale_price, price_final)
-        SELECT id, 1, price, sale, COALESCE(sale, price) FROM (
+    run($db, "INSERT INTO bn_variant_prices (variant_id, price_list_id, price, discount, discount_percent, price_final)
+        SELECT id, 1, price, sale, 0, IF(price IS NULL, NULL, price - COALESCE(sale, 0)) FROM (
           SELECT v.id,
                  IF(MOD(CRC32(CONCAT('r', v.id)), 100) = 0, NULL, ROUND(100 + MOD(CRC32(CONCAT('p', v.id)), 99900) + MOD(CRC32(CONCAT('pp', v.id)), 100) / 100, 2)) price,
-                 IF(MOD(CRC32(CONCAT('z', v.id)), 10) = 0, ROUND((100 + MOD(CRC32(CONCAT('p', v.id)), 99900)) * 0.8, 2), NULL) sale
+                 IF(MOD(CRC32(CONCAT('z', v.id)), 10) = 0, ROUND((100 + MOD(CRC32(CONCAT('p', v.id)), 99900)) * 0.2, 2), NULL) sale
           FROM bn_variants v
         ) y");
     run($db, "INSERT INTO bn_stock_levels (variant_id, location_id, qty, reserved) SELECT id, 1, stock_total, 0 FROM bn_variants WHERE stock_tracked = 1");
@@ -129,8 +129,8 @@ if ($cmd === 'generate' || $cmd === 'all') {
 
     // Витринный индекс: лист, родитель, дед, корень + 20 % товаров во второй категории.
     $pc = static function (string $catExpr, int $direct, int $main, string $where = '1=1', string $ignore = ''): string {
-        return "INSERT $ignore INTO bn_product_categories (catid, product_id, direct, is_main, state, sort_order, price_sort, in_stock, featured, created, title_sort)
-            SELECT $catExpr, p.id, $direct, $main, p.state, MOD(CRC32(CONCAT('o', p.id, '-', $catExpr)), 1000000), p.price_min, p.in_stock, p.featured, p.created, LEFT(LOWER(p.title), 60)
+        return "INSERT $ignore INTO bn_product_categories (catid, product_id, direct, is_main, state, sort_order, price_sort, in_stock, created, title_sort)
+            SELECT $catExpr, p.id, $direct, $main, p.state, MOD(CRC32(CONCAT('o', p.id, '-', $catExpr)), 1000000), p.price_min, p.in_stock, p.created, LEFT(LOWER(p.title), 60)
             FROM bn_products p WHERE $where";
     };
     run($db, $pc('p.catid', 1, 1));

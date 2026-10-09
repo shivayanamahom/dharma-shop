@@ -1,0 +1,709 @@
+{
+    "n": 10000,
+    "date": "2026-10-09T01:28:23+00:00",
+    "rows": [
+        {
+            "group": "forms",
+            "name": "S1 бренд (3,4) \/ root(1) \/ A EXISTS",
+            "ms": 2.17,
+            "max": 2.35,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "forms",
+            "name": "S1 бренд (3,4) \/ root(1) \/ B ведущий IN",
+            "ms": 1.77,
+            "max": 1.92,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "forms",
+            "name": "S1 бренд (3,4) \/ root(1) \/ C JOIN DISTINCT",
+            "ms": 1.59,
+            "max": 1.71,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "forms",
+            "name": "S1 бренд (3,4) \/ root(1) \/ D ведущая выборка",
+            "ms": 1.6,
+            "max": 1.61,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "forms",
+            "name": "S1 бренд (3,4) \/ L2(12) \/ A EXISTS",
+            "ms": 0.61,
+            "max": 0.63,
+            "plan": ""
+        },
+        {
+            "group": "forms",
+            "name": "S1 бренд (3,4) \/ L2(12) \/ B ведущий IN",
+            "ms": 0.63,
+            "max": 0.66,
+            "plan": ""
+        },
+        {
+            "group": "forms",
+            "name": "S1 бренд (3,4) \/ L2(12) \/ C JOIN DISTINCT",
+            "ms": 0.88,
+            "max": 0.93,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "forms",
+            "name": "S1 бренд (3,4) \/ L2(12) \/ D ведущая выборка",
+            "ms": 0.89,
+            "max": 0.93,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "forms",
+            "name": "S2 бренд самый частый \/ root(1) \/ A EXISTS",
+            "ms": 2.6,
+            "max": 2.74,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "forms",
+            "name": "S2 бренд самый частый \/ root(1) \/ B ведущий IN",
+            "ms": 2.7,
+            "max": 2.77,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "forms",
+            "name": "S2 бренд самый частый \/ root(1) \/ C JOIN DISTINCT",
+            "ms": 2.9,
+            "max": 3.07,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "forms",
+            "name": "S2 бренд самый частый \/ root(1) \/ D ведущая выборка",
+            "ms": 2.86,
+            "max": 2.87,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "forms",
+            "name": "S2 бренд самый частый \/ L2(12) \/ A EXISTS",
+            "ms": 0.54,
+            "max": 0.55,
+            "plan": ""
+        },
+        {
+            "group": "forms",
+            "name": "S2 бренд самый частый \/ L2(12) \/ B ведущий IN",
+            "ms": 0.37,
+            "max": 0.39,
+            "plan": ""
+        },
+        {
+            "group": "forms",
+            "name": "S2 бренд самый частый \/ L2(12) \/ C JOIN DISTINCT",
+            "ms": 1.54,
+            "max": 1.58,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "forms",
+            "name": "S2 бренд самый частый \/ L2(12) \/ D ведущая выборка",
+            "ms": 1.53,
+            "max": 1.55,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "forms",
+            "name": "S3 цена+бренд+материал+цвет \/ root(1) \/ A EXISTS",
+            "ms": 2.84,
+            "max": 3,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "forms",
+            "name": "S3 цена+бренд+материал+цвет \/ root(1) \/ B ведущий IN",
+            "ms": 2.76,
+            "max": 2.82,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "forms",
+            "name": "S3 цена+бренд+материал+цвет \/ root(1) \/ C JOIN DISTINCT",
+            "ms": 4.15,
+            "max": 4.18,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "forms",
+            "name": "S3 цена+бренд+материал+цвет \/ root(1) \/ D ведущая выборка",
+            "ms": 2.27,
+            "max": 2.32,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "forms",
+            "name": "S3 цена+бренд+материал+цвет \/ L2(12) \/ A EXISTS",
+            "ms": 1.56,
+            "max": 1.7,
+            "plan": ""
+        },
+        {
+            "group": "forms",
+            "name": "S3 цена+бренд+материал+цвет \/ L2(12) \/ B ведущий IN",
+            "ms": 1.49,
+            "max": 1.69,
+            "plan": ""
+        },
+        {
+            "group": "forms",
+            "name": "S3 цена+бренд+материал+цвет \/ L2(12) \/ C JOIN DISTINCT",
+            "ms": 3.64,
+            "max": 3.8,
+            "plan": "temp"
+        },
+        {
+            "group": "forms",
+            "name": "S3 цена+бренд+материал+цвет \/ L2(12) \/ D ведущая выборка",
+            "ms": 1.17,
+            "max": 1.19,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "forms",
+            "name": "S4 неудобный: частый бренд+материал+страна \/ root(1) \/ A EXISTS",
+            "ms": 1.29,
+            "max": 1.34,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "forms",
+            "name": "S4 неудобный: частый бренд+материал+страна \/ root(1) \/ B ведущий IN",
+            "ms": 1.29,
+            "max": 1.31,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "forms",
+            "name": "S4 неудобный: частый бренд+материал+страна \/ root(1) \/ C JOIN DISTINCT",
+            "ms": 2.64,
+            "max": 2.68,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "forms",
+            "name": "S4 неудобный: частый бренд+материал+страна \/ root(1) \/ D ведущая выборка",
+            "ms": 1.66,
+            "max": 1.68,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "forms",
+            "name": "S4 неудобный: частый бренд+материал+страна \/ L2(12) \/ A EXISTS",
+            "ms": 0.92,
+            "max": 0.95,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "forms",
+            "name": "S4 неудобный: частый бренд+материал+страна \/ L2(12) \/ B ведущий IN",
+            "ms": 0.92,
+            "max": 0.95,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "forms",
+            "name": "S4 неудобный: частый бренд+материал+страна \/ L2(12) \/ C JOIN DISTINCT",
+            "ms": 1.86,
+            "max": 1.9,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "forms",
+            "name": "S4 неудобный: частый бренд+материал+страна \/ L2(12) \/ D ведущая выборка",
+            "ms": 0.95,
+            "max": 0.96,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "forms",
+            "name": "S5 редкий: цвет+размер (варианты)+тег \/ root(1) \/ A EXISTS",
+            "ms": 3.49,
+            "max": 6.66,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "forms",
+            "name": "S5 редкий: цвет+размер (варианты)+тег \/ root(1) \/ B ведущий IN",
+            "ms": 2.27,
+            "max": 2.32,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "forms",
+            "name": "S5 редкий: цвет+размер (варианты)+тег \/ root(1) \/ C JOIN DISTINCT",
+            "ms": 4.82,
+            "max": 4.9,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "forms",
+            "name": "S5 редкий: цвет+размер (варианты)+тег \/ root(1) \/ D ведущая выборка",
+            "ms": 2.37,
+            "max": 2.4,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "forms",
+            "name": "S5 редкий: цвет+размер (варианты)+тег \/ L2(12) \/ A EXISTS",
+            "ms": 0.97,
+            "max": 1,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "forms",
+            "name": "S5 редкий: цвет+размер (варианты)+тег \/ L2(12) \/ B ведущий IN",
+            "ms": 0.98,
+            "max": 1.01,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "forms",
+            "name": "S5 редкий: цвет+размер (варианты)+тег \/ L2(12) \/ C JOIN DISTINCT",
+            "ms": 4.19,
+            "max": 4.24,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "forms",
+            "name": "S5 редкий: цвет+размер (варианты)+тег \/ L2(12) \/ D ведущая выборка",
+            "ms": 1.01,
+            "max": 1.06,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "forms",
+            "name": "S6 число+цена+бренд \/ root(1) \/ A EXISTS",
+            "ms": 2.55,
+            "max": 2.62,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "forms",
+            "name": "S6 число+цена+бренд \/ root(1) \/ B ведущий IN",
+            "ms": 2.38,
+            "max": 2.53,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "forms",
+            "name": "S6 число+цена+бренд \/ root(1) \/ C JOIN DISTINCT",
+            "ms": 2.98,
+            "max": 3.05,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "forms",
+            "name": "S6 число+цена+бренд \/ root(1) \/ D ведущая выборка",
+            "ms": 2.61,
+            "max": 2.62,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "forms",
+            "name": "S6 число+цена+бренд \/ L2(12) \/ A EXISTS",
+            "ms": 2.07,
+            "max": 2.1,
+            "plan": ""
+        },
+        {
+            "group": "forms",
+            "name": "S6 число+цена+бренд \/ L2(12) \/ B ведущий IN",
+            "ms": 2.09,
+            "max": 2.15,
+            "plan": ""
+        },
+        {
+            "group": "forms",
+            "name": "S6 число+цена+бренд \/ L2(12) \/ C JOIN DISTINCT",
+            "ms": 2.93,
+            "max": 2.98,
+            "plan": "temp"
+        },
+        {
+            "group": "forms",
+            "name": "S6 число+цена+бренд \/ L2(12) \/ D ведущая выборка",
+            "ms": 1.19,
+            "max": 1.24,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "forms",
+            "name": "S7 логика И по тегам \/ root(1) \/ A EXISTS",
+            "ms": 0.77,
+            "max": 0.78,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "forms",
+            "name": "S7 логика И по тегам \/ root(1) \/ B ведущий IN",
+            "ms": 0.75,
+            "max": 0.79,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "forms",
+            "name": "S7 логика И по тегам \/ root(1) \/ C JOIN DISTINCT",
+            "ms": 0.75,
+            "max": 0.79,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "forms",
+            "name": "S7 логика И по тегам \/ root(1) \/ D ведущая выборка",
+            "ms": 0.76,
+            "max": 0.79,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "forms",
+            "name": "S7 логика И по тегам \/ L2(12) \/ A EXISTS",
+            "ms": 0.81,
+            "max": 0.83,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "forms",
+            "name": "S7 логика И по тегам \/ L2(12) \/ B ведущий IN",
+            "ms": 0.79,
+            "max": 0.83,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "forms",
+            "name": "S7 логика И по тегам \/ L2(12) \/ C JOIN DISTINCT",
+            "ms": 0.64,
+            "max": 0.8,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "forms",
+            "name": "S7 логика И по тегам \/ L2(12) \/ D ведущая выборка",
+            "ms": 0.77,
+            "max": 0.84,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "count",
+            "name": "S3 цена+бренд+материал+цвет \/ root \/ A EXISTS",
+            "ms": 2.73,
+            "max": 3.1,
+            "plan": "temp"
+        },
+        {
+            "group": "count",
+            "name": "S3 цена+бренд+материал+цвет \/ root \/ B ведущий IN",
+            "ms": 2.81,
+            "max": 3.31,
+            "plan": "temp"
+        },
+        {
+            "group": "count",
+            "name": "S4 неудобный: частый бренд+материал+страна \/ root \/ A EXISTS",
+            "ms": 1.11,
+            "max": 1.34,
+            "plan": "temp"
+        },
+        {
+            "group": "count",
+            "name": "S4 неудобный: частый бренд+материал+страна \/ root \/ B ведущий IN",
+            "ms": 1.27,
+            "max": 1.39,
+            "plan": "temp"
+        },
+        {
+            "group": "count",
+            "name": "S2 бренд самый частый \/ root \/ A EXISTS",
+            "ms": 2.67,
+            "max": 2.7,
+            "plan": ""
+        },
+        {
+            "group": "count",
+            "name": "S2 бренд самый частый \/ root \/ B ведущий IN",
+            "ms": 2.68,
+            "max": 2.7,
+            "plan": ""
+        },
+        {
+            "group": "cov-index",
+            "name": "S3 цена+бренд+материал+цвет \/ root \/ A EXISTS (с idx_cov)",
+            "ms": 2.75,
+            "max": 2.98,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "cov-index",
+            "name": "S3 цена+бренд+материал+цвет \/ root \/ B ведущий IN (с idx_cov)",
+            "ms": 3.89,
+            "max": 6.52,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "cov-index",
+            "name": "S4 неудобный: частый бренд+материал+страна \/ root \/ A EXISTS (с idx_cov)",
+            "ms": 1.32,
+            "max": 1.34,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "cov-index",
+            "name": "S4 неудобный: частый бренд+материал+страна \/ root \/ B ведущий IN (с idx_cov)",
+            "ms": 1.33,
+            "max": 1.34,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "cov-index",
+            "name": "S5 редкий: цвет+размер (варианты)+тег \/ root \/ A EXISTS (с idx_cov)",
+            "ms": 2.23,
+            "max": 2.25,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "cov-index",
+            "name": "S5 редкий: цвет+размер (варианты)+тег \/ root \/ B ведущий IN (с idx_cov)",
+            "ms": 2.23,
+            "max": 2.34,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "facets",
+            "name": "база, 1 поле (бренд) \/ root(1)",
+            "ms": 5.94,
+            "max": 6.12,
+            "plan": ""
+        },
+        {
+            "group": "facets",
+            "name": "база, 6 полей одним запросом \/ root(1)",
+            "ms": 35.4,
+            "max": 35.7,
+            "plan": ""
+        },
+        {
+            "group": "facets",
+            "name": "каскад: выбран бренд (3,4), 5 полей \/ root(1)",
+            "ms": 5.11,
+            "max": 5.18,
+            "plan": "temp"
+        },
+        {
+            "group": "facets",
+            "name": "каскад: выбран частый бренд, 5 полей \/ root(1)",
+            "ms": 6.85,
+            "max": 6.92,
+            "plan": "temp"
+        },
+        {
+            "group": "facets",
+            "name": "каскад: 3 условия, поле «страна» \/ root(1)",
+            "ms": 2.05,
+            "max": 2.08,
+            "plan": "temp"
+        },
+        {
+            "group": "facets",
+            "name": "база, поле варианта (цвет) DISTINCT \/ root(1)",
+            "ms": 19.97,
+            "max": 20.49,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "facets",
+            "name": "проверка порога кандидатов (20 001) \/ root(1)",
+            "ms": 1.27,
+            "max": 1.28,
+            "plan": ""
+        },
+        {
+            "group": "facets",
+            "name": "границы цены по индексу \/ root(1)",
+            "ms": 0.35,
+            "max": 0.36,
+            "plan": ""
+        },
+        {
+            "group": "facets",
+            "name": "границы числа (вес) живые \/ root(1)",
+            "ms": 11.24,
+            "max": 11.29,
+            "plan": ""
+        },
+        {
+            "group": "facets",
+            "name": "база, 1 поле (бренд) \/ L1(2)",
+            "ms": 3.66,
+            "max": 3.72,
+            "plan": "temp"
+        },
+        {
+            "group": "facets",
+            "name": "база, 6 полей одним запросом \/ L1(2)",
+            "ms": 9.35,
+            "max": 9.46,
+            "plan": "temp"
+        },
+        {
+            "group": "facets",
+            "name": "каскад: выбран бренд (3,4), 5 полей \/ L1(2)",
+            "ms": 2.5,
+            "max": 3.13,
+            "plan": "temp"
+        },
+        {
+            "group": "facets",
+            "name": "каскад: выбран частый бренд, 5 полей \/ L1(2)",
+            "ms": 3.31,
+            "max": 3.45,
+            "plan": "temp"
+        },
+        {
+            "group": "facets",
+            "name": "каскад: 3 условия, поле «страна» \/ L1(2)",
+            "ms": 1.98,
+            "max": 2.01,
+            "plan": "temp"
+        },
+        {
+            "group": "facets",
+            "name": "база, поле варианта (цвет) DISTINCT \/ L1(2)",
+            "ms": 6.09,
+            "max": 6.15,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "facets",
+            "name": "проверка порога кандидатов (20 001) \/ L1(2)",
+            "ms": 0.64,
+            "max": 0.67,
+            "plan": ""
+        },
+        {
+            "group": "facets",
+            "name": "границы цены по индексу \/ L1(2)",
+            "ms": 0.3,
+            "max": 0.37,
+            "plan": ""
+        },
+        {
+            "group": "facets",
+            "name": "границы числа (вес) живые \/ L1(2)",
+            "ms": 3.37,
+            "max": 3.4,
+            "plan": ""
+        },
+        {
+            "group": "facets",
+            "name": "база, 1 поле (бренд) \/ L2(12)",
+            "ms": 1.23,
+            "max": 1.27,
+            "plan": "temp"
+        },
+        {
+            "group": "facets",
+            "name": "база, 6 полей одним запросом \/ L2(12)",
+            "ms": 2.76,
+            "max": 2.87,
+            "plan": "temp"
+        },
+        {
+            "group": "facets",
+            "name": "каскад: выбран бренд (3,4), 5 полей \/ L2(12)",
+            "ms": 1.39,
+            "max": 1.52,
+            "plan": "temp"
+        },
+        {
+            "group": "facets",
+            "name": "каскад: выбран частый бренд, 5 полей \/ L2(12)",
+            "ms": 2.01,
+            "max": 2.11,
+            "plan": "temp"
+        },
+        {
+            "group": "facets",
+            "name": "каскад: 3 условия, поле «страна» \/ L2(12)",
+            "ms": 2.24,
+            "max": 2.69,
+            "plan": "temp"
+        },
+        {
+            "group": "facets",
+            "name": "база, поле варианта (цвет) DISTINCT \/ L2(12)",
+            "ms": 1.9,
+            "max": 2.6,
+            "plan": "filesort,temp"
+        },
+        {
+            "group": "facets",
+            "name": "проверка порога кандидатов (20 001) \/ L2(12)",
+            "ms": 0.42,
+            "max": 0.5,
+            "plan": ""
+        },
+        {
+            "group": "facets",
+            "name": "границы цены по индексу \/ L2(12)",
+            "ms": 0.2,
+            "max": 0.22,
+            "plan": ""
+        },
+        {
+            "group": "facets",
+            "name": "границы числа (вес) живые \/ L2(12)",
+            "ms": 1.17,
+            "max": 1.53,
+            "plan": ""
+        },
+        {
+            "group": "precalc",
+            "name": "чтение базового состояния (все поля) \/ root(1)",
+            "ms": 0.39,
+            "max": 0.66,
+            "plan": ""
+        },
+        {
+            "group": "precalc",
+            "name": "чтение базового состояния (все поля) \/ L1(2)",
+            "ms": 0.34,
+            "max": 0.35,
+            "plan": ""
+        },
+        {
+            "group": "precalc",
+            "name": "чтение базового состояния (все поля) \/ L2(12)",
+            "ms": 0.33,
+            "max": 0.36,
+            "plan": ""
+        },
+        {
+            "group": "precalc",
+            "name": "сопровождение: +1 по строкам одного товара",
+            "ms": 1.54,
+            "max": 1.75,
+            "plan": ""
+        }
+    ],
+    "stats": {
+        "products": 10000,
+        "field_values": 194102,
+        "product_categories": 45815
+    },
+    "consistency": "ok",
+    "index_build_s": 0.2,
+    "facets_build_s": 0.6,
+    "facets_rows": 93142,
+    "facets_rows_per_product": 44
+}
