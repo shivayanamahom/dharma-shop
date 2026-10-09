@@ -28,6 +28,18 @@ class Router extends RouterView
     private array $childCache = [];
     private array $productCache = [];
 
+    /** Prime category routes in one batch before rendering a module or another category collection. */
+    public function primeCategories(array $items): void
+    {
+        foreach ($items as $item) {
+            if ((int) ($item->id ?? 0) > 1 && isset($item->parent_id, $item->alias)) {
+                $this->categoryCache[self::CATEGORY . '/' . (int) $item->id] = (object) [
+                    'id' => (int) $item->id, 'parent_id' => (int) $item->parent_id, 'alias' => (string) $item->alias,
+                ];
+            }
+        }
+    }
+
     public function __construct($app, $menu, $categoryFactory, private readonly \Joomla\Database\DatabaseInterface $db)
     {
         // Как в com_content: список категорий (пункт меню, корень) → категория (вложенная) → товар. Адрес строится от подходящего пункта меню

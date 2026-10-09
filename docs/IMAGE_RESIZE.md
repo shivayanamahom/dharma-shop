@@ -49,6 +49,9 @@
 | `module.products.grid` | Будущий модуль товаров: сетка | 600 × 600 |
 | `module.products.list` | Будущий модуль товаров: список | 240 × 240 |
 | `module.products.table` | Будущий модуль товаров: таблица | 112 × 112 |
+| `module.categories.grid` | Модуль категорий: сетка | 600 × 400 |
+| `module.categories.accordion` | Модуль категорий: аккордеон | 600 × 400 |
+| `module.categories.slider` | Модуль категорий: слайдер | 600 × 400 |
 | `field.option` | Картинки вариантов дополнительных полей | 96 × 96 |
 | `field.video.poster` | Обложки видеогалерей | 640 × 360 |
 | `admin.product`, `admin.category` | Миниатюры списков админки | 96 × 96 |

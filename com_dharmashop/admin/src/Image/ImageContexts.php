@@ -34,6 +34,9 @@ final class ImageContexts
         'module.products.grid' => [600, 600],
         'module.products.list' => [240, 240],
         'module.products.table' => [112, 112],
+        'module.categories.grid' => [600, 400],
+        'module.categories.accordion' => [600, 400],
+        'module.categories.slider' => [600, 400],
         'field.option' => [96, 96],
         'field.gallery.card' => [240, 180],
         'field.gallery.page' => [600, 450],
@@ -58,11 +61,27 @@ final class ImageContexts
         }
         return $rows;
     }
+
+    /** New module contexts also work with presets saved before the module existed. Explicit rows, including 0 × 0, win. */
+    public static function categoryModuleDefaults(mixed $rows): array
+    {
+        if (is_string($rows)) { $rows = json_decode($rows, true) ?: []; }
+        $rows = (array) $rows;
+        $configured = [];
+        foreach ($rows as $row) { $configured[(string) (((array) $row)['context'] ?? '')] = true; }
+        foreach (self::defaults() as $row) {
+            if (str_starts_with($row['context'], 'module.categories.') && !isset($configured[$row['context']])) {
+                $rows[] = $row;
+            }
+        }
+        return $rows;
+    }
     public static function presets(Registry $settings): array
     {
         $rows = $settings->get('image_resize_presets');
         if ($rows === null || $rows === '') $rows = self::defaults();
         if (is_string($rows)) $rows = json_decode($rows, true) ?: [];
+        $rows = self::categoryModuleDefaults($rows);
         $result = [];
         $quality = ImageQuality::resolve($settings);
         foreach ((array) $rows as $row) {

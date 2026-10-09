@@ -11,6 +11,7 @@ class ImagesizesField extends SubformField
     {
         if (!parent::setup($element, $value, $group)) return false;
         if ($this->value === null) $this->value = ImageContexts::defaults();
+        else $this->value = ImageContexts::categoryModuleDefaults($this->value);
         return true;
     }
 }

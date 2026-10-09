@@ -61,3 +61,13 @@ if [ -d "$M" ]; then
   [ -d "$M/media" ] && $R "$M/media/" "$T/media/mod_dharmashop_filter/" || true
   for l in ru-RU en-GB; do cp "$M/language/$l/"*.ini "$T/language/$l/"; done
 fi
+# Модуль категорий: нативные формы и отдельные переопределяемые карточки.
+M="$S/mod_dharmashop_categories"
+if [ -d "$M" ]; then
+  mkdir -p "$T/modules/mod_dharmashop_categories"
+  for d in services src tmpl layouts; do $R "$M/$d/" "$T/modules/mod_dharmashop_categories/$d/"; done
+  cp "$M/mod_dharmashop_categories.xml" "$T/modules/mod_dharmashop_categories/"
+  mkdir -p "$T/media/mod_dharmashop_categories"
+  $R "$M/media/" "$T/media/mod_dharmashop_categories/"
+  for l in ru-RU en-GB; do cp "$M/language/$l/"*.ini "$T/language/$l/"; done
+fi

@@ -1,0 +1,22 @@
+--- a/templates/dharma_starter/index.php
++++ b/templates/dharma_starter/index.php
+@@ -143,6 +143,9 @@
+ 		<div class="container">
+ 			<jdoc:include type="modules" name="breadcrumbs" style="none" />
+ 			<jdoc:include type="modules" name="main-top" style="none" />
++			<?php if ($this->countModules('catalog-categories', true)) : ?>
++				<div class="mb-4"><jdoc:include type="modules" name="catalog-categories" style="none" /></div>
++			<?php endif; ?>
+ 			<jdoc:include type="message" />
+ 
+ 			<div class="row g-4">
+--- a/templates/dharma_starter/templateDetails.xml
++++ b/templates/dharma_starter/templateDetails.xml
+@@ -35,6 +35,7 @@
+ 		<position>banner</position>
+ 		<position>breadcrumbs</position>
+ 		<position>main-top</position>
++		<position>catalog-categories</position>
+ 		<position>main-bottom</position>
+ 		<position>section-1</position>
+ 		<position>section-2</position>
