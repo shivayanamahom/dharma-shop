@@ -221,12 +221,30 @@ CREATE TABLE IF NOT EXISTS `#__dharmashop_field_values` (
   `num_end` decimal(18,6) NULL,
   `str` varchar(190) NULL,
   PRIMARY KEY (`id`),
-  KEY `idx_product` (`product_id`, `field_id`),
+  KEY `idx_product` (`product_id`, `field_id`, `option_id`, `num`),
   KEY `idx_variant` (`variant_id`, `field_id`),
   KEY `idx_option` (`field_id`, `option_id`, `product_id`),
   KEY `idx_num` (`field_id`, `num`, `product_id`),
   KEY `idx_num_end` (`field_id`, `num_end`, `product_id`),
   KEY `idx_str` (`field_id`, `str`, `product_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Фильтр (C84): предрасчёт базового состояния — сколько товаров категории имеют значение поля и границы чисел. Строится и сопровождается FacetIndexer.
+CREATE TABLE IF NOT EXISTS `#__dharmashop_filter_facets` (
+  `catid` int unsigned NOT NULL,
+  `field_id` int unsigned NOT NULL,
+  `option_id` int unsigned NOT NULL,
+  `products` int unsigned NOT NULL DEFAULT 0,
+  PRIMARY KEY (`catid`, `field_id`, `option_id`),
+  KEY `idx_field` (`field_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `#__dharmashop_filter_ranges` (
+  `catid` int unsigned NOT NULL,
+  `field_id` int unsigned NOT NULL,
+  `num_min` decimal(18,6) NULL,
+  `num_max` decimal(18,6) NULL,
+  PRIMARY KEY (`catid`, `field_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `#__dharmashop_field_texts` (

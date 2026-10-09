@@ -86,7 +86,7 @@ class HtmlView extends BaseHtmlView
         $this->textValues = CategoryValues::build($taxonomy->area, $this->item, $ancestors, $model, $this->money);
         // Сортировка и вид в запросе (форма без JavaScript): страница-дубль, канонический адрес — без параметров, индексировать не нужно.
         $query = $app->getInput()->get;
-        $variant = $query->exists('sort') || $query->exists('product_view') || $this->searchQuery !== '';
+        $variant = $query->exists('sort') || $query->exists('product_view') || $this->searchQuery !== '' || !$model->getFilterState()->isEmpty();
         $this->seo = $seo->resolve($taxonomy->area, $this->item, $this->textValues, $ownMenu,
             $this->absoluteRoute((int) $this->item->id) . (!$variant && $this->start ? '?start=' . $this->start : ''),
             $variant ? 'noindex, follow' : null, $this->pagination ? (int) $this->pagination->pagesCurrent : 1);

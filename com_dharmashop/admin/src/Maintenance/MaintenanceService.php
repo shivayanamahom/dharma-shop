@@ -35,6 +35,7 @@ final class MaintenanceService
         'products' => 'COM_DHARMASHOP_CMD_PRODUCTS',
         'sales' => 'COM_DHARMASHOP_CMD_SALES',
         'webp' => 'COM_DHARMASHOP_CMD_WEBP',
+        'facets' => 'COM_DHARMASHOP_CMD_FACETS',
     ];
 
     public function __construct(
@@ -68,6 +69,14 @@ final class MaintenanceService
 
         if ($command === 'sales') {
             return ['processed' => $this->sales->run(), 'cursor' => 0, 'done' => true];
+        }
+
+        if ($command === 'facets') {
+            // Предрасчёт фильтра (C84): порциями по категориям; курсор — номер последней обработанной категории.
+            $step = (new \Dharma\Component\DharmaShop\Administrator\Filter\FacetIndexer($this->db))->rebuildStep(is_int($cursor) ? $cursor : 0, min($budgetMs, 5000));
+            \Dharma\Component\DharmaShop\Administrator\Filter\FilterCache::forget();
+
+            return $step;
         }
 
         if ($command === 'webp') {

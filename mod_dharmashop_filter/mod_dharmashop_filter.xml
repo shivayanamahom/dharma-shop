@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<extension type="module" client="site" method="upgrade">
+	<name>MOD_DHARMASHOP_FILTER</name>
+	<author>Dharma</author>
+	<creationDate>2026-10</creationDate>
+	<copyright>(C) 2026 Dharma</copyright>
+	<license>GNU General Public License version 2 or later</license>
+	<version>0.1.0</version>
+	<description>MOD_DHARMASHOP_FILTER_XML_DESCRIPTION</description>
+	<namespace path="src">Dharma\Module\DharmaShopFilter</namespace>
+	<files>
+		<folder module="mod_dharmashop_filter">services</folder>
+		<folder>src</folder>
+		<folder>tmpl</folder>
+		<folder>layouts</folder>
+	</files>
+	<media folder="media" destination="mod_dharmashop_filter">
+		<filename>joomla.asset.json</filename>
+	</media>
+	<languages>
+		<language tag="ru-RU">language/ru-RU/mod_dharmashop_filter.ini</language>
+		<language tag="ru-RU">language/ru-RU/mod_dharmashop_filter.sys.ini</language>
+		<language tag="en-GB">language/en-GB/mod_dharmashop_filter.ini</language>
+		<language tag="en-GB">language/en-GB/mod_dharmashop_filter.sys.ini</language>
+	</languages>
+	<config>
+		<fields name="params">
+			<fieldset name="basic" label="MOD_DHARMASHOP_FILTER_TAB_BASIC" addfieldprefix="Dharma\Module\DharmaShopFilter\Site\Field">
+				<field name="category_mode" type="list" default="current" filter="cmd" validate="options" label="MOD_DHARMASHOP_FILTER_CATEGORY_MODE" description="MOD_DHARMASHOP_FILTER_CATEGORY_MODE_DESC">
+					<option value="current">MOD_DHARMASHOP_FILTER_CATEGORY_CURRENT</option>
+					<option value="root">MOD_DHARMASHOP_FILTER_CATEGORY_ROOT</option>
+					<option value="fixed">MOD_DHARMASHOP_FILTER_CATEGORY_FIXED</option>
+				</field>
+				<field name="category" type="category" extension="com_dharmashop" default="" filter="integer" showon="category_mode:fixed" label="MOD_DHARMASHOP_FILTER_CATEGORY" />
+				<field name="menu_item" type="menuitem" published="1" filter="integer" label="MOD_DHARMASHOP_FILTER_MENU_ITEM" description="MOD_DHARMASHOP_FILTER_MENU_ITEM_DESC">
+					<option value="0">MOD_DHARMASHOP_FILTER_MENU_ITEM_CURRENT</option>
+				</field>
+				<field name="orientation" type="list" default="vertical" filter="cmd" validate="options" label="MOD_DHARMASHOP_FILTER_ORIENTATION" description="MOD_DHARMASHOP_FILTER_ORIENTATION_DESC">
+					<option value="vertical">MOD_DHARMASHOP_FILTER_ORIENTATION_VERTICAL</option>
+					<option value="horizontal">MOD_DHARMASHOP_FILTER_ORIENTATION_HORIZONTAL</option>
+				</field>
+				<field name="show_apply_button" type="radio" layout="joomla.form.field.radio.switcher" default="1" filter="integer" label="MOD_DHARMASHOP_FILTER_SHOW_APPLY">
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+				<field name="apply_text" type="text" filter="string" showon="show_apply_button:1" label="MOD_DHARMASHOP_FILTER_APPLY_TEXT" description="MOD_DHARMASHOP_FILTER_APPLY_TEXT_DESC" hint="MOD_DHARMASHOP_FILTER_APPLY_TEXT_HINT" />
+				<field name="show_reset_button" type="radio" layout="joomla.form.field.radio.switcher" default="1" filter="integer" label="MOD_DHARMASHOP_FILTER_SHOW_RESET">
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+				<field name="show_active_chips" type="radio" layout="joomla.form.field.radio.switcher" default="1" filter="integer" label="MOD_DHARMASHOP_FILTER_SHOW_CHIPS" description="MOD_DHARMASHOP_FILTER_SHOW_CHIPS_DESC">
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+				<field name="show_result_count" type="radio" layout="joomla.form.field.radio.switcher" default="1" filter="integer" label="MOD_DHARMASHOP_FILTER_SHOW_COUNT" description="MOD_DHARMASHOP_FILTER_SHOW_COUNT_DESC">
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+			</fieldset>
+			<fieldset name="behavior" label="MOD_DHARMASHOP_FILTER_TAB_BEHAVIOR">
+				<field name="empty_options" type="list" default="hide" filter="cmd" validate="options" label="MOD_DHARMASHOP_FILTER_EMPTY_OPTIONS" description="MOD_DHARMASHOP_FILTER_EMPTY_OPTIONS_DESC">
+					<option value="show">MOD_DHARMASHOP_FILTER_EMPTY_SHOW</option>
+					<option value="hide">MOD_DHARMASHOP_FILTER_EMPTY_HIDE</option>
+					<option value="disable">MOD_DHARMASHOP_FILTER_EMPTY_DISABLE</option>
+				</field>
+				<field name="counts" type="list" default="inherit" filter="cmd" validate="options" label="MOD_DHARMASHOP_FILTER_COUNTS" description="MOD_DHARMASHOP_FILTER_COUNTS_DESC">
+					<option value="inherit">MOD_DHARMASHOP_FILTER_COUNTS_INHERIT</option>
+					<option value="off">MOD_DHARMASHOP_FILTER_COUNTS_OFF</option>
+					<option value="base">MOD_DHARMASHOP_FILTER_COUNTS_BASE</option>
+					<option value="live">MOD_DHARMASHOP_FILTER_COUNTS_LIVE</option>
+				</field>
+				<field name="hide_single_value_fields" type="radio" layout="joomla.form.field.radio.switcher" default="0" filter="integer" label="MOD_DHARMASHOP_FILTER_HIDE_SINGLE" description="MOD_DHARMASHOP_FILTER_HIDE_SINGLE_DESC">
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+				<field name="collapsible_groups" type="radio" layout="joomla.form.field.radio.switcher" default="1" filter="integer" label="MOD_DHARMASHOP_FILTER_COLLAPSIBLE" description="MOD_DHARMASHOP_FILTER_COLLAPSIBLE_DESC">
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
+			</fieldset>
+			<fieldset name="values" label="MOD_DHARMASHOP_FILTER_TAB_VALUES">
+				<field name="checkbox_limit_mode" type="list" default="all" filter="cmd" validate="options" label="MOD_DHARMASHOP_FILTER_LIMIT_MODE" description="MOD_DHARMASHOP_FILTER_LIMIT_MODE_DESC">
+					<option value="all">MOD_DHARMASHOP_FILTER_LIMIT_ALL</option>
+					<option value="limit">MOD_DHARMASHOP_FILTER_LIMIT_LIMIT</option>
+				</field>
+				<field name="checkbox_visible_count" type="number" default="6" min="1" max="100" filter="integer" showon="checkbox_limit_mode:limit" label="MOD_DHARMASHOP_FILTER_VISIBLE_COUNT" />
+				<field name="options_sort" type="list" default="field" filter="cmd" validate="options" label="MOD_DHARMASHOP_FILTER_OPTIONS_SORT" description="MOD_DHARMASHOP_FILTER_OPTIONS_SORT_DESC">
+					<option value="field">MOD_DHARMASHOP_FILTER_SORT_FIELD</option>
+					<option value="alpha">MOD_DHARMASHOP_FILTER_SORT_ALPHA</option>
+					<option value="count">MOD_DHARMASHOP_FILTER_SORT_COUNT</option>
+				</field>
+			</fieldset>
+			<fieldset name="price" label="MOD_DHARMASHOP_FILTER_TAB_PRICE">
+				<field name="price_display" type="list" default="inputs" filter="cmd" validate="options" label="MOD_DHARMASHOP_FILTER_PRICE_DISPLAY" description="MOD_DHARMASHOP_FILTER_PRICE_DISPLAY_DESC">
+					<option value="none">MOD_DHARMASHOP_FILTER_PRICE_NONE</option>
+					<option value="inputs">MOD_DHARMASHOP_FILTER_PRICE_INPUTS</option>
+				</field>
+				<field name="price_step" type="number" default="0" min="0" step="1" filter="integer" showon="price_display:inputs" label="MOD_DHARMASHOP_FILTER_PRICE_STEP" description="MOD_DHARMASHOP_FILTER_PRICE_STEP_DESC" />
+				<field name="price_presets" type="textarea" rows="4" filter="string" showon="price_display:inputs" label="MOD_DHARMASHOP_FILTER_PRICE_PRESETS" description="MOD_DHARMASHOP_FILTER_PRICE_PRESETS_DESC" hint="до 50 000 = 0-50000" />
+			</fieldset>
+			<fieldset name="filters" label="MOD_DHARMASHOP_FILTER_TAB_FILTERS" addfieldprefix="Dharma\Module\DharmaShopFilter\Site\Field">
+				<field name="fields_config" type="subform" multiple="true" min="0" max="60" buttons="add,remove,move" layout="joomla.form.field.subform.repeatable-table" label="MOD_DHARMASHOP_FILTER_FIELDS_CONFIG" description="MOD_DHARMASHOP_FILTER_FIELDS_CONFIG_DESC">
+					<form>
+						<field name="field" type="filterfields" filter="string" required="true" label="MOD_DHARMASHOP_FILTER_FIELD" />
+						<field name="show" type="radio" layout="joomla.form.field.radio.switcher" default="1" filter="integer" label="MOD_DHARMASHOP_FILTER_FIELD_SHOW">
+							<option value="0">JNO</option>
+							<option value="1">JYES</option>
+						</field>
+						<field name="title" type="text" filter="string" label="MOD_DHARMASHOP_FILTER_FIELD_TITLE" />
+						<field name="control" type="list" default="auto" filter="cmd" validate="options" label="MOD_DHARMASHOP_FILTER_FIELD_CONTROL">
+							<option value="auto">MOD_DHARMASHOP_FILTER_CONTROL_AUTO</option>
+							<option value="select">MOD_DHARMASHOP_FILTER_CONTROL_SELECT</option>
+							<option value="checkboxes">MOD_DHARMASHOP_FILTER_CONTROL_CHECKBOXES</option>
+							<option value="radio">MOD_DHARMASHOP_FILTER_CONTROL_RADIO</option>
+							<option value="buttons">MOD_DHARMASHOP_FILTER_CONTROL_BUTTONS</option>
+							<option value="swatches">MOD_DHARMASHOP_FILTER_CONTROL_SWATCHES</option>
+						</field>
+						<field name="expanded" type="radio" layout="joomla.form.field.radio.switcher" default="1" filter="integer" label="MOD_DHARMASHOP_FILTER_FIELD_EXPANDED">
+							<option value="0">JNO</option>
+							<option value="1">JYES</option>
+						</field>
+						<field name="logic" type="list" default="inherit" filter="cmd" validate="options" label="MOD_DHARMASHOP_FILTER_FIELD_LOGIC">
+							<option value="inherit">MOD_DHARMASHOP_FILTER_LOGIC_INHERIT</option>
+							<option value="or">MOD_DHARMASHOP_FILTER_LOGIC_OR</option>
+							<option value="and">MOD_DHARMASHOP_FILTER_LOGIC_AND</option>
+						</field>
+					</form>
+				</field>
+			</fieldset>
+			<fieldset name="advanced">
+				<field name="layout" type="modulelayout" label="JFIELD_ALT_LAYOUT_LABEL" class="form-select" validate="moduleLayout" />
+				<field name="moduleclass_sfx" type="textarea" label="COM_MODULES_FIELD_MODULECLASS_SFX_LABEL" rows="3" validate="CssIdentifier" />
+				<field name="cache" type="list" default="0" label="COM_MODULES_FIELD_CACHING_LABEL" description="COM_MODULES_FIELD_CACHING_DESC">
+					<option value="0">COM_MODULES_FIELD_VALUE_NOCACHING</option>
+				</field>
+			</fieldset>
+		</fields>
+	</config>
+</extension>

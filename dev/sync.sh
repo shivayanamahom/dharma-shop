@@ -40,3 +40,12 @@ if [ -d "$M" ]; then
   for l in ru-RU en-GB; do cp "$M/language/$l/"*.ini "$T/language/$l/"; done
 fi
 echo synced
+# Модуль фильтра: код, макеты элементов (modules/…/layouts), media и языковые файлы.
+M="$S/mod_dharmashop_filter"
+if [ -d "$M" ]; then
+  mkdir -p "$T/modules/mod_dharmashop_filter" "$T/media/mod_dharmashop_filter"
+  for d in services src tmpl layouts; do $R "$M/$d/" "$T/modules/mod_dharmashop_filter/$d/"; done
+  cp "$M/mod_dharmashop_filter.xml" "$T/modules/mod_dharmashop_filter/"
+  [ -d "$M/media" ] && $R "$M/media/" "$T/media/mod_dharmashop_filter/" || true
+  for l in ru-RU en-GB; do cp "$M/language/$l/"*.ini "$T/language/$l/"; done
+fi

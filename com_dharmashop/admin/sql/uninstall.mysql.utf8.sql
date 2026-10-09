@@ -28,6 +28,8 @@ DROP TABLE IF EXISTS `#__dharmashop_order_items`;
 DROP TABLE IF EXISTS `#__dharmashop_order_adjustments`;
 DROP TABLE IF EXISTS `#__dharmashop_order_history`;
 DROP TABLE IF EXISTS `#__dharmashop_payments`;
+DROP TABLE IF EXISTS `#__dharmashop_filter_facets`;
+DROP TABLE IF EXISTS `#__dharmashop_filter_ranges`;
 DROP TABLE IF EXISTS `#__dharmashop_category_field_values`;
 DROP TABLE IF EXISTS `#__dharmashop_category_field_texts`;
 DROP TABLE IF EXISTS `#__dharmashop_category_field_media`;

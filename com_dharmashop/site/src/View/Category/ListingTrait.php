@@ -119,6 +119,7 @@ trait ListingTrait
         $this->gridClasses = Grid::classes($this->params, 'category');
         $ordering = $app->getInput()->getCmd('sort', (string) $this->params->get('list_ordering', 'order'));
         $this->searchQuery = $model->getQueryText();
+        $this->redirectToCanonicalFilter($model);
         // С поисковым запросом по умолчанию — по релевантности.
         $this->ordering = $this->searchQuery !== '' && !$app->getInput()->exists('sort') ? 'relevance'
             : (in_array($ordering, CategoryModel::SORTS, true) ? $ordering : 'order');
@@ -126,6 +127,54 @@ trait ListingTrait
         $this->start = max(0, $app->getInput()->getInt('start', $app->getInput()->getInt('limitstart')));
 
         return $menu;
+    }
+
+    /**
+     * Адрес с условиями фильтра приводится к каноническому виду (алиасы, без пустых и неизвестных параметров, стабильный порядок):
+     * форма без JavaScript отправляет и пустые поля, а один выбор должен иметь один адрес (кэш, поисковики, ссылки).
+     */
+    protected function redirectToCanonicalFilter(CategoryModel $model): void
+    {
+        $app = Factory::getApplication();
+        $input = $app->getInput();
+
+        if ($input->getMethod() !== 'GET' || $input->getCmd('format') === 'raw') {
+            return;
+        }
+
+        $requested = $input->get->get('filter', [], 'array');
+        $managed = ['f', 'price', 'brand', 'badge', 'cat', 'stock', 'sale'];
+
+        if (!is_array($requested) || !array_intersect($managed, array_keys($requested))) {
+            return;
+        }
+
+        $canonical = $model->getFilterState()->toArray($model->getFilterDefinition());
+        $keep = array_diff_key($requested, array_flip($managed));
+        $target = $canonical + $keep;
+
+        if ($this->normalizeQuery($requested) === $this->normalizeQuery($target)) {
+            return;
+        }
+
+        $uri = clone \Joomla\CMS\Uri\Uri::getInstance();
+        $uri->delVar('filter');
+        $uri->delVar('start');
+        $rest = $uri->getQuery();
+        // Списки значений — `filter[f][поле][]=…` (как их отправляет форма), а не `[0]`, `[1]`.
+        $filterQuery = $target ? (string) preg_replace('/%5B\d+%5D/', '%5B%5D', http_build_query(['filter' => $target], '', '&', PHP_QUERY_RFC3986)) : '';
+        $query = trim($rest . ($rest !== '' && $filterQuery !== '' ? '&' : '') . $filterQuery, '&');
+
+        // Строка собирается вручную: `Uri::toString()` пересобирает запрос и снова расставляет индексы.
+        $app->redirect($uri->toString(['path']) . ($query !== '' ? '?' . $query : ''), 301);
+    }
+
+    /** @param array<mixed> $filter */
+    private function normalizeQuery(array $filter): string
+    {
+        ksort($filter);
+
+        return http_build_query($filter, '', '&', PHP_QUERY_RFC3986);
     }
 
     /** Читает страницу товаров и готовит штатную постраничную навигацию Joomla. */
@@ -164,7 +213,9 @@ trait ListingTrait
 
             $pagination->setAdditionalUrlParam('sort', $query->exists('sort') ? $this->ordering : null);
             $pagination->setAdditionalUrlParam('product_view', $query->exists('product_view') ? $this->productView : null);
-            $pagination->setAdditionalUrlParam('filter', $this->searchQuery !== '' ? ['search' => $this->searchQuery] : null);
+            // Условия фильтра и поиск остаются в ссылках страниц (канонический вид: алиасы).
+            $filterParams = $model->getFilterState()->toArray($model->getFilterDefinition()) + ($this->searchQuery !== '' ? ['search' => $this->searchQuery] : []);
+            $pagination->setAdditionalUrlParam('filter', $filterParams ?: null);
         }
     }
 

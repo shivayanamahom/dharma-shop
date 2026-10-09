@@ -27,6 +27,7 @@
 		<file type="plugin" id="dharmashopmenu" group="system">plg_system_dharmashopmenu.zip</file>
 		<file type="module" id="mod_dharmashop_cart" client="site">mod_dharmashop_cart.zip</file>
 		<file type="module" id="mod_dharmashop_search" client="site">mod_dharmashop_search.zip</file>
+		<file type="module" id="mod_dharmashop_filter" client="site">mod_dharmashop_filter.zip</file>
 	</files>
 	<languages folder="language">
 		<language tag="en-GB">en-GB/pkg_dharmashop.sys.ini</language>

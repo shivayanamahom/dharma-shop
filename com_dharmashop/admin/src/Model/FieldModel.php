@@ -247,6 +247,8 @@ class FieldModel extends AdminModel
             $this->setError(Text::_('COM_DHARMASHOP_FIELD_SAVE_FAILED')); return false;
         }
         $this->cleanCache();
+        // Фильтр (C84): флаг «фильтр», значения и порядок поля меняют предрасчёт значений и границ.
+        try { Factory::getApplication()->bootComponent('com_dharmashop')->getServices()->facets()->rebuildField($id); } catch (\Throwable $facetError) { \Joomla\CMS\Log\Log::add('Facets rebuildField: ' . $facetError::class, \Joomla\CMS\Log\Log::WARNING, 'com_dharmashop'); }
         return true;
     }
     protected function canDelete($record): bool { return (int) $record->state === -2 && parent::canDelete($record); }

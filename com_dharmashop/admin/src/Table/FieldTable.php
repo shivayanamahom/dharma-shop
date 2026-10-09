@@ -103,7 +103,7 @@ class FieldTable extends Table
         $db->transactionStart();
         try {
             if (!parent::delete($id)) { $db->transactionRollback(); return false; }
-            foreach (['field_options','category_fields'] as $suffix) {
+            foreach (['field_options','category_fields','filter_facets','filter_ranges'] as $suffix) {
                 $query = $db->createQuery()->delete($db->quoteName('#__dharmashop_' . $suffix))->where('field_id = :id')->bind(':id', $id, ParameterType::INTEGER);
                 $db->setQuery($query)->execute();
             }

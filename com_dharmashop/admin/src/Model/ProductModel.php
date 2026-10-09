@@ -239,6 +239,8 @@ class ProductModel extends AdminModel
         $db->transactionStart();
 
         try {
+            // Предрасчёт фильтра: набор строк товара до правки (категории и значения полей); разница применяется перед коммитом.
+            $facetToken = $shop->facets()->begin([$id]);
             // Итоговые учёт остатков и «продавать без остатка» (товар → категории → настройки) записываем в вариант:
             // от них зависит наличие в списках.
             $row = $db->setQuery($db->createQuery()->select('*')->from('#__dharmashop_products')->where('id = ' . $id))->loadAssoc() ?: [];
@@ -276,6 +278,7 @@ class ProductModel extends AdminModel
 
             $removedFiles = array_merge($removedFiles, $fieldValues->save('product', $id, $preparedFields));
             (new SearchIndexer($db))->rebuild($id);
+            $shop->facets()->end($facetToken);
             $db->transactionCommit();
         } catch (\Throwable $e) {
             $db->transactionRollback();
@@ -380,10 +383,12 @@ class ProductModel extends AdminModel
                 continue;
             }
 
+            $facetToken = $shop->facets()->begin([$id]);
             $files = array_merge($files, $shop->gallery()->deleteForProduct($id));
             $files = array_merge($files, (new FieldValues($db))->deleteEntity('product', $id));
             $shop->variants()->deleteForProduct($id);
             $shop->indexer()->deleteProduct($id);
+            $shop->facets()->end($facetToken);
             $db->setQuery('DELETE FROM #__dharmashop_search WHERE product_id = ' . $id)->execute();
             $db->setQuery('DELETE FROM #__dharmashop_product_axes WHERE product_id = ' . $id)->execute();
         }
@@ -396,11 +401,15 @@ class ProductModel extends AdminModel
 
     public function publish(&$pks, $value = 1): bool
     {
+        $facets = $this->shop()->facets();
+        $facetToken = $facets->begin(array_map('intval', (array) $pks));
+
         if (!parent::publish($pks, $value)) {
             return false;
         }
 
         $this->shop()->indexer()->refreshProducts(array_map('intval', (array) $pks));
+        $facets->end($facetToken);
 
         return true;
     }

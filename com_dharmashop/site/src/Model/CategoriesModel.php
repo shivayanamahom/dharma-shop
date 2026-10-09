@@ -30,12 +30,24 @@ class CategoriesModel extends BaseDatabaseModel
         return Taxonomy::category();
     }
 
+    /** Номер категории, заданный кодом (модуль фильтра с фиксированной категорией); null — из адреса страницы. */
+    protected ?int $forcedCategory = null;
+
+    /** Задать категорию вместо номера из адреса страницы (до первого обращения к модели). */
+    public function forCategory(int $id): static
+    {
+        $this->forcedCategory = max(0, $id);
+        $this->parent = null;
+
+        return $this;
+    }
+
     public function getParent(): object
     {
         if ($this->parent !== null) {
             return $this->parent;
         }
-        $id = Factory::getApplication()->getInput()->getInt('id');
+        $id = $this->forcedCategory ?? Factory::getApplication()->getInput()->getInt('id');
         if ($id < 0) {
             throw new \RuntimeException(Text::_('COM_DHARMASHOP_CATEGORY_NOT_FOUND'), 404);
         }

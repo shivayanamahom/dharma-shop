@@ -3,6 +3,8 @@ declare(strict_types=1);
 
 namespace Dharma\Component\DharmaShop\Site\Model;
 
+use Dharma\Component\DharmaShop\Administrator\Filter\FilterDefinition;
+use Dharma\Component\DharmaShop\Administrator\Filter\FilterState;
 use Dharma\Component\DharmaShop\Site\Search\ProductSearch;
 use Dharma\Component\DharmaShop\Site\Support\SaleCountdown;
 use Joomla\CMS\Component\ComponentHelper;
@@ -23,8 +25,20 @@ class CategoryModel extends CategoriesModel
     /** @var array<string, string> значения параметров поискового подзапроса (переменные нужны для привязки по ссылке) */
     private array $searchBinds = [];
 
+    /** @var array<string, mixed> значения параметров вложенного запроса кандидатов (для привязки по ссылке) */
+    private array $embeddedBinds = [];
+
     /** Мягкий режим поиска включён (null — ещё не определено) */
     private ?bool $searchFuzzy = null;
+
+    private ?FilterDefinition $filterDefinition = null;
+    private ?FilterState $filterState = null;
+
+    /** Индекс витрины для подсказки `FORCE INDEX` страницы списка (выбирает планировщик фильтра; null — выбор оптимизатора). */
+    private ?string $indexHint = null;
+
+    /** Число найденных товаров с фильтром упёрлось в потолок подсчёта (показывать «N+»). */
+    public bool $totalCapped = false;
 
     /**
      * Нужен ли мягкий режим поиска: он включается, только если обычный запрос ничего не нашёл (один дополнительный COUNT на запрос)
@@ -43,6 +57,129 @@ class CategoryModel extends CategoriesModel
         }
 
         return $this->searchFuzzy;
+    }
+
+    /** Что можно фильтровать на этой странице (кэш). */
+    public function getFilterDefinition(): FilterDefinition
+    {
+        if ($this->filterDefinition === null) {
+            $catid = (int) $this->getParent()->id;
+            $this->filterDefinition = Factory::getApplication()->bootComponent('com_dharmashop')->getServices()->filter()->definition($catid);
+        }
+
+        return $this->filterDefinition;
+    }
+
+    /** Выбор посетителя в фильтре (`filter[f]`, `filter[price]`, …) по справочнику страницы; пустое состояние — без фильтра. */
+    public function getFilterState(): FilterState
+    {
+        if ($this->filterState === null) {
+            $input = Factory::getApplication()->getInput()->get('filter', [], 'array');
+            $enabled = (int) ComponentHelper::getParams('com_dharmashop')->get('filter_enabled', 1) === 1;
+            $services = Factory::getApplication()->bootComponent('com_dharmashop')->getServices()->filter();
+            $this->filterState = $enabled && is_array($input) && $input ? $services->state($input, $this->getFilterDefinition()) : new FilterState();
+        }
+
+        return $this->filterState;
+    }
+
+    /**
+     * Данные фильтра страницы: у каких значений есть товары, числа, границы. Режим счётчиков: `off` — только наличие по базовому
+     * состоянию, `base` — числа базового состояния, `live` — каскад (числа под текущий выбор; при слишком большом числе кандидатов — база).
+     *
+     * @return  array{options: array<int, array<int, int>>, counts: bool, approximate: bool, ranges: array<int, array{min: float, max: float}>, price: array{min: float, max: float}|null}
+     */
+    public function getFacets(string $mode = 'base'): array
+    {
+        $engine = Factory::getApplication()->bootComponent('com_dharmashop')->getServices()->filter()->facets();
+        $catid = (int) $this->getParent()->id;
+        $base = $engine->base($catid);
+        $result = ['options' => $base['options'], 'counts' => $mode !== 'off', 'approximate' => false, 'ranges' => $base['ranges'], 'price' => $engine->price($catid)];
+        $state = $this->getFilterState();
+
+        if ($mode !== 'live' || $state->isEmpty()) {
+            return $result;
+        }
+
+        // Каскад: поля без собственного выбора считаются по полному выбору одним запросом, поле с выбором — по выбору без него.
+        $definition = $this->getFilterDefinition();
+        $groups = [];
+
+        foreach ($definition->fields as $field) {
+            if ($field->kind !== \Dharma\Component\DharmaShop\Administrator\Filter\FilterField::OPTION) {
+                continue;
+            }
+
+            $own = isset($state->options[$field->id]);
+            $key = $own ? 'f' . $field->id : 'all';
+            $groups[$key]['state'] = $own ? $state->withoutField($field->id) : $state;
+            $groups[$key]['fields'][] = $field->id;
+        }
+
+        $limit = max(1000, (int) ComponentHelper::getParams('com_dharmashop')->get('filter_live_limit', 20000));
+        $live = [];
+
+        foreach ($groups as $group) {
+            $counts = $this->candidateCounts($group['state'], $group['fields'], $limit);
+
+            if ($counts === null) {
+                $result['approximate'] = true;
+
+                continue;
+            }
+
+            foreach ($group['fields'] as $fieldId) {
+                $live[$fieldId] = $counts[$fieldId] ?? [];
+            }
+        }
+
+        foreach ($live as $fieldId => $values) {
+            $result['options'][$fieldId] = $values;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Числа значений полей среди кандидатов (`productsQuery()` с заданным выбором); null — кандидатов больше предела.
+     *
+     * @param   int[]  $fieldIds
+     *
+     * @return  array<int, array<int, int>>|null
+     */
+    private function candidateCounts(FilterState $state, array $fieldIds, int $limit): ?array
+    {
+        $db = $this->getDatabase();
+        $candidates = $this->productsQuery($state)->select('p.id');
+        $sql = (string) $candidates;
+        $embed = function (QueryInterface $outer) use ($candidates): void {
+            foreach ($candidates->getBounded() as $key => $bound) {
+                $this->embeddedBinds[(string) $key] = $bound->value;
+                $outer->bind((string) $key, $this->embeddedBinds[(string) $key], $bound->dataType);
+            }
+        };
+
+        // Порог: больше кандидатов — живой подсчёт слишком дорог, остаётся база.
+        $guard = $db->createQuery()->select('COUNT(*)')->from('(' . $sql . ' LIMIT ' . ($limit + 1) . ') AS g');
+        $embed($guard);
+
+        if ((int) $db->setQuery($guard)->loadResult() > $limit) {
+            return null;
+        }
+
+        $outer = $db->createQuery()->select(['fv.field_id', 'fv.option_id', 'COUNT(DISTINCT fv.product_id) AS n'])
+            ->from($db->quoteName('#__dharmashop_field_values', 'fv'))
+            ->join('INNER', '(' . $sql . ') AS c ON c.id = fv.product_id')
+            ->where('fv.field_id IN (' . implode(',', array_map('intval', $fieldIds)) . ')')->where('fv.option_id IS NOT NULL')
+            ->group('fv.field_id, fv.option_id');
+        $embed($outer);
+        $counts = [];
+
+        foreach ($db->setQuery($outer)->loadObjectList() as $row) {
+            $counts[(int) $row->field_id][(int) $row->option_id] = (int) $row->n;
+        }
+
+        return $counts;
     }
 
     /** Текст поискового запроса (`filter[search]`) страницы списка; пусто — без поиска. */
@@ -70,6 +207,15 @@ class CategoryModel extends CategoriesModel
     {
         $db = $this->getDatabase();
 
+        // С фильтром точный подсчёт редкого условия по широкой категории дорог: считаем до потолка (по умолчанию 10 001), дальше — «N+».
+        if (!$this->getFilterState()->isEmpty()) {
+            $cap = max(100, (int) ComponentHelper::getParams('com_dharmashop')->get('filter_count_cap', 10001));
+            $found = count($db->setQuery($this->productsQuery()->select('1'), 0, $cap + 1)->loadColumn());
+            $this->totalCapped = $found > $cap;
+
+            return min($found, $cap);
+        }
+
         return (int) $db->setQuery($this->productsQuery()->select('COUNT(*)'))->loadResult();
     }
 
@@ -85,12 +231,18 @@ class CategoryModel extends CategoriesModel
         $db = $this->getDatabase();
         [$column, $direction] = $this->sortExpression($ordering);
         $sort = $db->quoteName($column);
+        // Форма запроса по плотности условий фильтра (замеры F0): плотное условие — обход индекса сортировки с ранней остановкой.
+        $state = $this->getFilterState();
+        $this->indexHint = $state->isEmpty() || $this->getQueryText() !== '' ? null
+            : Factory::getApplication()->bootComponent('com_dharmashop')->getServices()->filter()->planner()
+                ->indexHint($state, $this->getFilterDefinition(), (int) $this->getParent()->id, $ordering, max(0, $start), $limit);
         $query = $this->productsQuery()
             ->select($db->quoteName(['p.id', 'p.catid', 'p.title', 'p.alias', 'p.cover', 'p.cover_alt',
                 'p.introtext', 'p.price_min', 'p.price_max', 'p.price_zero_free', 'p.in_stock', 'p.unit', 'p.qty_min', 'p.qty_step', 'p.params']))
             ->select($db->quoteName('c.title', 'category_title'))
             ->order($sort . ' ' . $direction)->order('p.id ' . $direction);
         $items = $db->setQuery($query, max(0, $start), $limit)->loadObjectList();
+        $this->indexHint = null;
 
         $rules = Factory::getApplication()->bootComponent('com_dharmashop')->getServices()->orderRules();
 
@@ -232,7 +384,7 @@ class CategoryModel extends CategoriesModel
         return (object) ['product_count' => $this->getCountLabel($category), 'price_min' => $range['min'], 'price_max' => $range['max']];
     }
 
-    protected function productsQuery(): QueryInterface
+    protected function productsQuery(?FilterState $filterOverride = null): QueryInterface
     {
         $category = (int) $this->getParent()->id;
         $db = $this->getDatabase();
@@ -242,7 +394,7 @@ class CategoryModel extends CategoriesModel
             ->where('p.state = 1')->where('c.extension = ' . $db->quote('com_dharmashop'))
             ->where('c.published = 1')->where('c.access IN (' . $levels . ')');
         if ($category > 0) {
-            $query->join('INNER', $db->quoteName('#__dharmashop_product_categories', 'pc') . ' ON pc.product_id = p.id')
+            $query->join('INNER', $db->quoteName('#__dharmashop_product_categories', 'pc') . ($this->indexHint !== null ? ' FORCE INDEX (' . $this->indexHint . ')' : '') . ' ON pc.product_id = p.id')
                 ->where('pc.catid = :category')->where('pc.state = 1')->bind(':category', $category, ParameterType::INTEGER);
         }
         // Закрытый или снятый предок основной категории также скрывает товар.
@@ -251,6 +403,14 @@ class CategoryModel extends CategoriesModel
             ->where('blocked.lft <= c.lft')->where('blocked.rgt >= c.rgt')
             ->where('(blocked.published != 1 OR blocked.access NOT IN (' . $levels . '))');
         $query->where('NOT EXISTS (' . $blocked . ')');
+
+        // Фильтр: условия выбора посетителя (поля, цена, бренд, бейджи, наличие) поверх состава списка.
+        $filterState = $filterOverride ?? $this->getFilterState();
+
+        if (!$filterState->isEmpty()) {
+            Factory::getApplication()->bootComponent('com_dharmashop')->getServices()->filter()->query()
+                ->apply($query, $filterState, $this->getFilterDefinition(), $category > 0);
+        }
 
         // Поиск на странице списка (категория, бренд, бейдж, каталог): состав ограничивает поисковый индекс.
         if (($text = $this->getQueryText()) !== '') {

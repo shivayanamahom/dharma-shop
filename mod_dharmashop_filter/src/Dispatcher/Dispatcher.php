@@ -1,0 +1,42 @@
+<?php
+
+/**
+ * Dharma Shop — универсальный лёгкий интернет-магазин для Joomla 6+.
+ *
+ * @package    mod_dharmashop_filter
+ * @copyright  (C) 2026 Dharma. Все права защищены.
+ * @license    GNU General Public License версии 2 или новее; см. LICENSE.txt
+ */
+
+declare(strict_types=1);
+
+namespace Dharma\Module\DharmaShopFilter\Site\Dispatcher;
+
+use Dharma\Module\DharmaShopFilter\Site\Helper\FilterHelper;
+use Joomla\CMS\Dispatcher\AbstractModuleDispatcher;
+use Joomla\CMS\Log\Log;
+
+\defined('_JEXEC') or die;
+
+/**
+ * Фильтр товаров (C84). Форма — обычный GET на страницу списка: работает без JavaScript. Данные готовит `FilterHelper` по настройкам модуля;
+ * скрипты (AJAX, ползунок, offcanvas и др.) подключаются только если соответствующая возможность включена настройкой — сейчас таких нет,
+ * страница получает чистую форму без дополнительных ресурсов.
+ */
+class Dispatcher extends AbstractModuleDispatcher
+{
+    protected function getLayoutData()
+    {
+        $data = parent::getLayoutData();
+
+        // Сбой фильтра не должен ронять страницу каталога: модуль просто не выводится, причина — в журнале компонента.
+        try {
+            $data['filter'] = (new FilterHelper($this->getApplication(), $data['params']))->build();
+        } catch (\Throwable $error) {
+            Log::add('Filter module: ' . $error::class . ': ' . $error->getMessage() . ' @ ' . basename($error->getFile()) . ':' . $error->getLine(), Log::ERROR, 'com_dharmashop');
+            $data['filter'] = null;
+        }
+
+        return $data;
+    }
+}

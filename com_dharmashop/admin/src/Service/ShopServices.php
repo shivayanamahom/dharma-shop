@@ -27,6 +27,8 @@ use Dharma\Component\DharmaShop\Administrator\Order\OrderRules;
 use Dharma\Component\DharmaShop\Administrator\Pricing\MoneyFormatter;
 use Dharma\Component\DharmaShop\Administrator\Pricing\PriceResolver;
 use Dharma\Component\DharmaShop\Administrator\Pricing\SaleScheduler;
+use Dharma\Component\DharmaShop\Administrator\Filter\FacetIndexer;
+use Dharma\Component\DharmaShop\Administrator\Filter\FilterService;
 use Dharma\Component\DharmaShop\Administrator\Payment\PaymentService;
 use Dharma\Component\DharmaShop\Administrator\Shipping\ShippingService;
 use Dharma\Component\DharmaShop\Administrator\Stock\StockService;
@@ -72,6 +74,8 @@ final class ShopServices
     private ?OrderStatusService $orderStatuses = null;
     private ?ShippingService $shipping = null;
     private ?PaymentService $payments = null;
+    private ?FilterService $filter = null;
+    private ?FacetIndexer $facets = null;
     private ?WarehouseService $warehouses = null;
 
     public function __construct(private readonly DatabaseInterface $db)
@@ -81,6 +85,16 @@ final class ShopServices
     public function warehouses(): WarehouseService
     {
         return $this->warehouses ??= new WarehouseService($this->db);
+    }
+
+    public function facets(): FacetIndexer
+    {
+        return $this->facets ??= new FacetIndexer($this->db);
+    }
+
+    public function filter(): FilterService
+    {
+        return $this->filter ??= new FilterService($this->db);
     }
 
     public function payments(): PaymentService
