@@ -133,6 +133,7 @@
 				<field name="price_presets" type="textarea" rows="4" filter="string" showon="price_display:inputs,slider" label="MOD_DHARMASHOP_FILTER_PRICE_PRESETS" description="MOD_DHARMASHOP_FILTER_PRICE_PRESETS_DESC" hint="до 50 000 = 0-50000" />
 			</fieldset>
 			<fieldset name="filters" label="MOD_DHARMASHOP_FILTER_TAB_FILTERS" addfieldprefix="Dharma\Module\DharmaShopFilter\Site\Field">
+				<field name="fields_note" type="note" class="alert alert-info" label="MOD_DHARMASHOP_FILTER_FIELDS_NOTE" description="MOD_DHARMASHOP_FILTER_FIELDS_NOTE_DESC" />
 				<field name="fields_config" type="subform" multiple="true" min="0" max="60" buttons="add,remove,move" layout="joomla.form.field.subform.repeatable-table" label="MOD_DHARMASHOP_FILTER_FIELDS_CONFIG" description="MOD_DHARMASHOP_FILTER_FIELDS_CONFIG_DESC">
 					<form>
 						<field name="field" type="filterfields" filter="string" required="true" label="MOD_DHARMASHOP_FILTER_FIELD" />
