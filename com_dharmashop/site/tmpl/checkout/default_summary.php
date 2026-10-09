@@ -22,13 +22,13 @@ $qtyText = static fn (float $qty): string => rtrim(rtrim(number_format($qty, 3, 
                     <li>
                         <div class="d-flex justify-content-between align-items-baseline gap-3">
                             <a class="fw-semibold text-break link-body-emphasis text-decoration-none" href="<?php echo $this->escape($line->url); ?>"><?php echo $this->escape($line->title); ?></a>
-                            <?php if ($line->error === '') : ?><span class="fw-semibold text-end flex-shrink-0"><?php echo $this->escape($this->money->price((string) $line->total)); ?></span><?php endif; ?>
+                            <?php if ($line->error === '') : ?><span class="fw-semibold text-end flex-shrink-0"><?php echo $this->escape($this->money->price((string) $line->total, !empty($line->zero_free))); ?></span><?php endif; ?>
                         </div>
                         <?php if ($line->variant_title) : ?><div class="text-body-secondary"><?php echo $this->escape($line->variant_title); ?></div><?php endif; ?>
                         <?php if ($line->error !== '') : ?>
                             <div class="text-danger"><?php echo $this->escape(Text::_($line->error)); ?></div>
                         <?php else : ?>
-                            <div class="text-body-secondary"><?php echo $this->escape($qtyText((float) $line->qty)); ?> × <?php echo $this->escape($this->money->price((string) $line->unit_price)); ?></div>
+                            <div class="text-body-secondary"><?php echo $this->escape($qtyText((float) $line->qty)); ?> × <?php echo $this->escape($this->money->price((string) $line->unit_price, !empty($line->zero_free))); ?></div>
                         <?php endif; ?>
                     </li>
                 <?php endforeach; ?>

@@ -55,21 +55,43 @@ final class MoneyFormatter
         return $text !== '' ? $text : Text::_('COM_DHARMASHOP_PRODUCT_PRICE_REQUEST');
     }
 
-    /** Цена для витрины: нулевая сумма заменяется текстом, если замена включена; пустое значение остаётся пустым. */
-    public function price(null|float|string $amount): string
+    /** Текст для бесплатного товара (правило «Цена 0 — бесплатно» у товара или категории). */
+    public function freeText(): string
+    {
+        return Text::_('COM_DHARMASHOP_PRODUCT_PRICE_FREE');
+    }
+
+    /**
+     * Цена для витрины: нулевая сумма заменяется текстом, если замена включена; пустое значение остаётся пустым.
+     *
+     * @param  bool  $free  у товара «цена 0 — бесплатно»: нулевая цена показывается как «Бесплатно» и не заменяется текстом «по запросу»
+     */
+    public function price(null|float|string $amount, bool $free = false): string
     {
         if ($amount === null || $amount === '') {
             return '';
         }
 
-        return $this->replacesZero() && (float) $amount === 0.0 ? $this->zeroText() : $this->format($amount);
+        if ((float) $amount === 0.0) {
+            if ($free) {
+                return $this->freeText();
+            }
+
+            return $this->replacesZero() ? $this->zeroText() : $this->format($amount);
+        }
+
+        return $this->format($amount);
     }
 
     /** Диапазон цен для витрины: «от — до»; если обе границы нулевые и замена включена, выводится только текст. */
-    public function range(null|float|string $min, null|float|string $max = null): string
+    public function range(null|float|string $min, null|float|string $max = null, bool $free = false): string
     {
         if ($min === null || $min === '') {
             return '';
+        }
+
+        if ($free && (float) $min === 0.0) {
+            return $this->freeText();
         }
 
         if ($this->replacesZero() && (float) $min === 0.0) {

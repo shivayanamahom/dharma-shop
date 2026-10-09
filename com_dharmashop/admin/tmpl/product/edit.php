@@ -56,7 +56,7 @@ $canAdmin = $this->getCurrentUser()->authorise('core.admin', 'com_dharmashop');
             <div class="col-lg-6">
                 <fieldset class="options-form">
                     <legend><?php echo Text::_('COM_DHARMASHOP_FIELDSET_PRICE'); ?></legend>
-                    <?php foreach (['sku', 'price', 'discount', 'price_result', 'discount_start', 'discount_end'] as $name) : ?>
+                    <?php foreach (['sku', 'price', 'price_zero_free', 'discount', 'price_result', 'discount_start', 'discount_end'] as $name) : ?>
                         <?php echo $this->form->renderField($name); ?>
                     <?php endforeach; ?>
                 </fieldset>

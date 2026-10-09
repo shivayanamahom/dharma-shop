@@ -66,7 +66,7 @@ class SearchController extends BaseController
                     'image' => \Dharma\Component\DharmaShop\Administrator\Image\ImageUrl::resolve((string) $product->cover, 'search.module'),
                     'category' => (string) ($product->category_title ?? ''),
                     'sku' => (string) ($skus[(int) $product->id] ?? ''),
-                    'price' => $money->range($product->price_min, $product->price_max),
+                    'price' => $money->range($product->price_min, $product->price_max, !empty($product->price_free)),
                     'in_stock' => (int) $product->in_stock === 1,
                 ];
             }

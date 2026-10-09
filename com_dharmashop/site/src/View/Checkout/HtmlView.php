@@ -48,11 +48,11 @@ class HtmlView extends BaseHtmlView
     public function totalText(float $amount): string
     {
         $zero = $this->money->replacesZero()
-            && array_filter($this->lines, static fn (object $line): bool => $line->error === '' && $line->unit_price === 0.0);
+            && array_filter($this->lines, static fn (object $line): bool => $line->error === '' && $line->unit_price === 0.0 && empty($line->zero_free));
 
         return $zero
             ? ($amount > 0 ? $this->money->format((string) $amount) . ' + ' : '') . $this->money->zeroText()
-            : $this->money->price((string) $amount);
+            : $this->money->price((string) $amount, true);
     }
 
     public function discountTotals(): array

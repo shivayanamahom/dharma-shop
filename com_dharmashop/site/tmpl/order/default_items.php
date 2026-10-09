@@ -16,8 +16,8 @@ $money = $this->details->money;
                         <?php if ($line->sku !== '') : ?><div class="small text-body-secondary"><?php echo Text::_('COM_DHARMASHOP_ORDER_SKU'); ?>: <?php echo $this->escape($line->sku); ?></div><?php endif; ?>
                     </div>
                     <div class="col-12 col-sm-5 text-sm-end">
-                        <div class="fw-semibold"><?php echo $this->escape($line->total === null ? $money->zeroText() : $money->price($line->total)); ?></div>
-                        <div class="small text-body-secondary"><?php echo $this->escape(OrderDisplay::quantity((string) $line->qty) . ' ' . $line->unit); ?> × <?php echo $this->escape($line->price === null ? $money->zeroText() : $money->price($line->price)); ?></div>
+                        <div class="fw-semibold"><?php echo $this->escape($line->total === null ? $money->zeroText() : $money->price($line->total, !empty($params['zero_free']))); ?></div>
+                        <div class="small text-body-secondary"><?php echo $this->escape(OrderDisplay::quantity((string) $line->qty) . ' ' . $line->unit); ?> × <?php echo $this->escape($line->price === null ? $money->zeroText() : $money->price($line->price, !empty($params['zero_free']))); ?></div>
                     </div>
                 </div>
             </li>

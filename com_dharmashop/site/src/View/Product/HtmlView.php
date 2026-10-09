@@ -52,7 +52,7 @@ class HtmlView extends BaseHtmlView
         $this->item = $this->getModel()->getItem();
         $this->params = ComponentHelper::getParams('com_dharmashop');
         $money = new MoneyFormatter($this->params);
-        $this->price = $money->range($this->item->price_min, $this->item->price_max);
+        $this->price = $money->range($this->item->price_min, $this->item->price_max, !empty($this->item->price_free));
         $this->showDiscount = (int) $this->params->get('product_page_show_discount', 1) === 1 && $this->item->base_price !== null;
         $this->showSaleCountdown = (int) $this->params->get('product_page_sale_countdown', 1) === 1
             && !empty($this->item->sale_end_timestamp);
@@ -94,7 +94,7 @@ class HtmlView extends BaseHtmlView
             // Одно Offer только для одной реальной цены; диапазон вариантов не выдаём за конкретное предложение.
             $offerPrice = $min !== null && $min !== '' && (float) $min >= 0
                 && ($max === null || (float) $min === (float) $max)
-                && !($money->replacesZero() && (float) $min === 0.0) ? (string) $min : null;
+                && !($money->replacesZero() && (float) $min === 0.0 && empty($this->item->price_free)) ? (string) $min : null;
             $content = new ProductMetadata(
                 (string) $this->item->title, (string) $this->item->sku, (string) $this->item->brand_title,
                 ProductValues::introtext($this->text((string) $this->item->introtext)),

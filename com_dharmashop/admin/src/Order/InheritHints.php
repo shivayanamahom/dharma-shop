@@ -40,7 +40,7 @@ final class InheritHints
             $value = self::format($field, $inherited['values'][$field]);
             $source = $rules->sourceLabel($inherited['sources'][$field]);
 
-            if (in_array($field, ['stock_tracked', 'backorder'], true)) {
+            if (in_array($field, ['stock_tracked', 'backorder', 'price_zero_free'], true)) {
                 $form->setFieldAttribute($name, 'description', Text::sprintf('COM_DHARMASHOP_ORDER_INHERIT_DESC', $value, $source), $group);
             } else {
                 $form->setFieldAttribute($name, 'hint', Text::sprintf('COM_DHARMASHOP_ORDER_INHERIT_HINT', $value . ' (' . $source . ')'), $group);

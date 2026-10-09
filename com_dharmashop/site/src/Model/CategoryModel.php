@@ -87,13 +87,16 @@ class CategoryModel extends CategoriesModel
         $sort = $db->quoteName($column);
         $query = $this->productsQuery()
             ->select($db->quoteName(['p.id', 'p.catid', 'p.title', 'p.alias', 'p.cover', 'p.cover_alt',
-                'p.introtext', 'p.price_min', 'p.price_max', 'p.in_stock', 'p.unit', 'p.qty_min', 'p.qty_step', 'p.params']))
+                'p.introtext', 'p.price_min', 'p.price_max', 'p.price_zero_free', 'p.in_stock', 'p.unit', 'p.qty_min', 'p.qty_step', 'p.params']))
             ->select($db->quoteName('c.title', 'category_title'))
             ->order($sort . ' ' . $direction)->order('p.id ' . $direction);
         $items = $db->setQuery($query, max(0, $start), $limit)->loadObjectList();
 
+        $rules = Factory::getApplication()->bootComponent('com_dharmashop')->getServices()->orderRules();
+
         foreach ($items as $item) {
             $item->params = new Registry($item->params);
+            $item->price_free = $rules->priceIsFree($item);
         }
 
         return $items;

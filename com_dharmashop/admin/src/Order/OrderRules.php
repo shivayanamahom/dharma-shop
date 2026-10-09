@@ -32,12 +32,15 @@ use Joomla\Registry\Registry;
  */
 final class OrderRules
 {
-    public const FIELDS = ['qty_min', 'qty_step', 'qty_max', 'unit', 'stock_tracked', 'backorder'];
+    public const FIELDS = ['qty_min', 'qty_step', 'qty_max', 'unit', 'stock_tracked', 'backorder', 'price_zero_free'];
 
-    private const BUILTIN = ['qty_min' => 1.0, 'qty_step' => 1.0, 'qty_max' => 0.0, 'unit' => 'шт', 'stock_tracked' => 0, 'backorder' => 0];
+    private const BUILTIN = ['qty_min' => 1.0, 'qty_step' => 1.0, 'qty_max' => 0.0, 'unit' => 'шт', 'stock_tracked' => 0, 'backorder' => 0, 'price_zero_free' => 0];
 
     /** @var array<int, array<string, mixed>>|null настройки каждой категории магазина: id => params */
     private ?array $categoryParams = null;
+
+    /** @var array<int, bool> правило «цена 0 — бесплатно» по основной категории (в рамках запроса) */
+    private array $freeByCategory = [];
 
     public function __construct(private readonly DatabaseInterface $db, private readonly Registry $params)
     {
@@ -47,6 +50,7 @@ final class OrderRules
     public function flush(): void
     {
         $this->categoryParams = null;
+        $this->freeByCategory = [];
     }
 
     /** Подпись источника значения: «из настроек магазина» или «из категории «…»». */
@@ -135,6 +139,25 @@ final class OrderRules
         }
 
         return $rules;
+    }
+
+    /**
+     * Цена 0 у товара означает «бесплатно» (а не «по запросу»): значение товара, иначе категории и её родителей.
+     *
+     * @param   array<string, mixed>|object  $product  нужны catid и собственное price_zero_free
+     */
+    public function priceIsFree(array|object $product): bool
+    {
+        $product = (array) $product;
+        $own = $product['price_zero_free'] ?? null;
+
+        if ($own !== null && $own !== '') {
+            return (int) $own === 1;
+        }
+
+        $catid = (int) ($product['catid'] ?? 0);
+
+        return $this->freeByCategory[$catid] ??= (int) $this->forCategory($catid)['values']['price_zero_free'] === 1;
     }
 
     /** Записывает итоговые учёт остатков и «продавать без остатка» в варианты товаров с id от $from до $to и пересчитывает наличие. */

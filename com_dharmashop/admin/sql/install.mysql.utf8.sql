@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS `#__dharmashop_products` (
   `qty_max` decimal(12,3) NULL,
   `stock_tracked` tinyint unsigned NULL,
   `backorder` tinyint unsigned NULL,
+  `price_zero_free` tinyint unsigned NULL,
   `price_min` decimal(15,2) NULL,
   `price_max` decimal(15,2) NULL,
   `in_stock` tinyint unsigned NOT NULL DEFAULT 1,

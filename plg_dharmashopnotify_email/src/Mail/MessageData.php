@@ -29,14 +29,15 @@ final class MessageData
             $variant = json_decode((string) $item['params'], true) ?: [];
             $title = $item['title'] . (!empty($variant['variant_title']) ? ' — ' . $variant['variant_title'] : '');
             $qty = rtrim(rtrim(number_format((float) $item['qty'], 3, ',', ' '), '0'), ',') . ' ' . $item['unit'];
-            $price = $item['price'] === null ? $money->zeroText() : $money->price($item['price']);
-            $total = $item['total'] === null ? $money->zeroText() : $money->price($item['total']);
+            $free = !empty($variant['zero_free']);
+            $price = $item['price'] === null ? $money->zeroText() : $money->price($item['price'], $free);
+            $total = $item['total'] === null ? $money->zeroText() : $money->price($item['total'], $free);
             $productId = (int) ($item['available_product_id'] ?? 0);
             $url = $productId > 0 ? $root . '/index.php?option=com_dharmashop&view=product&id=' . $productId : '';
             $image = $productId > 0 ? ImageUrl::resolve((string) ($item['cover'] ?? ''), 'email.product') : '';
             $items[] = ['title'=>$title, 'sku'=>$item['sku'], 'qty'=>$qty, 'price'=>$price, 'total'=>$total, 'url'=>$url, 'image'=>$image];
             $plainItems[] = $title . ($item['sku'] !== '' ? ' [' . $item['sku'] . ']' : '') . "\n" . $qty . ' × ' . $price . ' = ' . $total;
-            if ($item['price'] === null || ($money->replacesZero() && (float) $item['price'] === 0.0)) $unknown = true;
+            if ($item['price'] === null || ($money->replacesZero() && (float) $item['price'] === 0.0 && !$free)) $unknown = true;
         }
         $adjustments = [];
         foreach ($message->adjustments as $adjustment) {

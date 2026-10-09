@@ -35,7 +35,7 @@ $qtyText = static fn (float $qty): string => rtrim(rtrim(number_format($qty, 3, 
                     $step = (float) ($line->qty_step ?: 1);
                     $min = (float) ($line->qty_min ?: $step);
                     $onSale = $line->error === '' && $line->base_price !== null && $line->unit_price !== null && $line->unit_price > 0 && $line->base_price > $line->unit_price;
-                    $showUnit = $line->unit_price !== null && !($this->money->replacesZero() && $line->unit_price === 0.0);
+                    $showUnit = $line->unit_price !== null && !(($this->money->replacesZero() || !empty($line->zero_free)) && $line->unit_price === 0.0);
                     ?>
                     <div class="card shadow-sm mb-3 position-relative dharmaCartLine" data-line="<?php echo (int) $line->id; ?>">
                         <div class="card-body d-flex gap-3">
@@ -58,7 +58,7 @@ $qtyText = static fn (float $qty): string => rtrim(rtrim(number_format($qty, 3, 
                                         <div class="text-end lh-sm">
                                             <?php if ($onSale) : ?><div class="small text-body-secondary"><s><?php echo $this->escape($this->money->format((string) $line->base_price)); ?></s></div><?php endif; ?>
                                             <?php if ($showUnit) : ?><div class="small text-body-secondary"><?php echo $this->escape($this->money->price((string) $line->unit_price)); ?><?php echo (string) $line->unit !== '' ? ' / ' . $this->escape($line->unit) : ''; ?></div><?php endif; ?>
-                                            <div class="fw-semibold fs-6"><?php echo $this->escape($this->money->price((string) $line->total)); ?></div>
+                                            <div class="fw-semibold fs-6"><?php echo $this->escape($this->money->price((string) $line->total, !empty($line->zero_free))); ?></div>
                                         </div>
                                     <?php endif; ?>
                                 </div>

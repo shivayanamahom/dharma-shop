@@ -35,7 +35,7 @@ class ProductModel extends BaseDatabaseModel
             ->where('(blocked.published != 1 OR blocked.access NOT IN (' . $levels . '))');
         $query = $db->createQuery()->select($db->quoteName([
                 'p.id', 'p.catid', 'p.title', 'p.alias', 'p.introtext', 'p.fulltext', 'p.cover', 'p.cover_alt',
-                'p.price_min', 'p.price_max', 'p.unit', 'p.qty_min', 'p.qty_step', 'p.in_stock', 'p.metadesc', 'p.metadata', 'p.params',
+                'p.price_min', 'p.price_max', 'p.price_zero_free', 'p.unit', 'p.qty_min', 'p.qty_step', 'p.in_stock', 'p.metadesc', 'p.metadata', 'p.params',
             ]))
             ->select($db->quoteName('c.title', 'category_title'))
             ->from($db->quoteName('#__dharmashop_products', 'p'))
@@ -57,6 +57,7 @@ class ProductModel extends BaseDatabaseModel
             ->where('pc.direct = 1')->where('b.extension = ' . $db->quote('com_dharmashop.brand'))
             ->where('b.published = 1')->where('b.access IN (' . $levels . ')')->order('b.id'), 0, 1)->loadResult();
         $item->description = (string) ($item->fulltext ?? '');
+        $item->price_free = Factory::getApplication()->bootComponent('com_dharmashop')->getServices()->orderRules()->priceIsFree($item);
         // SKU и фактическое наличие одного и того же опубликованного варианта, без отдельного запроса остатков.
         $variant = $db->setQuery($db->createQuery()->select($db->quoteName(['sku', 'stock_tracked', 'stock_total']))
             ->from($db->quoteName('#__dharmashop_variants'))

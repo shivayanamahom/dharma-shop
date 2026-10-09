@@ -110,7 +110,7 @@ class ProductTable extends Table
         $this->search_text = $this->search_text === '' ? null : $this->search_text;
 
         // Правила оформления заказа необязательны: пустое значение = «наследовать» (NULL).
-        foreach (['unit', 'qty_min', 'qty_step', 'qty_max', 'stock_tracked', 'backorder'] as $field) {
+        foreach (['unit', 'qty_min', 'qty_step', 'qty_max', 'stock_tracked', 'backorder', 'price_zero_free'] as $field) {
             if ($this->$field === '' || $this->$field === null) {
                 $this->$field = null;
             }

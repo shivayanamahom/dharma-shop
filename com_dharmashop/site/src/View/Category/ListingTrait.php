@@ -287,7 +287,7 @@ trait ListingTrait
             'productUrl' => Route::_('index.php?option=com_dharmashop&view=product&id=' . (int) $item->id . '&catid=' . (int) $item->catid, false),
             'showIntro' => (int) $this->params->get('product_card_intro', 1) === 1,
             'intro' => $intro,
-            'priceRange' => $this->formatRange($item->price_min, $item->price_max),
+            'priceRange' => $this->formatRange($item->price_min, $item->price_max, !empty($item->price_free)),
             'oldPrice' => $item->base_price !== null ? $this->money->format($item->base_price) : '',
             'discountAmount' => $item->discount_amount !== null ? $this->money->format($item->discount_amount) : '',
             'discountPercent' => (float) $item->discount_percent,
@@ -319,9 +319,9 @@ trait ListingTrait
         }
     }
 
-    private function formatRange(?string $min, ?string $max): string
+    private function formatRange(?string $min, ?string $max, bool $free = false): string
     {
-        return $this->money->range($min, $max);
+        return $this->money->range($min, $max, $free);
     }
 
     private function existingLayout(string $name, string $directory, string $fallback = 'default'): string

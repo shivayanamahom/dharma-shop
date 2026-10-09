@@ -40,6 +40,11 @@
 				<option value="1">JYES</option>
 				<option value="0">JNO</option>
 			</field>
+			<field name="order_price_zero_free" type="list" label="COM_DHARMASHOP_ORDER_PRICE_ZERO_FREE" description="COM_DHARMASHOP_ORDER_PRICE_ZERO_FREE_DESC" default="" validate="options">
+				<option value="">COM_DHARMASHOP_ORDER_INHERIT</option>
+				<option value="1">JYES</option>
+				<option value="0">JNO</option>
+			</field>
 			<field name="order_backorder" type="list" label="COM_DHARMASHOP_ORDER_BACKORDER" description="COM_DHARMASHOP_ORDER_BACKORDER_DESC" default="" validate="options">
 				<option value="">COM_DHARMASHOP_ORDER_INHERIT</option>
 				<option value="1">JYES</option>

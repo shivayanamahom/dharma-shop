@@ -256,7 +256,7 @@ final class CartService
             ->select([
                 'ci.id', 'ci.variant_id', 'ci.qty', 'ci.params AS line_params', 'v.product_id', 'v.sku', 'v.title AS variant_title', 'v.state AS variant_state',
                 'v.stock_tracked', 'v.backorder', 'v.stock_total', 'v.in_stock',
-                'p.title', 'p.catid', 'c.title AS category_title', 'p.cover', 'p.cover_alt', 'p.state AS product_state', 'p.unit', 'p.qty_min', 'p.qty_step', 'p.qty_max',
+                'p.title', 'p.catid', 'c.title AS category_title', 'p.cover', 'p.cover_alt', 'p.state AS product_state', 'p.unit', 'p.qty_min', 'p.qty_step', 'p.qty_max', 'p.price_zero_free',
                 'vp.price', 'vp.price_final',
             ])
             ->from($this->db->quoteName('#__dharmashop_cart_items', 'ci'))
@@ -277,6 +277,8 @@ final class CartService
             $row->qty_step = $rules['qty_step'];
             $row->qty_max = $rules['qty_max'];
             $row->qty = (float) $row->qty;
+            // Цена 0 означает «бесплатно» (правило товара или категории), а не «по запросу».
+            $row->zero_free = $this->rules->priceIsFree($row);
             $row->error = $this->lineError((array) $row, $row->qty);
             $event = $this->dispatch('onDharmaShopCartItemValidate', ['cart' => $cart, 'line' => $row, 'error' => (string) ($row->error ?? '')]);
             $row->error = (string) $event->getArgument('error');

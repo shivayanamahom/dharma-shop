@@ -25,7 +25,7 @@ final class OrderDisplay
         $this->date = HTMLHelper::_('date', $order->created, 'd.m.Y H:i');
         $unknown = false;
         foreach ($order->items as $item) {
-            if ($item->price === null || ($this->money->replacesZero() && (float) $item->price === 0.0)) {
+            if ($item->price === null || ($this->money->replacesZero() && (float) $item->price === 0.0 && !self::isFree($item))) {
                 $unknown = true;
             }
         }
@@ -39,6 +39,12 @@ final class OrderDisplay
         return $unknown
             ? ((float) $value > 0 ? $amount . ' + ' : '') . $this->money->zeroText()
             : $amount;
+    }
+
+    /** Строка заказа с ценой 0 оформлена как бесплатная (правило товара или категории на момент заказа). */
+    public static function isFree(object $item): bool
+    {
+        return !empty((json_decode((string) ($item->params ?? ''), true) ?: [])['zero_free']);
     }
 
     public static function quantity(string $qty): string

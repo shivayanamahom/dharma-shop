@@ -144,7 +144,7 @@ class CategoryModel extends AdminModel
             );
         } else {
             // Правила оформления заказа есть только у категорий магазина.
-            foreach (['order_qty_min', 'order_qty_step', 'order_qty_max', 'order_unit', 'order_stock_tracked', 'order_backorder'] as $field) {
+            foreach (['order_qty_min', 'order_qty_step', 'order_qty_max', 'order_unit', 'order_stock_tracked', 'order_backorder', 'order_price_zero_free'] as $field) {
                 $form->removeField($field, 'params');
             }
             $form->removeField('new_product_position', 'params');
@@ -450,7 +450,7 @@ class CategoryModel extends AdminModel
     {
         $result = [];
 
-        foreach (['order_qty_min', 'order_qty_step', 'order_qty_max', 'order_unit', 'order_stock_tracked', 'order_backorder'] as $key) {
+        foreach (['order_qty_min', 'order_qty_step', 'order_qty_max', 'order_unit', 'order_stock_tracked', 'order_backorder', 'order_price_zero_free'] as $key) {
             $result[$key] = (string) ($params[$key] ?? '');
         }
 

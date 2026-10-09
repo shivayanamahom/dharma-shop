@@ -94,7 +94,7 @@ final class OrderService
             foreach ($lines as $index=>$line) {
                 $item = (object) ['order_id'=>$id,'variant_id'=>(int) $line->variant_id,'product_id'=>(int) $line->product_id,'sku'=>(string) $line->sku,
                     'title'=>(string) $line->title,'unit'=>(string) $line->unit,'qty'=>$line->qty,'price'=>$line->unit_price,'total'=>$line->total,
-                    'params'=>json_encode(['variant_title'=>$line->variant_title,'base_price'=>$line->base_price,'line_params'=>$line->line_params],JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),'ordering'=>$index+1];
+                    'params'=>json_encode(['variant_title'=>$line->variant_title,'base_price'=>$line->base_price,'zero_free'=>!empty($line->zero_free),'line_params'=>$line->line_params],JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR),'ordering'=>$index+1];
                 $this->db->insertObject('#__dharmashop_order_items',$item);
             }
             // Остаток под заказ: списываем по вариантам с включённым учётом остатков (атомарно, в этой же транзакции; возврат — статусом с эффектом «возвращает остатки»).

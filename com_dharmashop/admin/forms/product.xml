@@ -29,6 +29,11 @@
 	<fieldset name="price" addfieldprefix="Dharma\Component\DharmaShop\Administrator\Field">
 		<field name="sku" type="text" label="COM_DHARMASHOP_FIELD_SKU_LABEL" description="COM_DHARMASHOP_FIELD_SKU_DESC" maxlength="100" />
 		<field name="price" type="number" label="COM_DHARMASHOP_FIELD_PRICE_LABEL" description="COM_DHARMASHOP_FIELD_PRICE_DESC" step="0.01" min="0" hint="COM_DHARMASHOP_FIELD_PRICE_HINT" />
+		<field name="price_zero_free" type="list" label="COM_DHARMASHOP_ORDER_PRICE_ZERO_FREE" description="COM_DHARMASHOP_ORDER_PRICE_ZERO_FREE_DESC" default="" validate="options">
+			<option value="">COM_DHARMASHOP_ORDER_INHERIT</option>
+			<option value="1">JYES</option>
+			<option value="0">JNO</option>
+		</field>
 		<field name="discount" type="text" label="COM_DHARMASHOP_FIELD_DISCOUNT_LABEL" description="COM_DHARMASHOP_FIELD_DISCOUNT_DESC" hint="COM_DHARMASHOP_FIELD_DISCOUNT_HINT" maxlength="12" filter="string" />
 		<field name="price_result" type="text" label="COM_DHARMASHOP_FIELD_PRICE_RESULT_LABEL" description="COM_DHARMASHOP_FIELD_PRICE_RESULT_DESC" class="readonly" readonly="true" filter="unset" showon="discount!:" />
 		<field name="discount_start" type="calendar" label="COM_DHARMASHOP_FIELD_DISCOUNT_START_LABEL" translateformat="true" showtime="true" filter="user_utc" showon="discount!:" />

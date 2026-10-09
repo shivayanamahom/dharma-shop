@@ -62,10 +62,10 @@ $qtyText = static fn (float $qty): string => rtrim(rtrim(number_format($qty, 3, 
                                 <?php if ($discount) : ?>
                                     <span class="dharmaMiniCartOldPrice"><s><?php echo $this->escape($this->money->format((string) $line->base_price)); ?></s></span>
                                 <?php endif; ?>
-                                <?php if ($this->mini['unit'] && $line->unit_price !== null && !($this->money->replacesZero() && $line->unit_price === 0.0)) : ?>
+                                <?php if ($this->mini['unit'] && $line->unit_price !== null && !(($this->money->replacesZero() || !empty($line->zero_free)) && $line->unit_price === 0.0)) : ?>
                                     <span class="dharmaMiniCartUnitPrice"><?php echo $this->escape($this->money->price((string) $line->unit_price)); ?><?php echo $unit !== '' ? ' / ' . $this->escape($unit) : ''; ?></span>
                                 <?php endif; ?>
-                                <span class="dharmaMiniCartTotal"><?php echo $this->escape($this->money->price((string) $line->total)); ?></span>
+                                <span class="dharmaMiniCartTotal"><?php echo $this->escape($this->money->price((string) $line->total, !empty($line->zero_free))); ?></span>
                             </div>
                         <?php endif; ?>
                     </div>
