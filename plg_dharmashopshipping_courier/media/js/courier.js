@@ -189,8 +189,9 @@
     const init = (root) => {
         if (root.dataset.courierReady) return;
         root.dataset.courierReady = '1';
-        const option = root.closest('[data-shipping-option]');
-        const radio = option?.querySelector('[data-shipping-radio]');
+        // Радиокнопка и цена находятся в плитке способа на странице оформления, не внутри панели.
+        const radio = document.querySelector('[data-shipping-radio][value="' + CSS.escape(root.dataset.methodId || '') + '"]');
+        const option = radio?.closest('.col') || null;
         const search = root.querySelector('[data-courier-search]');
         const list = root.querySelector('[data-courier-suggest]');
         const city = root.querySelector('[data-courier-city]');

@@ -9,8 +9,9 @@
  *                            suggest (подсказки адреса), map (mode: js|none, ratio, config — JSON для скрипта карты), pending (цена ещё не рассчитана),
  *                            ajax_url, image_url, price_text, total_text, free_text (строки)
  *
- * Правила для всех типов доставки (docs/SHIPPING.md): радиокнопка `shipping_method` с data-shipping-radio, data-price-text, data-total-text;
- * поля покупателя — `shipping[<id>][<ключ>]` в блоке data-shipping-extra, у каждого data-summary-label. Город, улица и дом — всегда:
+ * Правила для всех типов доставки (docs/SHIPPING.md): макет типа выводит только панель выбранного способа; плитку-вкладку с радиокнопкой `shipping_method`
+ * (data-shipping-radio, data-price-text, data-total-text, цена — [data-shipping-option-price]) рисует страница оформления (default_shipping_tile.php); корень панели — [data-shipping-option] с data-method-id.
+ * Поля покупателя — `shipping[<id>][<ключ>]` в блоке data-shipping-extra, у каждого data-summary-label. Город, улица и дом — всегда:
  * [data-courier-city], [data-courier-street] и [data-courier-house]; одна строка адреса с подсказками — [data-courier-search] и список [data-courier-suggest]; контейнер [data-courier]
  * (data-ajax-url, data-method-id, data-suggest, data-distance, data-apikey — публичный ключ для подсказок в браузере, data-near — «широта,долгота» центра складов), статус расчёта — [data-courier-status], карта — [data-courier-map].
  * Скрипт плагина обновляет цену способа (data-shipping-option-price, data-price-text/-total-text радио) и событием
@@ -37,30 +38,15 @@ foreach (['city', 'street', 'house'] as $baseKey) {
         $addressError = (string) $errors[$baseKey];
     }
 }
-$priceText = $quote->pending ? $displayData['price_text'] : ($quote->free ? $displayData['free_text'] : $displayData['price_text']);
 ?>
-<div class="border rounded p-3 dharmaShippingOption" data-shipping-option>
-    <div class="form-check mb-0">
-        <input class="form-check-input" type="radio" name="shipping_method" id="dharma-shipping-<?php echo $id; ?>" value="<?php echo $id; ?>"<?php echo $selected ? ' checked' : ''; ?>
-            data-shipping-radio data-price-text="<?php echo $esc($priceText); ?>" data-total-text="<?php echo $esc($displayData['total_text']); ?>">
-        <label class="form-check-label w-100 d-flex justify-content-between align-items-baseline gap-3" for="dharma-shipping-<?php echo $id; ?>">
-            <span class="d-flex align-items-center gap-2">
-                <?php if (!empty($displayData['image_url'])) : ?><img src="<?php echo $esc($displayData['image_url']); ?>" alt="" width="32" height="32" class="flex-shrink-0 object-fit-contain" loading="lazy"><?php endif; ?>
-                <span>
-                    <span class="fw-semibold"><?php echo $esc($method->title); ?></span>
-                    <?php if ($quote->term !== '') : ?><span class="d-block small text-body-secondary"><?php echo $esc($quote->term); ?></span><?php endif; ?>
-                </span>
-            </span>
-            <span class="fw-semibold text-nowrap<?php echo $quote->free ? ' text-success' : ''; ?>" data-shipping-option-price><?php echo $esc($priceText); ?></span>
-        </label>
-    </div>
+<div class="border rounded p-3 mt-2 dharmaShippingOption<?php echo $selected ? '' : ' d-none'; ?>" data-shipping-option data-method-id="<?php echo $id; ?>">
     <?php if ($method->description !== '') : ?>
-        <div class="small text-body-secondary mt-2 ms-4 text-break"><?php echo nl2br($esc($method->description)); ?></div>
+        <div class="small text-body-secondary mb-2 text-break"><?php echo nl2br($esc($method->description)); ?></div>
     <?php endif; ?>
     <?php if ($quote->note !== '') : ?>
-        <div class="small text-body-secondary mt-2 ms-4 text-break"><?php echo nl2br($esc($quote->note)); ?></div>
+        <div class="small text-body-secondary mb-2 text-break"><?php echo nl2br($esc($quote->note)); ?></div>
     <?php endif; ?>
-    <div class="mt-1 ms-3<?php echo $selected ? '' : ' d-none'; ?>" data-shipping-extra data-courier
+    <div class="mt-1<?php echo $selected ? '' : ' d-none'; ?>" data-shipping-extra data-courier
         data-ajax-url="<?php echo $esc($displayData['ajax_url'] ?? ''); ?>" data-method-id="<?php echo $id; ?>"
         data-suggest="<?php echo $displayData['suggest'] ? '1' : '0'; ?>" data-distance="<?php echo $displayData['distance_mode'] ? '1' : '0'; ?>"
         data-apikey="<?php echo $esc($displayData['suggest_key'] ?? ''); ?>" data-near="<?php echo $esc($displayData['suggest_near'] ?? ''); ?>">

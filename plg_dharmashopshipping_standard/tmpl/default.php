@@ -6,9 +6,9 @@
  * @var  array  $displayData  method (Method), quote (Quote), selected (bool), id (int), values (array), errors (array [ключ поля => языковой ключ]),
  *                            info (строки describe), fields (определения полей покупателя), image_url (адрес изображения способа или ''), price_text, total_text, free_text (строки)
  *
- * Правила для всех типов доставки (docs/SHIPPING.md): радиокнопка `shipping_method` со значением id способа и атрибутами
- * data-shipping-radio, data-price-text, data-total-text; поля покупателя — `shipping[<id>][<ключ>]` внутри блока data-shipping-extra
- * (он скрывается у невыбранных способов), у каждого поля data-summary-label — подпись для боковой панели.
+ * Правила для всех типов доставки (docs/SHIPPING.md): макет типа выводит только панель выбранного способа (описание, примечание, поля); плитку-вкладку с радиокнопкой
+ * `shipping_method` (data-shipping-radio, data-price-text, data-total-text) рисует страница оформления (default_shipping_tile.php). Корень панели — [data-shipping-option] с data-method-id
+ * (у невыбранных способов скрыт); поля покупателя — `shipping[<id>][<ключ>]` внутри блока data-shipping-extra, у каждого поля data-summary-label — подпись для боковой панели.
  */
 \defined('_JEXEC') or die;
 
@@ -22,31 +22,16 @@ $errors = (array) ($displayData['errors'] ?? []);
 $values = (array) ($displayData['values'] ?? []);
 $fields = (array) ($displayData['fields'] ?? []);
 $esc = static fn ($value): string => htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
-$priceText = $quote->free ? $displayData['free_text'] : $displayData['price_text'];
 ?>
-<div class="border rounded p-3 dharmaShippingOption" data-shipping-option>
-    <div class="form-check mb-0">
-        <input class="form-check-input" type="radio" name="shipping_method" id="dharma-shipping-<?php echo $id; ?>" value="<?php echo $id; ?>"<?php echo $selected ? ' checked' : ''; ?>
-            data-shipping-radio data-price-text="<?php echo $esc($priceText); ?>" data-total-text="<?php echo $esc($displayData['total_text']); ?>">
-        <label class="form-check-label w-100 d-flex justify-content-between align-items-baseline gap-3" for="dharma-shipping-<?php echo $id; ?>">
-            <span class="d-flex align-items-center gap-2">
-                <?php if (!empty($displayData['image_url'])) : ?><img src="<?php echo $esc($displayData['image_url']); ?>" alt="" width="32" height="32" class="flex-shrink-0 object-fit-contain" loading="lazy"><?php endif; ?>
-                <span>
-                    <span class="fw-semibold"><?php echo $esc($method->title); ?></span>
-                    <?php if ($quote->term !== '') : ?><span class="d-block small text-body-secondary"><?php echo $esc($quote->term); ?></span><?php endif; ?>
-                </span>
-            </span>
-            <span class="fw-semibold text-nowrap<?php echo $quote->free ? ' text-success' : ''; ?>"><?php echo $esc($priceText); ?></span>
-        </label>
-    </div>
+<div class="border rounded p-3 mt-2 dharmaShippingOption<?php echo $selected ? '' : ' d-none'; ?>" data-shipping-option data-method-id="<?php echo $id; ?>">
     <?php if ($method->description !== '') : ?>
-        <div class="small text-body-secondary mt-2 ms-4 text-break"><?php echo nl2br($esc($method->description)); ?></div>
+        <div class="small text-body-secondary mb-2 text-break"><?php echo nl2br($esc($method->description)); ?></div>
     <?php endif; ?>
     <?php if ($quote->note !== '') : ?>
-        <div class="small text-body-secondary mt-2 ms-4 text-break"><?php echo nl2br($esc($quote->note)); ?></div>
+        <div class="small text-body-secondary mb-2 text-break"><?php echo nl2br($esc($quote->note)); ?></div>
     <?php endif; ?>
     <?php if ($fields) : ?>
-        <div class="row g-2 mt-1 ms-3<?php echo $selected ? '' : ' d-none'; ?>" data-shipping-extra>
+        <div class="row g-2 mt-1<?php echo $selected ? '' : ' d-none'; ?>" data-shipping-extra>
             <?php foreach ($fields as $field) :
                 $key = (string) $field['key'];
                 $fieldId = 'dharma-shipping-' . $id . '-' . $key;

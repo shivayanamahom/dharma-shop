@@ -36,7 +36,7 @@ class HtmlView extends BaseHtmlView
     public array $values = [];
     public array $errors = [];
     public ?array $receipt = null;
-    /** @var array<int, array{title: string, term: string, price_text: string, info: array, html: string}> варианты доставки: id способа => сведения для боковой панели и готовый HTML варианта (макет плагина типа) */
+    /** @var array<int, array{id: int, selected: bool, free: bool, image_url: string, total_text: string, title: string, term: string, price_text: string, info: array, html: string}> варианты доставки: id способа => данные плитки-вкладки, сведения для боковой панели и готовый HTML панели варианта (макет плагина типа) */
     public array $shippingOptions = [];
     public int $shippingSelected = 0;
     public float $shippingPrice = 0.0;
@@ -44,6 +44,8 @@ class HtmlView extends BaseHtmlView
     public bool $shippingPending = false;
     /** Способы доставки включены, но для этой корзины ни один не подходит: заказ оформить нельзя. */
     public bool $shippingBlocked = false;
+    /** @var array<string, mixed> данные плитки способа для default_shipping_tile.php */
+    public array $shippingTile = [];
 
     public function totalText(float $amount): string
     {
@@ -112,6 +114,11 @@ class HtmlView extends BaseHtmlView
             }
 
             $this->shippingOptions[$id] = [
+                'id' => $id,
+                'selected' => $id === $this->shippingSelected,
+                'free' => $quote->free && !$quote->pending,
+                'image_url' => $option['method']->image !== '' ? ImageUrl::resolve($option['method']->image, 'shipping.option') : '',
+                'total_text' => $this->totalText(round((float) $this->totals['total'] + ($quote->pending ? 0.0 : $quote->price), 2)),
                 'title' => $option['method']->title,
                 'term' => $quote->term,
                 'price_text' => $quote->pending ? Text::_('COM_DHARMASHOP_SHIPPING_PENDING') : ($quote->free ? $free : $this->money->format((string) $quote->price)),

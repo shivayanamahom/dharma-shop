@@ -61,10 +61,13 @@
     // Поля покупателя внутри варианта (data-summary-label) дублируются в боковой панели; значения выводятся как текст.
     const shippingRadios = form.querySelectorAll('[data-shipping-radio]');
     const inputRows = form.querySelector('[data-checkout-shipping-input]');
+    // Панель способа (макет плагина типа) лежит отдельно от плитки с радиокнопкой и связана с ней номером способа.
+    const optionOf = (radio) => form.querySelector('[data-shipping-option][data-method-id="' + radio.value + '"]');
     const syncShipping = () => {
         const chosen = Array.from(shippingRadios).find((radio) => radio.checked);
         shippingRadios.forEach((radio) => {
-            const option = radio.closest('[data-shipping-option]');
+            const option = optionOf(radio);
+            option?.classList.toggle('d-none', !radio.checked);
             const point = option?.querySelector('[data-shipping-point]:checked')?.value;
             // Блоки способа видны у выбранного способа; сведения пункта (data-shipping-point-detail) — ещё и у выбранного пункта.
             option?.querySelectorAll('[data-shipping-extra]').forEach((node) => {
@@ -81,7 +84,7 @@
         });
         // Общая карта способа: адрес берётся у выбранного пункта (data-map-url); без адреса блок скрыт.
         shippingRadios.forEach((radio) => {
-            const option = radio.closest('[data-shipping-option]');
+            const option = optionOf(radio);
             const frame = option?.querySelector('[data-shipping-map]');
             const wrap = option?.querySelector('[data-shipping-map-wrap]');
             if (!frame || !wrap || !radio.checked) return;
@@ -106,7 +109,7 @@
         };
         // Поля и выбор покупателя внутри способа дублируются в боковой панели. data-summary-value — готовое значение (радио пункта),
         // data-summary-rows — JSON-список {label, value} с дополнительными сведениями выбранного пункта. Всё выводится как текст.
-        chosen.closest('[data-shipping-option]')?.querySelectorAll('[data-summary-label], [data-summary-rows]').forEach((input) => {
+        optionOf(chosen)?.querySelectorAll('[data-summary-label], [data-summary-rows]').forEach((input) => {
             if (input.type === 'radio' && !input.checked) return;
             if (input.dataset.summaryLabel) {
                 const value = input.dataset.summaryValue ?? (input.tagName === 'SELECT' ? (input.selectedOptions[0]?.value ? input.selectedOptions[0].textContent : '') : input.value.trim());
