@@ -83,9 +83,12 @@ class GalleryField extends FormField
         }
 
         $limits = Text::sprintf('COM_DHARMASHOP_UPLOAD_LIMITS', strtoupper(implode(', ', $uploader->allowedExtensions())), $maxMb ?: '—');
+        $uploadUrl = $isFieldGallery
+            ? 'index.php?option=com_dharmashop&task=media.uploadFieldGallery&field_id=' . $fieldId . '&format=json'
+            : 'index.php?option=com_dharmashop&task=media.upload&format=json';
 
         return '<div id="' . $attr($this->id) . '" class="dharmashop-gallery"' . ($isFieldGallery ? ' data-kind="field-gallery" data-field-id="' . $fieldId . '" data-entity-id="' . (int) $this->form->getValue('id', null, 0) . '"' : '')
-            . ' data-url="' . $attr($isFieldGallery ? 'index.php?option=com_dharmashop&task=media.uploadFieldGallery&format=json' : 'index.php?option=com_dharmashop&task=media.upload&format=json')
+            . ' data-url="' . $attr($uploadUrl)
             . '" data-token="' . $attr(Session::getFormToken()) . '" data-folder="' . $attr($folder) . '" data-name="' . $attr($this->name) . '" data-max-count="' . $maxCount
             . '" data-root="' . $attr($root) . '" data-max-bytes="' . (int) $uploader->maxBytes()
             . '" data-accept="' . $attr(implode(',', $uploader->allowedExtensions()))

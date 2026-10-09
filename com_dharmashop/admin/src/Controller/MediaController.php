@@ -50,6 +50,7 @@ class MediaController extends BaseController
             if (!$user->authorise('core.create', 'com_dharmashop') && !$user->authorise('core.edit', 'com_dharmashop')) { throw new \RuntimeException('JLIB_APPLICATION_ERROR_ACCESS_FORBIDDEN'); }
             TypeRegistry::current()->get('gallery');
             $fieldId = $this->input->post->getInt('field_id');
+            if ($fieldId < 1) { $fieldId = $this->input->getInt('field_id', 0); }
             if ($fieldId < 1) { throw new \RuntimeException('JLIB_APPLICATION_ERROR_ACCESS_FORBIDDEN'); }
             $db = Factory::getContainer()->get(DatabaseInterface::class);
             $levels = array_map('intval', $user->getAuthorisedViewLevels()) ?: [0];
