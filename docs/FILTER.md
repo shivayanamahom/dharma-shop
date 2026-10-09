@@ -180,10 +180,10 @@ WHERE fv.field_id IN (:fields) GROUP BY fv.field_id, fv.option_id
 | ни одна из ниже | **нет скриптов** (чистая форма) | `ajax=0`, `apply_mode=button`, нет ползунка/offcanvas/dropdown/«показать ещё»/поиска в списках/липкости |
 | `ajax=1` или `apply_mode=instant` | `media/mod_dharmashop_filter/js/filter.js` (реализовано; один файл вместо core+ajax) | AJAX (список и форма из ответа страницы, `pushState`, `popstate`, чипы/сброс/интервалы ссылками), применение сразу (с задержкой для чисел), без AJAX — `requestSubmit()` |
 | `apply_mode=instant` без AJAX | `…filter-core.js` | отправка формы при изменении |
-| `price_display` содержит `slider` | `…filter-slider.js` | ползунок цены (два бегунка на двух полях `type=range` + поля ввода) |
-| `offcanvas_mode ≠ never` | штатный `bootstrap.offcanvas` + `…filter-offcanvas.js` (закрытие после применения) | выдвижная панель |
+| `price_display=slider` или `range_slider=1` | `media/mod_dharmashop_filter/js/filter-slider.js` (реализовано) | два штатных `form-range` над полями «от — до», без CSS; границы каталога = пустое поле |
+| `offcanvas_mode ≠ never` | штатный `bootstrap.offcanvas` (реализовано; отдельного скрипта нет: кнопка «Показать N» закрывает панель атрибутом `data-bs-dismiss`) | выдвижная панель, `offcanvas-<bp>` на узких экранах |
 | макет поля `dropdown` | штатный `bootstrap.dropdown` | горизонтальный макет |
-| сворачиваемые группы | штатный `bootstrap.collapse` (запоминание — флаг) | `collapsible_groups=1` |
+| сворачиваемые группы | штатный `bootstrap.collapse`, разметка Bootstrap accordion без родителя (реализовано; `<details>` не используется) | `collapsible_groups=1` |
 | `checkbox_limit` | `…filter-more.js` | «Показать ещё» |
 | `options_search_threshold` | `…filter-optsearch.js` | поиск внутри длинного списка значений |
 | `sticky=1` | `…filter-sticky.js` | отступ сверху (класс `sticky-top` + `top` из скрипта) |
@@ -272,7 +272,7 @@ WHERE fv.field_id IN (:fields) GROUP BY fv.field_id, fv.option_id
 | **F2** | Определения фильтров (**выполнено 2026-10-09**) | `FilterDefinition(+Loader)`, кэш, настройки поля (§10.2), системные источники (бренд/бейдж/наличие/цена/подкатегории) |
 | **F3** | Модуль без JS (**выполнено 2026-10-09**; настройки магазина `filter_*` пока читаются со значениями по умолчанию) | `mod_dharmashop_filter` в пакете: форма GET, вертикальный макет, поля `fields_config`, чипы, «Сбросить», `empty_options`, значения «по базовому состоянию»; правила §8 «без скриптов» |
 | **F4** | Счётчики и каскад | `FacetEngine`, режимы `off/base/live`, пороги, кэш, (при решении F0) `FacetIndexer` + `reindex` |
-| **F5** | AJAX и интерфейс (**частично 2026-10-09:** `ajax`, `apply_mode`, `instant_delay`, `filter.js`; осталось: ползунок цены, offcanvas, липкость, dropdown-макет, «Показать N» по живому счёту) | `filter.apply` JSON, история, чипы, «Показать N», ползунок цены, offcanvas, липкость, горизонтальный/dropdown макет |
+| **F5** | AJAX и интерфейс (**почти выполнено 2026-10-09:** `ajax`, `apply_mode`, `instant_delay`, `filter.js`; выдвижная панель Bootstrap offcanvas с живым «Показать N»; ползунки цены и числовых полей `filter-slider.js`; группы — Bootstrap accordion; осталось: липкость, dropdown-макет горизонтального вида) | `filter.apply` JSON, история, чипы, «Показать N», ползунок цены, offcanvas, липкость, горизонтальный/dropdown макет |
 | **F6** | Остальные представления | плитки, образцы цвета/картинки, поиск в списке, «Показать ещё», акция (`on_sale`) |
 | **F7** | SEO, доступность, безопасность, плагины | canonical/robots, `FilterTypeInterface` для типов-плагинов, переопределения макетов, тесты пределов |
 | **F8** | Замеры и документация | повтор F0 на финальном коде (100 / 10 000 / 100 000), `BENCHMARKS_NOTES.md`, примеры шаблонных переопределений |

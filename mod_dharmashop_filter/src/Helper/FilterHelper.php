@@ -177,7 +177,7 @@ final class FilterHelper
             }
 
             return ['kind' => 'range', 'title' => $field->title . ($field->unit !== '' ? ', ' . $field->unit : ''), 'name' => 'filter[f][' . $field->alias . ']', 'control' => 'range',
-                'bounds' => $bounds, 'value' => $value, 'selected' => $value['min'] !== null || $value['max'] !== null, 'options' => [], 'step' => $field->kind === FilterField::RANGE || ($bounds && (fmod($bounds['min'], 1) !== 0.0 || fmod($bounds['max'], 1) !== 0.0)) ? 'any' : '1'];
+                'bounds' => $bounds, 'value' => $value, 'selected' => $value['min'] !== null || $value['max'] !== null, 'slider' => (int) $this->params->get('range_slider', 0) === 1, 'options' => [], 'step' => $field->kind === FilterField::RANGE || ($bounds && (fmod($bounds['min'], 1) !== 0.0 || fmod($bounds['max'], 1) !== 0.0)) ? 'any' : '1'];
         }
 
         $present = $facets['options'][$field->id] ?? [];
@@ -271,7 +271,7 @@ final class FilterHelper
         $step = (int) $this->params->get('price_step', 0);
 
         return ['kind' => 'price', 'title' => Text::_('MOD_DHARMASHOP_FILTER_SYSTEM_PRICE'), 'name' => 'filter[price]', 'control' => 'range', 'bounds' => $bounds, 'value' => $value,
-            'selected' => $state->price !== null, 'options' => [], 'step' => $step > 0 ? (string) $step : '1', 'presets' => $presets];
+            'selected' => $state->price !== null, 'slider' => (string) $this->params->get('price_display', 'inputs') === 'slider', 'options' => [], 'step' => $step > 0 ? (string) $step : '1', 'presets' => $presets];
     }
 
     /** Представление значений: авто — флажки (мультивыбор); radio и select — один выбор; buttons и swatches — кнопки и образцы. */

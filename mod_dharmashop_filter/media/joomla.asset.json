@@ -9,7 +9,16 @@
 			"name": "mod_dharmashop_filter.filter",
 			"type": "script",
 			"uri": "mod_dharmashop_filter/filter.js",
-			"version": "fe57b7066c10",
+			"version": "b275e7735b63",
+			"attributes": {
+				"defer": true
+			}
+		},
+		{
+			"name": "mod_dharmashop_filter.slider",
+			"type": "script",
+			"uri": "mod_dharmashop_filter/filter-slider.js",
+			"version": "66291fa578de",
 			"attributes": {
 				"defer": true
 			}

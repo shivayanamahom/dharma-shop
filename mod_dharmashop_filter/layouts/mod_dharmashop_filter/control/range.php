@@ -14,7 +14,17 @@ $format = static fn (?float $n): string => $n === null ? '' : rtrim(rtrim(number
 $bounds = $section['bounds'] ?? null;
 $value = $section['value'];
 $id = 'dharmashop-filter-' . $module . '-' . md5($section['name']);
+// Ползунки — два штатных form-range (нижняя и верхняя граница), синхронизируются с полями скриптом filter-slider.js (без него остаются поля).
+$slider = !empty($section['slider']) && $bounds && $bounds['min'] < $bounds['max'];
 ?>
+<?php if ($slider) : ?>
+    <div class="mb-2" data-dharmashop-slider>
+        <input type="range" class="form-range" data-dharmashop-slider-min aria-label="<?php echo $escape(Text::_('MOD_DHARMASHOP_FILTER_FROM')); ?>"
+            min="<?php echo $escape($format($bounds['min'])); ?>" max="<?php echo $escape($format($bounds['max'])); ?>" step="<?php echo $escape($section['step']); ?>" value="<?php echo $escape($format($value['min'] ?? $bounds['min'])); ?>">
+        <input type="range" class="form-range" data-dharmashop-slider-max aria-label="<?php echo $escape(Text::_('MOD_DHARMASHOP_FILTER_TO')); ?>"
+            min="<?php echo $escape($format($bounds['min'])); ?>" max="<?php echo $escape($format($bounds['max'])); ?>" step="<?php echo $escape($section['step']); ?>" value="<?php echo $escape($format($value['max'] ?? $bounds['max'])); ?>">
+    </div>
+<?php endif; ?>
 <div class="row g-2">
     <div class="col-6">
         <label class="visually-hidden" for="<?php echo $id; ?>-min"><?php echo Text::_('MOD_DHARMASHOP_FILTER_FROM'); ?></label>

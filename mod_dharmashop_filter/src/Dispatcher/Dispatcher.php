@@ -37,16 +37,39 @@ class Dispatcher extends AbstractModuleDispatcher
             $data['filter'] = null;
         }
 
-        // Скрипт — только если включено AJAX или применение сразу (без них форма работает обычной отправкой и ничего не подключает).
+        // Ресурсы подключаются только для включённых возможностей: фильтр без них — чистая форма без скриптов.
         $params = $data['params'];
 
-        if ($data['filter'] && ((int) $params->get('ajax', 0) === 1 || (string) $params->get('apply_mode', 'button') === 'instant')) {
-            try {
-                $wa = $this->getApplication()->getDocument()->getWebAssetManager();
-                $wa->getRegistry()->addExtensionRegistryFile('mod_dharmashop_filter');
-                $wa->useScript('mod_dharmashop_filter.filter');
-            } catch (\Throwable $error) {
-                Log::add('Filter module assets: ' . $error::class . ': ' . $error->getMessage(), Log::ERROR, 'com_dharmashop');
+        if ($data['filter']) {
+            $scripts = [];
+
+            if ((int) $params->get('ajax', 0) === 1 || (string) $params->get('apply_mode', 'button') === 'instant') {
+                $scripts[] = 'mod_dharmashop_filter.filter';
+            }
+
+            if ((string) $params->get('price_display', 'inputs') === 'slider' || (int) $params->get('range_slider', 0) === 1) {
+                $scripts[] = 'mod_dharmashop_filter.slider';
+            }
+
+            if ((int) $params->get('collapsible_groups', 1) === 1) {
+                $scripts[] = 'bootstrap.collapse';
+            }
+
+            if (in_array((string) $params->get('offcanvas_mode', 'never'), ['mobile', 'always'], true)) {
+                $scripts[] = 'bootstrap.offcanvas';
+            }
+
+            if ($scripts) {
+                try {
+                    $wa = $this->getApplication()->getDocument()->getWebAssetManager();
+                    $wa->getRegistry()->addExtensionRegistryFile('mod_dharmashop_filter');
+
+                    foreach ($scripts as $script) {
+                        $wa->useScript($script);
+                    }
+                } catch (\Throwable $error) {
+                    Log::add('Filter module assets: ' . $error::class . ': ' . $error->getMessage(), Log::ERROR, 'com_dharmashop');
+                }
             }
         }
 

@@ -89,6 +89,10 @@
 				</field>
 			</fieldset>
 			<fieldset name="values" label="MOD_DHARMASHOP_FILTER_TAB_VALUES">
+				<field name="range_slider" type="radio" layout="joomla.form.field.radio.switcher" default="0" filter="integer" label="MOD_DHARMASHOP_FILTER_RANGE_SLIDER" description="MOD_DHARMASHOP_FILTER_RANGE_SLIDER_DESC">
+					<option value="0">JNO</option>
+					<option value="1">JYES</option>
+				</field>
 				<field name="checkbox_limit_mode" type="list" default="all" filter="cmd" validate="options" label="MOD_DHARMASHOP_FILTER_LIMIT_MODE" description="MOD_DHARMASHOP_FILTER_LIMIT_MODE_DESC">
 					<option value="all">MOD_DHARMASHOP_FILTER_LIMIT_ALL</option>
 					<option value="limit">MOD_DHARMASHOP_FILTER_LIMIT_LIMIT</option>
@@ -100,13 +104,33 @@
 					<option value="count">MOD_DHARMASHOP_FILTER_SORT_COUNT</option>
 				</field>
 			</fieldset>
+			<fieldset name="mobile" label="MOD_DHARMASHOP_FILTER_TAB_MOBILE">
+				<field name="offcanvas_mode" type="list" default="never" filter="cmd" validate="options" label="MOD_DHARMASHOP_FILTER_OFFCANVAS_MODE" description="MOD_DHARMASHOP_FILTER_OFFCANVAS_MODE_DESC">
+					<option value="never">MOD_DHARMASHOP_FILTER_OFFCANVAS_NEVER</option>
+					<option value="mobile">MOD_DHARMASHOP_FILTER_OFFCANVAS_MOBILE</option>
+					<option value="always">MOD_DHARMASHOP_FILTER_OFFCANVAS_ALWAYS</option>
+				</field>
+				<field name="offcanvas_breakpoint" type="list" default="lg" filter="cmd" validate="options" showon="offcanvas_mode:mobile" label="MOD_DHARMASHOP_FILTER_OFFCANVAS_BREAKPOINT" description="MOD_DHARMASHOP_FILTER_OFFCANVAS_BREAKPOINT_DESC">
+					<option value="sm">MOD_DHARMASHOP_FILTER_BP_SM</option>
+					<option value="md">MOD_DHARMASHOP_FILTER_BP_MD</option>
+					<option value="lg">MOD_DHARMASHOP_FILTER_BP_LG</option>
+					<option value="xl">MOD_DHARMASHOP_FILTER_BP_XL</option>
+				</field>
+				<field name="offcanvas_position" type="list" default="start" filter="cmd" validate="options" showon="offcanvas_mode:mobile,always" label="MOD_DHARMASHOP_FILTER_OFFCANVAS_POSITION">
+					<option value="start">MOD_DHARMASHOP_FILTER_POSITION_START</option>
+					<option value="end">MOD_DHARMASHOP_FILTER_POSITION_END</option>
+				</field>
+				<field name="offcanvas_button_text" type="text" filter="string" showon="offcanvas_mode:mobile,always" label="MOD_DHARMASHOP_FILTER_OFFCANVAS_BUTTON_TEXT" hint="MOD_DHARMASHOP_FILTER_OFFCANVAS_BUTTON_HINT" />
+				<field name="offcanvas_show_text" type="text" filter="string" showon="offcanvas_mode:mobile,always" label="MOD_DHARMASHOP_FILTER_OFFCANVAS_SHOW_TEXT" description="MOD_DHARMASHOP_FILTER_OFFCANVAS_SHOW_TEXT_DESC" hint="MOD_DHARMASHOP_FILTER_OFFCANVAS_SHOW_HINT" />
+			</fieldset>
 			<fieldset name="price" label="MOD_DHARMASHOP_FILTER_TAB_PRICE">
 				<field name="price_display" type="list" default="inputs" filter="cmd" validate="options" label="MOD_DHARMASHOP_FILTER_PRICE_DISPLAY" description="MOD_DHARMASHOP_FILTER_PRICE_DISPLAY_DESC">
 					<option value="none">MOD_DHARMASHOP_FILTER_PRICE_NONE</option>
 					<option value="inputs">MOD_DHARMASHOP_FILTER_PRICE_INPUTS</option>
+					<option value="slider">MOD_DHARMASHOP_FILTER_PRICE_SLIDER</option>
 				</field>
-				<field name="price_step" type="number" default="0" min="0" step="1" filter="integer" showon="price_display:inputs" label="MOD_DHARMASHOP_FILTER_PRICE_STEP" description="MOD_DHARMASHOP_FILTER_PRICE_STEP_DESC" />
-				<field name="price_presets" type="textarea" rows="4" filter="string" showon="price_display:inputs" label="MOD_DHARMASHOP_FILTER_PRICE_PRESETS" description="MOD_DHARMASHOP_FILTER_PRICE_PRESETS_DESC" hint="до 50 000 = 0-50000" />
+				<field name="price_step" type="number" default="0" min="0" step="1" filter="integer" showon="price_display:inputs,slider" label="MOD_DHARMASHOP_FILTER_PRICE_STEP" description="MOD_DHARMASHOP_FILTER_PRICE_STEP_DESC" />
+				<field name="price_presets" type="textarea" rows="4" filter="string" showon="price_display:inputs,slider" label="MOD_DHARMASHOP_FILTER_PRICE_PRESETS" description="MOD_DHARMASHOP_FILTER_PRICE_PRESETS_DESC" hint="до 50 000 = 0-50000" />
 			</fieldset>
 			<fieldset name="filters" label="MOD_DHARMASHOP_FILTER_TAB_FILTERS" addfieldprefix="Dharma\Module\DharmaShopFilter\Site\Field">
 				<field name="fields_config" type="subform" multiple="true" min="0" max="60" buttons="add,remove,move" layout="joomla.form.field.subform.repeatable-table" label="MOD_DHARMASHOP_FILTER_FIELDS_CONFIG" description="MOD_DHARMASHOP_FILTER_FIELDS_CONFIG_DESC">
