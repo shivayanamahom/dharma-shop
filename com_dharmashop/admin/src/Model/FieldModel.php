@@ -2,6 +2,7 @@
 declare(strict_types=1);
 namespace Dharma\Component\DharmaShop\Administrator\Model;
 use Dharma\Component\DharmaShop\Administrator\Fields\TypeRegistry;
+use Dharma\Component\DharmaShop\Administrator\Image\ImageUploader;
 use Joomla\CMS\Application\ApplicationHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Form\Form;
@@ -64,9 +65,14 @@ class FieldModel extends AdminModel
         if (in_array((string) $item->type, ['editor', 'text', 'files', 'gallery','video'], true)) { $item->filterable = 0; }
         $id = (int) $item->id;
         $db = $this->getDatabase();
-        $query = $db->createQuery()->select($db->quoteName(['id','title','alias','image']))->from($db->quoteName('#__dharmashop_field_options'))
+        $query = $db->createQuery()->select($db->quoteName(['id','title','alias','image','color']))->from($db->quoteName('#__dharmashop_field_options'))
             ->where('field_id = :id')->bind(':id', $id, ParameterType::INTEGER)->order('ordering ASC, id ASC');
         $item->options = $db->setQuery($query)->loadAssocList();
+        if ($item->type === 'color') {
+            $item->color_options = array_map(static fn (array $row): array => $row + [
+                'swatch' => trim((string) $row['image']) !== '' ? 'image' : 'color',
+            ], $item->options);
+        }
         if ($item->type === 'checkbox' && !empty($item->params['checkbox_default_option_id'])) {
             $titles = array_column($item->options, 'title', 'id');
             $item->params['checkbox_default_option'] = $titles[(int) $item->params['checkbox_default_option_id']] ?? '';
@@ -126,15 +132,35 @@ class FieldModel extends AdminModel
             $seenIds = [];
             $existingIds = array_column($existing->options ?? [], 'id');
             $existingImages = array_column($existing->options ?? [], 'image', 'id');
+            $existingColors = array_column($existing->options ?? [], 'color', 'id');
             $defaultOptionIndex = null;
-            if (in_array($type, ['list','checkbox'], true)) {
-                foreach ((array) ($data['options'] ?? []) as $row) {
+            if (in_array($type, ['list','checkbox','color'], true)) {
+                $submittedOptions = $type === 'color' ? ($data['color_options'] ?? []) : ($data['options'] ?? []);
+                foreach ((array) $submittedOptions as $row) {
                     $row = (array) $row;
                     $title = trim(strip_tags((string) ($row['title'] ?? '')));
                     $optionId = (int) ($row['id'] ?? 0);
                     if ($title === '' && !$optionId) { continue; }
                     // An already-open older form has no image key; retain its saved media reference.
                     $image = trim((string) ($row['image'] ?? ($existingImages[$optionId] ?? '')));
+                    $color = $existingColors[$optionId] ?? null;
+                    if ($type === 'color') {
+                        $swatch = (string) ($row['swatch'] ?? ($image !== '' ? 'image' : 'color'));
+                        if ($swatch === 'color') {
+                            $color = strtolower(trim((string) ($row['color'] ?? $color ?? '')));
+                            if (preg_match('/^#[0-9a-f]{3}$/D', $color)) {
+                                $color = '#' . $color[1] . $color[1] . $color[2] . $color[2] . $color[3] . $color[3];
+                            }
+                            if (!preg_match('/^#[0-9a-f]{6}$/D', $color)) {
+                                throw new \InvalidArgumentException('PLG_DHARMASHOPFIELD_BASIC_COLOR_INVALID');
+                            }
+                            $image = '';
+                        } elseif ($swatch === 'image') {
+                            $image = ImageUploader::filterPath($image);
+                            if ($image === '') { throw new \InvalidArgumentException('PLG_DHARMASHOPFIELD_BASIC_COLOR_IMAGE_REQUIRED'); }
+                            $color = null;
+                        } else { throw new \InvalidArgumentException('PLG_DHARMASHOPFIELD_BASIC_COLOR_SOURCE_INVALID'); }
+                    }
                     if (mb_strlen($image) > 500 || preg_match('/[\x00-\x1f\x7f]/', $image)) {
                         throw new \InvalidArgumentException('COM_DHARMASHOP_FIELD_OPTION_IMAGE_INVALID');
                     }
@@ -145,9 +171,9 @@ class FieldModel extends AdminModel
                     }
                     $seen[$alias] = true;
                     if ($optionId) { $seenIds[$optionId] = true; }
-                    $options[] = ['id'=>$optionId, 'title'=>$title, 'alias'=>$alias, 'image'=>$image];
+                    $options[] = ['id'=>$optionId, 'title'=>$title, 'alias'=>$alias, 'image'=>$image, 'color'=>$color];
                 }
-                if (($type === 'list' || ($data['params']['checkbox_mode'] ?? 'single') === 'options') && !$options) {
+                if ((in_array($type, ['list','color'], true) || ($data['params']['checkbox_mode'] ?? 'single') === 'options') && !$options) {
                     throw new \InvalidArgumentException('COM_DHARMASHOP_FIELD_OPTIONS_REQUIRED');
                 }
             }
@@ -191,7 +217,7 @@ class FieldModel extends AdminModel
                 if (count($db->setQuery($query)->loadColumn()) !== count($catids)) { throw new \InvalidArgumentException('COM_DHARMASHOP_FIELD_CATEGORIES_INVALID'); }
             } else { $catids = []; }
         } catch (\Throwable $error) { $this->setError(Text::_($error->getMessage())); return false; }
-        unset($data['options'], $data['catids']);
+        unset($data['options'], $data['color_options'], $data['catids']);
         if (!parent::save($data)) { return false; }
         $id = (int) $this->getState('field.id');
         // Table::store takes LOCK TABLES: the following relation transaction starts only after it completes.
@@ -215,8 +241,8 @@ class FieldModel extends AdminModel
                 }
             }
             foreach ($options as $ordering => $option) {
-                $record = (object) ['field_id'=>$id,'title'=>$option['title'],'alias'=>$option['alias'],'image'=>$option['image'],'ordering'=>$ordering+1];
-                if ($option['id']) { $record->id=$option['id']; $db->updateObject('#__dharmashop_field_options',$record,'id'); }
+                $record = (object) ['field_id'=>$id,'title'=>$option['title'],'alias'=>$option['alias'],'image'=>$option['image'],'color'=>$option['color'],'ordering'=>$ordering+1];
+                if ($option['id']) { $record->id=$option['id']; $db->updateObject('#__dharmashop_field_options',$record,'id',true); }
                 else { $db->insertObject('#__dharmashop_field_options',$record,'id'); }
                 if ($defaultOptionIndex === $ordering) {
                     // New options receive IDs here, after the definition's native Table::store.

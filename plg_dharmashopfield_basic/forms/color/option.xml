@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form addfieldprefix="Dharma\Component\DharmaShop\Administrator\Field">
+    <field name="id" type="hidden" filter="uint" />
+    <field name="title" type="text" label="PLG_DHARMASHOPFIELD_BASIC_COLOR_CAPTION" description="PLG_DHARMASHOPFIELD_BASIC_COLOR_CAPTION_DESC" required="true" filter="string" maxlength="255" />
+    <field name="alias" type="text" label="JFIELD_ALIAS_LABEL" filter="string" maxlength="190" />
+    <field name="swatch" type="list" label="PLG_DHARMASHOPFIELD_BASIC_COLOR_SOURCE" default="color" filter="cmd" validate="options"><option value="color">COM_DHARMASHOP_FIELD_TYPE_COLOR</option><option value="image">COM_DHARMASHOP_HEADING_IMAGE</option></field>
+    <field name="color" type="color" label="COM_DHARMASHOP_FIELD_TYPE_COLOR" default="#000000" format="hex" filter="string" showon="swatch:color" />
+    <field name="image" type="compactmedia" label="COM_DHARMASHOP_HEADING_IMAGE" filter="string" types="images" preview="true" preview_width="48" preview_height="48" showon="swatch:image" />
+</form>

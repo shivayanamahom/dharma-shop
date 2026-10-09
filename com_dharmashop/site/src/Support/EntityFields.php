@@ -75,7 +75,7 @@ final class EntityFields
             return $query;
         };
         $query = $base($simple)->select('v.' . $column . ' AS entity_id')->select($db->quoteName([
-            'v.field_id', 'v.option_id', 'v.num', 'v.num_end', 'v.str', 'o.title', 'o.image',
+            'v.field_id', 'v.option_id', 'v.num', 'v.num_end', 'v.str', 'o.title', 'o.image', 'o.color',
         ]))->join('LEFT', $db->quoteName('#__dharmashop_field_options', 'o') . ' ON o.id = v.option_id AND o.field_id = v.field_id')
             ->order('v.' . $column . ', o.ordering, v.id');
         $values = [];
@@ -87,7 +87,7 @@ final class EntityFields
             if ($row->option_id !== null) {
                 if ($row->title === null) { continue; }
                 $text = (string) $row->title;
-                $image = MediaUrl::absolute((string) $row->image);
+                $image = $field->type === 'color' ? (string) $row->image : MediaUrl::absolute((string) $row->image);
             } elseif ($field->type === 'checkbox') {
                 if ($row->num !== null) { $text = Text::_((float) $row->num !== 0.0 ? 'JYES' : 'JNO'); }
             } elseif ($field->type === 'number' && $row->num !== null) {
@@ -102,7 +102,10 @@ final class EntityFields
             }
             if ($text === null || $text === '') { continue; }
             if ($field->unit !== '') { $text .= ' ' . $field->unit; }
-            $values[(int) $row->entity_id][(int) $row->field_id][] = (object) ['text' => $text, 'image' => $image, 'html' => false];
+            $values[(int) $row->entity_id][(int) $row->field_id][] = (object) [
+                'text' => $text, 'image' => $image, 'html' => false,
+                'color' => $field->type === 'color' && preg_match('/^#[0-9a-f]{6}$/iD', (string) $row->color) ? strtolower($row->color) : '',
+            ];
         }
         if (array_filter($fields, static fn (object $field): bool => $field->type === 'editor')) {
             $query = $base($long)->select('v.' . $column . ' AS entity_id')->select($db->quoteName(['v.field_id', 'v.value']))->order('v.id');
@@ -169,7 +172,7 @@ final class EntityFields
         foreach ($products as $id => $item) {
             foreach ($fields as $fieldId => $field) {
                 if (empty($values[$id][$fieldId])) { continue; }
-                $format = (string) $field->settings->get('format_' . $context, 'comma');
+                $format = (string) $field->settings->get('format_' . $context, $field->type === 'color' ? 'image_title' : 'comma');
                 $item->fields[$field->alias] = (object) [
                     'id' => $fieldId, 'alias' => $field->alias, 'title' => $field->title, 'type' => $field->type,
                     'group_id' => (int) $field->group_id, 'group_title' => (string) ($field->group_title ?? ''),
@@ -178,6 +181,8 @@ final class EntityFields
                     'show_intro' => $target === 'product' && $context === 'page' && (int) $field->settings->get('show_intro', 0) === 1,
                     'format' => in_array($format, ['comma', 'list', 'image', 'image_title'], true) ? $format : 'comma',
                     'values' => $values[$id][$fieldId],
+                    'color_display' => $field->type === 'color' ? (string) $field->settings->get('color_display_site', 'radio') : '',
+                    'image_context' => $field->type === 'color' ? 'field.color.' . $context : 'field.option',
                     'file_settings' => $field->type === 'files' ? FileStorage::settings($field->settings->toArray()) : [],
                     'gallery_settings' => $field->type === 'gallery' ? TypeRegistry::current()->get('gallery')->normalizeSettings($field->settings->toArray()) : [],
                     'video_settings' => $field->type === 'video' ? VideoType::currentSettings($field->settings->toArray()) : [],

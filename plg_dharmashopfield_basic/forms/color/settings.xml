@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form>
+    <fields name="params">
+        <fieldset name="color_controls" label="PLG_DHARMASHOPFIELD_BASIC_COLOR_CONTROLS">
+            <field name="color_display_admin" type="list" label="PLG_DHARMASHOPFIELD_BASIC_COLOR_DISPLAY_ADMIN" showon=".type:color" default="radio" filter="cmd" validate="options">
+                <option value="select">PLG_DHARMASHOPFIELD_BASIC_COLOR_DISPLAY_SELECT</option>
+                <option value="radio">PLG_DHARMASHOPFIELD_BASIC_COLOR_DISPLAY_RADIO</option>
+            </field>
+            <field name="color_display_site" description="PLG_DHARMASHOPFIELD_BASIC_COLOR_CONTROLS_DESC" type="list" label="PLG_DHARMASHOPFIELD_BASIC_COLOR_DISPLAY_SITE" showon=".type:color" default="radio" filter="cmd" validate="options">
+                <option value="select">PLG_DHARMASHOPFIELD_BASIC_COLOR_DISPLAY_SELECT</option>
+                <option value="radio">PLG_DHARMASHOPFIELD_BASIC_COLOR_DISPLAY_RADIO</option>
+            </field>
+            <field name="color_display_filter" type="list" label="PLG_DHARMASHOPFIELD_BASIC_COLOR_DISPLAY_FILTER" showon=".type:color" default="radio" filter="cmd" validate="options">
+                <option value="select">PLG_DHARMASHOPFIELD_BASIC_COLOR_DISPLAY_SELECT</option>
+                <option value="radio">PLG_DHARMASHOPFIELD_BASIC_COLOR_DISPLAY_RADIO</option>
+            </field>
+        </fieldset>
+        <fieldset name="display_card">
+            <field name="color_format_card" type="list" label="COM_DHARMASHOP_FIELD_DISPLAY_FORMAT" description="PLG_DHARMASHOPFIELD_BASIC_COLOR_FORMAT_DESC" showon=".type:color[AND]load_card:1" default="image_title" filter="cmd" validate="options">
+                <option value="image_title">PLG_DHARMASHOPFIELD_BASIC_COLOR_FORMAT_TITLE</option>
+                <option value="image">PLG_DHARMASHOPFIELD_BASIC_COLOR_FORMAT_SWATCH</option>
+                <option value="comma">COM_DHARMASHOP_FIELD_FORMAT_COMMA</option>
+                <option value="list">COM_DHARMASHOP_FIELD_FORMAT_LIST</option>
+            </field>
+        </fieldset>
+        <fieldset name="display_page">
+            <field name="color_format_page" type="list" label="COM_DHARMASHOP_FIELD_DISPLAY_FORMAT" description="PLG_DHARMASHOPFIELD_BASIC_COLOR_FORMAT_DESC" showon=".type:color[AND]load_page:1" default="image_title" filter="cmd" validate="options">
+                <option value="image_title">PLG_DHARMASHOPFIELD_BASIC_COLOR_FORMAT_TITLE</option>
+                <option value="image">PLG_DHARMASHOPFIELD_BASIC_COLOR_FORMAT_SWATCH</option>
+                <option value="comma">COM_DHARMASHOP_FIELD_FORMAT_COMMA</option>
+                <option value="list">COM_DHARMASHOP_FIELD_FORMAT_LIST</option>
+            </field>
+        </fieldset>
+    </fields>
+    <fieldset name="choices">
+        <field name="color_options" type="subform" label="COM_DHARMASHOP_FIELD_OPTIONS" description="PLG_DHARMASHOPFIELD_BASIC_COLOR_OPTIONS_DESC" formsource="plugins/dharmashopfield/basic/forms/color/option.xml" multiple="true" layout="joomla.form.field.subform.repeatable" filter="array" validate="Subform" showon="type:color" />
+    </fieldset>
+</form>

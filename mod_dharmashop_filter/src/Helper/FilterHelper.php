@@ -205,7 +205,7 @@ final class FilterHelper
         $effective = $logic === 'inherit' ? $field->logic() : ($logic === 'and' ? 'and' : 'or');
 
         return ['kind' => 'field', 'title' => $field->title, 'name' => 'filter[f][' . $field->alias . '][]', 'control' => $this->control($control, $field),
-            'options' => $options, 'selected' => (bool) $chosen, 'logic' => $effective, 'limit' => $this->limit()];
+            'options' => $options, 'selected' => (bool) $chosen, 'logic' => $effective, 'limit' => $this->limit(), 'swatches' => $field->type === 'color'];
     }
 
     /** @return array<string, mixed>|null */

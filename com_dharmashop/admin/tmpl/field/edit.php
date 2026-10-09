@@ -31,6 +31,7 @@ $this->getDocument()->getWebAssetManager()->useScript('keepalive')->useScript('f
                     <?php if ($context === 'card') { echo $this->form->renderField('in_card_editor_disabled'); } ?>
                     <?php echo $this->form->renderField('show_title_' . $context, 'params'); ?>
                     <?php echo $this->form->renderField('format_' . $context, 'params'); ?>
+                    <?php echo $this->form->renderField('color_format_' . $context, 'params'); ?>
                     <?php if ($context === 'card') { echo $this->form->renderField('format_card_editor_disabled', 'params'); } ?>
                 <?php else : ?>
                     <?php echo $this->form->renderFieldset('display_' . $context); ?>
@@ -45,6 +46,12 @@ $this->getDocument()->getWebAssetManager()->useScript('keepalive')->useScript('f
             <legend><?php echo Text::_('COM_DHARMASHOP_FIELD_SIDEBAR_IDENTITY'); ?></legend>
             <?php foreach (['target', 'type', 'group_id'] as $name) { echo $this->form->renderField($name); } ?>
         </fieldset>
+        <?php if ($this->form->getField('color_display_admin', 'params')) : ?>
+        <fieldset class="options-form form-vertical mb-3" data-showon='<?php echo json_encode(\Joomla\CMS\Form\FormHelper::parseShowOnConditions('type:color', 'jform')); ?>'>
+            <legend><?php echo Text::_('PLG_DHARMASHOPFIELD_BASIC_COLOR_CONTROLS'); ?></legend>
+            <?php echo $this->form->renderFieldset('color_controls'); ?>
+        </fieldset>
+        <?php endif; ?>
         <fieldset class="options-form form-vertical mb-3">
             <legend><?php echo Text::_('COM_DHARMASHOP_FIELD_APPLICATION'); ?></legend>
             <?php echo $this->form->renderFieldset('application'); ?>

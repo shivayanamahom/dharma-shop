@@ -17,7 +17,7 @@ $any = !array_filter($section['options'], static fn (array $option): bool => $op
     <?php foreach ($section['options'] as $i => $option) : $id = 'dharmashop-filter-' . $module . '-' . md5($section['name'] . $i); ?>
         <div class="form-check">
             <input class="form-check-input" type="radio" name="<?php echo $escape($section['name']); ?>" value="<?php echo $escape($option['value']); ?>" id="<?php echo $id; ?>"<?php echo $option['checked'] ? ' checked' : ''; ?><?php echo $option['disabled'] ? ' disabled' : ''; ?>>
-            <label class="form-check-label<?php echo $option['disabled'] ? ' text-body-secondary' : ''; ?>" for="<?php echo $id; ?>"><?php echo $escape($option['label']); ?><?php if ($option['count'] !== null) : ?> <span class="text-body-secondary small">(<?php echo (int) $option['count']; ?>)</span><?php endif; ?></label>
+            <label class="form-check-label d-inline-flex align-items-center gap-2<?php echo $option['disabled'] ? ' text-body-secondary' : ''; ?>" for="<?php echo $id; ?>"><?php if (!empty($section['swatches'])) { echo \Joomla\CMS\Layout\LayoutHelper::render('components.dharmashop.fields.swatch', ['color' => $option['color'] ?? '', 'image' => $option['image'] ?? '', 'context' => 'field.color.filter']); } ?> <?php echo $escape($option['label']); ?><?php if ($option['count'] !== null) : ?> <span class="text-body-secondary small">(<?php echo (int) $option['count']; ?>)</span><?php endif; ?></label>
         </div>
     <?php endforeach; ?>
 </div>

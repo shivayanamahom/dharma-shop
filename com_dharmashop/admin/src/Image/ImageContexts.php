@@ -38,6 +38,10 @@ final class ImageContexts
         'module.categories.accordion' => [600, 400],
         'module.categories.slider' => [600, 400],
         'field.option' => [96, 96],
+        'field.color.admin' => [96, 96],
+        'field.color.filter' => [96, 96],
+        'field.color.card' => [96, 96],
+        'field.color.page' => [96, 96],
         'field.gallery.card' => [240, 180],
         'field.gallery.page' => [600, 450],
         'field.gallery.lightbox' => [1800, 1800],
@@ -62,7 +66,7 @@ final class ImageContexts
         return $rows;
     }
 
-    /** New module contexts also work with presets saved before the module existed. Explicit rows, including 0 × 0, win. */
+    /** Newly introduced category-module and color contexts also work with older saved presets. Explicit rows, including 0 × 0, win. */
     public static function categoryModuleDefaults(mixed $rows): array
     {
         if (is_string($rows)) { $rows = json_decode($rows, true) ?: []; }
@@ -70,7 +74,7 @@ final class ImageContexts
         $configured = [];
         foreach ($rows as $row) { $configured[(string) (((array) $row)['context'] ?? '')] = true; }
         foreach (self::defaults() as $row) {
-            if (str_starts_with($row['context'], 'module.categories.') && !isset($configured[$row['context']])) {
+            if ((str_starts_with($row['context'], 'module.categories.') || str_starts_with($row['context'], 'field.color.')) && !isset($configured[$row['context']])) {
                 $rows[] = $row;
             }
         }

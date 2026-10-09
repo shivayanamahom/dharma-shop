@@ -22,8 +22,9 @@ trait NativeValue
         switch ($this->id()) {
             case 'checkbox':
             case 'list':
+            case 'color':
                 $single = $this->id() === 'checkbox' && ($settings['checkbox_mode'] ?? 'single') === 'single';
-                $multiple = !$single && ($this->id() === 'checkbox' || (int) ($settings['list_multiple'] ?? 0) === 1);
+                $multiple = !$single && $this->optionMultiple($settings);
                 $xml['type'] = $multiple && $this->id() === 'checkbox' ? 'checkboxes' : 'list';
                 $xml['validate'] = 'options';
                 $xml['multiple'] = $multiple ? 'true' : 'false';
@@ -81,8 +82,8 @@ trait NativeValue
             $hints = array_merge($hints, $this->numericConstraints($settings, 'number'));
         } elseif ($this->id() === 'range') {
             $hints[] = Text::_('COM_DHARMASHOP_FIELD_CONSTRAINT_RANGE');
-        } elseif ($this->id() === 'list') {
-            $hints[] = Text::_((int) ($settings['list_multiple'] ?? 0) === 1
+        } elseif (in_array($this->id(), ['list', 'color'], true)) {
+            $hints[] = Text::_($this->optionMultiple($settings)
                 ? 'COM_DHARMASHOP_FIELD_CONSTRAINT_MULTIPLE' : 'COM_DHARMASHOP_FIELD_CONSTRAINT_SINGLE');
         }
         if (in_array($this->id(), ['number', 'range'], true) && trim((string) ($field->unit ?? '')) !== '') {
@@ -153,7 +154,7 @@ trait NativeValue
         if ($this->store() === 'option') {
             $ids = array_values(array_filter(array_map(static fn (object $row): int => (int) $row->option_id, $rows)));
             // Штатные макеты checkboxes и list сравнивают значение с option строго, как строки: числа дали бы «ничего не выбрано».
-            return $this->id() === 'checkbox' || (int) ($field->settings['list_multiple'] ?? 0) === 1 ? array_map('strval', $ids) : (isset($ids[0]) ? (string) $ids[0] : '');
+            return $this->optionMultiple($field->settings) ? array_map('strval', $ids) : (isset($ids[0]) ? (string) $ids[0] : '');
         }
         return $this->store() === 'number' ? ($rows[0]->num ?? '') : ($rows[0]->str ?? '');
     }
@@ -181,6 +182,7 @@ trait NativeValue
             switch ($this->id()) {
                 case 'checkbox':
                 case 'list':
+                case 'color':
                     if ($this->id() === 'checkbox' && ($settings['checkbox_mode'] ?? 'single') === 'single') {
                         if (!is_scalar($value) || !in_array((string) $value, ['0', '1'], true)) { $this->invalid(); }
                         $result['rows'][] = ['num' => (int) $value];
@@ -190,7 +192,7 @@ trait NativeValue
                             if (!is_scalar($id) || !ctype_digit((string) $id) || !isset($options[(int) $id])) { $this->invalid(); }
                             $ids[(int) $id] = (int) $id;
                         }
-                        if ($this->id() === 'list' && !(int) ($settings['list_multiple'] ?? 0) && count($ids) > 1) { $this->invalid('COM_DHARMASHOP_FIELD_VALUE_SINGLE'); }
+                        if (in_array($this->id(), ['list', 'color'], true) && !$this->optionMultiple($settings) && count($ids) > 1) { $this->invalid('COM_DHARMASHOP_FIELD_VALUE_SINGLE'); }
                         foreach ($ids as $id) { $result['rows'][] = ['option_id' => $id]; }
                     }
                     break;
@@ -214,6 +216,11 @@ trait NativeValue
         }
         if ((int) $field->required === 1 && !$result['rows'] && $result['text'] === null) { $this->invalid('COM_DHARMASHOP_FIELD_VALUE_REQUIRED'); }
         return $result;
+    }
+
+    private function optionMultiple(array $settings): bool
+    {
+        return $this->id() === 'checkbox' || ($this->id() === 'list' && (int) ($settings['list_multiple'] ?? 0) === 1);
     }
 
     private function number(mixed $value, array $settings, string $prefix): string

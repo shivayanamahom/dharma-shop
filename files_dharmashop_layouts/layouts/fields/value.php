@@ -6,6 +6,10 @@ use Dharma\Component\DharmaShop\Administrator\Image\ImageUrl;
 use Joomla\CMS\Filter\InputFilter;
 
 $field = $displayData['field'];
+if ($field->type === 'color') {
+    echo (new \Joomla\CMS\Layout\FileLayout('components.dharmashop.fields.color', null, ['component'=>'none','client'=>0]))->render($displayData);
+    return;
+}
 if ($field->type === 'files') {
     echo (new \Joomla\CMS\Layout\FileLayout('components.dharmashop.fields.files', null, ['component'=>'none','client'=>0]))->render($displayData);
     return;

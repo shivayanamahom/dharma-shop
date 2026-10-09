@@ -11,6 +11,8 @@
         <files folder="layouts/fields" target="layouts/components/dharmashop/fields">
             <filename>default.php</filename>
             <filename>value.php</filename>
+            <filename>color.php</filename>
+            <filename>swatch.php</filename>
             <filename>files.php</filename>
             <filename>gallery.php</filename>
             <folder>gallery</folder>

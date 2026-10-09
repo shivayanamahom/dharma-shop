@@ -16,15 +16,18 @@ final class DisplaySettings
         foreach (['card', 'page'] as $context) {
             $locked = $type === 'editor' && $context === 'card';
             $result['load_' . $context] = $locked ? 0 : (int) (bool) ($settings['load_' . $context] ?? 1);
-            $format = $locked ? 'comma' : (string) ($settings['format_' . $context] ?? 'comma');
+            $format = $locked ? 'comma' : (string) ($type === 'color'
+                ? ($settings['color_format_' . $context] ?? $settings['format_' . $context] ?? 'image_title')
+                : ($settings['format_' . $context] ?? 'comma'));
             if (!in_array($format, self::FORMATS, true)) {
                 throw new \InvalidArgumentException('COM_DHARMASHOP_FIELD_SETTINGS_INVALID');
             }
             $result['format_' . $context] = $format;
+            if ($type === 'color') { $result['color_format_' . $context] = $format; }
             $result['show_title_' . $context] = (int) (bool) ($settings['show_title_' . $context] ?? 1);
         }
         $result['show_intro'] = (int) (bool) ($settings['show_intro'] ?? 0);
-        $result['variation'] = $type === 'list' ? (int) (bool) ($settings['variation'] ?? 0) : 0;
+        $result['variation'] = in_array($type, ['list', 'color'], true) ? (int) (bool) ($settings['variation'] ?? 0) : 0;
         return $result;
     }
 }

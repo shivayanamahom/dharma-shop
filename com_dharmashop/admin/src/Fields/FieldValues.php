@@ -60,7 +60,7 @@ final class FieldValues
             $fields[(int) $field->id] = $field;
         }
         if ($fields) {
-            $query = $this->db->createQuery()->select($this->db->quoteName(['id', 'field_id', 'title', 'alias', 'image']))
+            $query = $this->db->createQuery()->select($this->db->quoteName(['id', 'field_id', 'title', 'alias', 'image', 'color']))
                 ->from($this->db->quoteName('#__dharmashop_field_options'))
                 ->where('field_id IN (' . implode(',', array_keys($fields)) . ')')->order('ordering, id');
             foreach ($this->db->setQuery($query)->loadObjectList() as $option) { $fields[(int) $option->field_id]->options[(int) $option->id] = $option; }

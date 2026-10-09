@@ -38,7 +38,7 @@ final class FilterDefinitionLoader
     public function forCategory(int $catid, array $levels): FilterDefinition
     {
         sort($levels);
-        $key = 'definition:' . $catid . ':' . implode(',', $levels);
+        $key = 'definition:color-controls-1:' . $catid . ':' . implode(',', $levels);
 
         return FilterCache::remember($key, fn (): FilterDefinition => $this->load($catid, $levels));
     }
@@ -113,7 +113,11 @@ final class FilterDefinitionLoader
                 continue;
             }
 
-            $settings = (array) ((new Registry((string) $row->params))->get('filter') ?? []);
+            $params = new Registry((string) $row->params);
+            $settings = (array) ($params->get('filter') ?? []);
+            if ($row->type === 'color') {
+                $settings['control'] = $params->get('color_display_filter', 'radio') === 'select' ? 'select' : 'radio';
+            }
             $result[$id] = new FilterField($id, (string) $row->alias, (string) $row->title, (string) $row->type, (string) $row->store, (int) $row->level, (string) $row->unit, $options[$id] ?? [], $settings);
         }
 
