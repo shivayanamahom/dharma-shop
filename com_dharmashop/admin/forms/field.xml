@@ -35,6 +35,7 @@
     </fieldset>
     <fieldset name="display_variation" label="COM_DHARMASHOP_FIELD_DISPLAY_VARIATION">
         <field name="variation_disabled" type="radio" label="COM_DHARMASHOP_FIELD_DISPLAY_SHOW" description="COM_DHARMASHOP_FIELD_VARIATION_LIST_ONLY" layout="joomla.form.field.radio.switcher" default="0" disabled="true" filter="unset" showon="type!:list[AND]type!:color"><option value="0">JNO</option><option value="1">JYES</option></field>
+        <field name="variation_multiple_disabled" type="note" description="COM_DHARMASHOP_FIELD_VARIATION_SINGLE_ONLY" filter="unset" showon="type:list[AND]params.list_multiple:1" />
     </fieldset>
     <fields name="params">
         <fieldset name="display_card">
@@ -57,7 +58,17 @@
             </field>
         </fieldset>
         <fieldset name="display_variation">
-            <field name="variation" type="radio" label="COM_DHARMASHOP_FIELD_DISPLAY_SHOW" description="COM_DHARMASHOP_FIELD_VARIATION_PENDING" layout="joomla.form.field.radio.switcher" default="0" filter="int" validate="options" showon=".type:list,color"><option value="0">JNO</option><option value="1">JYES</option></field>
+            <field name="variation" type="radio" label="COM_DHARMASHOP_FIELD_DISPLAY_SHOW" description="COM_DHARMASHOP_FIELD_VARIATION_PENDING" layout="joomla.form.field.radio.switcher" default="0" filter="int" validate="options" showon="list_multiple:0[AND].type:list[OR].type:color[AND].target:product"><option value="0">JNO</option><option value="1">JYES</option></field>
+            <field name="product_choice_display" type="list" label="COM_DHARMASHOP_FIELD_PRODUCT_CHOICE_DISPLAY" description="COM_DHARMASHOP_FIELD_PRODUCT_CHOICE_DISPLAY_DESC" default="select" filter="cmd" validate="options" showon=".type:list[AND]variation:1">
+                <option value="off">COM_DHARMASHOP_FIELD_GROUP_CARD_OFF</option><option value="select">COM_DHARMASHOP_FIELD_GROUP_CARD_SELECT</option><option value="radio">COM_DHARMASHOP_FIELD_GROUP_CARD_RADIO</option>
+            </field>
+            <field name="color_product_choice_display" type="list" label="COM_DHARMASHOP_FIELD_PRODUCT_CHOICE_DISPLAY" description="COM_DHARMASHOP_FIELD_PRODUCT_CHOICE_DISPLAY_DESC" default="color" filter="cmd" validate="options" showon=".type:color[AND]variation:1">
+                <option value="off">COM_DHARMASHOP_FIELD_GROUP_CARD_OFF</option><option value="select">COM_DHARMASHOP_FIELD_GROUP_CARD_SELECT</option><option value="radio">COM_DHARMASHOP_FIELD_GROUP_CARD_RADIO</option><option value="color">COM_DHARMASHOP_FIELD_GROUP_CARD_COLOR</option>
+            </field>
+            <field name="product_choice_title" type="radio" label="COM_DHARMASHOP_FIELD_PRODUCT_CHOICE_TITLE" layout="joomla.form.field.radio.switcher" default="1" filter="int" validate="options" showon=".type:list,color[AND]variation:1"><option value="0">JNO</option><option value="1">JYES</option></field>
+            <field name="product_choice_format" type="list" label="COM_DHARMASHOP_FIELD_PRODUCT_CHOICE_FORMAT" default="image_title" filter="cmd" validate="options" showon=".type:color[AND]variation:1[AND]color_product_choice_display:color">
+                <option value="image">COM_DHARMASHOP_FIELD_FORMAT_IMAGE</option><option value="image_title">COM_DHARMASHOP_FIELD_FORMAT_IMAGE_TITLE</option>
+            </field>
             <field name="group_card_show" type="radio" label="COM_DHARMASHOP_FIELD_GROUP_CARD_SHOW" description="COM_DHARMASHOP_FIELD_GROUP_CARD_SHOW_DESC" layout="joomla.form.field.radio.switcher" default="1" filter="int" validate="options" showon=".type:list,color[AND]variation:1"><option value="0">JNO</option><option value="1">JYES</option></field>
             <field name="group_card_display" type="list" label="COM_DHARMASHOP_FIELD_GROUP_CARD_DISPLAY" description="COM_DHARMASHOP_FIELD_GROUP_CARD_DISPLAY_DESC" default="off" filter="cmd" validate="options" showon=".type:list[AND]variation:1">
                 <option value="off">COM_DHARMASHOP_FIELD_GROUP_CARD_OFF</option><option value="select">COM_DHARMASHOP_FIELD_GROUP_CARD_SELECT</option><option value="radio">COM_DHARMASHOP_FIELD_GROUP_CARD_RADIO</option>

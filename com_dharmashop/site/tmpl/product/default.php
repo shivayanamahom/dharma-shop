@@ -13,7 +13,7 @@ if (!isset($this->item) || !is_object($this->item)) {
 $page = ($this->seo ?? null) instanceof PageMetadata ? $this->seo : null;
 $heading = $page?->h1 ?? (string) ($this->item->title ?? '');
 ?>
-<div id="dharma_shop" class="dharmaProduct">
+<div id="dharma_shop" class="dharmaProduct" data-product-id="<?php echo (int) $this->item->id; ?>" data-product-group="<?php echo (int) ($this->item->group_id ?? 0); ?>">
 <section class="py-4">
     <?php echo $this->renderHook('beforeTitle'); ?>
     <?php if (($this->showHeading ?? true) && $heading !== '') : ?>
@@ -31,7 +31,6 @@ $heading = $page?->h1 ?? (string) ($this->item->title ?? '');
         <div class="col-12 col-md-6 col-xl-5 dharmaProductInfo">
             <?php echo $this->renderHook('beforeIntro'); ?>
             <?php echo $this->loadTemplate('intro'); ?>
-            <?php echo $this->loadTemplate('choices'); ?>
             <?php echo $this->renderHook('afterIntro'); ?>
         </div>
         <div class="col-12 col-xl-3 dharmaProductPurchase">

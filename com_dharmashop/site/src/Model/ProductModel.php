@@ -19,6 +19,12 @@ class ProductModel extends BaseDatabaseModel
 {
     protected $option = 'com_dharmashop';
 
+    /** Select one public member without exposing the model database connection. */
+    public function selectChoice(array $values): int
+    {
+        return (new \Dharma\Component\DharmaShop\Site\Support\ProductChoices($this->getDatabase()))->resolve($this->getItem(), $values);
+    }
+
     public function getItem(): object
     {
         $id = Factory::getApplication()->getInput()->getInt('id');
@@ -131,6 +137,7 @@ class ProductModel extends BaseDatabaseModel
 
         $item->choices = (new \Dharma\Component\DharmaShop\Site\Support\ProductChoices($db))->forProduct($item);
         ProductFields::attach($db, [$item], 'page');
+        \Dharma\Component\DharmaShop\Site\Support\ProductChoices::suppressRepeatedFields($item);
         return $item;
     }
 }

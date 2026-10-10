@@ -28,6 +28,9 @@ final class DisplaySettings
         }
         $result['show_intro'] = (int) (bool) ($settings['show_intro'] ?? 0);
         $result['variation'] = in_array($type, ['list', 'color'], true) ? (int) (bool) ($settings['variation'] ?? 0) : 0;
+        if ($result['variation'] && $type === 'list' && ((int) ($settings['list_multiple'] ?? 0) || (int) ($settings['multiple'] ?? 0))) {
+            throw new \InvalidArgumentException('COM_DHARMASHOP_FIELD_VARIATION_SINGLE_ONLY');
+        }
         $display = (string) ($type === 'color' ? ($settings['color_group_card_display'] ?? $settings['group_card_display'] ?? 'off') : ($settings['group_card_display'] ?? 'off'));
         $format = (string) ($settings['group_card_format'] ?? 'image_title');
         if (!in_array($display, $type === 'color' ? ['off', 'select', 'radio', 'color'] : ['off', 'select', 'radio'], true)
@@ -39,6 +42,16 @@ final class DisplaySettings
         $result['group_card_format'] = $format;
         $result['group_card_display'] = $display;
         if ($type === 'color') { $result['color_group_card_display'] = $display; }
+        $productDisplay = (string) ($type === 'color' ? ($settings['color_product_choice_display'] ?? $settings['product_choice_display'] ?? 'color') : ($settings['product_choice_display'] ?? 'select'));
+        $productFormat = (string) ($settings['product_choice_format'] ?? 'image_title');
+        if (!in_array($productDisplay, $type === 'color' ? ['off', 'select', 'radio', 'color'] : ['off', 'select', 'radio'], true)
+            || !in_array($productFormat, ['image', 'image_title'], true)) {
+            throw new \InvalidArgumentException('COM_DHARMASHOP_FIELD_SETTINGS_INVALID');
+        }
+        $result['product_choice_display'] = $productDisplay;
+        $result['product_choice_title'] = (int) (bool) ($settings['product_choice_title'] ?? 1);
+        $result['product_choice_format'] = $productFormat;
+        if ($type === 'color') { $result['color_product_choice_display'] = $productDisplay; }
         return $result;
     }
 }

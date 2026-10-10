@@ -36,6 +36,13 @@
             <filename>list.php</filename>
             <filename>table.php</filename>
         </files>
+        <files folder="layouts/variant-controls" target="layouts/components/dharmashop/variant-controls">
+            <filename>default.php</filename>
+            <filename>select.php</filename>
+            <filename>radio.php</filename>
+            <filename>color.php</filename>
+            <filename>value.php</filename>
+        </files>
         <files folder="layouts/group-card-parts" target="layouts/components/dharmashop/group-card-parts">
             <filename>attributes.php</filename>
             <filename>choice.php</filename>

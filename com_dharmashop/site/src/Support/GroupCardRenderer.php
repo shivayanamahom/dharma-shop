@@ -67,6 +67,8 @@ final class GroupCardRenderer
             $data['productData']['imageContext'] = 'group.teaser.' . $mode;
             $data['productData']['compactActions'] = $mode === 'table';
             $data['image'] = (string) ($data['productData']['images'][0]->url ?? $representative->cover);
+            $data['title'] = (string) $representative->title;
+            $data['intro'] = (string) $representative->introtext;
         }
         return (new FileLayout('components.dharmashop.group-card.default', null, ['component' => 'none', 'client' => 0]))->render($data);
     }

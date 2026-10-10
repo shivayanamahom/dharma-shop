@@ -75,7 +75,7 @@ class FieldTable extends Table
         }
         if ($id > 0 && $db->setQuery('SELECT group_id FROM #__dharmashop_group_axes WHERE field_id=' . $id, 0, 1)->loadResult()) {
             $settings = new Registry($this->params);
-            if (!(int) $settings->get('variation', 0) || (int) $settings->get('multiple', 0)) {
+            if (!(int) $settings->get('variation', 0) || (int) $settings->get('list_multiple', $settings->get('multiple', 0))) {
                 $this->setError(Text::_('COM_DHARMASHOP_GROUP_AXIS_USED')); return false;
             }
         }

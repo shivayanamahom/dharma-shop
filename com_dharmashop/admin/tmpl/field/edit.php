@@ -20,7 +20,13 @@ $this->getDocument()->getWebAssetManager()->useScript('keepalive')->useScript('f
         <?php echo $this->form->renderFieldset('choices'); ?>
         <?php echo HTMLHelper::_('uitab.endTab'); ?>
         <?php echo HTMLHelper::_('uitab.addTab','fieldTab','display',Text::_('COM_DHARMASHOP_TAB_DISPLAY')); ?>
-        <?php foreach (['card', 'page', 'filter', 'variation'] as $context) : ?>
+        <?php $variantField = !empty($this->item->params['variation']); ?>
+        <?php foreach (['variation', 'card', 'page', 'filter'] as $context) : ?>
+            <?php if ($context === 'card') : ?>
+            <details class="border rounded p-3 mb-3"<?php echo $variantField ? '' : ' open'; ?>>
+                <summary class="fw-semibold"><?php echo Text::_('COM_DHARMASHOP_FIELD_ORDINARY_DISPLAY'); ?></summary>
+                <p class="small text-body-secondary mt-2"><?php echo Text::_('COM_DHARMASHOP_FIELD_ORDINARY_DISPLAY_DESC'); ?></p>
+            <?php endif; ?>
             <fieldset class="options-form">
                 <legend><?php echo Text::_('COM_DHARMASHOP_FIELD_DISPLAY_' . strtoupper($context)); ?></legend>
                 <?php if (in_array($context, ['card', 'page'], true)) : ?>
@@ -37,6 +43,7 @@ $this->getDocument()->getWebAssetManager()->useScript('keepalive')->useScript('f
                     <?php echo $this->form->renderFieldset('display_' . $context); ?>
                 <?php endif; ?>
             </fieldset>
+            <?php if ($context === 'page') : ?></details><?php endif; ?>
         <?php endforeach; ?>
         <?php echo HTMLHelper::_('uitab.endTab'); ?>
         <?php echo HTMLHelper::_('uitab.endTabSet'); ?>

@@ -12,7 +12,7 @@ class ChoiceaxesField extends ListField
  {
   $out=parent::getOptions();
   $rows=$this->getDatabase()->setQuery("SELECT id,title,params FROM #__dharmashop_fields WHERE target='product' AND state=1 AND level=1 AND store='option' AND type IN ('list','color') ORDER BY ordering,id")->loadObjectList();
-  foreach($rows as $row) { $p=new Registry($row->params); if((int)$p->get('variation',0) && !(int)$p->get('multiple',0)) {$out[]=HTMLHelper::_('select.option',$row->id,$row->title);} }
+  foreach($rows as $row) { $p=new Registry($row->params); if((int)$p->get('variation',0) && !(int)$p->get('list_multiple',$p->get('multiple',0))) {$out[]=HTMLHelper::_('select.option',$row->id,$row->title);} }
   return $out;
  }
 }

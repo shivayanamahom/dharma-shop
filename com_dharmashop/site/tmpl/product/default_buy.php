@@ -39,6 +39,7 @@ $inStock = (int) $this->item->in_stock !== 0;
             </div>
         <?php endif; ?>
         <?php echo $this->renderHook('afterPrice'); ?>
+        <?php echo $this->loadTemplate('choices'); ?>
         <?php echo $this->renderHook('beforeActions'); ?>
         <div class="dharmaProductBuyActions">
             <?php echo (new FileLayout('components.dharmashop.product-card-parts.actions', null, ['component' => 'none', 'client' => 0]))->render(array_replace($this->buy, ['stackActions' => true])); ?>

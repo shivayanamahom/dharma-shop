@@ -6,8 +6,20 @@
 	"license": "GPL-2.0-or-later",
 	"assets": [
 		{
+			"name": "com_dharmashop.product-choice",
+			"version": "a772e8970bc7",
+			"type": "script",
+			"uri": "com_dharmashop/product-choice.js",
+			"attributes": {
+				"defer": true
+			},
+			"dependencies": [
+				"core"
+			]
+		},
+		{
 			"name": "com_dharmashop.group-card",
-			"version": "ddefeccd4f00",
+			"version": "6c9f2057bf37",
 			"type": "script",
 			"uri": "com_dharmashop/group-card.js",
 			"attributes": {
@@ -100,6 +112,7 @@
 		},
 		{
 			"name": "com_dharmashop.product-gallery",
+			"version": "0e5a7f24cc41",
 			"type": "script",
 			"uri": "com_dharmashop/product-gallery.js",
 			"attributes": { "defer": true }

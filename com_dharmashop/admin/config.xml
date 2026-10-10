@@ -174,6 +174,10 @@
 
         <fieldset name="display_product" label="COM_DHARMASHOP_DISPLAY_PRODUCT" addfieldprefix="Dharma\Component\DharmaShop\Administrator\Field">
             <field name="display_product_note" type="note" description="COM_DHARMASHOP_DISPLAY_PLANNED_DESC" class="alert alert-info" />
+            <field name="product_choice_mode" type="list" label="COM_DHARMASHOP_PRODUCT_CHOICE_MODE" description="COM_DHARMASHOP_PRODUCT_CHOICE_MODE_DESC" default="navigate" filter="cmd" validate="options">
+                <option value="navigate">COM_DHARMASHOP_PRODUCT_CHOICE_NAVIGATE</option>
+                <option value="ajax">COM_DHARMASHOP_PRODUCT_CHOICE_AJAX</option>
+            </field>
             <field name="product_layout" type="layout" layoutgroup="product" label="COM_DHARMASHOP_LAYOUT_PRODUCT_LABEL" validate="options"></field>
             <field name="product_gallery_type" type="list" default="swiper" validate="options" label="COM_DHARMASHOP_GALLERY_TYPE" description="COM_DHARMASHOP_GALLERY_TYPE_DESC">
                 <option value="swiper">COM_DHARMASHOP_GALLERY_TYPE_SWIPER</option>

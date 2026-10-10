@@ -372,3 +372,14 @@ C74: результат вынесен в `site/tmpl/checkoutcomplete/default.ph
 
 
 Карточки групп, 2026-10-10: group_card_mode управляет всеми тремя видами. Дополнительные displayData: ajax, instance, context (подписанный контекст выдачи), selection (field_id→option_id только выбранного товара), ajaxUrl, productData (общие данные карточки одного варианта). choiceFields теперь содержит id/type/title/params и values{id,title,color,image}. Часть attributes добавляет data-group-source/context/url; переопределение корня сохраняет эти атрибуты и data-dharmashop-group-card для AJAX. choice выводит один образец/подпись, details — статические значения или native select/radio/btn-check. productData использует product-card-parts.media/price/actions; table показывает компактное фото. Все части независимо переопределяемы в html/layouts/components/dharmashop; attributes.php/choice.php явно включены в манифест. Изображения — прежние group.teaser.grid/list/table и group.choice через ImageUrl. JS заменяет article/tr целиком и отправляет существующее dharmashop:updated, поэтому собственный макет должен возвращать один корневой узел.
+
+
+## Общие переключатели вариантов (2026-10-10)
+
+Слот `variant-controls`: `files_dharmashop_layouts/layouts/variant-controls/{default,select,radio,color,value}.php` → `layouts/components/dharmashop/variant-controls/`. Переопределения: `html/layouts/components/dharmashop/variant-controls/` с теми же именами. default — fieldset/legend; select — native select, radio — native radio, color — круглые образцы btn-check, value — подпись/образец через fields.swatch и существующий контекст `group.choice`. Все файлы включены в манифест files_dharmashop_layouts. Собственного CSS нет.
+
+displayData: field{id,title,type,values}, selected (option_id), id, name, attribute (`data-product-choice` либо `data-group-choice`), control, showTitle, format. group-card-parts.choice остаётся совместимой обёрткой над value. Тизер и полная страница используют общие переключатели; SQL в макетах отсутствует.
+
+`product/default_choices.php` теперь подключён из default_buy сразу под ценой/afterPrice. product_choice_mode=navigate|ajax; при JS смена значения сразу выбирает вариант, без JS остаётся submit. `.dharmaProduct` имеет data-product-id/group; AJAX заменяет корень и отправляет dharmashop:updated/joomla:updated, обновляет head/крошки/URL. Переопределения сохраняют data-атрибуты, один корневой узел и форму. Галерея слушает dharmashop:updated.
+
+AJAX-тизер использует название/интро/изображения/цену выбранного товара; простой режим — группы. Невалидные видимые сочетания сохраняются в контролах с блокировкой покупки; скрытые поля — предпочтения. Значения характеристик остаются загружены, но show/show_intro отключаются только для полей фактически видимого селектора страницы; подстановки и независимые переопределения не теряют данные.

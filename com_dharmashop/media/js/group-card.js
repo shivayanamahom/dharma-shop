@@ -21,7 +21,7 @@
     card.querySelectorAll('.carousel').forEach((element) => window.bootstrap?.Carousel?.getInstance(element)?.dispose());
   };
   document.addEventListener('click', (event) => {
-    if (event.target.closest(purchase)?.closest('[data-dharmashop-group-card][aria-busy="true"]')) {
+    if (event.target.closest(purchase)?.closest('[data-dharmashop-group-card][aria-busy="true"], [data-dharmashop-group-card][data-group-pending]')) {
       event.preventDefault();
       event.stopImmediatePropagation();
     }
@@ -43,6 +43,7 @@
     card.classList.add('opacity-50');
     busy(card, true);
     let publicError = '';
+    let unavailable = false;
     // Keep choices enabled for quick changes; purchases are blocked in capture phase until a response settles.
     try {
       const url = new URL(card.dataset.groupUrl, window.location.href);
@@ -53,6 +54,7 @@
       if (requests.get(card) !== controller || !card.isConnected) return;
       if (!result.success || typeof result.html !== 'string') {
         publicError = typeof result.message === 'string' ? result.message : '';
+        unavailable = result.reason === 'unavailable';
         throw new Error('Selection failed');
       }
       const range = document.createRange();
@@ -68,14 +70,15 @@
       focus?.focus({ preventScroll: true });
     } catch (error) {
       if (error.name === 'AbortError' || requests.get(card) !== controller || !card.isConnected) return;
-      restore(card);
+      if (unavailable) card.dataset.groupPending = '1';
+      else { restore(card); delete card.dataset.groupPending; }
       if (message) message.textContent = publicError || (window.Joomla?.Text?._('COM_DHARMASHOP_GROUP_CARD_ERROR') || 'Unable to switch variant. Please try again.');
     } finally {
       if (requests.get(card) === controller) {
         requests.delete(card);
         card.removeAttribute('aria-busy');
-        card.classList.remove('opacity-50');
-        busy(card, false);
+        card.classList.toggle('opacity-50', Boolean(card.dataset.groupPending));
+        busy(card, Boolean(card.dataset.groupPending));
       }
     }
   });

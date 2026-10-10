@@ -9,6 +9,7 @@ use Dharma\Component\DharmaShop\Site\Search\ProductSearch;
 use Dharma\Component\DharmaShop\Site\Support\SaleCountdown;
 use Dharma\Component\DharmaShop\Site\Support\GroupListing;
 use Dharma\Component\DharmaShop\Site\Support\GroupCardRenderer;
+use Dharma\Component\DharmaShop\Site\Support\VariantSelection;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
 use Dharma\Component\DharmaShop\Site\Support\ProductFields;
@@ -379,7 +380,7 @@ class CategoryModel extends CategoriesModel
         $this->groupListing()->inheritImages($groupItems, $ajaxGroups ? $imagesLimit : 1);
     }
 
-    /** AJAX picks exactly one member of the same public candidate set; hidden axes keep their current values. */
+    /** AJAX picks one member of the same public candidate set by visible choices; hidden axes are preferences. */
     public function selectGroupCardProduct(int $sourceId, array $changes, int $imagesLimit): object
     {
         if (!$this->groupsEnabled() || ComponentHelper::getParams('com_dharmashop')->get('group_card_mode', 'simple') !== 'ajax' || count($changes) > 6) {
@@ -411,7 +412,13 @@ class CategoryModel extends CategoriesModel
             }
             $values[$fieldId] = (int) $optionId;
         }
-        $id = $services->groups()->resolve((int) $source->group_id, $values);
+        $visible = $preferred = [];
+        foreach ($fields as $fieldId => $field) {
+            $display = (string) $field->params->get($field->type === 'color' ? 'color_group_card_display' : 'group_card_display', 'off');
+            if (!$field->params->get('variation', 0) || $display === 'off') { $preferred[$fieldId] = $values[$fieldId]; }
+            else { $visible[$fieldId] = $values[$fieldId]; }
+        }
+        $id = (new VariantSelection($db))->choose($candidates, (int) $source->group_id, $visible, $preferred);
         $item = $id ? $load($id) : null;
         if (!$item || (int) $item->group_id !== (int) $source->group_id) { throw new \RuntimeException('COM_DHARMASHOP_GROUP_UNAVAILABLE', 404); }
         $item->params = new Registry($item->params);
@@ -419,7 +426,7 @@ class CategoryModel extends CategoriesModel
         // Reuse the same group's scope/options, and only replace its selected member.
         $item->listing_type = 'group';
         $item->listing_group = $source->listing_group;
-        $item->group_selection = $values;
+        $item->group_selection = $services->groups()->combination($id, (int) $source->group_id);
         $this->attachCardData([$item], $imagesLimit);
         return $item;
     }

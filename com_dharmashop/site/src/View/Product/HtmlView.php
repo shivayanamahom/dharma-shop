@@ -109,6 +109,14 @@ class HtmlView extends BaseHtmlView
             ? $layout : 'default';
         $this->setLayout($layout);
 
+        if (!empty($this->item->choices)) {
+            $assets = $this->getDocument()->getWebAssetManager();
+            $assets->getRegistry()->addExtensionRegistryFile('com_dharmashop');
+            $assets->useScript('com_dharmashop.product-choice');
+            \Joomla\CMS\Language\Text::script('COM_DHARMASHOP_PRODUCT_CHOICE_ERROR');
+            \Joomla\CMS\Language\Text::script('COM_DHARMASHOP_PRODUCT_CHOICE_UNAVAILABLE');
+        }
+
         $this->prepareGallery();
         $this->prepareFieldGroups();
         $this->prepareBreadcrumbs();

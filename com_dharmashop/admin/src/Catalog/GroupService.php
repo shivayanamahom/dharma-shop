@@ -103,7 +103,7 @@ final class GroupService
         foreach ($ids as $id) {
             $f = $this->db->setQuery('SELECT target,type,store,level,state,params FROM #__dharmashop_fields WHERE id=' . $id)->loadObject();
             $settings = new Registry($f->params ?? '');
-            if (!$f || $f->target !== 'product' || !in_array($f->type, ['list','color'], true) || $f->store !== 'option' || (int) $f->state !== 1 || (int) $f->level !== 1 || !(int) $settings->get('variation', 0) || (int) $settings->get('multiple', 0)) {
+            if (!$f || $f->target !== 'product' || !in_array($f->type, ['list','color'], true) || $f->store !== 'option' || (int) $f->state !== 1 || (int) $f->level !== 1 || !(int) $settings->get('variation', 0) || (int) $settings->get('list_multiple', $settings->get('multiple', 0))) {
                 throw new \RuntimeException('COM_DHARMASHOP_GROUP_AXIS_INVALID');
             }
         }

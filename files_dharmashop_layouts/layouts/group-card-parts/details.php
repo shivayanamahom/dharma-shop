@@ -8,6 +8,7 @@ $ajax = !empty($displayData['ajax']);
 <?php foreach ($displayData['choiceFields'] as $field) :
     $field = (object) $field;
     $control = (string) $field->params->get($field->type === 'color' ? 'color_group_card_display' : 'group_card_display', 'off');
+    if (!in_array($control, ['off', 'select', 'radio', 'color'], true)) { $control = 'off'; }
     if ($ajax ? ($control === 'off' || !(int) $field->params->get('variation', 0)) : !(int) $field->params->get('group_card_show', 1)) { continue; }
     $showTitle = (int) $field->params->get('group_card_title', 1) === 1;
     $selected = (int) ($displayData['selection'][$field->id] ?? 0);
@@ -15,29 +16,11 @@ $ajax = !empty($displayData['ajax']);
 ?>
     <fieldset class="border-0 p-0 mt-2 mb-0 dharmaGroupChoices">
         <legend class="float-none w-auto fs-6 mb-1<?php echo $showTitle ? ' small text-body-secondary' : ' visually-hidden'; ?>"><?php echo $escape($field->title); ?></legend>
-        <?php if ($ajax && $control === 'select') : ?>
-            <label class="visually-hidden" for="<?php echo $escape($id); ?>"><?php echo $escape($field->title); ?></label>
-            <select id="<?php echo $escape($id); ?>" class="form-select form-select-sm" data-group-choice="<?php echo (int) $field->id; ?>">
-                <?php foreach ($field->values as $value) : ?>
-                    <option value="<?php echo (int) $value->id; ?>"<?php echo $selected === (int) $value->id ? ' selected' : ''; ?>><?php echo $escape($value->title); ?></option>
-                <?php endforeach; ?>
-            </select>
-        <?php elseif ($ajax) : ?>
-            <div class="d-flex flex-wrap align-items-center gap-2">
-            <?php foreach ($field->values as $value) : $optionId = $id . '-' . (int) $value->id; ?>
-                <?php if ($control === 'color') : ?>
-                    <input type="radio" class="btn-check" id="<?php echo $escape($optionId); ?>" name="<?php echo $escape($id); ?>" value="<?php echo (int) $value->id; ?>" data-group-choice="<?php echo (int) $field->id; ?>"<?php echo $selected === (int) $value->id ? ' checked' : ''; ?>>
-                    <label class="btn btn-outline-secondary rounded-pill p-1 d-inline-flex align-items-center gap-1" for="<?php echo $escape($optionId); ?>" title="<?php echo $escape($value->title); ?>">
-                        <?php echo $choice->render(['field' => $field, 'value' => $value, 'forceColor' => true]); ?>
-                    </label>
-                <?php else : ?>
-                    <div class="form-check mb-0">
-                        <input type="radio" class="form-check-input" id="<?php echo $escape($optionId); ?>" name="<?php echo $escape($id); ?>" value="<?php echo (int) $value->id; ?>" data-group-choice="<?php echo (int) $field->id; ?>"<?php echo $selected === (int) $value->id ? ' checked' : ''; ?>>
-                        <label class="form-check-label" for="<?php echo $escape($optionId); ?>"><?php echo $escape($value->title); ?></label>
-                    </div>
-                <?php endif; ?>
-            <?php endforeach; ?>
-            </div>
+        <?php if ($ajax) : ?>
+            <?php echo (new FileLayout('components.dharmashop.variant-controls.' . $control, null, ['component' => 'none', 'client' => 0]))->render([
+                'field' => $field, 'selected' => $selected, 'id' => $id, 'name' => $id,
+                'attribute' => 'data-group-choice', 'format' => (string) $field->params->get('group_card_format', 'image_title'),
+            ]); ?>
         <?php else : $format = (string) $field->params->get('group_card_format', 'image_title'); ?>
             <div class="d-flex flex-wrap align-items-center gap-2<?php echo $format === 'list' ? ' flex-column align-items-start' : ''; ?>">
             <?php foreach ($field->values as $n => $value) : ?>
