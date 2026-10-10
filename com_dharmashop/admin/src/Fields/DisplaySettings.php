@@ -28,6 +28,17 @@ final class DisplaySettings
         }
         $result['show_intro'] = (int) (bool) ($settings['show_intro'] ?? 0);
         $result['variation'] = in_array($type, ['list', 'color'], true) ? (int) (bool) ($settings['variation'] ?? 0) : 0;
+        $display = (string) ($type === 'color' ? ($settings['color_group_card_display'] ?? $settings['group_card_display'] ?? 'off') : ($settings['group_card_display'] ?? 'off'));
+        $format = (string) ($settings['group_card_format'] ?? 'image_title');
+        if (!in_array($display, $type === 'color' ? ['off', 'select', 'radio', 'color'] : ['off', 'select', 'radio'], true)
+            || !in_array($format, self::FORMATS, true)) {
+            throw new \InvalidArgumentException('COM_DHARMASHOP_FIELD_SETTINGS_INVALID');
+        }
+        $result['group_card_show'] = (int) (bool) ($settings['group_card_show'] ?? 1);
+        $result['group_card_title'] = (int) (bool) ($settings['group_card_title'] ?? 1);
+        $result['group_card_format'] = $format;
+        $result['group_card_display'] = $display;
+        if ($type === 'color') { $result['color_group_card_display'] = $display; }
         return $result;
     }
 }

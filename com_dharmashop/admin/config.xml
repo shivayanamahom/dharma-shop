@@ -125,6 +125,13 @@
             <field name="category_price_range" label="COM_DHARMASHOP_DISPLAY_SHOW_LIST_PRICES" type="radio" layout="joomla.form.field.radio.switcher" default="0" filter="integer"><option value="0">JNO</option><option value="1">JYES</option></field>
         </fieldset>
 
+        <fieldset name="display_groups" label="COM_DHARMASHOP_DISPLAY_GROUPS">
+            <field name="group_card_mode" type="list" label="COM_DHARMASHOP_GROUP_CARD_MODE" description="COM_DHARMASHOP_GROUP_CARD_MODE_DESC" default="simple" filter="cmd" validate="options">
+                <option value="simple">COM_DHARMASHOP_GROUP_CARD_SIMPLE</option>
+                <option value="ajax">COM_DHARMASHOP_GROUP_CARD_AJAX</option>
+            </field>
+        </fieldset>
+
         <fieldset name="display_brands" label="COM_DHARMASHOP_DISPLAY_BRANDS" addfieldprefix="Dharma\Component\DharmaShop\Administrator\Field">
             <field name="display_brands_note" type="note" description="COM_DHARMASHOP_DISPLAY_BRANDS_NOTE" class="alert alert-info" />
             <field name="brand_layout" type="layout" layoutgroup="brand" label="COM_DHARMASHOP_LAYOUT_BRAND_PAGE" description="COM_DHARMASHOP_LAYOUT_BRAND_PAGE_DESC" validate="options"></field>

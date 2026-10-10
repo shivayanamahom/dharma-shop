@@ -17,11 +17,12 @@ final class ProductCardRenderer
     private MoneyFormatter $money;
     private array $cart = [];
     private Registry $settings;
-    public function __construct(private readonly Registry $params)
+    public function __construct(private readonly Registry $params, ?array $cartQuantities = null)
     {
         $this->settings = ComponentHelper::getParams('com_dharmashop');
         $this->money = new MoneyFormatter($this->settings);
-        if ((int) $params->get('catalog_mode', 0) !== 1 && $this->cartMode() === 'stepper') {
+        if ($cartQuantities !== null) { $this->cart = $cartQuantities; }
+        if ($cartQuantities === null && (int) $params->get('catalog_mode', 0) !== 1 && $this->cartMode() === 'stepper') {
             $app = Factory::getApplication();
             $session = new CartSession($app->bootComponent('com_dharmashop')->getServices()->cart(), $app);
             if ($cart = $session->current()) {
@@ -37,7 +38,7 @@ final class ProductCardRenderer
         return in_array($mode, ['button','qty','stepper'], true) ? $mode
             : ((int) $this->params->get('product_card_qty', 0) === 1 ? 'qty' : 'stepper');
     }
-    public function data(object $item, string $mode = 'grid', string $context = 'product.category', string $instance = ''): array
+    public function data(object $item, string $mode = 'grid', string $context = 'product.category', string $instance = '', bool $loadAssets = true): array
     {
         $mode = $mode === 'list' ? 'list' : 'grid';
         $settings = $this->settings;
@@ -55,18 +56,18 @@ final class ProductCardRenderer
         $wa->getRegistry()->addExtensionRegistryFile('com_dharmashop');
         $slider = $settings->get('product_gallery_type', 'swiper') !== 'bootstrap'
             && $wa->getRegistry()->exists('preset', 'dharmashop.swiper') ? 'swiper' : 'bootstrap';
-        if (count($images) > 1) {
+        if ($loadAssets && count($images) > 1) {
             if ($slider === 'swiper') { $wa->usePreset('dharmashop.swiper')->useScript('com_dharmashop.card-slider'); }
             else { $wa->useScript('bootstrap.carousel'); }
         }
         $catalog = (int) $this->params->get('catalog_mode', 0) === 1;
         $cartMode = $this->cartMode();
-        if (!$catalog) {
+        if ($loadAssets && !$catalog) {
             CartAssets::use(Factory::getApplication()->getDocument());
             if ($cartMode === 'qty') { $wa->useScript('com_dharmashop.qty'); }
         }
         $showCountdown = (int) $settings->get('product_card_sale_countdown', 1) === 1;
-        if ($showCountdown && !empty($item->sale_end_timestamp)) { $wa->useScript('com_dharmashop.sale-countdown'); }
+        if ($loadAssets && $showCountdown && !empty($item->sale_end_timestamp)) { $wa->useScript('com_dharmashop.sale-countdown'); }
         return ['item' => $item, 'params' => clone $this->params, 'mode' => $mode, 'cardLayout' => $mode,
             'cardFolder' => 'product-card', 'instanceId' => $instance . '-' . (int) $item->id,
             'imageContext' => $context . '.' . $mode, 'fields' => $item->fields ?? [],

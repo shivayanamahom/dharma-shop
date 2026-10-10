@@ -6,6 +6,18 @@
 	"license": "GPL-2.0-or-later",
 	"assets": [
 		{
+			"name": "com_dharmashop.group-card",
+			"version": "ddefeccd4f00",
+			"type": "script",
+			"uri": "com_dharmashop/group-card.js",
+			"attributes": {
+				"defer": true
+			},
+			"dependencies": [
+				"core"
+			]
+		},
+		{
 			"name": "com_dharmashop.product-picker",
 			"version": "b4dae484a3d9",
 			"type": "script",

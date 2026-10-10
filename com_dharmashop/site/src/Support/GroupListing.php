@@ -6,6 +6,8 @@ namespace Dharma\Component\DharmaShop\Site\Support;
 use Dharma\Component\DharmaShop\Administrator\Order\OrderRules;
 use Joomla\Database\DatabaseInterface;
 use Joomla\Database\QueryInterface;
+use Joomla\CMS\Component\ComponentHelper;
+use Joomla\Registry\Registry;
 
 \defined('_JEXEC') or die;
 
@@ -68,7 +70,7 @@ final class GroupListing
             . ' WHERE listing_prior.group_id=p.group_id AND ' . $earlier . '))');
     }
 
-    /** Four bounded batch queries for groups on this page; no per-card SQL or global group price caches. */
+    /** Bounded batch queries for groups on this page; no per-card SQL or global group price caches. */
     public function attach(array $items, QueryInterface $candidates, OrderRules $rules): void
     {
         $ids = array_values(array_unique(array_filter(array_map(static fn(object $p): int => (int) ($p->group_id ?? 0), $items))));
@@ -80,6 +82,7 @@ final class GroupListing
         $statsQuery = clone $matched;
         $statsQuery->select('p.group_id,COUNT(*) AS product_count,MIN(p.price_min) AS price_min,MAX(p.price_max) AS price_max')->group('p.group_id');
         foreach ($this->db->setQuery($statsQuery)->loadObjectList() as $stats) {
+            if (!isset($groups[(int) $stats->group_id])) { continue; }
             $group = $groups[(int) $stats->group_id];
             $group->product_count = (int) $stats->product_count;
             $group->price_min = $stats->price_min;
@@ -90,13 +93,13 @@ final class GroupListing
         $zero = clone $matched;
         $zero->where('p.price_min=0')->select('p.group_id,p.catid,p.price_zero_free');
         foreach ($this->db->setQuery($zero)->loadObjectList() as $product) {
-            if ($rules->priceIsFree($product)) { $groups[(int) $product->group_id]->price_free = true; }
+            if (isset($groups[(int) $product->group_id]) && $rules->priceIsFree($product)) { $groups[(int) $product->group_id]->price_free = true; }
         }
         $memberIds = clone $matched;
         $memberIds->select('p.id,p.group_id');
         $choices = $this->db->createQuery();
         $sql = $this->embed($memberIds, $choices);
-        $choices->select('DISTINCT eligible.group_id,f.id AS field_id,f.title AS field_title,f.type,ga.ordering,o.id AS option_id,o.title,o.color,o.image,o.ordering AS option_order')
+        $choices->select('DISTINCT eligible.group_id,f.id AS field_id,f.title AS field_title,f.type,f.params,ga.ordering,o.id AS option_id,o.title,o.color,o.image,o.ordering AS option_order')
             ->from('(' . $sql . ') AS eligible')
             ->join('INNER', '#__dharmashop_group_axes ga ON ga.group_id=eligible.group_id')
             ->join('INNER', '#__dharmashop_fields f ON f.id=ga.field_id AND f.state=1')
@@ -106,14 +109,55 @@ final class GroupListing
             ->join('INNER', '#__dharmashop_field_options o ON o.id=fv.option_id AND o.field_id=f.id')
             ->order('eligible.group_id,ga.ordering,f.id,o.ordering,o.id');
         foreach ($this->db->setQuery($choices)->loadObjectList() as $row) {
+            if (!isset($groups[(int) $row->group_id])) { continue; }
             $group = $groups[(int) $row->group_id];
-            $group->choice_fields[(int) $row->field_id] ??= (object) ['title' => $row->field_title, 'type' => $row->type, 'values' => []];
-            $group->choice_fields[(int) $row->field_id]->values[] = (object) ['title' => $row->title, 'color' => $row->color, 'image' => $row->image];
+            $group->choice_fields[(int) $row->field_id] ??= (object) ['id' => (int) $row->field_id, 'title' => $row->field_title, 'type' => $row->type, 'params' => new Registry($row->params), 'values' => []];
+            $group->choice_fields[(int) $row->field_id]->values[] = (object) ['id' => (int) $row->option_id, 'title' => $row->title, 'color' => $row->color, 'image' => $row->image];
+        }
+        $selected = [];
+        if (ComponentHelper::getParams('com_dharmashop')->get('group_card_mode', 'simple') === 'ajax') {
+            $productIds = array_map(static fn(object $p): int => (int) $p->id, $items);
+            $query = $this->db->createQuery()->select('fv.product_id,fv.field_id,fv.option_id')
+                ->from('#__dharmashop_field_values fv')->join('INNER', '#__dharmashop_products sp ON sp.id=fv.product_id')
+                ->join('INNER', '#__dharmashop_group_axes sa ON sa.group_id=sp.group_id AND sa.field_id=fv.field_id')
+                ->whereIn('fv.product_id', $productIds)->where('fv.variant_id IS NULL');
+            foreach ($this->db->setQuery($query)->loadObjectList() as $row) {
+                $selected[(int) $row->product_id][(int) $row->field_id] = (int) $row->option_id;
+            }
         }
         foreach ($items as $item) {
             if (isset($groups[(int) ($item->group_id ?? 0)])) {
                 $item->listing_type = 'group';
                 $item->listing_group = $groups[(int) $item->group_id];
+                $item->group_selection = $selected[(int) $item->id] ?? [];
+            }
+        }
+    }
+
+    /** Inherit the selected representatives' images in one batch, after ordinary card enrichment. */
+    public function inheritImages(array $items, int $imagesLimit): void
+    {
+        $groupIds = [];
+        foreach ($items as $item) {
+            if (($item->inherit_images ?? 'own') === 'group' && isset($item->listing_group)) { $groupIds[] = (int) $item->group_id; }
+        }
+        $media = [];
+        if ($groupIds && $imagesLimit !== 1) {
+            $limit = $imagesLimit > 0 ? min(20, $imagesLimit) : 20;
+            foreach ($this->db->setQuery($this->db->createQuery()->select('group_id,path,alt')->from('#__dharmashop_group_media')
+                ->whereIn('group_id', array_values(array_unique($groupIds)))->order('group_id,ordering'))->loadObjectList() as $row) {
+                if (count($media[(int) $row->group_id] ?? []) < $limit) { $media[(int) $row->group_id][] = $row; }
+            }
+        }
+        foreach ($items as $item) {
+            if (!isset($item->listing_group)) { continue; }
+            if (($item->inherit_images ?? 'own') === 'group') {
+                $item->cover = $item->listing_group->cover;
+                $item->cover_alt = $item->listing_group->cover_alt;
+                $item->images = $media[(int) $item->group_id] ?? [];
+            } elseif (($item->inherit_images ?? 'own') === 'empty') {
+                $item->cover = $item->cover_alt = '';
+                $item->images = [];
             }
         }
     }

@@ -257,7 +257,7 @@ class CategoryModel extends CategoriesModel
         $candidates = $this->productsQuery(forListing: $grouped);
         $query = ($grouped ? $this->groupListing()->representatives($candidates, $sort, $direction) : clone $candidates)
             ->select($db->quoteName(['p.id', 'p.catid', 'p.title', 'p.alias', 'p.cover', 'p.cover_alt',
-                'p.introtext', 'p.group_id', 'p.price_min', 'p.price_max', 'p.price_zero_free', 'p.in_stock', 'p.unit', 'p.qty_min', 'p.qty_step', 'p.params']))
+                'p.introtext', 'p.group_id', 'p.inherit_images', 'p.price_min', 'p.price_max', 'p.price_zero_free', 'p.in_stock', 'p.unit', 'p.qty_min', 'p.qty_step', 'p.params']))
             ->select($db->quoteName('c.title', 'category_title'))
             ->order($sort . ' ' . $direction)->order('p.id ' . $direction);
         $items = $db->setQuery($query, max(0, $start), $limit)->loadObjectList();
@@ -271,6 +271,12 @@ class CategoryModel extends CategoriesModel
         }
 
         if ($grouped) { $this->groupListing()->attach($items, $candidates, $rules); }
+        foreach ($items as $item) {
+            if (GroupCardRenderer::isGroup($item)) {
+                $item->listing_scope = ['view' => $this->taxonomy()->pageView, 'id' => (int) $this->getParent()->id,
+                    'filter' => (array) Factory::getApplication()->getInput()->get('filter', [], 'array'), 'search' => $this->getQueryText()];
+            }
+        }
 
         return $items;
     }
@@ -283,8 +289,11 @@ class CategoryModel extends CategoriesModel
      */
     public function attachCardData(array $items, int $imagesLimit = 1): void
     {
-        $items = array_values(array_filter($items, static fn(object $item): bool => !GroupCardRenderer::isGroup($item)));
+        $ajaxGroups = ComponentHelper::getParams('com_dharmashop')->get('group_card_mode', 'simple') === 'ajax';
+        $groupItems = array_values(array_filter($items, static fn(object $item): bool => GroupCardRenderer::isGroup($item)));
+        $items = array_values(array_filter($items, static fn(object $item): bool => $ajaxGroups || !GroupCardRenderer::isGroup($item)));
         if (!$items) {
+            $this->groupListing()->inheritImages($groupItems, 1);
             return;
         }
 
@@ -367,6 +376,52 @@ class CategoryModel extends CategoriesModel
                 $item->sale_end_timestamp = SaleCountdown::endTimestamp($row->discount_start, $row->discount_end, true);
             }
         }
+        $this->groupListing()->inheritImages($groupItems, $ajaxGroups ? $imagesLimit : 1);
+    }
+
+    /** AJAX picks exactly one member of the same public candidate set; hidden axes keep their current values. */
+    public function selectGroupCardProduct(int $sourceId, array $changes, int $imagesLimit): object
+    {
+        if (!$this->groupsEnabled() || ComponentHelper::getParams('com_dharmashop')->get('group_card_mode', 'simple') !== 'ajax' || count($changes) > 6) {
+            throw new \RuntimeException('COM_DHARMASHOP_GROUP_UNAVAILABLE', 404);
+        }
+        $db = $this->getDatabase();
+        $candidates = $this->productsQuery(forListing: true);
+        $load = function (int $id) use ($db, $candidates): ?object {
+            $query = clone $candidates;
+            $query->select('p.id,p.catid,p.title,p.alias,p.cover,p.cover_alt,p.introtext,p.group_id,p.inherit_images,p.price_min,p.price_max,p.price_zero_free,p.in_stock,p.unit,p.qty_min,p.qty_step,p.params,c.title AS category_title')
+                ->where('p.id=' . $id);
+            return $db->setQuery($query, 0, 1)->loadObject();
+        };
+        $source = $load($sourceId);
+        if (!$source || (int) $source->group_id < 1) { throw new \RuntimeException('COM_DHARMASHOP_GROUP_UNAVAILABLE', 404); }
+        $services = Factory::getApplication()->bootComponent('com_dharmashop')->getServices();
+        $this->groupListing()->attach([$source], $candidates, $services->orderRules());
+        if (!GroupCardRenderer::isGroup($source)) { throw new \RuntimeException('COM_DHARMASHOP_GROUP_UNAVAILABLE', 404); }
+        $values = $source->group_selection;
+        $fields = $source->listing_group->choice_fields ?? [];
+        if (!$values || count($values) !== count($fields)) { throw new \RuntimeException('COM_DHARMASHOP_GROUP_UNAVAILABLE', 404); }
+        foreach ($changes as $fieldId => $optionId) {
+            $fieldId = (int) $fieldId;
+            $field = $fields[$fieldId] ?? null;
+            $display = $field ? (string) $field->params->get($field->type === 'color' ? 'color_group_card_display' : 'group_card_display', 'off') : 'off';
+            if (!$field || !$field->params->get('variation', 0) || $display === 'off' || !is_scalar($optionId)
+                || !in_array((int) $optionId, array_map(static fn(object $v): int => $v->id, $field->values), true)) {
+                throw new \RuntimeException('COM_DHARMASHOP_GROUP_UNAVAILABLE', 404);
+            }
+            $values[$fieldId] = (int) $optionId;
+        }
+        $id = $services->groups()->resolve((int) $source->group_id, $values);
+        $item = $id ? $load($id) : null;
+        if (!$item || (int) $item->group_id !== (int) $source->group_id) { throw new \RuntimeException('COM_DHARMASHOP_GROUP_UNAVAILABLE', 404); }
+        $item->params = new Registry($item->params);
+        $item->price_free = $services->orderRules()->priceIsFree($item);
+        // Reuse the same group's scope/options, and only replace its selected member.
+        $item->listing_type = 'group';
+        $item->listing_group = $source->listing_group;
+        $item->group_selection = $values;
+        $this->attachCardData([$item], $imagesLimit);
+        return $item;
     }
 
     /**

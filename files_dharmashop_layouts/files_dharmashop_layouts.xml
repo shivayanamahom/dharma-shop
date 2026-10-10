@@ -37,6 +37,8 @@
             <filename>table.php</filename>
         </files>
         <files folder="layouts/group-card-parts" target="layouts/components/dharmashop/group-card-parts">
+            <filename>attributes.php</filename>
+            <filename>choice.php</filename>
             <filename>media.php</filename>
             <filename>details.php</filename>
             <filename>actions.php</filename>

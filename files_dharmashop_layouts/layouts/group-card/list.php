@@ -6,7 +6,7 @@ $escape = static fn($value): string => htmlspecialchars((string) $value, ENT_QUO
 $part = static fn(string $name): string => (new FileLayout('components.dharmashop.group-card-parts.' . $name, null, ['component' => 'none', 'client' => 0]))->render($displayData);
 $intro = trim(strip_tags($displayData['intro']));
 ?>
-<article class="card dharmaGroupCard dharmaGroupCardList" data-dharmashop-group="<?php echo (int) $displayData['group']->id; ?>">
+<article class="card dharmaGroupCard dharmaGroupCardList" <?php echo $part('attributes'); ?>>
     <div class="row g-0">
         <div class="col-sm-3"><?php echo $part('media'); ?></div>
         <div class="col-sm-9"><div class="card-body h-100 d-flex flex-column flex-lg-row justify-content-between gap-3">

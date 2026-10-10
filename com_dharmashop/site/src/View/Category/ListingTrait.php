@@ -51,6 +51,7 @@ trait ListingTrait
     public string $searchQuery = '';
     public string $cardFolder = 'product-card';
     private MoneyFormatter $money;
+    private ?\Dharma\Component\DharmaShop\Site\Support\GroupCardRenderer $groupCards = null;
 
     /** Тип записей страницы; бренды и бейджи переопределяют. */
     protected function taxonomy(): Taxonomy
@@ -180,6 +181,7 @@ trait ListingTrait
     /** Читает страницу товаров и готовит штатную постраничную навигацию Joomla. */
     protected function loadProducts(CategoryModel $model): void
     {
+        if ($model->groupsEnabled()) { \Dharma\Component\DharmaShop\Site\Support\GroupCardRenderer::assets(); }
         $limit = max(1, min(200, (int) $this->params->get('list_limit', 24)));
         $total = $model->getTotal();
         $this->total = $total;
@@ -323,7 +325,8 @@ trait ListingTrait
     public function renderProduct(object $item): string
     {
         if (\Dharma\Component\DharmaShop\Site\Support\GroupCardRenderer::isGroup($item)) {
-            return (new \Dharma\Component\DharmaShop\Site\Support\GroupCardRenderer())->render($item, $this->params, $this->productView, $this->fieldColumns);
+            $this->groupCards ??= new \Dharma\Component\DharmaShop\Site\Support\GroupCardRenderer();
+            return $this->groupCards->render($item, $this->params, $this->productView, $this->fieldColumns, $this->cartProducts);
         }
         // Единая точка сборки карточки: в default.php позже подключаются отдельные части (слайдер, цена, действия и т. п.).
         $layout = new FileLayout('components.dharmashop.product-card.default', null, ['component' => 'none', 'client' => 0]);
