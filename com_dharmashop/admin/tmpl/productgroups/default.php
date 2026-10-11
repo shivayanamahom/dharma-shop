@@ -4,6 +4,7 @@ use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Layout\LayoutHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
+use Dharma\Component\DharmaShop\Administrator\Image\ImageUrl;
 $this->getDocument()->getWebAssetManager()->useScript('table.columns')->useScript('multiselect');
 $user = $this->getCurrentUser();
 $canEdit = $user->authorise('core.edit', 'com_dharmashop');
@@ -22,6 +23,7 @@ $catLink = function (object $entry) use ($user): string {
         <tr>
             <td class="w-1 text-center"><?php echo HTMLHelper::_('grid.checkall'); ?></td>
             <th scope="col" class="w-5 text-center"><?php echo Text::_('JSTATUS'); ?></th>
+            <th scope="col" class="w-1 text-center d-none d-md-table-cell"><span class="icon-image" aria-hidden="true"></span><span class="visually-hidden"><?php echo Text::_('COM_DHARMASHOP_HEADING_IMAGE'); ?></span></th>
             <th scope="col"><?php echo Text::_('JGLOBAL_TITLE'); ?></th>
             <th scope="col" class="w-20 d-none d-md-table-cell"><?php echo Text::_('COM_DHARMASHOP_HEADING_CATEGORIES'); ?></th>
             <th scope="col" class="w-30"><?php echo Text::_('COM_DHARMASHOP_GROUP_MEMBERS'); ?></th>
@@ -31,10 +33,18 @@ $catLink = function (object $entry) use ($user): string {
     <tbody>
         <?php foreach ($this->items as $i => $item) :
             $groupUrl = Route::_('index.php?option=com_dharmashop&task=productgroup.edit&id=' . (int) $item->id);
+            $cover = trim(explode('#', (string) $item->cover, 2)[0]);
             ?>
             <tr>
                 <td class="text-center"><?php echo HTMLHelper::_('grid.id', $i, $item->id); ?></td>
                 <td class="text-center"><?php echo HTMLHelper::_('jgrid.published', $item->state, $i, 'productgroups.', $canChange); ?></td>
+                <td class="text-center d-none d-md-table-cell">
+                    <?php if ($cover !== '') : ?>
+                        <img src="<?php echo $this->escape(ImageUrl::resolve($cover, 'admin.group')); ?>" alt="" width="48" height="48" loading="lazy" class="rounded object-fit-cover">
+                    <?php else : ?>
+                        <span class="icon-image text-body-secondary" aria-hidden="true"></span>
+                    <?php endif; ?>
+                </td>
                 <th scope="row" class="break-word">
                     <?php if ($canEdit) : ?>
                         <a href="<?php echo $groupUrl; ?>"><?php echo $this->escape($item->title); ?></a>
