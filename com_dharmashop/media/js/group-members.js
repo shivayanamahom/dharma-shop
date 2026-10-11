@@ -76,12 +76,12 @@ const memberFields = () => {
     try { product = JSON.parse(field.dataset.pickerProduct || 'null'); } catch { product = null; }
     const show = selected.length > 0 && Number(product?.id) === Number(field.querySelector('.js-input-value')?.value) && Number(product?.id) > 0;
     field.querySelector('[data-group-member-panel]').hidden = !show;
-    field.querySelector('[data-group-member-main]').classList.toggle('col-xxl-8', show);
+    field.querySelector('[data-group-member-main]').classList.toggle('col-lg-8', show);
     list.replaceChildren();
     if (!show) return;
     selected.forEach((axis) => {
       const box = document.createElement('div');
-      box.className = 'border rounded bg-body px-3 py-2 flex-grow-1';
+      box.className = 'flex-grow-1';
       const title = document.createElement('dt');
       title.className = 'small text-body-secondary fw-normal mb-1';
       title.textContent = axis.textContent;

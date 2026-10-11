@@ -39,7 +39,7 @@
 		},
 		{
 			"name": "com_dharmashop.group-members",
-			"version": "b3fe4aef2496",
+			"version": "f9c3f2b5e61f",
 			"type": "script",
 			"uri": "com_dharmashop/group-members.js",
 			"attributes": { "type": "module" },

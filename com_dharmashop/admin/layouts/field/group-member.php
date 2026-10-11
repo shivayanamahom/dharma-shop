@@ -25,10 +25,10 @@ $hasImage = !empty($product['image']);
         </div>
        </div>
       </div>
-      <div class="col-12 col-xxl-4" data-group-member-panel hidden>
-        <div class="border rounded bg-body-tertiary p-3 h-100">
+      <div class="col-12 col-lg-4" data-group-member-panel hidden>
+        <div class="rounded bg-body-tertiary p-3 h-100">
           <div class="small text-body-secondary mb-2"><?php echo $escape(Text::_('COM_DHARMASHOP_GROUP_MEMBER_CHOICES')); ?></div>
-          <dl class="d-flex flex-wrap gap-2 mb-0" data-group-member-choices data-empty="<?php echo $escape(Text::_('COM_DHARMASHOP_GROUP_MEMBER_VALUE_EMPTY')); ?>" aria-live="polite"></dl>
+          <dl class="d-flex flex-column gap-3 mb-0" data-group-member-choices data-empty="<?php echo $escape(Text::_('COM_DHARMASHOP_GROUP_MEMBER_VALUE_EMPTY')); ?>" aria-live="polite"></dl>
         </div>
       </div>
     </div>

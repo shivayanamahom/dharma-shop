@@ -13,7 +13,11 @@ $wa->useScript('keepalive')->useScript('form.validate')->useScript('com_dharmash
 <div class="row"><div class="col-lg-9"><div class="main-card p-4">
 <?php echo HTMLHelper::_('uitab.startTabSet','groupTabs',['active'=>'details']); ?>
 <?php echo HTMLHelper::_('uitab.addTab','groupTabs','details',Text::_('COM_DHARMASHOP_GROUP_TAB_PRODUCTS')); ?>
-<fieldset class="options-form"><?php foreach(['axes','members'] as $name) {echo $this->form->renderField($name);} ?></fieldset>
+<fieldset class="options-form"><?php echo $this->form->renderField('axes'); ?></fieldset>
+<section class="mt-4 ps-3" aria-labelledby="group-members-title">
+<h2 id="group-members-title" class="h4 mb-3"><?php echo Text::_('COM_DHARMASHOP_GROUP_MEMBERS'); ?></h2>
+<?php echo $this->form->getInput('members'); ?>
+</section>
 <?php echo HTMLHelper::_('uitab.endTab'); ?>
 <?php echo HTMLHelper::_('uitab.addTab','groupTabs','content',Text::_('COM_DHARMASHOP_GROUP_TAB_CONTENT')); ?>
 <fieldset class="options-form"><?php echo $this->form->renderFieldset('content'); ?></fieldset>
