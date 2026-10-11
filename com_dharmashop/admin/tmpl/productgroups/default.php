@@ -51,6 +51,9 @@ $catLink = function (object $entry) use ($user): string {
                     <?php else : ?>
                         <?php echo $this->escape($item->title); ?>
                     <?php endif; ?>
+                    <div class="small break-word fw-normal text-body-secondary">
+                        <?php echo Text::_('JFIELD_ALIAS_LABEL'); ?>: <?php echo $this->escape($item->alias); ?>
+                    </div>
                 </th>
                 <td class="d-none d-md-table-cell">
                     <?php if ($item->main) : ?>
