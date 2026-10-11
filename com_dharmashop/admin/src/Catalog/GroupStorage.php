@@ -12,6 +12,7 @@ final class GroupStorage
   if ($bad) { throw new \RuntimeException('COM_DHARMASHOP_SKU_INVARIANT'); }
   foreach (explode(';',file_get_contents(__DIR__.'/../../sql/groups.mysql.utf8.sql')) as $ddl) { if(trim($ddl)!=='') { $db->setQuery($ddl)->execute(); } }
   self::upgradeTaxonomy($db);
+  self::upgradeGenerator($db);
   $columns=$db->getTableColumns('#__dharmashop_products');
   foreach (['group_id'=>'int unsigned NULL','combo_hash'=>'char(64) CHARACTER SET ascii COLLATE ascii_bin NULL',
    'inherit_intro'=>"varchar(8) NOT NULL DEFAULT 'own'",'inherit_full'=>"varchar(8) NOT NULL DEFAULT 'own'",'inherit_images'=>"varchar(8) NOT NULL DEFAULT 'own'"] as $name=>$definition) {
@@ -21,6 +22,12 @@ final class GroupStorage
    '#__dharmashop_variants'=>['uq_product_sku'=>'UNIQUE KEY uq_product_sku (product_id)']] as $table=>$wanted) {
    $keys=[]; foreach($db->getTableKeys($table) as $key) {$keys[$key->Key_name]=true;}
    foreach($wanted as $name=>$definition) {if(!isset($keys[$name])) {$db->setQuery('ALTER TABLE '.$db->quoteName($table).' ADD '.$definition)->execute();}}
+  }
+ }
+ public static function upgradeGenerator(DatabaseInterface $db): void
+ {
+  if (!isset($db->getTableColumns('#__dharmashop_product_groups')['title_template'])) {
+   $db->setQuery("ALTER TABLE #__dharmashop_product_groups ADD title_template varchar(1000) NOT NULL DEFAULT '{group.title} {variant.values}'")->execute();
   }
  }
  /** Idempotent columns and direct bindings; existing group and product data is preserved. */

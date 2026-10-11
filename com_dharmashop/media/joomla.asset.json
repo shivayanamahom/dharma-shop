@@ -56,6 +56,20 @@
 			]
 		},
 		{
+			"name": "com_dharmashop.group-generator",
+			"type": "script",
+			"uri": "com_dharmashop/group-generator.js",
+			"attributes": {
+				"defer": true
+			},
+			"dependencies": [
+				"core",
+				"webcomponent.field-subform",
+				"webcomponent.toolbar-button"
+			],
+			"version": "a8aa1cc0a149"
+		},
+		{
 			"name": "com_dharmashop.settings-search",
 			"version": "ca7d6950f28e",
 			"type": "script",

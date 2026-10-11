@@ -1,6 +1,7 @@
 CREATE TABLE IF NOT EXISTS `#__dharmashop_product_groups` (
  `id` int unsigned NOT NULL AUTO_INCREMENT,
  `title` varchar(255) NOT NULL, `alias` varchar(190) NOT NULL,
+ `title_template` varchar(1000) NOT NULL DEFAULT '{group.title} {variant.values}',
  `display_mode` varchar(8) NOT NULL DEFAULT 'single', `state` tinyint NOT NULL DEFAULT 1,
  `catid` int unsigned NULL, `brand_id` int unsigned NULL,
  `introtext` text NULL, `fulltext` mediumtext NULL, `cover` varchar(500) NULL, `cover_alt` varchar(255) NULL,

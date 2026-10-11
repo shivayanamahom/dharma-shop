@@ -62,7 +62,6 @@ class HtmlView extends BaseHtmlView
             }
         }
 
-        if (!$isNew && $canDo->get('core.create') && $canDo->get('core.edit')) { $toolbar->standardButton('generate', 'COM_DHARMASHOP_GROUP_GENERATE', 'productgroup.generate')->icon('icon-copy')->listCheck(false); }
         $toolbar->cancel('productgroup.cancel', $isNew ? 'JTOOLBAR_CANCEL' : 'JTOOLBAR_CLOSE');
         parent::display($tpl);
     }

@@ -35,6 +35,8 @@ class ProductgroupTable extends Table
             $this->setError(Text::_('JLIB_DATABASE_ERROR_CATEGORY_REQUIRED'));
             return false;
         }
+        $this->title_template = trim(strip_tags((string) ($this->title_template ?? ''))) ?: \Dharma\Component\DharmaShop\Administrator\Catalog\GroupGenerator::DEFAULT_TEMPLATE;
+        if (mb_strlen($this->title_template) > 1000) { $this->setError(Text::_('COM_DHARMASHOP_GENERATOR_TEMPLATE_INVALID')); return false; }
         $this->revision = max(1, (int) $this->revision);
         $this->in_stock = (int) $this->in_stock;
         $this->members_count = (int) $this->members_count;

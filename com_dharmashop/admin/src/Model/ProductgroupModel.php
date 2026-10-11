@@ -6,10 +6,8 @@ namespace Dharma\Component\DharmaShop\Administrator\Model;
 use Dharma\Component\DharmaShop\Administrator\Catalog\ProductPicker;
 use Dharma\Component\DharmaShop\Administrator\Catalog\GroupService;
 use Dharma\Component\DharmaShop\Administrator\Catalog\GroupTaxonomy;
-use Dharma\Component\DharmaShop\Administrator\Catalog\VariantRepository;
-use Dharma\Component\DharmaShop\Administrator\Fields\FieldValues;
+use Dharma\Component\DharmaShop\Administrator\Catalog\GroupGenerator;
 use Dharma\Component\DharmaShop\Administrator\Image\ImageUploader;
-use Dharma\Component\DharmaShop\Administrator\Pricing\PriceResolver;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Form\Form;
 use Joomla\CMS\Language\Text;
@@ -35,31 +33,45 @@ class ProductgroupModel extends AdminModel
         $form = $this->loadForm('com_dharmashop.productgroup', 'productgroup', ['control' => 'jform', 'load_data' => $loadData]);
         if (!$form) { return false; }
         $id = (int) ($this->getState('productgroup.id') ?: (((array) $data)['id'] ?? 0));
-        if ($id > 0) {
-            $xml = new \SimpleXMLElement('<form><fieldset name="executions"><field name="executions" type="subform" validate="Subform" multiple="true" layout="joomla.form.field.subform.repeatable" label="COM_DHARMASHOP_GROUP_EXECUTIONS" max="100"><form><fieldset name="row"><field name="title" type="text" label="JGLOBAL_TITLE" filter="string" maxlength="255"/><field name="sku" type="text" label="COM_DHARMASHOP_FIELD_SKU_LABEL" maxlength="100"/><field name="price" type="number" label="COM_DHARMASHOP_FIELD_PRICE_LABEL" min="0" step="0.01"/><field name="stock_qty" type="number" label="COM_DHARMASHOP_FIELD_STOCK_QTY_LABEL" min="0" step="0.001"/></fieldset></form></field></fieldset></form>');
-            $rows = $xml->fieldset->field->form->fieldset;
-            foreach ((new GroupService($this->getDatabase()))->axes($id) as $axis) {
-                $field = $rows->addChild('field');
-                $field['name'] = 'axis_' . $axis->id;
-                $field['type'] = 'list';
-                $field['label'] = $axis->title;
-                $field['filter'] = 'int';
-                $field->addChild('option', 'JOPTION_SELECT')->addAttribute('value', '');
-                $options = $this->getDatabase()->setQuery('SELECT id,title FROM #__dharmashop_field_options WHERE field_id=' . (int) $axis->id . ' ORDER BY ordering,id')->loadObjectList();
-                foreach ($options as $option) {
-                    $element = $field->addChild('option');
-                    $element[0] = $option->title;
-                    $element['value'] = $option->id;
+        $values = $loadData ? (array) $this->loadFormData() : (array) $data;
+        $ids = (array) ($values['axes'] ?? []);
+        $generator = new GroupGenerator($this->getDatabase());
+        if ($ids) {
+            $axes = $generator->axes($ids);
+            $xml = new \SimpleXMLElement('<form><fields name="generation_values"><fieldset name="generation_values"/></fields><fieldset name="executions"><field name="executions" type="subform" validate="Subform" multiple="true" min="0" max="100" component="com_dharmashop" client="administrator" layout="field.generator" label="COM_DHARMASHOP_GROUP_EXECUTIONS"><form><fieldset name="row"><field name="title_preview" type="text" label="COM_DHARMASHOP_GENERATOR_PREVIEW_TITLE" readonly="true" filter="unset" class="fw-semibold"/><field name="custom_title" type="text" label="COM_DHARMASHOP_GENERATOR_TITLE_OVERRIDE" description="COM_DHARMASHOP_GENERATOR_TITLE_OVERRIDE_DESC" filter="string" maxlength="255"/><field name="sku" type="text" label="COM_DHARMASHOP_FIELD_SKU_LABEL" description="COM_DHARMASHOP_GENERATOR_SKU_DESC" maxlength="100"/><field name="price" type="number" label="COM_DHARMASHOP_FIELD_PRICE_LABEL" min="0" step="0.01" default="0"/><field name="stock_qty" type="number" label="COM_DHARMASHOP_FIELD_STOCK_QTY_LABEL" min="0" step="0.001" default="0"/><field name="product_state" type="list" label="JSTATUS" default="1" validate="options"><option value="0">JUNPUBLISHED</option><option value="1">JPUBLISHED</option></field><field name="image" type="media" label="COM_DHARMASHOP_GENERATOR_IMAGE" description="COM_DHARMASHOP_GENERATOR_IMAGE_DESC" directory="dharmashop" types="images" filter="Dharma\Component\DharmaShop\Administrator\Image\ImageUploader::filterPath"/></fieldset></form></field></fieldset></form>');
+            $rowFields = $xml->fieldset->field->form->fieldset;
+            if (!$this->getCurrentUser()->authorise('core.edit.state', 'com_dharmashop')) {
+                $stateFields = $xml->xpath('//field[@name="product_state"]');
+                $stateFields[0]['default'] = '0';
+            }
+            foreach ($axes as $axis) {
+                foreach ([$rowFields, $xml->fields->fieldset] as $index => $parent) {
+                    $field = $parent->addChild('field');
+                    $pool = $index === 1;
+                    $field['name'] = ($pool ? 'f_' : 'axis_') . $axis->id;
+                    $field['type'] = 'list';
+                    $field['label'] = $axis->title;
+                    $field['filter'] = $pool ? 'int_array' : 'int';
+                    $field['validate'] = 'options';
+                    if ($pool) {
+                        $field['multiple'] = 'true';
+                        $field['layout'] = 'joomla.form.field.list-fancy-select';
+                    } else { $field->addChild('option', 'JSELECT')->addAttribute('value', ''); }
+                    foreach ($axis->options as $option => $title) {
+                        $element = $field->addChild('option');
+                        $element[0] = $title;
+                        $element['value'] = $option;
+                    }
                 }
             }
             $form->load($xml, false);
-            // Static loadForm binding precedes these dynamically added fields.
-            $values = $loadData ? (array) $this->loadFormData() : (array) $data;
-            $form->bind(['executions' => $values['executions'] ?? []]);
+            $form->bind(['executions' => $values['executions'] ?? [], 'generation_values' => $values['generation_values'] ?? []]);
         }
         if (!$this->getCurrentUser()->authorise('core.edit.state', 'com_dharmashop')) {
             $form->setFieldAttribute('state', 'disabled', 'true');
             $form->setFieldAttribute('state', 'filter', 'unset');
+            $form->setFieldAttribute('generation_state', 'default', '0');
+            $form->setValue('generation_state', null, 0);
         }
         // Preload once before Joomla creates an independent Form for each repeated row.
         (new ProductPicker($this->getDatabase()))->preload($form->getData()->toArray(), 0, true);
@@ -77,6 +89,11 @@ class ProductgroupModel extends AdminModel
                 $data->members = array_map(static fn($id) => ['product_id' => (int) $id], $ids);
                 $data->catid = $ids ? (int) $this->getDatabase()->setQuery('SELECT catid FROM #__dharmashop_products WHERE id=' . (int) reset($ids))->loadResult() : '';
             }
+        }
+        $values = (array) $data;
+        $draft = $app->getUserState('com_dharmashop.generator.' . (int) ($values['id'] ?? 0), []);
+        if ($draft && !array_key_exists('executions', $values)) {
+            $data = (object) array_replace($values, $draft);
         }
         return $data;
     }
@@ -102,16 +119,19 @@ class ProductgroupModel extends AdminModel
         $service = new GroupService($db);
         $started = false;
         $originalId = (int) ($data['id'] ?? 0);
+        $draft = array_intersect_key($data, array_flip(['executions', 'generation_values', 'generation_catid', 'generation_price', 'generation_stock', 'generation_state']));
         try {
             $taxonomyService = new GroupTaxonomy($db);
             $taxonomy = $taxonomyService->prepare(array_replace($taxonomyService->get($originalId), $data));
             $data['catid'] = $taxonomy['catid'];
             $data['brand_id'] = $taxonomy['brand_id'] ?: null;
             $axes = $service->validateAxes((array) ($data['axes'] ?? []));
+            $generator = new GroupGenerator($db);
+            $generator->title((string) ($data['title_template'] ?? ''), (string) ($data['title'] ?? ''), $generator->axes($axes), []);
             $members = array_map(static fn($row) => (int) (((array) $row)['product_id'] ?? 0), (array) ($data['members'] ?? []));
             $media = ImageUploader::filterGallery($data['gallery'] ?? []);
             $revision = (int) ($data['revision'] ?? 0);
-            unset($data['extra_catids'], $data['badge_ids'], $data['display_mode'], $data['axes'], $data['members'], $data['gallery'], $data['executions'], $data['revision'], $data['generation_catid']);
+            unset($data['extra_catids'], $data['badge_ids'], $data['display_mode'], $data['axes'], $data['members'], $data['gallery'], $data['executions'], $data['revision'], $data['generation_catid'], $data['generation_values'], $data['generation_price'], $data['generation_stock'], $data['generation_state']);
             // This table has no asset_id: its Table::store does not take Joomla asset table locks.
             $db->transactionStart();
             $started = true;
@@ -125,6 +145,7 @@ class ProductgroupModel extends AdminModel
             $taxonomyService->store($id, $taxonomy);
             $db->transactionCommit();
             Factory::getApplication()->setUserState('com_dharmashop.group.selection', null);
+            if (array_key_exists('executions', $draft)) { Factory::getApplication()->setUserState('com_dharmashop.generator.' . $id, $draft); }
             return true;
         } catch (\Throwable $error) {
             if ($started) { $db->transactionRollback(); }
@@ -134,79 +155,31 @@ class ProductgroupModel extends AdminModel
         }
     }
 
+    public function prepareGeneration(int $id, array $data): array
+    {
+        return (new GroupGenerator($this->getDatabase()))->prepare($id, $data);
+    }
+
     /** Validate all rows first. No outer transaction around ProductTable's asset writes. */
     public function createExecutions(int $id, array $data): array
     {
-        $db = $this->getDatabase();
-        $groups = new GroupService($db);
-        $group = $groups->get($id);
-        if (!$group) { throw new \RuntimeException('COM_DHARMASHOP_GROUP_NOT_FOUND'); }
-        if ((int)($data['revision'] ?? 0) !== (int)$group->revision) { throw new \RuntimeException('COM_DHARMASHOP_GROUP_CHANGED'); }
-        $user = $this->getCurrentUser();
-        $taxonomy = (new GroupTaxonomy($db))->get($id);
-        $catid = (int) ($data['generation_catid'] ?? 0) ?: $taxonomy['catid'];
-        if (!$catid || !$user->authorise('core.create', 'com_dharmashop.category.' . $catid)
-            || !$user->authorise('core.edit', 'com_dharmashop')) {
-            throw new \RuntimeException('JLIB_APPLICATION_ERROR_ACCESS_FORBIDDEN');
-        }
-        if (!$db->setQuery("SELECT id FROM #__categories WHERE id=" . $catid . " AND extension='com_dharmashop'")->loadResult()) {
-            throw new \RuntimeException('JLIB_DATABASE_ERROR_CATEGORY_REQUIRED');
-        }
-        $axes = $groups->axes($id);
-        $plan = $hashes = $skus = [];
-        $repository = new VariantRepository($db, new PriceResolver());
-        foreach ((array) ($data['executions'] ?? []) as $key => $row) {
-            $row = (array) $row;
-            if (!array_filter($row, static fn($value) => $value !== '' && $value !== null && $value !== 0 && $value !== '0')) { continue; }
-            $title = trim((string) ($row['title'] ?? ''));
-            $sku = trim((string) ($row['sku'] ?? ''));
-            $skuKey = mb_strtolower($sku);
-            if ($title === '' || $sku === '' || mb_strlen($title) > 255 || mb_strlen($sku) > 100 || isset($skus[$skuKey])) {
-                throw new \RuntimeException('COM_DHARMASHOP_GROUP_GENERATION_REQUIRED');
-            }
-            $skus[$skuKey] = true;
-            $values = $fields = $markers = [];
-            foreach ($axes as $axis) {
-                $values[(int) $axis->id] = (int) ($row['axis_' . $axis->id] ?? 0);
-                $fields['f_' . $axis->id] = $values[(int) $axis->id];
-                $markers['f_' . $axis->id] = 1;
-            }
-            $hash = GroupService::hash($values);
-            if (isset($hashes[$hash])) { throw new \RuntimeException('COM_DHARMASHOP_GROUP_DUPLICATE'); }
-            $hashes[$hash] = true;
-            $product = [
-                'id' => 0, 'catid' => $catid, 'title' => $title, 'alias' => '', 'state' => 0, 'sku' => $sku,
-                'extra_catids' => array_values(array_diff($taxonomy['extra_catids'], [$catid])), 'brand_id' => $taxonomy['brand_id'], 'badge_ids' => $taxonomy['badge_ids'],
-                'price' => $row['price'] ?? '', 'stock_qty' => $row['stock_qty'] ?? 0, 'stock_tracked' => 1,
-                'group_id' => $id, 'inherit_intro' => 'group', 'inherit_full' => 'group', 'inherit_images' => 'group',
-                'custom_fields' => $fields, 'custom_fields_present' => $markers,
-            ];
-            $prepared = (new FieldValues($db))->prepare('product', $product);
-            $groups->validateProduct(0, $id, $prepared);
-            $repository->assertSkuAvailable(0, $sku);
-            foreach (['price', 'stock_qty'] as $number) {
-                if ($product[$number] !== '' && (!is_numeric($product[$number]) || (float) $product[$number] < 0)) {
-                    throw new \RuntimeException('COM_DHARMASHOP_GROUP_GENERATION_REQUIRED');
-                }
-            }
-            $plan[$key] = $product;
-        }
-        if (!$plan || count($plan) > 100 || count($groups->members($id)) + count($plan) > GroupService::MEMBER_LIMIT) {
-            throw new \RuntimeException('COM_DHARMASHOP_GROUP_LIMIT');
-        }
+        $draft = (new GroupGenerator($this->getDatabase()))->plan($id, $data);
         $created = [];
         $remaining = (array) ($data['executions'] ?? []);
-        foreach ($plan as $key => $product) {
+        foreach ($draft['skipped'] as $key) { unset($remaining[$key]); }
+        foreach ($draft['products'] as $key => $product) {
             $model = Factory::getApplication()->bootComponent('com_dharmashop')->getMVCFactory()->createModel('Product', 'Administrator', ['ignore_request' => true]);
             try {
-                if (!$model->save($product)) { return ['created' => $created, 'remaining' => $remaining, 'error' => (string) $model->getError()]; }
+                if (!$model->save($product)) { throw new \RuntimeException((string) $model->getError()); }
             } catch (\Throwable $error) {
-                return ['created' => $created, 'remaining' => $remaining, 'error' => Text::_($error->getMessage())];
+                Factory::getApplication()->setUserState('com_dharmashop.generator.' . $id, ['executions' => $remaining]);
+                return ['created' => $created, 'remaining' => $remaining, 'skipped' => count($draft['skipped']), 'error' => Text::_($error->getMessage())];
             }
             $created[] = (int) $model->getState('product.id');
             unset($remaining[$key]);
         }
-        return ['created' => $created, 'remaining' => [], 'error' => ''];
+        Factory::getApplication()->setUserState('com_dharmashop.generator.' . $id, null);
+        return ['created' => $created, 'remaining' => [], 'skipped' => count($draft['skipped']), 'error' => ''];
     }
 
     protected function canDelete($record): bool
