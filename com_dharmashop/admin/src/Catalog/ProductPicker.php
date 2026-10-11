@@ -8,6 +8,7 @@ use Dharma\Component\DharmaShop\Administrator\Pricing\Discount;
 use Dharma\Component\DharmaShop\Administrator\Pricing\MoneyFormatter;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Language\Text;
+use Joomla\CMS\Router\Route;
 use Joomla\Registry\Registry;
 use Joomla\Database\DatabaseInterface;
 
@@ -49,7 +50,7 @@ final class ProductPicker
         $missing = array_diff_key($ids, self::$rows[$connection] ?? []);
         if ($missing) {
             foreach ($missing as $value) { self::$rows[$connection][$value] = null; }
-            $query = $this->db->createQuery()->select('p.id,p.title,p.cover,p.price_min,p.price_max,vp.price AS price_regular,vp.price_final,vp.discount,vp.discount_percent')
+            $query = $this->db->createQuery()->select('p.id,p.title,p.cover,p.price_min,p.price_max,p.state,p.in_stock,COALESCE(v.stock_tracked,p.stock_tracked,0) AS stock_tracked,v.stock_total AS stock_qty,vp.price AS price_regular,vp.price_final,vp.discount,vp.discount_percent')
                 ->from('#__dharmashop_products p')
                 ->join('LEFT', '#__dharmashop_variants v ON v.product_id=p.id AND v.is_default=1')
                 ->join('LEFT', '#__dharmashop_variant_prices vp ON vp.variant_id=v.id AND vp.price_list_id=1')
@@ -100,10 +101,24 @@ final class ProductPicker
         $price = $item->price_min === null ? Text::_('COM_DHARMASHOP_PRICE_ON_REQUEST')
             : ($sale ? $this->money->format($item->price_final) : $this->money->range($item->price_min, $item->price_max));
         $image = trim((string) ($item->cover ?? ''));
+        $stock = (int) ($item->in_stock ?? 0) === 1 ? Text::_('COM_DHARMASHOP_IN_STOCK') : Text::_('COM_DHARMASHOP_OUT_OF_STOCK');
+        if ((int) ($item->in_stock ?? 0) === 1 && (int) ($item->stock_tracked ?? 0) === 1 && $item->stock_qty !== null) {
+            $quantity = rtrim(rtrim(number_format((float) $item->stock_qty, 3, '.', ' '), '0'), '.');
+            $stock .= ': ' . $quantity;
+        }
+        $state = match ((int) ($item->state ?? 0)) {
+            1 => Text::_('JPUBLISHED'),
+            0 => Text::_('JUNPUBLISHED'),
+            2 => Text::_('JARCHIVED'),
+            -2 => Text::_('JTRASHED'),
+            default => Text::_('JSTATUS'),
+        };
         return [
             'id' => (int) $item->id, 'title' => (string) $item->title,
             'image' => $image !== '' ? ImageUrl::resolve($image, $context) : '',
+            'editUrl' => Route::_('index.php?option=com_dharmashop&task=product.edit&id=' . (int) $item->id),
             'price' => $price,
+            'stock' => $stock, 'state' => $state,
             'regular' => $sale ? $this->money->format($item->price_regular) : '',
             'discount' => $sale ? '−' . ((int) $item->discount_percent === 1 ? Discount::format($item->discount, 1) : $this->money->format($item->discount)) : '',
         ];

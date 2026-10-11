@@ -32,9 +32,25 @@
     field.querySelector('[data-picker-placeholder]').hidden = hasImage;
     ['price', 'regular', 'discount'].forEach((key) => {
       const node = field.querySelector(`[data-picker-${key}]`);
+      if (!node) return;
       node.textContent = product?.[key] || '';
       node.hidden = !product?.[key];
     });
+    const stock = field.querySelector('[data-picker-stock]');
+    if (stock) stock.textContent = product?.stock || '';
+    const state = field.querySelector('[data-picker-state]');
+    if (state) state.textContent = product?.state || '';
+    const edit = field.querySelector('[data-picker-edit]');
+    if (edit) {
+      let editUrl;
+      try {
+        const candidate = new URL(product?.editUrl || '', window.location.origin);
+        if (candidate.origin === window.location.origin) editUrl = candidate;
+      } catch { /* Keep the edit action hidden for an invalid URL. */ }
+      edit.hidden = !editUrl;
+      if (editUrl) edit.href = editUrl.href;
+      else edit.removeAttribute('href');
+    }
   };
   const setup = (scope) => fields(scope).forEach((field) => {
     try {

@@ -15,7 +15,12 @@ $wa->useScript('keepalive')->useScript('form.validate')->useScript('com_dharmash
 <?php echo HTMLHelper::_('uitab.addTab','groupTabs','details',Text::_('COM_DHARMASHOP_GROUP_TAB_PRODUCTS')); ?>
 <fieldset class="options-form"><?php echo $this->form->renderField('axes'); ?></fieldset>
 <section class="mt-4 ps-3" aria-labelledby="group-members-title">
-<h2 id="group-members-title" class="h4 mb-3"><?php echo Text::_('COM_DHARMASHOP_GROUP_MEMBERS'); ?></h2>
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+<h2 id="group-members-title" class="h4 mb-0"><?php echo Text::_('COM_DHARMASHOP_GROUP_MEMBERS'); ?></h2>
+<button type="button" class="btn btn-outline-danger" data-group-members-clear-all data-confirm="<?php echo htmlspecialchars(Text::_('COM_DHARMASHOP_GROUP_MEMBERS_CLEAR_CONFIRM'), ENT_QUOTES, 'UTF-8'); ?>" disabled>
+<span class="icon-trash" aria-hidden="true"></span> <?php echo Text::_('COM_DHARMASHOP_GROUP_MEMBERS_CLEAR_ALL'); ?>
+</button>
+</div>
 <?php echo $this->form->getInput('members'); ?>
 </section>
 <?php echo HTMLHelper::_('uitab.endTab'); ?>

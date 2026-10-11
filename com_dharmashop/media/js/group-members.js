@@ -65,6 +65,22 @@ const add = (event) => {
 document.addEventListener('click', add, true);
 document.addEventListener('keydown', add, true);
 
+const clearAllMembers = () => {
+  const button = document.querySelector('#productgroup-form [data-group-members-clear-all]');
+  const subform = document.querySelector('#productgroup-form joomla-field-subform.dharma-group-members');
+  if (!button || !subform) return;
+  const updateButton = () => { button.disabled = subform.getRows().length === 0; };
+  button.addEventListener('click', () => {
+    const rows = subform.getRows();
+    if (!rows.length || !window.confirm(button.dataset.confirm || '')) return;
+    rows.reverse().forEach((row) => row.querySelector('.group-remove')?.click());
+    updateButton();
+    button.focus();
+  });
+  new MutationObserver(updateButton).observe(subform, { childList: true, subtree: true });
+  updateButton();
+};
+
 // Group-specific preview: selected axes only, with native Bootstrap styling.
 const memberFields = () => {
   const axes = document.querySelector('#jform_axes');
@@ -81,12 +97,12 @@ const memberFields = () => {
     if (!show) return;
     selected.forEach((axis) => {
       const box = document.createElement('div');
-      box.className = 'flex-grow-1';
+      box.className = 'row gx-2 align-items-center';
       const title = document.createElement('dt');
-      title.className = 'small text-body-secondary fw-normal mb-1';
+      title.className = 'col-5 small text-body-secondary fw-normal mb-0';
       title.textContent = axis.textContent;
       const value = document.createElement('dd');
-      value.className = 'mb-0 fw-semibold d-flex flex-wrap align-items-center gap-2';
+      value.className = 'col-7 mb-0 fw-semibold d-flex flex-wrap align-items-center gap-2';
       const options = product.choices?.[axis.value];
       if (!Array.isArray(options) || !options.length) {
         value.textContent = list.dataset.empty;
@@ -126,5 +142,6 @@ document.addEventListener('change', (event) => {
   if (event.target.matches('#jform_axes, #productgroup-form .js-input-value')) queueMicrotask(memberFields);
 });
 document.addEventListener('joomla:updated', () => queueMicrotask(memberFields));
-if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', memberFields, { once: true });
-else memberFields();
+const init = () => { memberFields(); clearAllMembers(); };
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init, { once: true });
+else init();

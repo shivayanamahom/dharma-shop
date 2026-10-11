@@ -31,124 +31,186 @@
 		},
 		{
 			"name": "com_dharmashop.product-picker",
-			"version": "c1d0c9ec7e00",
+			"version": "343a2a28f830",
 			"type": "script",
 			"uri": "com_dharmashop/product-picker.js",
-			"attributes": { "defer": true },
-			"dependencies": ["modal-content-select-field"]
+			"attributes": {
+				"defer": true
+			},
+			"dependencies": [
+				"modal-content-select-field"
+			]
 		},
 		{
 			"name": "com_dharmashop.group-members",
-			"version": "f9c3f2b5e61f",
+			"version": "d9280d85b2e6",
 			"type": "script",
 			"uri": "com_dharmashop/group-members.js",
-			"attributes": { "type": "module" },
-			"dependencies": ["com_dharmashop.product-picker", "webcomponent.field-subform", "joomla.dialog"]
+			"attributes": {
+				"type": "module"
+			},
+			"dependencies": [
+				"com_dharmashop.product-picker",
+				"webcomponent.field-subform",
+				"joomla.dialog"
+			]
 		},
 		{
 			"name": "com_dharmashop.settings-search",
 			"version": "ca7d6950f28e",
 			"type": "script",
 			"uri": "com_dharmashop/settings-search.js",
-			"attributes": { "defer": true },
-			"dependencies": ["core", "webcomponent.joomla-tab"]
+			"attributes": {
+				"defer": true
+			},
+			"dependencies": [
+				"core",
+				"webcomponent.joomla-tab"
+			]
 		},
 		{
 			"name": "com_dharmashop.checkout",
 			"version": "315235613e9d",
 			"type": "script",
 			"uri": "com_dharmashop/checkout.js",
-			"attributes": { "defer": true },
-			"dependencies": ["core", "bootstrap.modal"]
+			"attributes": {
+				"defer": true
+			},
+			"dependencies": [
+				"core",
+				"bootstrap.modal"
+			]
 		},
 		{
 			"name": "com_dharmashop.listing",
 			"type": "script",
 			"uri": "com_dharmashop/listing.js",
-			"attributes": { "defer": true }
+			"attributes": {
+				"defer": true
+			}
 		},
 		{
 			"name": "com_dharmashop.pagination",
 			"type": "script",
 			"uri": "com_dharmashop/pagination.js",
-			"attributes": { "defer": true },
-			"dependencies": ["com_dharmashop.listing"]
+			"attributes": {
+				"defer": true
+			},
+			"dependencies": [
+				"com_dharmashop.listing"
+			]
 		},
 		{
 			"name": "com_dharmashop.loadmore",
 			"type": "script",
 			"uri": "com_dharmashop/loadmore.js",
-			"attributes": { "defer": true },
-			"dependencies": ["core", "com_dharmashop.listing"]
+			"attributes": {
+				"defer": true
+			},
+			"dependencies": [
+				"core",
+				"com_dharmashop.listing"
+			]
 		},
 		{
 			"name": "com_dharmashop.cart",
 			"version": "e7eca6f5f8f9",
-			"dependencies": ["core"],
+			"dependencies": [
+				"core"
+			],
 			"type": "script",
 			"uri": "com_dharmashop/cart.js",
-			"attributes": { "defer": true }
+			"attributes": {
+				"defer": true
+			}
 		},
 		{
 			"name": "com_dharmashop.cart-toast",
 			"version": "4650f42713b9",
 			"type": "script",
 			"uri": "com_dharmashop/cart-toast.js",
-			"attributes": { "defer": true },
-			"dependencies": ["com_dharmashop.cart", "bootstrap.toast"]
+			"attributes": {
+				"defer": true
+			},
+			"dependencies": [
+				"com_dharmashop.cart",
+				"bootstrap.toast"
+			]
 		},
 		{
 			"name": "com_dharmashop.card-slider",
 			"type": "script",
 			"uri": "com_dharmashop/card-slider.js",
-			"attributes": { "defer": true }
+			"attributes": {
+				"defer": true
+			}
 		},
 		{
 			"name": "com_dharmashop.field-gallery",
 			"version": "a350f2641800",
 			"type": "script",
 			"uri": "com_dharmashop/field-gallery.js",
-			"attributes": { "defer": true }
+			"attributes": {
+				"defer": true
+			}
 		},
 		{
 			"name": "com_dharmashop.product-gallery",
 			"version": "0e5a7f24cc41",
 			"type": "script",
 			"uri": "com_dharmashop/product-gallery.js",
-			"attributes": { "defer": true }
+			"attributes": {
+				"defer": true
+			}
 		},
 		{
 			"name": "com_dharmashop.cart-page",
 			"type": "script",
 			"uri": "com_dharmashop/cart-page.js",
-			"attributes": { "defer": true },
-			"dependencies": ["core"]
+			"attributes": {
+				"defer": true
+			},
+			"dependencies": [
+				"core"
+			]
 		},
 		{
 			"name": "com_dharmashop.mini-cart",
 			"type": "script",
 			"uri": "com_dharmashop/mini-cart.js",
-			"attributes": { "defer": true },
-			"dependencies": ["core"]
+			"attributes": {
+				"defer": true
+			},
+			"dependencies": [
+				"core"
+			]
 		},
 		{
 			"name": "com_dharmashop.qty",
 			"type": "script",
 			"uri": "com_dharmashop/qty.js",
-			"attributes": { "defer": true }
+			"attributes": {
+				"defer": true
+			}
 		},
 		{
 			"name": "com_dharmashop.sale-countdown",
 			"type": "script",
 			"uri": "com_dharmashop/sale-countdown.js",
-			"attributes": { "defer": true }
+			"attributes": {
+				"defer": true
+			}
 		},
 		{
 			"name": "com_dharmashop.uploader",
 			"type": "script",
 			"uri": "com_dharmashop/uploader.js",
-			"attributes": { "defer": true },
-			"dependencies": ["core"]
+			"attributes": {
+				"defer": true
+			},
+			"dependencies": [
+				"core"
+			]
 		},
 		{
 			"name": "com_dharmashop.uploader",
@@ -160,8 +222,12 @@
 			"version": "8616a401af95",
 			"type": "script",
 			"uri": "com_dharmashop/gallery.js",
-			"attributes": { "defer": true },
-			"dependencies": ["core"]
+			"attributes": {
+				"defer": true
+			},
+			"dependencies": [
+				"core"
+			]
 		},
 		{
 			"name": "com_dharmashop.gallery",
