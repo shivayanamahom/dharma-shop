@@ -44,8 +44,29 @@ class ProductgroupTable extends Table
             return false;
         }
         $db = $this->getDatabase();
-        if ($db->setQuery('SELECT id FROM #__dharmashop_product_groups WHERE alias=' . $db->quote($this->alias) . ' AND id<>' . (int) $this->id, 0, 1)->loadResult()) {
-            $this->setError(Text::_('COM_DHARMASHOP_ERROR_ALIAS_EXISTS'));
+        // Like Joomla content items, keep the generated slug and add a numeric suffix on collision.
+        $baseAlias = $this->alias;
+        $id = (int) $this->id;
+        $suffix = 2;
+        do {
+            $alias = (string) $this->alias;
+            $query = $db->createQuery()->select($db->quoteName('id'))
+                ->from($db->quoteName('#__dharmashop_product_groups'))
+                ->where($db->quoteName('alias') . ' = :alias')
+                ->where($db->quoteName('id') . ' <> :id')
+                ->bind(':alias', $alias)
+                ->bind(':id', $id);
+            $exists = $db->setQuery($query, 0, 1)->loadResult();
+            if (!$exists) {
+                break;
+            }
+
+            $suffixText = '-' . $suffix++;
+            $this->alias = mb_substr($baseAlias, 0, 190 - mb_strlen($suffixText)) . $suffixText;
+        } while (true);
+
+        if (!$this->alias || mb_strlen($this->alias) > 190) {
+            $this->setError(Text::_('COM_DHARMASHOP_GROUP_INVALID'));
             return false;
         }
         return parent::check();
