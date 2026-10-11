@@ -74,7 +74,12 @@ class ProductField extends ModalSelectField
         $picker = new ProductPicker($this->getDatabase());
         $item = $picker->selected((int) $this->value, $this->form ? $this->form->getData()->toArray() : []);
         return (new FileLayout($this->previewLayout, JPATH_ADMINISTRATOR . '/components/com_dharmashop/layouts', ['component' => 'com_dharmashop', 'client' => 1]))
-            ->render(['input' => $input, 'product' => $item ? $picker->presentation($item, $this->imageContext) : null]);
+            ->render(['input' => $input, 'product' => $item ? $this->previewData($picker, $item) : null]);
+    }
+
+    protected function previewData(ProductPicker $picker, object $item): array
+    {
+        return $picker->presentation($item, $this->imageContext);
     }
 
     /** The shared batch cache also supplies the native field title. */

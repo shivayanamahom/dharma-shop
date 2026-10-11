@@ -149,3 +149,5 @@ ImageInventory включает seo.social для обложек товаров,
 Пикер групп товаров (2026-10-09): admin.picker.group (96×96 для фото 48×48 в диалоге productgroups/modal). Дополняет сохранённые пресеты через существующий префикс admin.picker; ImageInventory подготавливает этот контекст для изображений группы из group_media. Вызов ImageUrl::resolve — при пакетной подготовке строк HtmlView, подписи RU/EN.
 
 Участник группы (2026-10-09): admin.picker.member (128×128 для превью 64×64), независимо от admin.picker.field. Поле modal_groupmember и payload диалога используют ProductPicker::presentation/ImageUrl; добавлены RU/EN подписи, пресеты и ImageInventory уже поддерживают префикс admin.picker.
+
+Образец цвета участника группы (2026-10-10): `admin.picker.member.choice` (64×64 для вывода 24×24), собственный контекст в ImageContexts и RU/EN. Изображение значения разрешается через ImageUrl; инвентаризация значений поля включает этот контекст.

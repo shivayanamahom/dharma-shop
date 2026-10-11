@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Dharma\Component\DharmaShop\Administrator\Field\Modal;
 
+use Dharma\Component\DharmaShop\Administrator\Catalog\ProductPicker;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Uri\Uri;
 
@@ -14,6 +15,11 @@ class GroupmemberField extends ProductField
     protected $type = 'Modal_Groupmember';
     protected string $previewLayout = 'field.group-member';
     protected string $imageContext = 'admin.picker.member';
+
+    protected function previewData(ProductPicker $picker, object $item): array
+    {
+        return parent::previewData($picker, $item) + ['choices' => $picker->choices((int) $item->id)];
+    }
 
     public function setup(\SimpleXMLElement $element, $value, $group = null)
     {

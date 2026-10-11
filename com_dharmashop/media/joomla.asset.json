@@ -31,7 +31,7 @@
 		},
 		{
 			"name": "com_dharmashop.product-picker",
-			"version": "b4dae484a3d9",
+			"version": "c1d0c9ec7e00",
 			"type": "script",
 			"uri": "com_dharmashop/product-picker.js",
 			"attributes": { "defer": true },
@@ -39,7 +39,7 @@
 		},
 		{
 			"name": "com_dharmashop.group-members",
-			"version": "e4aacf1aa6ee",
+			"version": "b3fe4aef2496",
 			"type": "script",
 			"uri": "com_dharmashop/group-members.js",
 			"attributes": { "type": "module" },

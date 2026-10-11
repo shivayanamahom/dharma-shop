@@ -64,3 +64,67 @@ const add = (event) => {
 };
 document.addEventListener('click', add, true);
 document.addEventListener('keydown', add, true);
+
+// Group-specific preview: selected axes only, with native Bootstrap styling.
+const memberFields = () => {
+  const axes = document.querySelector('#jform_axes');
+  if (!axes) return;
+  const selected = [...axes.selectedOptions].filter((option) => Number(option.value) > 0);
+  document.querySelectorAll('#productgroup-form [data-group-member-choices]').forEach((list) => {
+    const field = list.closest('[data-dharmashop-product-field]');
+    let product;
+    try { product = JSON.parse(field.dataset.pickerProduct || 'null'); } catch { product = null; }
+    const show = selected.length > 0 && Number(product?.id) === Number(field.querySelector('.js-input-value')?.value) && Number(product?.id) > 0;
+    field.querySelector('[data-group-member-panel]').hidden = !show;
+    field.querySelector('[data-group-member-main]').classList.toggle('col-xxl-8', show);
+    list.replaceChildren();
+    if (!show) return;
+    selected.forEach((axis) => {
+      const box = document.createElement('div');
+      box.className = 'border rounded bg-body px-3 py-2 flex-grow-1';
+      const title = document.createElement('dt');
+      title.className = 'small text-body-secondary fw-normal mb-1';
+      title.textContent = axis.textContent;
+      const value = document.createElement('dd');
+      value.className = 'mb-0 fw-semibold d-flex flex-wrap align-items-center gap-2';
+      const options = product.choices?.[axis.value];
+      if (!Array.isArray(options) || !options.length) {
+        value.textContent = list.dataset.empty;
+        value.classList.add('text-warning-emphasis');
+      } else options.forEach((option) => {
+        const label = document.createElement('span');
+        label.className = 'd-inline-flex align-items-center gap-2';
+        if (/^#[0-9a-f]{6}$/i.test(option.color || '')) {
+          const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+          svg.setAttribute('width', '24'); svg.setAttribute('height', '24');
+          svg.setAttribute('viewBox', '0 0 24 24'); svg.setAttribute('aria-hidden', 'true');
+          svg.classList.add('border', 'rounded-circle', 'flex-shrink-0');
+          const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+          circle.setAttribute('cx', '12'); circle.setAttribute('cy', '12');
+          circle.setAttribute('r', '12'); circle.setAttribute('fill', option.color);
+          svg.append(circle); label.append(svg);
+        } else if (option.image) {
+          try {
+            const url = new URL(option.image, window.location.origin);
+            if (['http:', 'https:'].includes(url.protocol)) {
+              const image = document.createElement('img');
+              image.src = url.href; image.width = 24; image.height = 24; image.alt = '';
+              image.loading = 'lazy'; image.decoding = 'async';
+              image.className = 'border rounded-circle object-fit-cover flex-shrink-0';
+              label.append(image);
+            }
+          } catch { /* Keep the text if a sample URL is invalid. */ }
+        }
+        const text = document.createElement('span'); text.textContent = option.title;
+        label.append(text); value.append(label);
+      });
+      box.append(title, value); list.append(box);
+    });
+  });
+};
+document.addEventListener('change', (event) => {
+  if (event.target.matches('#jform_axes, #productgroup-form .js-input-value')) queueMicrotask(memberFields);
+});
+document.addEventListener('joomla:updated', () => queueMicrotask(memberFields));
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', memberFields, { once: true });
+else memberFields();

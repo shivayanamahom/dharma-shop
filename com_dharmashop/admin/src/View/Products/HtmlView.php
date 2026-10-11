@@ -13,6 +13,9 @@ declare(strict_types=1);
 namespace Dharma\Component\DharmaShop\Administrator\View\Products;
 
 use Dharma\Component\DharmaShop\Administrator\Maintenance\MaintenanceService;
+use Dharma\Component\DharmaShop\Administrator\Catalog\ProductPicker;
+use Joomla\CMS\Factory;
+use Joomla\Database\DatabaseInterface;
 use Joomla\CMS\Form\Form;
 use Joomla\CMS\Helper\ContentHelper;
 use Joomla\CMS\Language\Text;
@@ -34,6 +37,8 @@ class HtmlView extends BaseHtmlView
 
     /** @var object[] */
     protected array $items = [];
+
+    protected array $memberChoices = [];
 
     protected ?Pagination $pagination = null;
 
@@ -57,6 +62,12 @@ class HtmlView extends BaseHtmlView
 
         if ($errors = $model->getErrors()) {
             throw new GenericDataException(implode("\n", $errors), 500);
+        }
+
+        if ($this->getLayout() === 'modal' && $model->getState('picker.members')) {
+            $picker = new ProductPicker(Factory::getContainer()->get(DatabaseInterface::class));
+            $picker->preloadChoices(array_column($this->items, 'id'));
+            foreach ($this->items as $item) { $this->memberChoices[(int) $item->id] = $picker->choices((int) $item->id); }
         }
 
         // В окне выбора товара (layout=modal) панели инструментов нет.

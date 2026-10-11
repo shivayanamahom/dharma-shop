@@ -39,7 +39,7 @@ final class ImageInventory
                     : [[$row['path'], (int) $row['field_id'] > 0 ? ['field.gallery.card', 'field.gallery.page', 'field.gallery.lightbox'] : $product]],
                 2 => [[$row['path'], ['field.gallery.card', 'field.gallery.page', 'field.gallery.lightbox']]],
                 3 => $this->category($params, match ($row['extension']) { 'com_dharmashop.brand'=>'brand', 'com_dharmashop.badge'=>'badge', default=>'category' }),
-                4 => [[$row['image'], ['field.option', 'group.choice']]],
+                4 => [[$row['image'], ['field.option', 'group.choice', 'admin.picker.member.choice']]],
                 5 => [[$row['path'], [...$product, 'seo.social']]],
             };
         }

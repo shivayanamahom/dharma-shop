@@ -66,6 +66,7 @@ $picker = new ProductPicker(Factory::getContainer()->get(\Joomla\Database\Databa
                     <?php foreach ($this->items as $i => $item) :
                         $preview = $picker->presentation($item, 'admin.picker.modal');
                         $selectedPreview = $picker->presentation($item, $members ? 'admin.picker.member' : 'admin.picker.field');
+                        if ($members) { $selectedPreview['choices'] = $this->memberChoices[(int) $item->id] ?? []; }
                         ?>
                         <tr class="row<?php echo $i % 2; ?>">
                             <td class="text-center"><span class="tbody-icon"><span class="<?php echo $stateIcons[(int) $item->state] ?? 'icon-unpublish'; ?>" aria-hidden="true"></span></span></td>

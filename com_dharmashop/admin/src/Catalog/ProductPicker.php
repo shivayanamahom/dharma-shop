@@ -8,6 +8,7 @@ use Dharma\Component\DharmaShop\Administrator\Pricing\Discount;
 use Dharma\Component\DharmaShop\Administrator\Pricing\MoneyFormatter;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Language\Text;
+use Joomla\Registry\Registry;
 use Joomla\Database\DatabaseInterface;
 
 \defined('_JEXEC') or die;
@@ -17,6 +18,7 @@ final class ProductPicker
 {
     /** Per-request cache shared by repeated fields, separated by database connection. */
     private static array $rows = [];
+    private static array $memberChoices = [];
     private MoneyFormatter $money;
 
     public function __construct(private readonly DatabaseInterface $db)
@@ -32,7 +34,7 @@ final class ProductPicker
     }
 
     /** Call with the root form: native subform row Forms contain only their own row. */
-    public function preload(array $formData, int $currentId = 0): void
+    public function preload(array $formData, int $currentId = 0, bool $withChoices = false): void
     {
         $connection = spl_object_id($this->db);
         $ids = $currentId > 0 ? [$currentId => $currentId] : [];
@@ -54,6 +56,40 @@ final class ProductPicker
                 ->whereIn('p.id', array_values($missing));
             foreach ($this->db->setQuery($query)->loadObjectList() as $row) { self::$rows[$connection][(int) $row->id] = $row; }
         }
+        if ($withChoices) { $this->preloadChoices(array_values($ids)); }
+    }
+
+    /** One bounded batch for a group form or a modal page; ordinary pickers do not load axes. */
+    public function preloadChoices(array $ids): void
+    {
+        $connection = spl_object_id($this->db);
+        $ids = array_slice(array_values(array_unique(array_filter(array_map('intval', $ids), static fn($id) => $id > 0))), 0, 500);
+        $missing = array_diff($ids, array_keys(self::$memberChoices[$connection] ?? []));
+        if (!$missing) { return; }
+        foreach ($missing as $id) { self::$memberChoices[$connection][$id] = []; }
+        $query = $this->db->createQuery()->select('fv.product_id,f.id,f.params,o.title,o.color,o.image')
+            ->from('#__dharmashop_field_values fv')
+            ->join('INNER', '#__dharmashop_fields f ON f.id=fv.field_id')
+            ->join('INNER', '#__dharmashop_field_options o ON o.id=fv.option_id AND o.field_id=f.id')
+            ->whereIn('fv.product_id', array_values($missing))->where('fv.variant_id IS NULL')
+            ->where("f.target='product' AND f.state=1 AND f.level=1 AND f.store='option' AND f.type IN ('list','color')")
+            ->order('f.ordering,f.id,o.ordering,o.id');
+        foreach ($this->db->setQuery($query)->loadObjectList() as $row) {
+            $params = new Registry($row->params);
+            if (!(int) $params->get('variation', 0) || (int) $params->get('list_multiple', $params->get('multiple', 0))) { continue; }
+            $color = preg_match('/^#[0-9a-f]{6}$/iD', (string) $row->color) ? (string) $row->color : '';
+            self::$memberChoices[$connection][(int) $row->product_id][(int) $row->id][] = [
+                'title' => (string) $row->title, 'color' => $color,
+                'image' => $color === '' && trim((string) $row->image) !== ''
+                    ? ImageUrl::resolve((string) $row->image, 'admin.picker.member.choice') : '',
+            ];
+        }
+    }
+
+    public function choices(int $id): array
+    {
+        $this->preloadChoices([$id]);
+        return self::$memberChoices[spl_object_id($this->db)][$id] ?? [];
     }
 
     /** Plain strings only: shared by server-rendered previews and the native selection message. */

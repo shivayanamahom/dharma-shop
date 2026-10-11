@@ -15,6 +15,7 @@
       if (Number(selected?.id) === id && !products.has(id)) products.set(id, selected);
     } catch { /* Empty templates have no product payload. */ }
     const product = products.get(id);
+    field.dataset.pickerProduct = JSON.stringify(product || null);
     const preview = field.querySelector('[data-picker-preview]');
     if (!preview) return;
     preview.hidden = !product;

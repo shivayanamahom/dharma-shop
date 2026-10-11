@@ -62,7 +62,7 @@ class ProductgroupModel extends AdminModel
             $form->setFieldAttribute('state', 'filter', 'unset');
         }
         // Preload once before Joomla creates an independent Form for each repeated row.
-        (new ProductPicker($this->getDatabase()))->preload($form->getData()->toArray());
+        (new ProductPicker($this->getDatabase()))->preload($form->getData()->toArray(), 0, true);
         return $form;
     }
 
