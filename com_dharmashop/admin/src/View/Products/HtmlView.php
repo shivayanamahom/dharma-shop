@@ -88,7 +88,7 @@ class HtmlView extends BaseHtmlView
 
         if ($canDo->get('core.create')) {
             $toolbar->addNew('product.add');
-            if ($canDo->get('core.edit')) { $toolbar->standardButton('combine', 'COM_DHARMASHOP_GROUP_COMBINE', 'products.combine')->icon('icon-layer-group')->listCheck(true); }
+            if ($canDo->get('core.edit')) { $toolbar->standardButton('combine', 'COM_DHARMASHOP_GROUP_COMBINE', 'products.combine')->icon('icon-cubes')->listCheck(true); }
         }
 
         if ($canDo->get('core.edit.state') || $canDo->get('core.delete')) {

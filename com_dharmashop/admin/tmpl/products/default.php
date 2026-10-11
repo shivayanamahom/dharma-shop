@@ -80,7 +80,10 @@ $catLink = function (object $entry) use ($user): string {
                                 <th scope="col" style="min-width:100px">
                                     <?php echo HTMLHelper::_('searchtools.sort', 'JGLOBAL_TITLE', 'a.title', $listDirn, $listOrder); ?>
                                 </th>
-                                <th scope="col" class="w-25 d-none d-md-table-cell">
+                                <th scope="col" class="w-15 d-none d-md-table-cell">
+                                    <?php echo Text::_('COM_DHARMASHOP_PRODUCT_GROUP'); ?>
+                                </th>
+                                <th scope="col" class="w-20 d-none d-md-table-cell">
                                     <?php echo HTMLHelper::_('searchtools.sort', 'COM_DHARMASHOP_HEADING_CATEGORIES', 'category_title', $listDirn, $listOrder); ?>
                                 </th>
                                 <th scope="col" class="w-10 d-none d-md-table-cell text-end">
@@ -139,6 +142,18 @@ $catLink = function (object $entry) use ($user): string {
                                             </div>
                                         </div>
                                     </th>
+                                    <td class="d-none d-md-table-cell break-word">
+                                        <?php if ($item->group_title !== null) : ?>
+                                            <?php if ($user->authorise('core.edit', 'com_dharmashop')) : ?>
+                                                <a href="<?php echo Route::_('index.php?option=com_dharmashop&task=productgroup.edit&id=' . (int) $item->group_id); ?>">
+                                                    <?php echo $this->escape($item->group_title); ?></a>
+                                            <?php else : ?>
+                                                <?php echo $this->escape($item->group_title); ?>
+                                            <?php endif; ?>
+                                        <?php else : ?>
+                                            <span class="text-body-secondary" aria-label="<?php echo $this->escape(Text::_('COM_DHARMASHOP_GROUP_NONE')); ?>">—</span>
+                                        <?php endif; ?>
+                                    </td>
                                     <td class="d-none d-md-table-cell">
                                         <?php if ($item->main) : ?>
                                             <div class="fw-bold fs-4 mb-1"><?php echo $catLink($item->main); ?></div>

@@ -76,15 +76,17 @@ class ProductsModel extends ListModel
 
         $query->select($db->quoteName([
             'a.id', 'a.title', 'a.alias', 'a.catid', 'a.state', 'a.cover', 'a.price_min', 'a.price_max',
-            'a.in_stock', 'a.variants_count', 'a.created', 'a.created_by', 'a.checked_out', 'a.checked_out_time',
+            'a.in_stock', 'a.variants_count', 'a.created', 'a.created_by', 'a.checked_out', 'a.checked_out_time', 'a.group_id',
         ]))
             ->select($db->quoteName('c.title', 'category_title'))
+            ->select($db->quoteName('g.title', 'group_title'))
             ->select($db->quoteName('v.sku', 'sku'))
             ->select($db->quoteName(['v.stock_total', 'v.stock_tracked'], ['stock_qty', 'stock_tracked']))
             ->select($db->quoteName(['vp.price', 'vp.price_final', 'vp.discount', 'vp.discount_percent'], ['price_regular', 'price_final', 'discount', 'discount_percent']))
             ->select($db->quoteName('uc.name', 'editor'))
             ->from($db->quoteName('#__dharmashop_products', 'a'))
             ->join('LEFT', $db->quoteName('#__categories', 'c') . ' ON c.id = a.catid')
+            ->join('LEFT', $db->quoteName('#__dharmashop_product_groups', 'g') . ' ON g.id = a.group_id')
             ->join('LEFT', $db->quoteName('#__dharmashop_variants', 'v') . ' ON v.product_id = a.id AND v.is_default = 1')
             ->join('LEFT', $db->quoteName('#__dharmashop_variant_prices', 'vp') . ' ON vp.variant_id = v.id AND vp.price_list_id = 1')
             ->join('LEFT', $db->quoteName('#__users', 'uc') . ' ON uc.id = a.checked_out');
