@@ -142,7 +142,7 @@ $catLink = function (object $entry) use ($user): string {
                                             </div>
                                         </div>
                                     </th>
-                                    <td class="d-none d-md-table-cell break-word">
+                                    <td class="d-none d-md-table-cell break-word small">
                                         <?php if ($item->group_title !== null) : ?>
                                             <?php if ($user->authorise('core.edit', 'com_dharmashop')) : ?>
                                                 <a href="<?php echo Route::_('index.php?option=com_dharmashop&task=productgroup.edit&id=' . (int) $item->group_id); ?>">
