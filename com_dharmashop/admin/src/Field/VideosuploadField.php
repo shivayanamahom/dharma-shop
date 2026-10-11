@@ -67,7 +67,7 @@ class VideosuploadField extends FormField
         $extensions = explode(',', $settings['video_extensions']);
         return '<div id="' . $attr($this->id) . '" class="dharmashop-gallery dharmashop-video" data-kind="video" data-name="' . $attr($this->name) . '" data-field-id="' . $fieldId
             . '" data-entity-id="' . (int) $this->form->getValue('id', null, 0)
-            . '" data-url="index.php?option=com_dharmashop&amp;task=media.uploadVideo&amp;format=json" data-select-url="index.php?option=com_dharmashop&amp;task=media.selectVideo&amp;format=json" data-resolve-url="index.php?option=com_dharmashop&amp;task=media.resolveVideo&amp;format=json"'
+            . '" data-url="index.php?option=com_dharmashop&amp;task=media.uploadVideo&amp;format=json&amp;owner=' . ($this->element['owner'] === 'group' ? 'group' : '') . '" data-select-url="index.php?option=com_dharmashop&amp;task=media.selectVideo&amp;format=json" data-resolve-url="index.php?option=com_dharmashop&amp;task=media.resolveVideo&amp;format=json"'
             . ' data-root="' . $attr(Uri::root()) . '" data-token="' . $attr(Session::getFormToken()) . '" data-max-count="' . (int) $settings['video_max_count']
             . '" data-max-bytes="0" data-accept="' . $attr($settings['video_extensions']) . '" data-fetch-cover="' . (int) $settings['video_fetch_cover']
             . '" data-error-count="' . $attr(Text::_('PLG_DHARMASHOPFIELD_BASIC_VIDEO_COUNT_INVALID'))

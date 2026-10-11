@@ -29,6 +29,12 @@ final class GroupStorage
   if (!isset($db->getTableColumns('#__dharmashop_product_groups')['title_template'])) {
    $db->setQuery("ALTER TABLE #__dharmashop_product_groups ADD title_template varchar(1000) NOT NULL DEFAULT '{group.title} {variant.values}'")->execute();
   }
+  if (!isset($db->getTableColumns('#__dharmashop_product_groups')['copy_fields'])) {
+   $db->setQuery('ALTER TABLE #__dharmashop_product_groups ADD copy_fields tinyint unsigned NOT NULL DEFAULT 1')->execute();
+  }
+  foreach (explode(';', file_get_contents(__DIR__ . '/../../sql/groups.mysql.utf8.sql')) as $ddl) {
+   if (str_contains($ddl, 'CREATE TABLE IF NOT EXISTS `#__dharmashop_group_field_')) { $db->setQuery(trim($ddl))->execute(); }
+  }
  }
  /** Idempotent columns and direct bindings; existing group and product data is preserved. */
  public static function upgradeTaxonomy(DatabaseInterface $db): void

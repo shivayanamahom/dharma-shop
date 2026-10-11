@@ -94,7 +94,7 @@ class FieldTable extends Table
     public function hasValues(int $id): bool
     {
         $db = $this->getDatabase();
-        foreach (['field_values','field_texts','field_media','product_axes','group_axes','category_field_values','category_field_texts','category_field_media'] as $suffix) {
+        foreach (['field_values','field_texts','field_media','product_axes','group_axes','category_field_values','category_field_texts','category_field_media','group_field_values','group_field_texts','group_field_media'] as $suffix) {
             $query = $db->createQuery()->select('field_id')->from($db->quoteName('#__dharmashop_' . $suffix))
                 ->where('field_id = :id')->bind(':id', $id, ParameterType::INTEGER);
             if ($db->setQuery($query, 0, 1)->loadResult()) { return true; }

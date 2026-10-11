@@ -29,6 +29,7 @@ class ProductgroupTable extends Table
         // Legacy non-null column; public listing mode belongs to component settings.
         $this->display_mode ??= 'single';
         $this->state ??= 1;
+        $this->copy_fields = (int) ($this->copy_fields ?? 1) === 1 ? 1 : 0;
         $this->catid = (int) $this->catid;
         $this->brand_id = (int) $this->brand_id ?: null;
         if ($this->catid < 1) {
@@ -87,7 +88,7 @@ class ProductgroupTable extends Table
                 return false;
             }
             if (!parent::delete($id)) { $db->transactionRollback(); return false; }
-            foreach (['group_axes', 'group_media', 'group_categories'] as $suffix) {
+            foreach (['group_axes', 'group_media', 'group_categories', 'group_field_values', 'group_field_texts', 'group_field_media'] as $suffix) {
                 $db->setQuery('DELETE FROM #__dharmashop_' . $suffix . ' WHERE group_id=' . $id)->execute();
             }
             $db->transactionCommit();

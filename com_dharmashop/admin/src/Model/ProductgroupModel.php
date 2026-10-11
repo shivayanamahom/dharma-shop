@@ -7,6 +7,7 @@ use Dharma\Component\DharmaShop\Administrator\Catalog\ProductPicker;
 use Dharma\Component\DharmaShop\Administrator\Catalog\GroupService;
 use Dharma\Component\DharmaShop\Administrator\Catalog\GroupTaxonomy;
 use Dharma\Component\DharmaShop\Administrator\Catalog\GroupGenerator;
+use Dharma\Component\DharmaShop\Administrator\Fields\FieldValues;
 use Dharma\Component\DharmaShop\Administrator\Image\ImageUploader;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Form\Form;
@@ -73,6 +74,7 @@ class ProductgroupModel extends AdminModel
             $form->setFieldAttribute('generation_state', 'default', '0');
             $form->setValue('generation_state', null, 0);
         }
+        (new FieldValues($this->getDatabase(), 'group', array_map('intval', $ids)))->addToForm($form, 'product', $values, true);
         // Preload once before Joomla creates an independent Form for each repeated row.
         (new ProductPicker($this->getDatabase()))->preload($form->getData()->toArray(), 0, true);
         return $form;
@@ -126,12 +128,14 @@ class ProductgroupModel extends AdminModel
             $data['catid'] = $taxonomy['catid'];
             $data['brand_id'] = $taxonomy['brand_id'] ?: null;
             $axes = $service->validateAxes((array) ($data['axes'] ?? []));
+            $fieldValues = new FieldValues($db, 'group', $axes);
+            $common = $fieldValues->prepare('product', $data);
             $generator = new GroupGenerator($db);
             $generator->title((string) ($data['title_template'] ?? ''), (string) ($data['title'] ?? ''), $generator->axes($axes), []);
             $members = array_map(static fn($row) => (int) (((array) $row)['product_id'] ?? 0), (array) ($data['members'] ?? []));
             $media = ImageUploader::filterGallery($data['gallery'] ?? []);
             $revision = (int) ($data['revision'] ?? 0);
-            unset($data['extra_catids'], $data['badge_ids'], $data['display_mode'], $data['axes'], $data['members'], $data['gallery'], $data['executions'], $data['revision'], $data['generation_catid'], $data['generation_values'], $data['generation_price'], $data['generation_stock'], $data['generation_state']);
+            unset($data['extra_catids'], $data['badge_ids'], $data['display_mode'], $data['axes'], $data['members'], $data['gallery'], $data['executions'], $data['revision'], $data['generation_catid'], $data['generation_values'], $data['generation_price'], $data['generation_stock'], $data['generation_state'], $data['custom_fields'], $data['custom_fields_present']);
             // This table has no asset_id: its Table::store does not take Joomla asset table locks.
             $db->transactionStart();
             $started = true;
@@ -143,6 +147,7 @@ class ProductgroupModel extends AdminModel
             $id = (int) $this->getState('productgroup.id');
             $service->configure($id, $axes, $members, $media);
             $taxonomyService->store($id, $taxonomy);
+            $fieldValues->save('product', $id, $common);
             $db->transactionCommit();
             Factory::getApplication()->setUserState('com_dharmashop.group.selection', null);
             if (array_key_exists('executions', $draft)) { Factory::getApplication()->setUserState('com_dharmashop.generator.' . $id, $draft); }

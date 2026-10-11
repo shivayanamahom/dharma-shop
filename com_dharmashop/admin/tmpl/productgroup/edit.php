@@ -28,6 +28,8 @@ $wa->useScript('keepalive')->useScript('form.validate')->useScript('com_dharmash
 <section class="border-top mt-4 pt-4" data-group-generator aria-labelledby="group-generator-title">
     <h2 id="group-generator-title" class="h4"><?php echo Text::_('COM_DHARMASHOP_GENERATOR_HEADING'); ?></h2>
     <p class="text-body-secondary"><?php echo Text::_('COM_DHARMASHOP_GROUP_GENERATE_DESC'); ?></p>
+    <?php echo $this->form->renderField('copy_fields'); ?>
+    <p class="small text-body-secondary"><?php echo Text::sprintf('COM_DHARMASHOP_GROUP_COMMON_FIELDS_COUNT', $this->commonFieldCount); ?></p>
     <div class="border rounded bg-body-tertiary p-3 form-vertical">
         <?php echo $this->form->renderField('title_template'); ?>
         <div class="d-flex flex-wrap gap-2 mb-3" aria-label="<?php echo Text::_('COM_DHARMASHOP_GENERATOR_TOKENS'); ?>">
@@ -70,6 +72,7 @@ $wa->useScript('keepalive')->useScript('form.validate')->useScript('com_dharmash
 <?php echo HTMLHelper::_('uitab.addTab','groupTabs','content',Text::_('COM_DHARMASHOP_GROUP_TAB_CONTENT')); ?>
 <fieldset class="options-form"><?php echo $this->form->renderFieldset('content'); ?></fieldset>
 <?php echo HTMLHelper::_('uitab.endTab'); ?>
+<?php echo LayoutHelper::render('field-tabs', ['form' => $this->form, 'groups' => $this->fieldGroups, 'tabSet' => 'groupTabs', 'hint' => 'COM_DHARMASHOP_GROUP_COMMON_FIELDS_HINT'], JPATH_ADMINISTRATOR . '/components/com_dharmashop/layouts'); ?>
 <?php echo HTMLHelper::_('uitab.endTabSet'); ?>
 </div></div><div class="col-lg-3"><fieldset class="options-form form-vertical mb-3"><legend><?php echo Text::_('COM_DHARMASHOP_SIDEBAR_CATEGORIES'); ?></legend><?php echo $this->form->renderFieldset('taxonomy'); ?></fieldset><fieldset class="options-form form-vertical"><?php echo $this->form->renderFieldset('publishing'); ?></fieldset></div></div>
 <?php echo $this->form->getInput('revision'); ?>

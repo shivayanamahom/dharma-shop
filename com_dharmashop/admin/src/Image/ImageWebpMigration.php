@@ -37,7 +37,7 @@ final class ImageWebpMigration
      */
     public function run(array $cursor = [], int $budgetMs = 5000): array
     {
-        $phases = ['products', 'categories', 'media', 'settings'];
+        $phases = ['products', 'categories', 'media', 'group_fields', 'settings'];
         $phase = (string) ($cursor['phase'] ?? 'products');
         $phaseIndex = array_search($phase, $phases, true);
 
@@ -106,6 +106,7 @@ final class ImageWebpMigration
             'products' => 'SELECT id, cover, params FROM #__dharmashop_products WHERE id > :id ORDER BY id',
             'categories' => 'SELECT id, params FROM #__categories WHERE extension = :extension AND id > :id ORDER BY id',
             'media' => 'SELECT id, path FROM #__dharmashop_field_media WHERE mime IS NULL AND id > :id ORDER BY id',
+            'group_fields' => "SELECT id, path, alt, mime FROM #__dharmashop_group_field_media WHERE (mime IS NULL OR (alt <> '' AND (mime LIKE 'application/vnd.dharmashop.video.%' OR mime LIKE 'video/%' OR mime IN ('application/mp4','application/ogg')))) AND id > :id ORDER BY id",
             'settings' => 'SELECT extension_id AS id, params FROM #__extensions WHERE type = :type AND element = :element AND extension_id > :id ORDER BY extension_id',
         ];
         $sql = $queries[$phase] ?? throw new \InvalidArgumentException('Unknown WebP migration phase.');
@@ -176,14 +177,16 @@ final class ImageWebpMigration
                     ':id' => [$id, ParameterType::INTEGER],
                 ]);
             }
-        } elseif ($phase === 'media') {
-            $path = (string) ($row['path'] ?? '');
+        } elseif (in_array($phase, ['media', 'group_fields'], true)) {
+            $column = $phase === 'group_fields' && ($row['mime'] ?? null) !== null ? 'alt' : 'path';
+            $path = (string) ($row[$column] ?? '');
             [$newPath, $changed, $error] = $this->migrateReference($path, $cache);
             $converted += $changed ? 1 : 0;
             $failed += $error ? 1 : 0;
 
             if ($newPath !== $path) {
-                Sql::exec($this->db, 'UPDATE #__dharmashop_field_media SET path = :path WHERE id = :id', [
+                $table = $phase === 'media' ? '#__dharmashop_field_media' : '#__dharmashop_group_field_media';
+                Sql::exec($this->db, 'UPDATE ' . $table . ' SET ' . $column . ' = :path WHERE id = :id', [
                     ':path' => [$newPath, ParameterType::STRING],
                     ':id' => [$id, ParameterType::INTEGER],
                 ]);

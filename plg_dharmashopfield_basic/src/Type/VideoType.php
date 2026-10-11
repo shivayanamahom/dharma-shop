@@ -63,7 +63,15 @@ final class VideoType extends BaseType
     }
 
     public function defaultValue(object $field, array $options): mixed { return []; }
-    public function decode(object $field, array $rows, ?string $text): mixed { return array_map(static fn ($row): array => (array) $row, $rows); }
+    public function decode(object $field, array $rows, ?string $text): mixed
+    {
+        return array_map(static function ($row): array {
+            $item = (array) $row;
+            $prefix = 'application/vnd.dharmashop.video.';
+            $source = str_starts_with((string) ($item['mime'] ?? ''), $prefix) ? substr($item['mime'], strlen($prefix)) : 'local';
+            return $item + ['source'=>$source, 'url'=>$source === 'local' ? '' : ($item['path'] ?? ''), 'poster'=>$item['alt'] ?? ''];
+        }, $rows);
+    }
 
     public function encode(object $field, array $options, mixed $value): array
     {

@@ -24,8 +24,9 @@ final class ImageInventory
             "SELECT id, extension, params FROM #__categories WHERE extension IN ('com_dharmashop','com_dharmashop.brand','com_dharmashop.badge') AND id > :id ORDER BY id",
             'SELECT id, image FROM #__dharmashop_field_options WHERE id > :id ORDER BY id',
             'SELECT id, path FROM #__dharmashop_group_media WHERE id > :id ORDER BY id',
+            "SELECT id, path, alt, mime FROM #__dharmashop_group_field_media WHERE (mime IS NULL OR mime LIKE 'application/vnd.dharmashop.video.%' OR mime LIKE 'video/%' OR mime IN ('application/mp4','application/ogg')) AND id > :id ORDER BY id",
         ];
-        while ($phase < 6) {
+        while ($phase < 7) {
             $row = $this->db->setQuery(Sql::query($this->db, $queries[$phase], [':id'=>[$id, ParameterType::INTEGER]]), 0, 1)->loadAssoc();
             if (!$row) { $cursor = ['phase'=>++$phase, 'id'=>0]; $id = 0; continue; }
             $cursor = ['phase'=>$phase, 'id'=>(int)$row['id']];
@@ -41,10 +42,13 @@ final class ImageInventory
                 3 => $this->category($params, match ($row['extension']) { 'com_dharmashop.brand'=>'brand', 'com_dharmashop.badge'=>'badge', default=>'category' }),
                 4 => [[$row['image'], ['field.option', 'group.choice', 'admin.picker.member.choice']]],
                 5 => [[$row['path'], [...$product, 'seo.social']]],
+                6 => ($row['mime'] ?? null) !== null
+                    ? [[$row['alt'] ?? '', ['field.video.poster']]]
+                    : [[$row['path'], ['field.gallery.card', 'field.gallery.page', 'field.gallery.lightbox']]],
             };
         }
-        if ($phase === 6) {
-            $cursor = ['phase'=>7, 'id'=>0];
+        if ($phase === 7) {
+            $cursor = ['phase'=>8, 'id'=>0];
             $result = [[$this->settings->get('shop_logo',''), ['email.logo']], [$this->settings->get('seo_default_image',''), ['seo.social']]];
             foreach (['root_category'=>'category', 'root_brand'=>'brand'] as $key=>$kind) {
                 $result = array_merge($result, $this->category((array)$this->settings->get($key, []), $kind));

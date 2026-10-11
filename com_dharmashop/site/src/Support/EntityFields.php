@@ -67,7 +67,9 @@ final class EntityFields
         $productIds = implode(',', array_keys($products));
         $fieldIds = implode(',', array_keys($fields));
         $base = static function (string $table) use ($db, $column, $productIds, $fieldIds, $applicable, $target) {
-            $query = $db->createQuery()->from($db->quoteName($table, 'v'))
+            // Bound work to the displayed entities. The variant index can otherwise scan every NULL SKU row.
+            $index = $target === 'product' ? 'idx_product' : 'idx_category';
+            $query = $db->createQuery()->from($db->quoteName($table, 'v') . ' FORCE INDEX (' . $index . ')')
                 ->join('INNER', $db->quoteName('#__dharmashop_fields', 'f') . ' ON f.id = v.field_id')
                 ->where('v.' . $column . ' IN (' . $productIds . ')')->where('v.field_id IN (' . $fieldIds . ')')
                 ->where($applicable);

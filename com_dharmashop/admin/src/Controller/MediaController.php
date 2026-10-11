@@ -141,8 +141,10 @@ class MediaController extends BaseController
             if ($upload) {
                 $entityId = max(0, $this->input->post->getInt('entity_id'));
                 $entityAlias = $this->input->post->getString('entity_title');
+                $owner = $definition->target;
+                if ($this->input->getCmd('owner') === 'group' && $owner === 'product') { $owner = 'group'; }
                 if ($entityId > 0) {
-                    $table = $definition->target === 'product' ? '#__dharmashop_products' : '#__categories';
+                    $table = match ($owner) { 'group' => '#__dharmashop_product_groups', 'product' => '#__dharmashop_products', default => '#__categories' };
                     $entityQuery = $db->createQuery()->select($db->quoteName(['alias', 'title']))
                         ->from($db->quoteName($table))->where('id = ' . $entityId);
                     if ($definition->target === 'category') { $entityQuery->where('extension = ' . $db->quote('com_dharmashop')); }
@@ -151,7 +153,7 @@ class MediaController extends BaseController
                     $entityAlias = (string) ($entity->alias ?: $entity->title);
                 }
                 $result = $storage->store(is_array($file) ? $file : [], [
-                    'target'=>$definition->target, 'id'=>$entityId, 'alias'=>$entityAlias,
+                    'target'=>$owner, 'id'=>$entityId, 'alias'=>$entityAlias,
                     'field_alias'=>$definition->alias . ($type === 'video' ? '-' . $videoSettings['video_folder'] : ''),
                 ]);
             } else {

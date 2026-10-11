@@ -202,7 +202,7 @@ class FieldModel extends AdminModel
             $retained = array_column($options, 'id');
             foreach ($existingIds as $optionId) {
                 if (!in_array((int) $optionId, $retained, true)) {
-                    foreach (['field_values', 'category_field_values'] as $storage) {
+                    foreach (['field_values', 'category_field_values', 'group_field_values'] as $storage) {
                         $query = $db->createQuery()->select('id')->from($db->quoteName('#__dharmashop_' . $storage))
                             ->where('option_id = :option')->bind(':option', $optionId, ParameterType::INTEGER);
                         if ($db->setQuery($query, 0, 1)->loadResult()) { throw new \InvalidArgumentException('COM_DHARMASHOP_FIELD_OPTION_USED'); }
@@ -250,12 +250,16 @@ class FieldModel extends AdminModel
                         ->where('id = :id')->bind(':id', $id, ParameterType::INTEGER);
                     $settings = new Registry($db->setQuery($query)->loadResult());
                     $settings->set('checkbox_default_option_id', (int) $record->id);
-                    $db->updateObject('#__dharmashop_fields', (object) ['id' => $id, 'params' => (string) $settings], 'id');
+                    $definition = (object) ['id' => $id, 'params' => (string) $settings];
+                    $db->updateObject('#__dharmashop_fields', $definition, 'id');
                 }
             }
             $query = $db->createQuery()->delete($db->quoteName('#__dharmashop_category_fields'))->where('field_id = :id')->bind(':id', $id, ParameterType::INTEGER);
             $db->setQuery($query)->execute();
-            foreach ($catids as $catid) { $db->insertObject('#__dharmashop_category_fields',(object) ['catid'=>$catid,'field_id'=>$id]); }
+            foreach ($catids as $catid) {
+                $binding = (object) ['catid'=>$catid,'field_id'=>$id];
+                $db->insertObject('#__dharmashop_category_fields', $binding);
+            }
             $db->transactionCommit();
         } catch (\Throwable $error) {
             $db->transactionRollback();

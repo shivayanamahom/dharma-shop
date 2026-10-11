@@ -123,6 +123,10 @@ final class GroupGenerator
         $plan = $hashes = $skus = $aliases = [];
         $skipped = [];
         $repository = new VariantRepository($this->db, new PriceResolver());
+        $productFields = new FieldValues($this->db);
+        $copy = (int) $this->db->setQuery('SELECT copy_fields FROM #__dharmashop_product_groups WHERE id=' . $id)->loadResult();
+        $common = $copy ? (new FieldValues($this->db, 'group', array_map(static fn($a) => (int) $a->id, $axes)))
+            ->values('product', ['id' => $id] + $taxonomy) : [];
         foreach ($rows as $key => $row) {
             $row = (array) $row;
             $values = $this->values($axes, $row);
@@ -161,7 +165,8 @@ final class GroupGenerator
                     throw new \RuntimeException('COM_DHARMASHOP_GROUP_GENERATION_REQUIRED');
                 }
             }
-            $prepared = (new FieldValues($this->db))->prepare('product', $product);
+            $product = $productFields->forCreation($product, $common);
+            $prepared = $productFields->prepare('product', $product);
             $groups->validateProduct(0, $id, $prepared);
             $plan[$key] = $product;
         }

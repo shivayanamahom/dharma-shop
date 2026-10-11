@@ -36,6 +36,7 @@ $escape = static fn (string $text): string => htmlspecialchars($text, ENT_QUOTES
 ?>
 <?php if ($shared || $hasUngrouped) : ?>
     <?php echo HTMLHelper::_('uitab.addTab', $tabSet, 'fields', Text::_('COM_DHARMASHOP_TAB_FIELDS')); ?>
+    <?php if (!empty($displayData['hint'])) : ?><p class="text-muted"><?php echo Text::_($displayData['hint']); ?></p><?php endif; ?>
     <?php if ($hasUngrouped) : ?>
         <?php echo $form->renderFieldset($ungrouped); ?>
     <?php endif; ?>
@@ -55,6 +56,7 @@ $escape = static fn (string $text): string => htmlspecialchars($text, ENT_QUOTES
 
 <?php foreach ($separate as $group) : ?>
     <?php echo HTMLHelper::_('uitab.addTab', $tabSet, 'field-group-' . (int) $group->id, (string) $group->title); ?>
+    <?php if (!empty($displayData['hint'])) : ?><p class="text-muted"><?php echo Text::_($displayData['hint']); ?></p><?php endif; ?>
     <?php $fieldset = FieldGroupTabs::fieldset((int) $group->id); ?>
     <?php if ($form->getFieldset($fieldset)) : ?>
         <?php echo $form->renderFieldset($fieldset); ?>

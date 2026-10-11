@@ -182,13 +182,13 @@ final class FileStorage
         $metadata = $this->validate($upload['tmp_name'], $extension, true);
         $filename = $this->filename($original);
         $base = 'images/dharmashop/' . $this->base;
-        if (!in_array($owner['target'] ?? '', ['product', 'category'], true)) { throw new \InvalidArgumentException('COM_DHARMASHOP_UPLOAD_ERROR_STORE'); }
+        if (!in_array($owner['target'] ?? '', ['product', 'category', 'group'], true)) { throw new \InvalidArgumentException('COM_DHARMASHOP_UPLOAD_ERROR_STORE'); }
         $slug = static function (string $value, string $fallback): string {
             $value = OutputFilter::stringURLSafe($value);
             $value = preg_replace('/[^\pL\pN_-]+/u', '-', $value) ?? '';
             return trim(mb_strcut($value, 0, 80, 'UTF-8'), '-_') ?: $fallback;
         };
-        $kind = $owner['target'] === 'product' ? 'products' : 'categories';
+        $kind = match ($owner['target']) { 'product' => 'products', 'group' => 'groups', default => 'categories' };
         $entity = $slug((string) ($owner['alias'] ?? ''), $owner['target']) . '-' . (max(0, (int) ($owner['id'] ?? 0)) ?: 'new');
         $field = $slug((string) ($owner['field_alias'] ?? ''), 'field') . '-' . $this->fieldId;
         $parentDirectory = $base . '/' . $kind . '/' . $entity . '/' . $field;

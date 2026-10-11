@@ -11,6 +11,8 @@ declare(strict_types=1);
 namespace Dharma\Component\DharmaShop\Administrator\View\Productgroup;
 
 use Joomla\CMS\Factory;
+use Dharma\Component\DharmaShop\Administrator\Support\FieldGroupTabs;
+use Joomla\Database\DatabaseInterface;
 use Joomla\CMS\Form\Form;
 use Joomla\CMS\Helper\ContentHelper;
 use Joomla\CMS\Language\Text;
@@ -27,6 +29,8 @@ class HtmlView extends BaseHtmlView
     protected $option = 'com_dharmashop';
     protected ?Form $form = null;
     protected ?object $item = null;
+    protected array $fieldGroups = [];
+    protected int $commonFieldCount = 0;
 
     public function display($tpl = null): void
     {
@@ -41,6 +45,17 @@ class HtmlView extends BaseHtmlView
         }
 
         $this->form = $model->getForm();
+        $this->fieldGroups = array_values(array_filter(
+            FieldGroupTabs::load(Factory::getContainer()->get(DatabaseInterface::class), 'product'),
+            fn (object $group): bool => (bool) $this->form->getFieldset(FieldGroupTabs::fieldset((int) $group->id))
+        ));
+
+        if ((int) $this->item->id > 0) {
+            $data = $this->form->getData()->toArray();
+            $this->commonFieldCount = count((new \Dharma\Component\DharmaShop\Administrator\Fields\FieldValues(
+                Factory::getContainer()->get(DatabaseInterface::class), 'group', array_map('intval', (array) ($data['axes'] ?? []))
+            ))->values('product', $data));
+        }
 
         if ($errors = $model->getErrors()) {
             throw new GenericDataException(implode("\n", $errors), 500);

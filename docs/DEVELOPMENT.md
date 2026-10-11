@@ -1,5 +1,26 @@
 # Разработка: стенд, сборка, проверки
 
+## Общие поля группы: проверки (2026-10-11)
+
+```sh
+set -a
+. dev/.env
+set +a
+php dev/check-group-common-fields.php
+php dev/check-group-common-scope.php
+# Только если нужна новая опубликованная демогруппа:
+php dev/check-group-common-fields.php --demo
+php dev/bench/group-fields-scale.php
+# HTTP запускать после масштабного замера, без его параллельных вставок:
+python3 dev/bench/group-http.py
+```
+
+Без --demo собственные группы/товары переводятся в корзину, manifest существующего demo не заменяется. Scope-тест оставляет свои категории/поле в корзине. ID категории 51, полей/опций и ссылки на имеющиеся медиа — fixtures test.test, не данные других магазинов. --demo оставляет группу и шесть товаров опубликованными; manifest — ignored dist/common-fields-demo.json.
+
+Масштабный тест берёт первый товар manifest, создаёт изолированные таблицы со случайным префиксом cgqa_, проверяет реальные EntityFields/CategoryModel на 100 и 100000 товарах. EXPLAIN требует индекс владельца. В finally удаляются только собственные таблицы; магазин и чужие bn_* не меняются. Это загрузка полей/списка без активных фильтров; групповые фасеты и конкурентная HTTP-нагрузка не измеряются.
+
+HTTP делает 20 замеров после прогрева для каждого макета/AJAX/страницы, проверяет отсутствие group_field_* SQL в Joomla debugbar, не экспортирует debug/session данные. JSON-метрики — dist, итог — QA_GROUP_COMMON_FIELDS.md. Для адресного развёртывания вызвать GroupStorage::upgradeGenerator(); установщик вызывает upgrade автоматически. Новых CSS/JS нет.
+
 ## Стенд
 
 - Сайт: https://test.test, файлы `/Volumes/Work/Server/www/test` (чистая Joomla 6.1.4, шаблон `dharma_starter`). Переменная `DHARMA_SITE` по умолчанию указывает на него; `dharmatest.test` только для чтения.
