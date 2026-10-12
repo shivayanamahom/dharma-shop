@@ -5,6 +5,9 @@
 use Dharma\Component\DharmaShop\Administrator\Image\ImageUrl;
 use Dharma\Component\DharmaShop\Site\Support\LayoutHooks;
 use Joomla\CMS\Language\Text;
+use Dharma\Component\DharmaShop\Site\Support\CatalogModules;
+
+$slots = CatalogModules::render();
 
 $hooks = new LayoutHooks('category', 'brand', $this->item, $this->params, $this->items, $this->seo);
 $modes = ['grid' => 'COM_DHARMASHOP_VIEW_GRID', 'list' => 'COM_DHARMASHOP_VIEW_LIST', 'table' => 'COM_DHARMASHOP_VIEW_TABLE'];
@@ -40,7 +43,12 @@ $icons = [
             </div>
         </section>
     <?php endif; ?>
+    <?php if ($slots['top'] !== '') : ?><div class="mb-4 dharmaCatalogTop" data-dharmashop-module-position="dharmashop-products-top"><?php echo $slots['top']; ?></div><?php endif; ?>
+    <div class="row g-4 dharmaCatalogColumns">
+        <?php if ($slots['left'] !== '') : ?><aside class="col-12 col-lg-3 dharmaCatalogLeft" data-dharmashop-module-position="dharmashop-products-left"><?php echo $slots['left']; ?></aside><?php endif; ?>
+        <div class="col-12 col-lg-<?php echo 12 - ($slots['left'] !== '' ? 3 : 0) - ($slots['right'] !== '' ? 3 : 0); ?> dharmaCatalogMain">
     <form action="<?php echo $this->escape($this->categoryRoute((int) $this->item->id)); ?>" method="get" class="mb-4" data-dharmashop-listing-controls>
+        <?php echo $this->filterHiddenInputs(); ?>
         <div class="d-flex flex-column flex-lg-row align-items-lg-end justify-content-between gap-3">
             <div>
                 <label for="dharmashop-sort" class="visually-hidden"><?php echo Text::_('COM_DHARMASHOP_SORT_LABEL'); ?></label>
@@ -75,6 +83,9 @@ $icons = [
     <?php endif; ?>
     <?php // Список товаров и ссылки порций: этот же блок отдаёт AJAX-фрагмент (RawView), JavaScript заменяет им содержимое без смены адреса. ?>
     <div data-dharmashop-listing aria-live="polite"><?php echo $this->loadTemplate('items'); ?></div>
+        </div>
+        <?php if ($slots['right'] !== '') : ?><aside class="col-12 col-lg-3 dharmaCatalogRight" data-dharmashop-module-position="dharmashop-products-right"><?php echo $slots['right']; ?></aside><?php endif; ?>
+    </div>
     <?php if ($this->start === 0 && trim((string) $this->item->description) !== '') : ?><div class="mt-4 dharmaFulltext"><?php echo $this->text((string) $this->item->description); ?></div><?php endif; ?>
     <?php echo $hooks->render('afterContent'); ?>
 </section>

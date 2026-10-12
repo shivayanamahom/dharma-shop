@@ -102,4 +102,10 @@ class FieldgroupModel extends AdminModel
         $db = $this->getDatabase();
         return [$db->quoteName('target') . ' = ' . $db->quote((string) $table->target)];
     }
+
+    protected function cleanCache($group = null)
+    {
+        parent::cleanCache($group);
+        \Dharma\Component\DharmaShop\Administrator\Filter\FilterCache::forget();
+    }
 }

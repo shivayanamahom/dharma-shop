@@ -283,4 +283,24 @@ class FieldModel extends AdminModel
     }
     protected function canDelete($record): bool { return (int) $record->state === -2 && parent::canDelete($record); }
     protected function getReorderConditions($table): array { return ['target = ' . $this->getDatabase()->quote((string) $table->target)]; }
+
+    protected function cleanCache($group = null)
+    {
+        parent::cleanCache($group);
+        \Dharma\Component\DharmaShop\Administrator\Filter\FilterCache::forget();
+    }
+
+    public function publish(&$pks, $value = 1)
+    {
+        if (!parent::publish($pks, $value)) { return false; }
+        foreach ($pks as $id) { (new \Dharma\Component\DharmaShop\Administrator\Filter\FacetIndexer($this->getDatabase()))->rebuildField((int) $id); }
+        return true;
+    }
+
+    public function delete(&$pks)
+    {
+        if (!parent::delete($pks)) { return false; }
+        foreach ($pks as $id) { (new \Dharma\Component\DharmaShop\Administrator\Filter\FacetIndexer($this->getDatabase()))->rebuildField((int) $id); }
+        return true;
+    }
 }

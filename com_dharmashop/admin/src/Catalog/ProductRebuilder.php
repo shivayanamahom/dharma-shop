@@ -37,12 +37,12 @@ final class ProductRebuilder
     {
         $priceList = $this->priceListId;
         $sql = 'UPDATE #__dharmashop_products p LEFT JOIN ('
-            . 'SELECT v.product_id AS pid, MIN(vp.price_final) AS mn, MAX(vp.price_final) AS mx, MAX(v.in_stock) AS ins, COUNT(*) AS c '
+            . 'SELECT v.product_id AS pid, MIN(vp.price_final) AS mn, MAX(vp.price_final) AS mx, MAX(v.in_stock) AS ins, COUNT(*) AS c, MAX(CASE WHEN vp.price_final < vp.price THEN 1 ELSE 0 END) AS sale '
             . 'FROM #__dharmashop_variants v '
             . 'LEFT JOIN #__dharmashop_variant_prices vp ON vp.variant_id = v.id AND vp.price_list_id = :pl '
             . 'WHERE v.product_id BETWEEN :f AND :t AND v.state = 1 GROUP BY v.product_id'
             . ') a ON a.pid = p.id '
-            . 'SET p.price_min = a.mn, p.price_max = a.mx, p.in_stock = COALESCE(a.ins, 0), p.variants_count = COALESCE(a.c, 0) '
+            . 'SET p.price_min = a.mn, p.price_max = a.mx, p.in_stock = COALESCE(a.ins, 0), p.variants_count = COALESCE(a.c, 0), p.on_sale = COALESCE(a.sale, 0) '
             . 'WHERE p.id BETWEEN :f2 AND :t2';
 
         Sql::exec($this->db, $sql, [
@@ -67,12 +67,12 @@ final class ProductRebuilder
 
         $priceList = $this->priceListId;
         $sql = 'UPDATE #__dharmashop_products p LEFT JOIN ('
-            . 'SELECT v.product_id AS pid, MIN(vp.price_final) AS mn, MAX(vp.price_final) AS mx, MAX(v.in_stock) AS ins, COUNT(*) AS c '
+            . 'SELECT v.product_id AS pid, MIN(vp.price_final) AS mn, MAX(vp.price_final) AS mx, MAX(v.in_stock) AS ins, COUNT(*) AS c, MAX(CASE WHEN vp.price_final < vp.price THEN 1 ELSE 0 END) AS sale '
             . 'FROM #__dharmashop_variants v JOIN #__dharmashop_products pp ON pp.id = v.product_id AND pp.catid IN (' . $in . ') '
             . 'LEFT JOIN #__dharmashop_variant_prices vp ON vp.variant_id = v.id AND vp.price_list_id = :pl '
             . 'WHERE v.state = 1 GROUP BY v.product_id'
             . ') a ON a.pid = p.id '
-            . 'SET p.price_min = a.mn, p.price_max = a.mx, p.in_stock = COALESCE(a.ins, 0), p.variants_count = COALESCE(a.c, 0) '
+            . 'SET p.price_min = a.mn, p.price_max = a.mx, p.in_stock = COALESCE(a.ins, 0), p.variants_count = COALESCE(a.c, 0), p.on_sale = COALESCE(a.sale, 0) '
             . 'WHERE p.catid IN (' . $in . ')';
 
         Sql::exec($this->db, $sql, [':pl' => [$priceList, ParameterType::INTEGER]]);

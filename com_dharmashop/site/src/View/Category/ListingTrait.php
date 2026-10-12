@@ -27,6 +27,25 @@ use Joomla\Registry\Registry;
  */
 trait ListingTrait
 {
+    /** Preserve only validated filter values when native sorting submits the form. */
+    public function filterHiddenInputs(): string
+    {
+        $model = $this->getModel();
+        $values = ['filter' => $model->getFilterState()->toArray($model->getFilterDefinition())];
+        $module = Factory::getApplication()->getInput()->getInt('filter_module');
+        if ($module > 0 && !$model->getFilterState()->isEmpty()) { $values['filter_module'] = $module; }
+        $html = '';
+        $walk = function (array $values, string $prefix = '') use (&$walk, &$html): void {
+            foreach ($values as $key => $value) {
+                $name = $prefix === '' ? (string) $key : $prefix . '[' . (is_int($key) ? '' : $key) . ']';
+                if (is_array($value)) { $walk($value, $name); }
+                else { $html .= '<input type="hidden" name="' . $this->escape($name) . '" value="' . $this->escape($value) . '">'; }
+            }
+        };
+        $walk($values);
+        return $html;
+    }
+
     public object $item;
     public array $items = [];
     public Registry $params;
@@ -146,21 +165,23 @@ trait ListingTrait
         $requested = $input->get->get('filter', [], 'array');
         $managed = ['f', 'price', 'brand', 'badge', 'cat', 'stock', 'sale'];
 
-        if (!is_array($requested) || !array_intersect($managed, array_keys($requested))) {
+        if (!is_array($requested) || (!array_intersect($managed, array_keys($requested)) && !$input->get->exists('filter_module'))) {
             return;
         }
 
         $canonical = $model->getFilterState()->toArray($model->getFilterDefinition());
-        $keep = array_diff_key($requested, array_flip($managed));
+        $keep = $this->searchQuery !== '' ? ['search' => $this->searchQuery] : [];
         $target = $canonical + $keep;
 
-        if ($this->normalizeQuery($requested) === $this->normalizeQuery($target)) {
+        $orphanModule = !$canonical && $input->get->exists('filter_module');
+        if (!$orphanModule && $this->normalizeQuery($requested) === $this->normalizeQuery($target)) {
             return;
         }
 
         $uri = clone \Joomla\CMS\Uri\Uri::getInstance();
         $uri->delVar('filter');
-        $uri->delVar('start');
+        if (!$canonical) { $uri->delVar('filter_module'); }
+        if ($this->normalizeQuery($requested) !== $this->normalizeQuery($target)) { $uri->delVar('start'); }
         $rest = $uri->getQuery();
         // Списки значений — `filter[f][поле][]=…` (как их отправляет форма), а не `[0]`, `[1]`.
         $filterQuery = $target ? (string) preg_replace('/%5B\d+%5D/', '%5B%5D', http_build_query(['filter' => $target], '', '&', PHP_QUERY_RFC3986)) : '';
@@ -219,6 +240,7 @@ trait ListingTrait
             // Условия фильтра и поиск остаются в ссылках страниц (канонический вид: алиасы).
             $filterParams = $model->getFilterState()->toArray($model->getFilterDefinition()) + ($this->searchQuery !== '' ? ['search' => $this->searchQuery] : []);
             $pagination->setAdditionalUrlParam('filter', $filterParams ?: null);
+            $pagination->setAdditionalUrlParam('filter_module', $filterParams ? ($query->getInt('filter_module') ?: null) : null);
         }
     }
 

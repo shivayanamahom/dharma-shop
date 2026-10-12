@@ -28,6 +28,7 @@
     new FormData(form).forEach((value, key) => {
       if (typeof value === 'string' && value !== '' && key !== 'start' && key !== 'limitstart') params.append(key, value);
     });
+    if (!Array.from(params).some(([key, value]) => key.startsWith('filter[') && value !== '')) params.delete('filter_module');
     url.search = params.toString();
 
     return url.toString();
@@ -55,10 +56,20 @@
       const next = doc.querySelector(LIST);
       if (!next) throw new Error('no listing');
 
+      // Администратор мог сменить позицию/макет уже после открытия страницы.
+      // Подмена одной формы в старом контейнере оставила бы вертикальный фильтр в прежней верхней позиции.
+      for (const old of document.querySelectorAll(FORM)) {
+        const fresh = doc.getElementById(old.id);
+        if (fresh && old.dataset.configuration !== fresh.dataset.configuration) return fallback(response.url || url);
+      }
+
       const active = document.activeElement;
       const focus = active && formOf(active) && active.name ? { form: formOf(active).id, name: active.name, value: active.value, type: active.type } : null;
 
       box.innerHTML = next.innerHTML;
+      const oldControls=document.querySelector('[data-dharmashop-listing-controls]');
+      const nextControls=doc.querySelector('[data-dharmashop-listing-controls]');
+      if(oldControls && nextControls)oldControls.replaceWith(nextControls);
 
       document.querySelectorAll(FORM).forEach((old) => {
         const fresh = old.id ? doc.getElementById(old.id) : null;
@@ -96,12 +107,16 @@
       });
 
       if (doc.title) document.title = doc.title;
+      ['link[rel="canonical"]', 'meta[name="robots"]'].forEach((selector) => {
+        const old=document.head.querySelector(selector), fresh=doc.head.querySelector(selector);
+        if(fresh){if(old)old.replaceWith(fresh);else document.head.append(fresh);}else if(old){old.remove();}
+      });
       if (push) {
         history.pushState({ dharmashopFilter: 1 }, '', response.url || url);
         pushed = true;
       }
       document.dispatchEvent(new CustomEvent('dharmashop:updated'));
-      if (box.getBoundingClientRect().top < 0) box.scrollIntoView({ block: 'start' });
+      // При выборе и сбросе оставляем посетителя у фильтра; список не прокручивает страницу принудительно.
     } catch (error) {
       if (error.name === 'AbortError') return;
       fallback(url);
@@ -131,7 +146,7 @@
 
   document.addEventListener('change', (event) => {
     const form = formOf(event.target);
-    if (form && isInstant(form)) schedule(form, isText(event.target) ? 0 : 120);
+    if (form && isInstant(form) && !event.target.matches('[data-filter-search]')) schedule(form, isText(event.target) ? 0 : 120);
   });
 
   document.addEventListener('input', (event) => {

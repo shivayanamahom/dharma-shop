@@ -69,7 +69,7 @@ class FieldTable extends Table
             $type = TypeRegistry::current()->get((string) $this->type);
             $this->store = $type->store();
             $settings = (new Registry($this->params))->toArray();
-            $this->params = (string) new Registry(DisplaySettings::normalize($settings, (string) $this->type) + $type->normalizeSettings($settings));
+            $this->params = (string) new Registry(['filter' => \Dharma\Component\DharmaShop\Administrator\Filter\FilterSettings::normalize((array) ($settings['filter'] ?? []))] + DisplaySettings::normalize($settings, (string) $this->type) + $type->normalizeSettings($settings));
         } catch (\Throwable $error) {
             $this->setError(Text::_($error->getMessage())); return false;
         }

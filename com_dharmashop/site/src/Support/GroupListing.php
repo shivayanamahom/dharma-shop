@@ -39,35 +39,33 @@ final class GroupListing
             . " AND NOT EXISTS (SELECT 1 FROM #__categories lgb WHERE lgb.extension=$catalog AND lgb.lft<=lgc.lft AND lgb.rgt>=lgc.rgt AND (lgb.published<>1 OR lgb.access NOT IN ($levels)))))";
         $query->where("($ungrouped OR ($visible))");
         if ($category > 0) {
-            // Build the category's candidate IDs from its indexes; do not scan all catalogue products for an OR predicate.
-            $singles = 'SELECT single_pc.product_id FROM #__dharmashop_product_categories single_pc'
-                . ' INNER JOIN #__dharmashop_products single_p ON single_p.id=single_pc.product_id'
-                . ' WHERE single_pc.catid=' . $category . ' AND single_pc.state=1 AND (single_p.group_id IS NULL OR single_p.group_id=0)';
-            $members = 'SELECT listing_member.id AS product_id FROM #__dharmashop_group_categories lgt INNER JOIN #__categories lga ON lga.id=lgt.catid'
+            // Probe only groups of matching products. Materialising every member of the branch
+            // before applying selective filters made a 100k category unnecessarily expensive.
+            $members = 'SELECT 1 FROM #__dharmashop_group_categories lgt INNER JOIN #__categories lga ON lga.id=lgt.catid'
                 . ' INNER JOIN #__categories lgs ON lgs.id=' . $category
-                . ' INNER JOIN #__dharmashop_products listing_member ON listing_member.group_id=lgt.group_id'
-                . ' WHERE lga.extension=' . $this->db->quote($extension)
+                . ' WHERE lgt.group_id=p.group_id AND lga.extension=' . $this->db->quote($extension)
                 . " AND lga.lft>=lgs.lft AND lga.rgt<=lgs.rgt AND lga.published=1 AND lga.access IN ($levels)"
                 . ' AND NOT EXISTS (SELECT 1 FROM #__categories lgh WHERE lgh.extension=lga.extension AND lgh.lft<=lga.lft AND lgh.rgt>=lga.rgt'
                 . " AND (lgh.published<>1 OR lgh.access NOT IN ($levels)))";
-            // UNION removes duplicate IDs from multiple direct group categories within the same branch.
-            $query->join('INNER', '(' . $singles . ' UNION ' . $members . ') AS listing_scope ON listing_scope.product_id=p.id');
+            $query->where("(($ungrouped AND pc.product_id IS NOT NULL) OR (p.group_id>0 AND EXISTS ($members)))");
         }
     }
 
     /** Keep the first matching member under this sort, BEFORE LIMIT/OFFSET. */
-    public function representatives(QueryInterface $candidates, string $sort, string $direction): QueryInterface
+    public function representatives(QueryInterface $candidates, string $sort, string $direction, int $category = 0): QueryInterface
     {
-        $query = clone $candidates;
-        $other = clone $candidates;
-        $other->select(['p.id', 'p.group_id', $sort . ' AS listing_sort']);
-        $sql = $this->embed($other, $query);
-        $asc = $direction === 'ASC';
-        $op = $asc ? '<' : '>';
-        $nullFirst = $asc ? "listing_prior.listing_sort IS NULL AND ($sort) IS NOT NULL" : "listing_prior.listing_sort IS NOT NULL AND ($sort) IS NULL";
-        $earlier = "(listing_prior.listing_sort $op ($sort) OR ($nullFirst) OR (listing_prior.listing_sort <=> ($sort) AND listing_prior.id $op p.id))";
-        return $query->where('(p.group_id IS NULL OR p.group_id=0 OR NOT EXISTS (SELECT 1 FROM (' . $sql . ') AS listing_prior'
-            . ' WHERE listing_prior.group_id=p.group_id AND ' . $earlier . '))');
+        $query = $this->db->createQuery();
+        $ranked = clone $candidates;
+        // Rank only narrow matching rows once. Repeating a correlated full category scope per member
+        // was much slower for large groups/catalogues and unstable across MySQL query plans.
+        $ranked->select(['p.id', 'ROW_NUMBER() OVER (PARTITION BY ' . self::unit() . ' ORDER BY ' . $sort . ' ' . $direction . ',p.id ' . $direction . ') AS listing_rank']);
+        $sql = $this->embed($ranked, $query);
+        return $query->from('(' . $sql . ') AS listing_ranked')
+            ->join('INNER', '#__dharmashop_products p ON p.id=listing_ranked.id')
+            ->join('INNER', '#__categories c ON c.id=p.catid')
+            ->join('LEFT', '#__dharmashop_product_groups lg ON lg.id=p.group_id')
+            ->join('LEFT', '#__dharmashop_product_categories pc ON pc.product_id=p.id AND pc.catid=' . $category . ' AND pc.state=1')
+            ->where('listing_ranked.listing_rank=1');
     }
 
     /** Bounded batch queries for groups on this page; no per-card SQL or global group price caches. */

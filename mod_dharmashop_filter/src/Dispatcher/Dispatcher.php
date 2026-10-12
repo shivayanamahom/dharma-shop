@@ -31,7 +31,7 @@ class Dispatcher extends AbstractModuleDispatcher
 
         // Сбой фильтра не должен ронять страницу каталога: модуль просто не выводится, причина — в журнале компонента.
         try {
-            $data['filter'] = (new FilterHelper($this->getApplication(), $data['params']))->build();
+            $data['filter'] = (new FilterHelper($this->getApplication(), $data['params'], (int) $data['module']->id))->build();
         } catch (\Throwable $error) {
             Log::add('Filter module: ' . $error::class . ': ' . $error->getMessage() . ' @ ' . basename($error->getFile()) . ':' . $error->getLine(), Log::ERROR, 'com_dharmashop');
             $data['filter'] = null;
@@ -40,8 +40,10 @@ class Dispatcher extends AbstractModuleDispatcher
         // Ресурсы подключаются только для включённых возможностей: фильтр без них — чистая форма без скриптов.
         $params = $data['params'];
 
-        if ($data['filter']) {
+        if ($data['filter'] && $this->getApplication()->getInput()->getCmd('task') !== 'filter.refresh') {
             $scripts = [];
+
+            if ($data['filter']['cascade']) { $scripts[] = 'mod_dharmashop_filter.cascade'; }
 
             if ((int) $params->get('ajax', 0) === 1 || (string) $params->get('apply_mode', 'button') === 'instant') {
                 $scripts[] = 'mod_dharmashop_filter.filter';
@@ -51,6 +53,10 @@ class Dispatcher extends AbstractModuleDispatcher
                 $scripts[] = 'mod_dharmashop_filter.slider';
             }
 
+            if (array_filter($data['filter']['sections'], static fn(array $s): bool => count($s['options']) >= 10 || !empty($s['limit']))
+                || ((string)$params->get('orientation','vertical') === 'horizontal' && (string)$params->get('horizontal_groups','dropdown') === 'dropdown')) { $scripts[] = 'mod_dharmashop_filter.values'; }
+            if ((string)$params->get('orientation','vertical') === 'horizontal' && (string)$params->get('horizontal_groups','dropdown') === 'dropdown') { $scripts[] = 'bootstrap.dropdown'; }
+            if ((string)$params->get('sticky_mode','off') !== 'off' && (string)$params->get('orientation','vertical') !== 'horizontal' && (string)$params->get('offcanvas_mode','never') !== 'always') { $scripts[] = 'mod_dharmashop_filter.sticky'; }
             if ((int) $params->get('collapsible_groups', 1) === 1) {
                 $scripts[] = 'bootstrap.collapse';
             }
@@ -63,6 +69,10 @@ class Dispatcher extends AbstractModuleDispatcher
                 try {
                     $wa = $this->getApplication()->getDocument()->getWebAssetManager();
                     $wa->getRegistry()->addExtensionRegistryFile('mod_dharmashop_filter');
+
+                    if (in_array('mod_dharmashop_filter.slider', $scripts, true)) {
+                        $wa->useStyle('mod_dharmashop_filter.range');
+                    }
 
                     foreach ($scripts as $script) {
                         $wa->useScript($script);

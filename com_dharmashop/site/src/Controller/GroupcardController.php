@@ -26,6 +26,8 @@ final class GroupcardController extends BaseController
             $this->input->set('id', (int) $scope['id']);
             $this->input->set('filter', (array) $scope['filter']);
             $this->input->set('q', (string) $scope['search']);
+            $this->input->set('filter_module', (int) ($scope['filter_module'] ?? 0));
+            $this->input->set('Itemid', (int) ($scope['itemid'] ?? 0));
             $factory = $this->app->bootComponent('com_dharmashop')->getMVCFactory();
             $model = $factory->createModel(ucfirst($scope['view']), 'Site', ['ignore_request' => true]);
             $model->forCategory((int) $scope['id']);

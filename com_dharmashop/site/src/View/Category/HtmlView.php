@@ -88,9 +88,18 @@ class HtmlView extends BaseHtmlView
         // Сортировка и вид в запросе (форма без JavaScript): страница-дубль, канонический адрес — без параметров, индексировать не нужно.
         $query = $app->getInput()->get;
         $variant = $query->exists('sort') || $query->exists('product_view') || $this->searchQuery !== '' || !$model->getFilterState()->isEmpty();
-        $this->seo = $seo->resolve($taxonomy->area, $this->item, $this->textValues, $ownMenu,
-            $this->absoluteRoute((int) $this->item->id) . (!$variant && $this->start ? '?start=' . $this->start : ''),
-            $variant ? 'noindex, follow' : null, $this->pagination ? (int) $this->pagination->pagesCurrent : 1);
+        $filtered = !$model->getFilterState()->isEmpty();
+        $canonical = $this->absoluteRoute((int) $this->item->id) . (!$variant && $this->start ? '?start=' . $this->start : '');
+        if ($filtered && (string)$settings->get('filter_canonical','category') === 'self') {
+            $parts=['filter'=>$model->getFilterState()->toArray($model->getFilterDefinition())];
+            if ($app->getInput()->getInt('filter_module')) { $parts['filter_module']=$app->getInput()->getInt('filter_module'); }
+            if ($this->start) { $parts['start']=$this->start; }
+            $canonical .= '?' . preg_replace('/%5B\d+%5D/', '%5B%5D', http_build_query($parts,'','&',PHP_QUERY_RFC3986));
+        }
+        $robots = $variant ? 'noindex, follow' : null;
+        if ($filtered && (int)$settings->get('filter_noindex',1) !== 1 && $this->searchQuery === '') { $robots=null; }
+        $this->seo = $seo->resolve($taxonomy->area, $this->item, $this->textValues, $ownMenu, $canonical,
+            $robots, $this->pagination ? (int) $this->pagination->pagesCurrent : 1);
         $content = null;
         if ((int) $settings->get('seo_structureddata', 1) === 1) {
             $entries = [];

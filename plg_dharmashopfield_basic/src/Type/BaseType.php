@@ -2,10 +2,12 @@
 declare(strict_types=1);
 namespace Dharma\Plugin\DharmaShopField\Basic\Type;
 use Dharma\Component\DharmaShop\Administrator\Fields\ValueTypeInterface;
+use Dharma\Component\DharmaShop\Administrator\Fields\FilterTypeInterface;
 \defined('_JEXEC') or die;
-abstract class BaseType implements ValueTypeInterface
+abstract class BaseType implements ValueTypeInterface, FilterTypeInterface
 {
     use NativeValue;
+    public function filterKind(): ?string { return in_array($this->store(), ['option','number','range'], true) ? $this->store() : null; }
     public function label(): string { return 'COM_DHARMASHOP_FIELD_TYPE_' . strtoupper($this->id()); }
     public function settingsPath(): string { return dirname(__DIR__, 2) . '/forms/' . $this->id() . '/settings.xml'; }
     public function normalizeSettings(array $settings): array

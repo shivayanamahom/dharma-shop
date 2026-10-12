@@ -1,27 +1,60 @@
 {
-	"$schema": "https://developer.joomla.org/schemas/json-schema/web_assets.json",
-	"name": "mod_dharmashop_filter",
-	"version": "0.1.0",
-	"description": "Dharma Shop: фильтр товаров — скрипты подключаются только по включённым настройкам модуля",
-	"license": "GPL-2.0-or-later",
-	"assets": [
-		{
-			"name": "mod_dharmashop_filter.filter",
-			"type": "script",
-			"uri": "mod_dharmashop_filter/filter.js",
-			"version": "b275e7735b63",
-			"attributes": {
-				"defer": true
-			}
-		},
-		{
-			"name": "mod_dharmashop_filter.slider",
-			"type": "script",
-			"uri": "mod_dharmashop_filter/filter-slider.js",
-			"version": "66291fa578de",
-			"attributes": {
-				"defer": true
-			}
-		}
-	]
+  "$schema": "https://developer.joomla.org/schemas/json-schema/web_assets.json",
+  "name": "mod_dharmashop_filter",
+  "version": "0.1.0",
+  "description": "Dharma Shop: фильтр товаров — скрипты подключаются только по включённым настройкам модуля",
+  "license": "GPL-2.0-or-later",
+  "assets": [
+    {
+      "name": "mod_dharmashop_filter.filter",
+      "type": "script",
+      "uri": "mod_dharmashop_filter/filter.js",
+      "version": "c521d44d7674",
+      "attributes": {
+        "defer": true
+      }
+    },
+    {
+      "name": "mod_dharmashop_filter.slider",
+      "type": "script",
+      "uri": "mod_dharmashop_filter/filter-slider.js",
+      "version": "fad1875c6104",
+      "attributes": {
+        "defer": true
+      }
+    },
+    {
+      "name": "mod_dharmashop_filter.values",
+      "type": "script",
+      "uri": "mod_dharmashop_filter/filter-values.js",
+      "version": "fb23b9d5ec76",
+      "attributes": {
+        "defer": true
+      }
+    },
+    {
+      "name": "mod_dharmashop_filter.sticky",
+      "type": "script",
+      "uri": "mod_dharmashop_filter/filter-sticky.js",
+      "version": "5673ad647442",
+      "attributes": {
+        "defer": true
+      }
+    },
+    {
+      "name": "mod_dharmashop_filter.range",
+      "type": "style",
+      "uri": "mod_dharmashop_filter/filter-range.css",
+      "version": "85a2141343a5"
+    },
+    {
+      "name": "mod_dharmashop_filter.cascade",
+      "type": "script",
+      "uri": "mod_dharmashop_filter/filter-cascade.js",
+      "version": "7890518fa027",
+      "attributes": {
+        "defer": true
+      }
+    }
+  ]
 }

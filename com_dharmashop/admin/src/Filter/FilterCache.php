@@ -15,6 +15,7 @@ namespace Dharma\Component\DharmaShop\Administrator\Filter;
 use Joomla\CMS\Cache\CacheControllerFactoryInterface;
 use Joomla\CMS\Cache\Controller\CallbackController;
 use Joomla\CMS\Factory;
+use Joomla\CMS\Component\ComponentHelper;
 
 \defined('_JEXEC') or die;
 
@@ -80,7 +81,7 @@ final class FilterCache
             $controller = Factory::getContainer()->get(CacheControllerFactoryInterface::class)->createCacheController('callback', [
                 'defaultgroup' => self::GROUP,
                 'caching' => true,
-                'lifetime' => self::$lifetime,
+                'lifetime' => max(1, min(60, (int) ComponentHelper::getParams('com_dharmashop')->get('filter_cache_minutes', self::$lifetime))),
             ]);
             $controller->setCaching(true);
 

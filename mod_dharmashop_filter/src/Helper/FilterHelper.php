@@ -33,7 +33,7 @@ final class FilterHelper
     /** Страницы, на которых фильтр применим (вид компонента → модель). */
     private const MODELS = ['category' => 'Category', 'brand' => 'Brand', 'badge' => 'Badge', 'search' => 'Search'];
 
-    public function __construct(private readonly CMSApplicationInterface $app, private readonly Registry $params)
+    public function __construct(private readonly CMSApplicationInterface $app, private readonly Registry $params, private readonly int $moduleId = 0)
     {
     }
 
@@ -63,12 +63,19 @@ final class FilterHelper
             }
         }
 
+        $initiator = \Dharma\Component\DharmaShop\Site\Support\FilterRequest::params();
+        $model->setFilterModule(count($initiator->toArray()) ? $initiator : $this->params);
         $definition = $model->getFilterDefinition();
         $state = $model->getFilterState();
         $counts = (string) $this->params->get('counts', 'inherit');
         $counts = in_array($counts, ['off', 'base', 'live'], true) ? $counts : (string) $settings->get('filter_counts', 'base');
         $counts = in_array($counts, ['off', 'base', 'live'], true) ? $counts : 'base';
-        $facets = $model->getFacets($counts);
+        $cascadeSetting = (string) $this->params->get('cascade', 'inherit');
+        $cascade = in_array($cascadeSetting, ['on', 'off'], true)
+            ? $cascadeSetting === 'on' : (int) $settings->get('filter_cascade', 1) === 1;
+        // Доступность значений и показ чисел — независимые настройки. При каскаде числа также контекстные.
+        $facets = $model->getFacets($cascade ? 'live' : $counts);
+        if (!empty($facets['unavailable'])) { $counts = 'off'; }
         $catid = (int) $model->getParent()->id;
         $services = $this->app->bootComponent('com_dharmashop')->getServices();
         [$action, $hidden] = $this->target($input);
@@ -82,11 +89,12 @@ final class FilterHelper
             'sections' => $sections,
             'chips' => $this->params->get('show_active_chips', 1) ? $this->chips($definition, $state, $action, $hidden) : [],
             'resetUrl' => $this->url($action, $hidden, []),
-            'active' => !$state->isEmpty(),
+            'active' => $state->activeCount(),
             'total' => $total,
             'totalCapped' => $model->totalCapped,
             'approximate' => (bool) $facets['approximate'],
             'showCounts' => $counts !== 'off',
+            'cascade' => $cascade,
             'collapsible' => (int) $this->params->get('collapsible_groups', 1) === 1,
         ];
     }
@@ -120,6 +128,7 @@ final class FilterHelper
             }
 
             $config[] = ['field' => '@stock'];
+            $config[] = ['field' => '@sale'];
         }
 
         $sections = [];
@@ -135,15 +144,17 @@ final class FilterHelper
             $key = (string) $row['field'];
             $title = trim((string) ($row['title'] ?? ''));
             $control = (string) ($row['control'] ?? 'auto');
-            $expanded = (int) ($row['expanded'] ?? 1) === 1;
+            $expanded = (int) ($row['expanded'] ?? ($definition->fieldByAlias($key)?->settings['expanded'] ?? 1)) === 1;
             $section = null;
 
             if ($key === '@price') {
                 $section = $this->price($state, $definition, $facets['price'] ?? null, $action, $hidden);
             } elseif ($key === '@stock') {
                 $section = ['kind' => 'stock', 'name' => 'filter[stock]', 'checked' => $state->inStock, 'control' => 'switch', 'options' => [], 'title' => Text::_('MOD_DHARMASHOP_FILTER_SYSTEM_STOCK_LABEL')];
+            } elseif ($key === '@sale') {
+                $section = ['kind' => 'sale', 'name' => 'filter[sale]', 'checked' => $state->onSale, 'control' => 'switch', 'options' => [], 'title' => Text::_('MOD_DHARMASHOP_FILTER_SYSTEM_SALE_LABEL')];
             } elseif (in_array($key, ['@brand', '@badge', '@cat'], true)) {
-                $section = $this->directory($key, $definition, $state, $catid, $engine, $empty, $counts !== 'off', $control);
+                $section = $this->directory($key, $definition, $state, $catid, $engine, $facets, $empty, $counts !== 'off', $control);
             } elseif (($field = $definition->fieldByAlias($key)) !== null) {
                 $section = $this->field($field, $state, $facets, $empty, $counts !== 'off', $control, (string) ($row['logic'] ?? 'inherit'));
             }
@@ -205,11 +216,11 @@ final class FilterHelper
         $effective = $logic === 'inherit' ? $field->logic() : ($logic === 'and' ? 'and' : 'or');
 
         return ['kind' => 'field', 'title' => $field->title, 'name' => 'filter[f][' . $field->alias . '][]', 'control' => $this->control($control, $field),
-            'options' => $options, 'selected' => (bool) $chosen, 'logic' => $effective, 'limit' => $this->limit(), 'swatches' => $field->type === 'color'];
+            'options' => $options, 'selected' => (bool) $chosen, 'logic' => $effective, 'limit' => (int) ($field->settings['limit'] ?? 0) ?: $this->limit(), 'search' => (int) ($field->settings['search'] ?? 1) === 1, 'swatches' => $field->type === 'color'];
     }
 
     /** @return array<string, mixed>|null */
-    private function directory(string $key, FilterDefinition $definition, FilterState $state, int $catid, object $engine, string $empty, bool $showCounts, string $control): ?array
+    private function directory(string $key, FilterDefinition $definition, FilterState $state, int $catid, object $engine, array $facets, string $empty, bool $showCounts, string $control): ?array
     {
         [$directory, $chosen, $name, $title, $direct] = match ($key) {
             '@brand' => [$definition->brands, $state->brands, 'filter[brand][]', 'MOD_DHARMASHOP_FILTER_SYSTEM_BRAND', true],
@@ -221,7 +232,7 @@ final class FilterHelper
             return null;
         }
 
-        $counts = $engine->directoryCounts($key === '@cat' ? 0 : $catid, array_keys($directory), $direct);
+        $counts = $facets['directories'][substr($key, 1)] ?? [];
         $options = [];
 
         foreach ($directory as $id => $row) {
@@ -279,7 +290,7 @@ final class FilterHelper
     {
         $control = $control === 'auto' ? (string) ($field?->settings['control'] ?? 'auto') : $control;
 
-        return in_array($control, ['select', 'checkboxes', 'radio', 'buttons', 'swatches'], true) ? $control : 'checkboxes';
+        return in_array($control, ['select', 'checkboxes', 'radio', 'buttons', 'swatches', 'images'], true) ? $control : 'checkboxes';
     }
 
     /** @param array<int, array<string, mixed>> $options @return array<int, array<string, mixed>> */
@@ -325,12 +336,20 @@ final class FilterHelper
             }
         }
 
+        if (!(int) $this->app->get('sef', 0)) {
+            foreach (['option', 'view', 'id', 'Itemid'] as $name) {
+                if ($input->exists($name)) { $hidden[$name] = $input->getString($name); }
+            }
+        }
+        if ($input->getCmd('view') === 'search') { $hidden['q'] = $input->getString('q'); }
+
         $filter = $input->get('filter', [], 'array');
 
         if (is_array($filter) && isset($filter['search']) && is_scalar($filter['search']) && trim((string) $filter['search']) !== '') {
             $hidden['filter[search]'] = mb_substr(trim((string) $filter['search']), 0, 100);
         }
 
+        if ($this->moduleId > 0) { $hidden['filter_module'] = (string) $this->moduleId; }
         return [$path, array_map('strval', $hidden)];
     }
 
@@ -352,6 +371,8 @@ final class FilterHelper
         if ($filter) {
             $query['filter'] = $filter;
         }
+
+        if (!$filter) { unset($query['filter_module']); }
 
         // Списки значений — `[]`, а не `[0]`, `[1]` (как отправляет форма и как требует канонический адрес).
         $string = $query ? (string) preg_replace('/%5B\d+%5D/', '%5B%5D', http_build_query($query, '', '&', PHP_QUERY_RFC3986)) : '';
@@ -431,6 +452,7 @@ final class FilterHelper
             $chips[] = ['label' => Text::_('MOD_DHARMASHOP_FILTER_SYSTEM_STOCK_LABEL'), 'url' => $this->url($action, $hidden, $filter)];
         }
 
+        if ($state->onSale) { $filter = $current; unset($filter['sale']); $chips[] = ['label' => Text::_('MOD_DHARMASHOP_FILTER_SYSTEM_SALE_LABEL'), 'url' => $this->url($action, $hidden, $filter)]; }
         return $chips;
     }
 

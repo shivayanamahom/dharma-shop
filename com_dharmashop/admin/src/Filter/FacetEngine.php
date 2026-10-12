@@ -35,7 +35,7 @@ final class FacetEngine
      */
     public function base(int $catid): array
     {
-        return FilterCache::remember('base:' . $catid, function () use ($catid): array {
+        return FilterCache::remember($this->db->getPrefix() . ':' . 'base:' . $catid, function () use ($catid): array {
             $db = $this->db;
             $options = [];
             $ranges = [];
@@ -76,7 +76,7 @@ final class FacetEngine
 
         sort($ids);
 
-        return FilterCache::remember('directory:' . $catid . ':' . ($direct ? 'd' : 's') . ':' . implode(',', $ids), function () use ($catid, $ids, $direct): array {
+        return FilterCache::remember($this->db->getPrefix() . ':' . 'directory:' . $catid . ':' . ($direct ? 'd' : 's') . ':' . implode(',', $ids), function () use ($catid, $ids, $direct): array {
             $db = $this->db;
             $list = implode(',', $ids);
             $pc = $db->quoteName('#__dharmashop_product_categories');
@@ -105,7 +105,7 @@ final class FacetEngine
      */
     public function price(int $catid): ?array
     {
-        return FilterCache::remember('price:' . $catid, function () use ($catid): ?array {
+        return FilterCache::remember($this->db->getPrefix() . ':' . 'price:' . $catid, function () use ($catid): ?array {
             $db = $this->db;
 
             if ($catid > 0) {

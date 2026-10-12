@@ -12,6 +12,8 @@ declare(strict_types=1);
 
 namespace Dharma\Component\DharmaShop\Administrator\Filter;
 
+use Joomla\CMS\Component\ComponentHelper;
+
 \defined('_JEXEC') or die;
 
 /**
@@ -59,10 +61,13 @@ final class FilterState
     {
         $options = [];
         $ranges = [];
+        $settings = ComponentHelper::getParams('com_dharmashop');
+        $maxFields = max(1, min(24, (int) $settings->get('filter_max_fields', self::MAX_FIELDS)));
+        $maxValues = max(1, min(100, (int) $settings->get('filter_max_values', self::MAX_VALUES)));
         $fields = isset($filter['f']) && is_array($filter['f']) ? $filter['f'] : [];
 
-        foreach ($fields as $alias => $raw) {
-            if (count($options) + count($ranges) >= self::MAX_FIELDS) {
+        foreach (array_slice($fields, 0, $maxFields, true) as $alias => $raw) {
+            if (count($options) + count($ranges) >= $maxFields) {
                 break;
             }
 
@@ -75,7 +80,7 @@ final class FilterState
             if ($field->kind === FilterField::OPTION) {
                 $ids = [];
 
-                foreach (array_slice($raw, 0, self::MAX_VALUES) as $value) {
+                foreach (array_slice($raw, 0, $maxValues) as $value) {
                     $option = is_scalar($value) ? $field->option(mb_substr((string) $value, 0, 190)) : null;
 
                     if ($option !== null) {
@@ -188,7 +193,12 @@ final class FilterState
     /** Ключ состояния для кэша: каноническое содержимое. */
     public function key(): string
     {
-        return md5(json_encode([$this->options, $this->ranges, $this->price, $this->brands, $this->badges, $this->categories, $this->inStock, $this->onSale]) ?: '');
+        $options = $this->options; $ranges = $this->ranges;
+        ksort($options); ksort($ranges);
+        foreach ($options as &$ids) { sort($ids, SORT_NUMERIC); } unset($ids);
+        $directories = [$this->brands, $this->badges, $this->categories];
+        foreach ($directories as &$ids) { sort($ids, SORT_NUMERIC); } unset($ids);
+        return md5(json_encode([$options, $ranges, $this->price, $directories, $this->inStock, $this->onSale]) ?: '');
     }
 
     /** Состояние без одного поля (для чисел «каскада»: выбор самого поля не сужает его значения). */
@@ -199,6 +209,13 @@ final class FilterState
         unset($options[$fieldId], $ranges[$fieldId]);
 
         return new self($options, $ranges, $this->price, $this->brands, $this->badges, $this->categories, $this->inStock, $this->onSale);
+    }
+
+    public function withoutSystem(string $key): self
+    {
+        return new self($this->options, $this->ranges, $key === 'price' ? null : $this->price,
+            $key === 'brand' ? [] : $this->brands, $key === 'badge' ? [] : $this->badges,
+            $key === 'cat' ? [] : $this->categories, $key === 'stock' ? false : $this->inStock, $key === 'sale' ? false : $this->onSale);
     }
 
     /** Границы из массива min/max: числа, зажатые в разумные пределы; пустое — null. @param array<mixed> $raw @return array{min: ?float, max: ?float}|null */
@@ -244,7 +261,7 @@ final class FilterState
             return null;
         }
 
-        return max(-self::BOUND, min(self::BOUND, (float) $text));
+        return strlen($text) <= 64 && is_finite((float) $text) ? max(-self::BOUND, min(self::BOUND, (float) $text)) : null;
     }
 
     /**
@@ -263,7 +280,7 @@ final class FilterState
 
         $wanted = [];
 
-        foreach (array_slice($raw, 0, self::MAX_VALUES) as $value) {
+        foreach (array_slice($raw, 0, max(1, min(100, (int) ComponentHelper::getParams('com_dharmashop')->get('filter_max_values', self::MAX_VALUES)))) as $value) {
             if (is_scalar($value)) {
                 $wanted[mb_substr((string) $value, 0, 190)] = true;
             }

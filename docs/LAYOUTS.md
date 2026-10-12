@@ -1,5 +1,34 @@
 # Макеты Dharma Shop
 
+## Фильтр и внутренние позиции (2026-10-12)
+
+Позиции Joomla: `dharmashop-products-top` под подкатегориями; `dharmashop-products-left` и `dharmashop-products-right` по сторонам товаров. Их добавляет system plugin dharmashoppositions в штатное поле позиции модуля. Учитываются назначения меню/ACL/публикация. CatalogModules выводит их в category/brand/badge/search. На широком экране боковая колонка занимает 3/12, основная — оставшиеся 12/9/6; на узком экране колонки последовательные. Формат horizontal задаётся в модуле отдельно от позиции.
+
+Макеты controls: `mod_dharmashop_filter/layouts/mod_dharmashop_filter/control/`. Путь переопределения: `templates/<шаблон>/html/layouts/mod_dharmashop_filter/control/<имя>.php`.
+
+| Файл | Назначение |
+|---|---|
+| checkboxes, radio, select | Флажки, один выбор, список |
+| buttons, swatches, images | Кнопки, цвет/текстура, изображения |
+| options | Общая разметка флажков/кнопок, поиск и «ещё» |
+| range | Композиция шкалы, числовых полей и быстрых интервалов |
+| range-slider, range-inputs | Одна шкала с двумя бегунками / два числовых поля |
+| switch | Наличие/акция |
+
+В displayData передаются section и module (ID). Section содержит name/title/kind/control/options; у option — value/label/checked/disabled/count/color/image; диапазон получает bounds/value/step/slider/presets. SQL в layouts не выполняется. Переопределение всей формы: `templates/<шаблон>/html/mod_dharmashop_filter/default.php`.
+
+Пример оформления только флажков: скопировать options.php в переопределение, изменить классы label (например добавить `fw-semibold`), остальные wrappers оставить. buttons/radio/swatches/images также используют options; для отдельного оформления проверять `$control`. Для числового фильтра без шкалы можно переопределить range.php:
+
+```php
+<?php
+defined('_JEXEC') or die;
+$layout = new Joomla\CMS\Layout\FileLayout('mod_dharmashop_filter.control.range-inputs');
+$layout->addIncludePath(JPATH_ROOT . '/modules/mod_dharmashop_filter/layouts');
+echo $layout->render($displayData);
+```
+
+Сохранять names/values/label-for/id, disabled/checked и экранирование; для JS — data-dharmashop-filter, data-filter-options/option/label/search/more, data-dharmashop-slider/min/max, data-from/to и data-slider-track. Для выбранного числа в dropdown — data-filter-selected-count внутри .dharmaFilterSection. Без JS все значения/числовые поля остаются доступны. ImageUrl контексты: field.color.filter и field.option.filter.
+
 ## Контексты изображений C79
 
 Макеты получают URL через `Administrator\Image\ImageUrl::resolve($path, $context)`. Плагин `dharmashop/imageresize` подбирает размеры из настроек магазина; без него используется оригинал. Стили и данные снимков заказа не меняются. Полный реестр и инструкция расширения — [IMAGE_RESIZE.md](IMAGE_RESIZE.md).

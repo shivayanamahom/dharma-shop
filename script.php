@@ -36,7 +36,7 @@ return new class () implements ServiceProviderInterface {
                 private const MIN_PHP = '8.3.0';
 
                 /** Плагины пакета, которые включаем сразу после установки: [группа, элемент]. */
-                private const PLUGINS = [['dharmashop', 'imageresize'], ['dharmashopnotify', 'email'], ['dharmashopnotify', 'telegram'], ['dharmashop', 'social'], ['dharmashop', 'structureddata'], ['dharmashopfield', 'basic'], ['dharmashopshipping', 'standard'], ['dharmashopshipping', 'courier'], ['dharmashopshipping', 'pickup'], ['dharmashoppayment', 'standard'], ['dharmashoppayment', 'sandbox'], ['system', 'dharmashopswiper'], ['system', 'dharmashopfancybox'], ['system', 'dharmashopmenu'], ['system', 'dharmashoprelated']];
+                private const PLUGINS = [['dharmashop', 'imageresize'], ['dharmashopnotify', 'email'], ['dharmashopnotify', 'telegram'], ['dharmashop', 'social'], ['dharmashop', 'structureddata'], ['dharmashopfield', 'basic'], ['dharmashopshipping', 'standard'], ['dharmashopshipping', 'courier'], ['dharmashopshipping', 'pickup'], ['dharmashoppayment', 'standard'], ['dharmashoppayment', 'sandbox'], ['system', 'dharmashopswiper'], ['system', 'dharmashopfancybox'], ['system', 'dharmashopmenu'], ['system', 'dharmashoppositions'], ['system', 'dharmashoprelated']];
 
                 /** Обновление не должно включать плагин, отключённый владельцем сайта. */
                 private array $existingPlugins = [];
@@ -147,6 +147,8 @@ return new class () implements ServiceProviderInterface {
                     \Dharma\Component\DharmaShop\Administrator\Fields\FileStorage::upgrade($this->db);
                     require_once JPATH_ADMINISTRATOR . '/components/com_dharmashop/src/Catalog/GroupStorage.php';
                     \Dharma\Component\DharmaShop\Administrator\Catalog\GroupStorage::upgrade($this->db);
+                    require_once JPATH_ADMINISTRATOR . '/components/com_dharmashop/src/Filter/FilterStorage.php';
+                    \Dharma\Component\DharmaShop\Administrator\Filter\FilterStorage::upgrade($this->db);
                     $this->ensureDefaultCategory();
                     $this->ensureInitialOrderStatus();
                     // При первой установке PSR-4 карта нового компонента может ещё не обновиться.

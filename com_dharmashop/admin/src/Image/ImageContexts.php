@@ -42,6 +42,7 @@ final class ImageContexts
         'group.teaser.list' => [480, 480],
         'group.teaser.table' => [112, 112],
         'field.option' => [96, 96],
+        'field.option.filter' => [96, 96],
         'field.color.admin' => [96, 96],
         'field.color.filter' => [96, 96],
         'field.color.card' => [96, 96],
@@ -84,7 +85,7 @@ final class ImageContexts
         $configured = [];
         foreach ($rows as $row) { $configured[(string) (((array) $row)['context'] ?? '')] = true; }
         foreach (self::defaults() as $row) {
-            if ((str_starts_with($row['context'], 'module.categories.') || str_starts_with($row['context'], 'field.color.') || $row['context'] === 'group.choice' || $row['context'] === 'admin.group' || str_starts_with($row['context'], 'group.teaser.') || str_starts_with($row['context'], 'admin.picker.')) && !isset($configured[$row['context']])) {
+            if ((str_starts_with($row['context'], 'module.categories.') || str_starts_with($row['context'], 'field.color.') || $row['context'] === 'field.option.filter' || $row['context'] === 'group.choice' || $row['context'] === 'admin.group' || str_starts_with($row['context'], 'group.teaser.') || str_starts_with($row['context'], 'admin.picker.')) && !isset($configured[$row['context']])) {
                 $rows[] = $row;
             }
         }

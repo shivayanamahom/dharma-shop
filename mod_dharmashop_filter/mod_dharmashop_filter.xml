@@ -16,6 +16,7 @@
 	</files>
 	<media folder="media" destination="mod_dharmashop_filter">
 		<folder>js</folder>
+		<folder>css</folder>
 		<filename>joomla.asset.json</filename>
 	</media>
 	<languages>
@@ -40,6 +41,9 @@
 					<option value="vertical">MOD_DHARMASHOP_FILTER_ORIENTATION_VERTICAL</option>
 					<option value="horizontal">MOD_DHARMASHOP_FILTER_ORIENTATION_HORIZONTAL</option>
 				</field>
+                <field name="horizontal_groups" type="list" default="dropdown" filter="cmd" validate="options" label="MOD_DHARMASHOP_FILTER_HORIZONTAL_GROUPS" showon="orientation:horizontal"><option value="dropdown">MOD_DHARMASHOP_FILTER_HORIZONTAL_DROPDOWN</option><option value="grid">MOD_DHARMASHOP_FILTER_HORIZONTAL_GRID</option></field>
+                <field name="sticky_mode" type="list" default="off" filter="cmd" validate="options" label="MOD_DHARMASHOP_FILTER_STICKY_MODE" description="MOD_DHARMASHOP_FILTER_STICKY_DESC" showon="orientation:vertical"><option value="off">JNO</option><option value="desktop">MOD_DHARMASHOP_FILTER_STICKY_DESKTOP</option><option value="always">MOD_DHARMASHOP_FILTER_STICKY_ALWAYS</option></field>
+                <field name="sticky_offset" type="number" default="16" min="0" max="300" filter="integer" label="MOD_DHARMASHOP_FILTER_STICKY_OFFSET" showon="orientation:vertical[AND]sticky_mode:desktop,always" />
 				<field name="ajax" type="radio" layout="joomla.form.field.radio.switcher" default="0" filter="integer" label="MOD_DHARMASHOP_FILTER_AJAX" description="MOD_DHARMASHOP_FILTER_AJAX_DESC">
 					<option value="0">JNO</option>
 					<option value="1">JYES</option>
@@ -68,11 +72,17 @@
 				</field>
 			</fieldset>
 			<fieldset name="behavior" label="MOD_DHARMASHOP_FILTER_TAB_BEHAVIOR">
+                <field name="cascade" type="list" default="inherit" filter="cmd" validate="options" label="MOD_DHARMASHOP_FILTER_CASCADE" description="MOD_DHARMASHOP_FILTER_CASCADE_DESC">
+                    <option value="inherit">MOD_DHARMASHOP_FILTER_COUNTS_INHERIT</option><option value="on">JYES</option><option value="off">JNO</option>
+                </field>
 				<field name="empty_options" type="list" default="hide" filter="cmd" validate="options" label="MOD_DHARMASHOP_FILTER_EMPTY_OPTIONS" description="MOD_DHARMASHOP_FILTER_EMPTY_OPTIONS_DESC">
 					<option value="show">MOD_DHARMASHOP_FILTER_EMPTY_SHOW</option>
 					<option value="hide">MOD_DHARMASHOP_FILTER_EMPTY_HIDE</option>
 					<option value="disable">MOD_DHARMASHOP_FILTER_EMPTY_DISABLE</option>
 				</field>
+                <field name="filtered_listing" type="list" default="inherit" filter="cmd" validate="options" label="MOD_DHARMASHOP_FILTER_FILTERED_LISTING" description="MOD_DHARMASHOP_FILTER_FILTERED_LISTING_DESC">
+                    <option value="inherit">MOD_DHARMASHOP_FILTER_LISTING_INHERIT</option><option value="groups">MOD_DHARMASHOP_FILTER_LISTING_GROUPS</option><option value="products">MOD_DHARMASHOP_FILTER_LISTING_PRODUCTS</option>
+                </field>
 				<field name="counts" type="list" default="inherit" filter="cmd" validate="options" label="MOD_DHARMASHOP_FILTER_COUNTS" description="MOD_DHARMASHOP_FILTER_COUNTS_DESC">
 					<option value="inherit">MOD_DHARMASHOP_FILTER_COUNTS_INHERIT</option>
 					<option value="off">MOD_DHARMASHOP_FILTER_COUNTS_OFF</option>
@@ -130,11 +140,13 @@
 					<option value="slider">MOD_DHARMASHOP_FILTER_PRICE_SLIDER</option>
 				</field>
 				<field name="price_step" type="number" default="0" min="0" step="1" filter="integer" showon="price_display:inputs,slider" label="MOD_DHARMASHOP_FILTER_PRICE_STEP" description="MOD_DHARMASHOP_FILTER_PRICE_STEP_DESC" />
-				<field name="price_presets" type="textarea" rows="4" filter="string" showon="price_display:inputs,slider" label="MOD_DHARMASHOP_FILTER_PRICE_PRESETS" description="MOD_DHARMASHOP_FILTER_PRICE_PRESETS_DESC" hint="до 50 000 = 0-50000" />
+				<field name="price_presets" type="textarea" rows="4" filter="string" showon="price_display:inputs,slider" label="MOD_DHARMASHOP_FILTER_PRICE_PRESETS" description="MOD_DHARMASHOP_FILTER_PRICE_PRESETS_DESC" hint="MOD_DHARMASHOP_FILTER_PRICE_PRESETS_HINT" />
+                <field name="price_presets_help" type="note" class="alert alert-info" showon="price_display:inputs,slider" label="MOD_DHARMASHOP_FILTER_PRICE_PRESETS_HELP" description="MOD_DHARMASHOP_FILTER_PRICE_PRESETS_EXAMPLES" />
 			</fieldset>
 			<fieldset name="filters" label="MOD_DHARMASHOP_FILTER_TAB_FILTERS" addfieldprefix="Dharma\Module\DharmaShopFilter\Site\Field">
 				<field name="fields_note" type="note" class="alert alert-info" label="MOD_DHARMASHOP_FILTER_FIELDS_NOTE" description="MOD_DHARMASHOP_FILTER_FIELDS_NOTE_DESC" />
-				<field name="fields_config" type="subform" multiple="true" min="0" max="60" buttons="add,remove,move" layout="joomla.form.field.subform.repeatable-table" label="MOD_DHARMASHOP_FILTER_FIELDS_CONFIG" description="MOD_DHARMASHOP_FILTER_FIELDS_CONFIG_DESC">
+				<field name="fill_filters" type="fillfilters" filter="unset" hiddenLabel="true" />
+                <field name="fields_config" type="subform" multiple="true" min="0" max="60" buttons="add,remove,move" layout="joomla.form.field.subform.repeatable-table" label="MOD_DHARMASHOP_FILTER_FIELDS_CONFIG" description="MOD_DHARMASHOP_FILTER_FIELDS_CONFIG_DESC">
 					<form>
 						<field name="field" type="filterfields" filter="string" required="true" label="MOD_DHARMASHOP_FILTER_FIELD" />
 						<field name="show" type="radio" layout="joomla.form.field.radio.switcher" default="1" filter="integer" label="MOD_DHARMASHOP_FILTER_FIELD_SHOW">
@@ -148,7 +160,7 @@
 							<option value="checkboxes">MOD_DHARMASHOP_FILTER_CONTROL_CHECKBOXES</option>
 							<option value="radio">MOD_DHARMASHOP_FILTER_CONTROL_RADIO</option>
 							<option value="buttons">MOD_DHARMASHOP_FILTER_CONTROL_BUTTONS</option>
-							<option value="swatches">MOD_DHARMASHOP_FILTER_CONTROL_SWATCHES</option>
+							<option value="swatches">MOD_DHARMASHOP_FILTER_CONTROL_SWATCHES</option><option value="images">MOD_DHARMASHOP_FILTER_CONTROL_IMAGES</option>
 						</field>
 						<field name="expanded" type="radio" layout="joomla.form.field.radio.switcher" default="1" filter="integer" label="MOD_DHARMASHOP_FILTER_FIELD_EXPANDED">
 							<option value="0">JNO</option>

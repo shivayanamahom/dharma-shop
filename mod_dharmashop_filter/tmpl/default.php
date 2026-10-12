@@ -31,6 +31,8 @@ $instant = (string) $params->get('apply_mode', 'button') === 'instant';
 $dataAttributes = (int) $params->get('ajax', 0) === 1 || $instant
     ? ' data-ajax="' . ((int) $params->get('ajax', 0) === 1 ? 1 : 0) . '" data-apply="' . ($instant ? 'instant' : 'button') . '" data-delay="' . max(200, min(3000, (int) $params->get('instant_delay', 700))) . '"'
     : '';
+$dataAttributes .= $filter['cascade'] ? ' data-cascade="1"' : '';
+$dataAttributes .= ' data-configuration="' . hash('sha256', (string) $params . ':' . (string) ($module->position ?? '')) . '"';
 // Макеты значений лежат в modules/mod_dharmashop_filter/layouts; переопределение — templates/<шаблон>/html/layouts/mod_dharmashop_filter/control/<имя>.php.
 $layout = static function (string $name, array $data): string {
     $file = new FileLayout('mod_dharmashop_filter.control.' . $name);
@@ -49,7 +51,10 @@ $buttonClass = $mode === 'always' ? '' : ' d-' . $breakpoint . '-none';
 $buttonText = trim((string) $params->get('offcanvas_button_text', '')) !== '' ? (string) $params->get('offcanvas_button_text') : Text::_('MOD_DHARMASHOP_FILTER_OFFCANVAS_BUTTON_DEFAULT');
 $showText = trim((string) $params->get('offcanvas_show_text', '')) !== '' ? (string) $params->get('offcanvas_show_text') : Text::_('MOD_DHARMASHOP_FILTER_OFFCANVAS_SHOW_DEFAULT');
 $showText = str_replace('{count}', $totalText, $showText);
-$live = $dataAttributes !== '';
+$live = $instant || (int) $params->get('ajax', 0) === 1;
+$dropdown = $horizontal && (string) $params->get('horizontal_groups', 'dropdown') === 'dropdown';
+$nofollow = (int) \Joomla\CMS\Component\ComponentHelper::getParams('com_dharmashop')->get('filter_nofollow',1) === 1 ? ' rel="nofollow"' : '';
+$sticky = !$horizontal && $mode !== 'always' && (string)$params->get('sticky_mode','off') !== 'off' ? ' data-filter-sticky="' . $escape($params->get('sticky_mode')) . '" data-sticky-offset="' . max(0,min(300,(int)$params->get('sticky_offset',16))) . '"' : '';
 ?>
 <?php if ($offcanvas) : ?>
     <button type="button" class="btn btn-outline-primary w-100<?php echo $buttonClass; ?> dharmaFilterToggle" data-bs-toggle="offcanvas" data-bs-target="#<?php echo $panelId; ?>" aria-controls="<?php echo $panelId; ?>">
@@ -62,31 +67,37 @@ $live = $dataAttributes !== '';
         </div>
         <div class="offcanvas-body">
 <?php endif; ?>
-<form action="<?php echo $escape($filter['action']); ?>" method="get" class="dharmaFilter dharmaFilter-<?php echo $horizontal ? 'horizontal' : 'vertical'; ?> <?php echo $sfx; ?>" id="dharmashop-filter-<?php echo $id; ?>" data-dharmashop-filter<?php echo $dataAttributes; ?>>
+<form action="<?php echo $escape($filter['action']); ?>" method="get" class="dharmaFilter dharmaFilter-<?php echo $horizontal ? 'horizontal' : 'vertical'; ?> <?php echo $sfx; ?>" id="dharmashop-filter-<?php echo $id; ?>" data-dharmashop-filter<?php echo $dataAttributes . $sticky; ?>>
     <?php foreach ($filter['hidden'] as $name => $value) : ?>
         <input type="hidden" name="<?php echo $escape($name); ?>" value="<?php echo $escape($value); ?>">
     <?php endforeach; ?>
     <?php if ($filter['chips']) : ?>
         <div class="d-flex flex-wrap gap-2 mb-3 dharmaFilterChips" aria-label="<?php echo $escape(Text::_('MOD_DHARMASHOP_FILTER_ACTIVE')); ?>">
             <?php foreach ($filter['chips'] as $chip) : ?>
-                <a class="badge text-bg-light border text-decoration-none fw-normal" href="<?php echo $escape($chip['url']); ?>" title="<?php echo $escape(Text::_('MOD_DHARMASHOP_FILTER_REMOVE')); ?>"><?php echo $escape($chip['label']); ?> <span aria-hidden="true">&times;</span></a>
+                <a<?php echo $nofollow; ?> class="badge text-bg-light border text-decoration-none fw-normal" href="<?php echo $escape($chip['url']); ?>" title="<?php echo $escape(Text::_('MOD_DHARMASHOP_FILTER_REMOVE')); ?>"><?php echo $escape($chip['label']); ?> <span aria-hidden="true">&times;</span></a>
             <?php endforeach; ?>
         </div>
     <?php endif; ?>
     <?php if ((int) $params->get('show_result_count', 1) === 1) : ?>
         <div class="small text-body-secondary mb-2 dharmaFilterTotal" role="status" aria-live="polite"><?php echo Text::sprintf('MOD_DHARMASHOP_FILTER_FOUND', $totalText); ?><?php echo $filter['approximate'] ? ' <span title="' . $escape(Text::_('MOD_DHARMASHOP_FILTER_APPROXIMATE')) . '">≈</span>' : ''; ?></div>
     <?php endif; ?>
-    <div class="<?php echo $horizontal ? 'row row-cols-1 row-cols-md-2 row-cols-xl-4 g-3' : 'd-flex flex-column'; ?>">
+    <div class="<?php echo $dropdown ? 'd-flex flex-wrap gap-2' : ($horizontal ? 'row row-cols-1 row-cols-md-2 row-cols-xl-4 g-3' : 'd-flex flex-column'); ?>">
         <?php foreach ($filter['sections'] as $section) :
             $control = (string) $section['control'];
+            $selectedCount = in_array($section['kind'], ['range', 'price'], true)
+                ? (int) $section['selected']
+                : count(array_filter($section['options'], static fn (array $option): bool => !empty($option['checked'])));
             $body = match ($section['kind']) {
                 'range', 'price' => $layout('range', ['section' => $section, 'module' => $id]),
-                'stock' => $layout('switch', ['section' => $section, 'module' => $id]),
-                default => $layout($control === 'swatches' ? 'buttons' : $control, ['section' => $section, 'module' => $id]),
+                'stock', 'sale' => $layout('switch', ['section' => $section, 'module' => $id]),
+                default => $layout($control, ['section' => $section, 'module' => $id]),
             };
             ?>
-            <div class="<?php echo $horizontal ? 'col' : 'border-bottom py-2'; ?> dharmaFilterSection dharmaFilterSection-<?php echo $escape($section['kind']); ?>">
-                <?php if ($filter['collapsible'] && $section['kind'] !== 'stock') : ?>
+            <div class="<?php echo $dropdown ? 'dropdown' : ($horizontal ? 'col' : 'border-bottom py-2'); ?> dharmaFilterSection dharmaFilterSection-<?php echo $escape($section['kind']); ?>">
+                <?php if ($dropdown && !in_array($section['kind'], ['stock','sale'], true)) : ?>
+                    <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false"><?php echo $escape($section['title']); ?> <span class="badge text-bg-primary<?php echo $selectedCount ? '' : ' d-none'; ?>" data-filter-selected-count title="<?php echo $escape(Text::_('MOD_DHARMASHOP_FILTER_SELECTED_VALUES')); ?>"><?php echo $selectedCount; ?></span></button>
+                    <div class="dropdown-menu p-3"><?php echo $body; ?></div>
+                <?php elseif ($filter['collapsible'] && !in_array($section['kind'], ['stock','sale'], true)) : ?>
                     <?php $groupId = 'dharmashop-filter-' . $id . '-g-' . md5((string) $section['name']); ?>
                     <?php // Штатный Bootstrap accordion без родителя: группы сворачиваются независимо (скрипт bootstrap.collapse подключает Dispatcher). ?>
                     <div class="accordion accordion-flush">
@@ -100,7 +111,7 @@ $live = $dataAttributes !== '';
                         </div>
                     </div>
                 <?php else : ?>
-                    <?php if ($section['kind'] !== 'stock') : ?><div class="fw-semibold py-1"><?php echo $escape($section['title']); ?></div><?php endif; ?>
+                    <?php if (!in_array($section['kind'], ['stock','sale'], true)) : ?><div class="fw-semibold py-1"><?php echo $escape($section['title']); ?></div><?php endif; ?>
                     <div class="pt-1 pb-1"><?php echo $body; ?></div>
                 <?php endif; ?>
             </div>

@@ -122,6 +122,8 @@ final class FilterQuery
             $out[] = 'p.in_stock = 1';
         }
 
+        if ($state->onSale) { $out[] = 'p.on_sale = 1'; }
+
         return $out;
     }
 

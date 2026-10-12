@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Dharma\Component\DharmaShop\Administrator\Filter;
 
 use Dharma\Component\DharmaShop\Administrator\Fields\TypeRegistry;
+use Dharma\Component\DharmaShop\Administrator\Fields\FilterTypeInterface;
 use Joomla\CMS\Factory;
 use Joomla\Database\DatabaseInterface;
 use Joomla\Database\ParameterType;
@@ -38,7 +39,7 @@ final class FilterDefinitionLoader
     public function forCategory(int $catid, array $levels): FilterDefinition
     {
         sort($levels);
-        $key = 'definition:color-controls-1:' . $catid . ':' . implode(',', $levels);
+        $key = 'definition:v2:' . $this->db->getPrefix() . ':' . $catid . ':' . implode(',', $levels);
 
         return FilterCache::remember($key, fn (): FilterDefinition => $this->load($catid, $levels));
     }
@@ -89,6 +90,7 @@ final class FilterDefinitionLoader
             if ($provider === null || $provider->store() !== $kind || !in_array($kind, [FilterField::OPTION, FilterField::NUMBER, FilterField::RANGE], true)) {
                 continue;
             }
+            if ($provider instanceof FilterTypeInterface && $provider->filterKind() !== $kind) { continue; }
 
             $fields[(int) $row->id] = $row;
         }
@@ -115,7 +117,7 @@ final class FilterDefinitionLoader
 
             $params = new Registry((string) $row->params);
             $settings = (array) ($params->get('filter') ?? []);
-            if ($row->type === 'color') {
+            if ($row->type === 'color' && in_array($settings['control'] ?? 'auto', ['auto', ''], true)) {
                 $settings['control'] = $params->get('color_display_filter', 'radio') === 'select' ? 'select' : 'radio';
             }
             $result[$id] = new FilterField($id, (string) $row->alias, (string) $row->title, (string) $row->type, (string) $row->store, (int) $row->level, (string) $row->unit, $options[$id] ?? [], $settings);

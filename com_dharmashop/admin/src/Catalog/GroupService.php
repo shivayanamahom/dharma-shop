@@ -209,6 +209,7 @@ final class GroupService
 
     public function rebuild(int $id): void
     {
+        \Dharma\Component\DharmaShop\Administrator\Filter\FilterCache::forget();
         Sql::exec($this->db, 'UPDATE #__dharmashop_product_groups g LEFT JOIN (SELECT group_id,MIN(CASE WHEN state=1 THEN price_min END) mn,MAX(CASE WHEN state=1 THEN price_max END) mx,MAX(CASE WHEN state=1 THEN in_stock ELSE 0 END) ins,COUNT(*) cnt FROM #__dharmashop_products WHERE group_id=:id GROUP BY group_id) p ON p.group_id=g.id SET g.price_min=p.mn,g.price_max=p.mx,g.in_stock=COALESCE(p.ins,0),g.members_count=COALESCE(p.cnt,0) WHERE g.id=:target', [':id'=>[$id],':target'=>[$id]]);
     }
 

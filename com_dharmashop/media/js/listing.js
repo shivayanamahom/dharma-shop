@@ -31,7 +31,7 @@
     // Условия фильтра страницы (?filter[search]=…, позже и другие filter[…]) остаются: сортировка и вид меняют порядок найденных
     // товаров, а не сбрасывают поиск и фильтр.
     new URLSearchParams(window.location.search).forEach((value, key) => {
-      if (key.startsWith('filter[')) url.searchParams.append(key, value);
+      if (key.startsWith('filter[') || key === 'filter_module') url.searchParams.append(key, value);
     });
     if (current.sort) url.searchParams.set('sort', current.sort);
     if (current.view) url.searchParams.set('product_view', current.view);

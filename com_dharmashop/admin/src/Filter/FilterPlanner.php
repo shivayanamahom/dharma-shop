@@ -109,7 +109,7 @@ final class FilterPlanner
     /** Число товаров категории в витрине (кэш). */
     public function categorySize(int $catid): int
     {
-        return (int) FilterCache::remember('size:' . $catid, function () use ($catid): int {
+        return (int) FilterCache::remember($this->db->getPrefix() . ':' . 'size:' . $catid, function () use ($catid): int {
             $db = $this->db;
             $query = $db->createQuery()->select('COUNT(*)')->from($db->quoteName('#__dharmashop_product_categories'))
                 ->where('catid = :c')->where('state = 1')->bind(':c', $catid, ParameterType::INTEGER);
@@ -120,7 +120,7 @@ final class FilterPlanner
 
     private function totalProducts(): int
     {
-        return (int) FilterCache::remember('total', function (): int {
+        return (int) FilterCache::remember($this->db->getPrefix() . ':' . 'total', function (): int {
             $db = $this->db;
 
             return (int) $db->setQuery($db->createQuery()->select('COUNT(*)')->from($db->quoteName('#__dharmashop_products'))->where('state = 1'))->loadResult();
@@ -130,7 +130,7 @@ final class FilterPlanner
     /** @return array<int, int> значение → число строк (покрывающий индекс `idx_option`) */
     private function optionCounts(int $fieldId): array
     {
-        return FilterCache::remember('optcounts:' . $fieldId, function () use ($fieldId): array {
+        return FilterCache::remember($this->db->getPrefix() . ':' . 'optcounts:' . $fieldId, function () use ($fieldId): array {
             $db = $this->db;
             $query = $db->createQuery()->select(['option_id', 'COUNT(*) AS n'])->from($db->quoteName('#__dharmashop_field_values'))
                 ->where('field_id = :f')->where('option_id IS NOT NULL')->group('option_id')->bind(':f', $fieldId, ParameterType::INTEGER);
@@ -149,7 +149,7 @@ final class FilterPlanner
     {
         sort($catids);
 
-        return (int) FilterCache::remember('direct:' . implode(',', $catids), function () use ($catids): int {
+        return (int) FilterCache::remember($this->db->getPrefix() . ':' . 'direct:' . implode(',', $catids), function () use ($catids): int {
             $db = $this->db;
             $query = $db->createQuery()->select('COUNT(*)')->from($db->quoteName('#__dharmashop_product_categories'))
                 ->where('catid IN (' . implode(',', array_map('intval', $catids)) . ')')->where('state = 1');

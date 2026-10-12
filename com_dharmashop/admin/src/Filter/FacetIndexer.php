@@ -54,13 +54,11 @@ final class FacetIndexer
         $processed = 0;
 
         if ($cursorCatid <= 0) {
-            $db->setQuery('TRUNCATE TABLE ' . $db->quoteName('#__dharmashop_filter_facets'))->execute();
-            $db->setQuery('TRUNCATE TABLE ' . $db->quoteName('#__dharmashop_filter_ranges'))->execute();
-            $this->insertFor([0]);
+            $this->rebuildCategories([0]);
         }
 
         while (true) {
-            $query = $db->createQuery()->select('DISTINCT catid')->from($db->quoteName('#__dharmashop_product_categories'))
+            $query = $db->createQuery()->select('DISTINCT catid')->from('(SELECT catid FROM #__dharmashop_product_categories UNION SELECT catid FROM #__dharmashop_filter_facets UNION SELECT catid FROM #__dharmashop_filter_ranges) AS rebuild_cats')
                 ->where('catid > :c')->order('catid')->bind(':c', $cursorCatid, ParameterType::INTEGER);
             $catids = array_map('intval', $db->setQuery($query, 0, $categoriesPerChunk)->loadColumn());
 
@@ -68,7 +66,7 @@ final class FacetIndexer
                 return ['processed' => $processed, 'cursor' => 0, 'done' => true];
             }
 
-            $this->insertFor($catids);
+            $this->rebuildCategories($catids);
             $cursorCatid = (int) end($catids);
             $processed += count($catids);
 
@@ -88,22 +86,27 @@ final class FacetIndexer
             $cursor = $step['cursor'];
         } while (!$step['done']);
 
+        FilterCache::forget();
         return (int) $this->db->setQuery('SELECT COUNT(*) FROM ' . $this->db->quoteName('#__dharmashop_filter_facets'))->loadResult();
     }
 
     /** Пересчёт для перечисленных категорий (после перемещения ветки, смены состояния категории). @param int[] $catids */
     public function rebuildCategories(array $catids): void
     {
-        $catids = array_values(array_unique(array_filter(array_map('intval', $catids))));
+        $catids = array_values(array_unique(array_filter(array_map('intval', $catids), static fn(int $id): bool => $id >= 0)));
 
         if (!$catids) {
             return;
         }
 
         $list = implode(',', $catids);
-        $this->db->setQuery('DELETE FROM ' . $this->db->quoteName('#__dharmashop_filter_facets') . " WHERE catid IN ($list)")->execute();
-        $this->db->setQuery('DELETE FROM ' . $this->db->quoteName('#__dharmashop_filter_ranges') . " WHERE catid IN ($list)")->execute();
-        $this->insertFor($catids);
+        $this->db->transactionStart(true);
+        try {
+            $this->db->setQuery('DELETE FROM ' . $this->db->quoteName('#__dharmashop_filter_facets') . " WHERE catid IN ($list)")->execute();
+            $this->db->setQuery('DELETE FROM ' . $this->db->quoteName('#__dharmashop_filter_ranges') . " WHERE catid IN ($list)")->execute();
+            $this->insertFor($catids);
+            $this->db->transactionCommit(true);
+        } catch (\Throwable $error) { $this->db->transactionRollback(true); throw $error; }
         FilterCache::forget();
     }
 
@@ -111,9 +114,13 @@ final class FacetIndexer
     public function rebuildField(int $fieldId): void
     {
         $db = $this->db;
-        $db->setQuery('DELETE FROM ' . $db->quoteName('#__dharmashop_filter_facets') . ' WHERE field_id = ' . (int) $fieldId)->execute();
-        $db->setQuery('DELETE FROM ' . $db->quoteName('#__dharmashop_filter_ranges') . ' WHERE field_id = ' . (int) $fieldId)->execute();
-        $this->insertFor(null, $fieldId);
+        $db->transactionStart(true);
+        try {
+            $db->setQuery('DELETE FROM ' . $db->quoteName('#__dharmashop_filter_facets') . ' WHERE field_id = ' . (int) $fieldId)->execute();
+            $db->setQuery('DELETE FROM ' . $db->quoteName('#__dharmashop_filter_ranges') . ' WHERE field_id = ' . (int) $fieldId)->execute();
+            $this->insertFor(null, $fieldId);
+            $db->transactionCommit(true);
+        } catch (\Throwable $error) { $db->transactionRollback(true); throw $error; }
         FilterCache::forget();
     }
 
@@ -130,14 +137,6 @@ final class FacetIndexer
 
         if (!$productIds) {
             return $mutation();
-        }
-
-        if (count($productIds) > self::TRACK_LIMIT) {
-            // Слишком много товаров для относительных правок: изменяем и сбрасываем кэш; пересборка — командой обслуживания.
-            $result = $mutation();
-            FilterCache::forget();
-
-            return $result;
         }
 
         $token = $this->begin($productIds);
@@ -158,8 +157,9 @@ final class FacetIndexer
     {
         $productIds = array_values(array_unique(array_filter(array_map('intval', $productIds))));
 
-        if (!$productIds || count($productIds) > self::TRACK_LIMIT) {
-            return null;
+        if (!$productIds) { return null; }
+        if (count($productIds) > self::TRACK_LIMIT) {
+            return ['ids' => $productIds, 'before' => [], 'categories' => $this->affectedCategories($productIds)];
         }
 
         return ['ids' => $productIds, 'before' => $this->snapshot($productIds)];
@@ -168,11 +168,19 @@ final class FacetIndexer
     /** Вторая половина: снимок после правки, применение разницы и сброс кэша. @param array{ids: int[], before: array}|null $token */
     public function end(?array $token): void
     {
-        if ($token !== null) {
+        if (isset($token['categories'])) { $this->rebuildCategories(array_merge($token['categories'], $this->affectedCategories($token['ids']))); }
+        elseif ($token !== null) {
             $this->apply($token['before'], $this->snapshot($token['ids']));
         }
 
         FilterCache::forget();
+    }
+
+    private function affectedCategories(array $ids): array
+    {
+        $categories = [0];
+        foreach (array_chunk($ids,500) as $chunk) { $categories = array_merge($categories, array_map('intval', $this->db->setQuery('SELECT DISTINCT catid FROM #__dharmashop_product_categories WHERE product_id IN ('.implode(',',$chunk).')')->loadColumn())); }
+        return array_values(array_unique($categories));
     }
 
     /**
@@ -183,7 +191,7 @@ final class FacetIndexer
     public function verify(int $categories = 20): array
     {
         $db = $this->db;
-        $catids = array_map('intval', $db->setQuery('SELECT DISTINCT catid FROM ' . $db->quoteName('#__dharmashop_filter_facets') . ' ORDER BY RAND()', 0, $categories)->loadColumn());
+        $catids = array_map('intval', $db->setQuery('SELECT catid FROM (SELECT 0 AS catid UNION SELECT catid FROM #__dharmashop_product_categories UNION SELECT catid FROM #__dharmashop_filter_facets UNION SELECT catid FROM #__dharmashop_filter_ranges) cats ORDER BY catid', 0, max(1,min(10000,$categories)))->loadColumn());
         $bad = [];
 
         foreach ($catids as $catid) {
@@ -212,6 +220,17 @@ final class FacetIndexer
             }
         }
 
+        foreach ($catids as $catid) {
+            $from = $catid ? '#__dharmashop_product_categories pc JOIN #__dharmashop_field_values v ON v.product_id=pc.product_id' : '#__dharmashop_products p JOIN #__dharmashop_field_values v ON v.product_id=p.id';
+            $where = $catid ? 'pc.catid=' . $catid . ' AND pc.state=1' : 'p.state=1';
+            $live=[];
+            foreach ($db->setQuery('SELECT v.field_id,MIN(v.num) mn,MAX(COALESCE(v.num_end,v.num)) mx FROM '.$from.' JOIN #__dharmashop_fields f ON f.id=v.field_id AND '.$this->eligible('f', "'number','range'").' WHERE '.$where.' AND v.num IS NOT NULL GROUP BY v.field_id')->loadObjectList() as $row) { $live[(int)$row->field_id]=[(float)$row->mn,(float)$row->mx]; }
+            foreach ($db->setQuery('SELECT field_id,num_min,num_max FROM #__dharmashop_filter_ranges WHERE catid='.$catid)->loadObjectList() as $row) {
+                $value=[(float)$row->num_min,(float)$row->num_max];$expected=$live[(int)$row->field_id]??null;unset($live[(int)$row->field_id]);
+                if($value!==$expected)$bad[]=['catid'=>$catid,'field_id'=>(int)$row->field_id,'option_id'=>0,'table'=>$value,'live'=>$expected];
+            }
+            foreach($live as $field=>$value)$bad[]=['catid'=>$catid,'field_id'=>$field,'option_id'=>0,'table'=>null,'live'=>$value];
+        }
         return $bad;
     }
 
@@ -365,7 +384,6 @@ final class FacetIndexer
     {
         $db = $this->db;
 
-        try {
             if ($catid === 0) {
                 return $db->setQuery(
                     'SELECT v.field_id, v.option_id, COUNT(DISTINCT p.id) AS products FROM ' . $db->quoteName('#__dharmashop_products', 'p')
@@ -381,10 +399,6 @@ final class FacetIndexer
                 . ' JOIN ' . $db->quoteName('#__dharmashop_fields', 'f') . ' ON f.id = v.field_id AND ' . $this->eligible('f', "'option'")
                 . " WHERE pc.catid = $catid AND pc.state = 1 AND v.option_id IS NOT NULL GROUP BY v.field_id, v.option_id"
             )->loadObjectList();
-        } catch (\Throwable $error) {
-            Log::add('Facet verify: ' . $error::class, Log::WARNING, 'com_dharmashop');
 
-            return [];
-        }
     }
 }

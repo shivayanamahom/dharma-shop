@@ -6,6 +6,9 @@
 \defined('_JEXEC') or die;
 
 use Joomla\CMS\Language\Text;
+use Dharma\Component\DharmaShop\Site\Support\CatalogModules;
+
+$slots = CatalogModules::render();
 
 $modes = ['grid' => 'COM_DHARMASHOP_VIEW_GRID', 'list' => 'COM_DHARMASHOP_VIEW_LIST', 'table' => 'COM_DHARMASHOP_VIEW_TABLE'];
 ?>
@@ -14,7 +17,12 @@ $modes = ['grid' => 'COM_DHARMASHOP_VIEW_GRID', 'list' => 'COM_DHARMASHOP_VIEW_L
     <?php if ($this->showHeading) : ?>
         <h1 class="mb-4"><?php echo Text::_('COM_DHARMASHOP_SEARCH'); ?></h1>
     <?php endif; ?>
-    <form action="<?php echo $this->escape($this->searchUrl); ?>" method="get" class="mb-4 dharmaSearchForm" role="search">
+    <?php if ($slots['top'] !== '') : ?><div class="mb-4 dharmaCatalogTop" data-dharmashop-module-position="dharmashop-products-top"><?php echo $slots['top']; ?></div><?php endif; ?>
+    <div class="row g-4 dharmaCatalogColumns">
+        <?php if ($slots['left'] !== '') : ?><aside class="col-12 col-lg-3 dharmaCatalogLeft" data-dharmashop-module-position="dharmashop-products-left"><?php echo $slots['left']; ?></aside><?php endif; ?>
+        <div class="col-12 col-lg-<?php echo 12 - ($slots['left'] !== '' ? 3 : 0) - ($slots['right'] !== '' ? 3 : 0); ?> dharmaCatalogMain">
+    <form action="<?php echo $this->escape($this->searchUrl); ?>" method="get" class="mb-4 dharmaSearchForm" role="search" data-dharmashop-listing-controls>
+        <?php echo $this->filterHiddenInputs(); ?>
         <div class="row g-2 align-items-end">
             <div class="col-12 col-lg">
                 <label for="dharmashop-search-q" class="visually-hidden"><?php echo Text::_('COM_DHARMASHOP_SEARCH_LABEL'); ?></label>
@@ -45,5 +53,8 @@ $modes = ['grid' => 'COM_DHARMASHOP_VIEW_GRID', 'list' => 'COM_DHARMASHOP_VIEW_L
     <?php else : ?>
         <?php echo $this->loadTemplate('items'); ?>
     <?php endif; ?>
+        </div>
+        <?php if ($slots['right'] !== '') : ?><aside class="col-12 col-lg-3 dharmaCatalogRight" data-dharmashop-module-position="dharmashop-products-right"><?php echo $slots['right']; ?></aside><?php endif; ?>
+    </div>
 </section>
 </div>

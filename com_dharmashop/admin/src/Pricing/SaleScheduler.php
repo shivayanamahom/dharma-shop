@@ -85,6 +85,7 @@ final class SaleScheduler
             $this->indexer->refreshProducts($chunk);
         }
 
+        \Dharma\Component\DharmaShop\Administrator\Filter\FilterCache::forget();
         return count($ids);
     }
 }

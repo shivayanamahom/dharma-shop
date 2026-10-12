@@ -197,7 +197,9 @@ final class Indexer
     public function rebuildProducts(array $productIds, int $chunk = 500): void
     {
         foreach (array_chunk(array_values(array_unique(array_map('intval', $productIds))), $chunk) as $ids) {
-            $this->rebuildParentsForProducts($ids);
+            (new \Dharma\Component\DharmaShop\Administrator\Filter\FacetIndexer($this->db))->track($ids, function () use ($ids): void {
+                $this->rebuildParentsForProducts($ids);
+            });
         }
     }
 

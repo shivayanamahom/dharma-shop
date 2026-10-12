@@ -29,16 +29,15 @@ final class FilterfieldsField extends ListField
         $options = parent::getOptions();
         Factory::getApplication()->getLanguage()->load('mod_dharmashop_filter', JPATH_SITE . '/modules/mod_dharmashop_filter');
 
-        foreach (['@price' => 'PRICE', '@brand' => 'BRAND', '@badge' => 'BADGE', '@cat' => 'CAT', '@stock' => 'STOCK'] as $key => $label) {
+        foreach (['@price' => 'PRICE', '@brand' => 'BRAND', '@badge' => 'BADGE', '@cat' => 'CAT', '@stock' => 'STOCK', '@sale' => 'SALE'] as $key => $label) {
             $options[] = HTMLHelper::_('select.option', $key, Text::_('MOD_DHARMASHOP_FILTER_SYSTEM_' . $label));
         }
 
+        Factory::getApplication()->bootComponent('com_dharmashop');
         $db = Factory::getContainer()->get('DatabaseDriver');
-        $query = $db->createQuery()->select(['alias', 'title'])->from($db->quoteName('#__dharmashop_fields'))
-            ->where('target = ' . $db->quote('product'))->where('state = 1')->where('filterable = 1')->order('ordering, id');
-
-        foreach ((array) $db->setQuery($query)->loadObjectList() as $row) {
-            $options[] = HTMLHelper::_('select.option', (string) $row->alias, $row->title . ' [' . $row->alias . ']');
+        $definition = (new \Dharma\Component\DharmaShop\Administrator\Filter\FilterDefinitionLoader($db))->forCategory(0, \Dharma\Component\DharmaShop\Administrator\Filter\FilterDefinitionLoader::currentLevels());
+        foreach ($definition->fields as $row) {
+            $options[] = HTMLHelper::_('select.option', $row->alias, $row->title . ' [' . $row->alias . ']');
         }
 
         return $options;

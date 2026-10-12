@@ -5,6 +5,10 @@ namespace Dharma\Component\DharmaShop\Site\Model;
 
 use Dharma\Component\DharmaShop\Administrator\Filter\FilterDefinition;
 use Dharma\Component\DharmaShop\Administrator\Filter\FilterState;
+use Dharma\Component\DharmaShop\Administrator\Filter\FilterCache;
+use Dharma\Component\DharmaShop\Administrator\Filter\ScopedFacets;
+use Dharma\Component\DharmaShop\Administrator\Filter\QueryBudget;
+use Dharma\Component\DharmaShop\Site\Support\FilterRequest;
 use Dharma\Component\DharmaShop\Site\Search\ProductSearch;
 use Dharma\Component\DharmaShop\Site\Support\SaleCountdown;
 use Dharma\Component\DharmaShop\Site\Support\GroupListing;
@@ -41,8 +45,25 @@ class CategoryModel extends CategoriesModel
     private ?string $indexHint = null;
     private ?GroupListing $groupListing = null;
 
+    private ?Registry $filterModule = null;
+
+    public function setFilterModule(Registry $params): void
+    {
+        $this->filterModule = clone $params;
+        $this->filterDefinition = $this->filterState = null;
+    }
+
+    private function filterModule(): Registry
+    {
+        return $this->filterModule ??= FilterRequest::params();
+    }
+
     public function groupsEnabled(): bool
     {
+        if (!$this->getFilterState()->isEmpty()) {
+            $policy = (string) $this->filterModule()->get('filtered_listing', 'inherit');
+            if (in_array($policy, ['groups', 'products'], true)) { return $policy === 'groups'; }
+        }
         return ComponentHelper::getParams('com_dharmashop')->get('category_listing_mode', 'products') === 'groups_products';
     }
 
@@ -78,7 +99,7 @@ class CategoryModel extends CategoriesModel
     {
         if ($this->filterDefinition === null) {
             $catid = (int) $this->getParent()->id;
-            $this->filterDefinition = Factory::getApplication()->bootComponent('com_dharmashop')->getServices()->filter()->definition($catid);
+            $this->filterDefinition = FilterRequest::definition((new \Dharma\Component\DharmaShop\Administrator\Filter\FilterService($this->getDatabase()))->definition($catid), $this->filterModule());
         }
 
         return $this->filterDefinition;
@@ -90,7 +111,7 @@ class CategoryModel extends CategoriesModel
         if ($this->filterState === null) {
             $input = Factory::getApplication()->getInput()->get('filter', [], 'array');
             $enabled = (int) ComponentHelper::getParams('com_dharmashop')->get('filter_enabled', 1) === 1;
-            $services = Factory::getApplication()->bootComponent('com_dharmashop')->getServices()->filter();
+            $services = (new \Dharma\Component\DharmaShop\Administrator\Filter\FilterService($this->getDatabase()));
             $this->filterState = $enabled && is_array($input) && $input ? $services->state($input, $this->getFilterDefinition()) : new FilterState();
         }
 
@@ -105,95 +126,31 @@ class CategoryModel extends CategoriesModel
      */
     public function getFacets(string $mode = 'base'): array
     {
-        $engine = Factory::getApplication()->bootComponent('com_dharmashop')->getServices()->filter()->facets();
-        $catid = (int) $this->getParent()->id;
-        $base = $engine->base($catid);
-        $result = ['options' => $base['options'], 'counts' => $mode !== 'off', 'approximate' => false, 'ranges' => $base['ranges'], 'price' => $engine->price($catid)];
-        $state = $this->getFilterState();
-
-        if ($mode !== 'live' || $state->isEmpty()) {
-            return $result;
-        }
-
-        // Каскад: поля без собственного выбора считаются по полному выбору одним запросом, поле с выбором — по выбору без него.
+        $db = $this->getDatabase();
+        $grouped = $this->groupsEnabled();
         $definition = $this->getFilterDefinition();
-        $groups = [];
-
-        foreach ($definition->fields as $field) {
-            if ($field->kind !== \Dharma\Component\DharmaShop\Administrator\Filter\FilterField::OPTION) {
-                continue;
-            }
-
-            $own = isset($state->options[$field->id]);
-            $key = $own ? 'f' . $field->id : 'all';
-            $groups[$key]['state'] = $own ? $state->withoutField($field->id) : $state;
-            $groups[$key]['fields'][] = $field->id;
+        $source = fn(FilterState $state): QueryInterface => $this->productsQuery($state, forListing: $grouped)
+            ->select(['p.id', ($grouped ? GroupListing::unit() : 'p.id') . ' AS unit', 'p.price_min', 'p.price_max']);
+        $baseQuery = $source(new FilterState());
+        $boundValues = array_map(static fn(object $bound): mixed => $bound->value, $baseQuery->getBounded());
+        $cacheKey = md5($db->replacePrefix((string) $baseQuery) . json_encode([$boundValues, $definition, $this->getCurrentUser()->getAuthorisedViewLevels()]));
+        $stored = null;
+        // Глобальный предрасчёт безопасен только без скрытых категорий/предков и без поискового подмножества.
+        if (!$grouped && $this->getQueryText() === '' && $this->baseFacetsAccessible()) {
+            $stored = (new \Dharma\Component\DharmaShop\Administrator\Filter\FilterService($this->getDatabase()))->facets()->base((int) $this->getParent()->id);
         }
-
-        $limit = max(1000, (int) ComponentHelper::getParams('com_dharmashop')->get('filter_live_limit', 20000));
-        $live = [];
-
-        foreach ($groups as $group) {
-            $counts = $this->candidateCounts($group['state'], $group['fields'], $limit);
-
-            if ($counts === null) {
-                $result['approximate'] = true;
-
-                continue;
-            }
-
-            foreach ($group['fields'] as $fieldId) {
-                $live[$fieldId] = $counts[$fieldId] ?? [];
-            }
-        }
-
-        foreach ($live as $fieldId => $values) {
-            $result['options'][$fieldId] = $values;
-        }
-
-        return $result;
+        return (new ScopedFacets($db))->build($source, $definition, $this->getFilterState(), $mode, $cacheKey, $stored);
     }
 
-    /**
-     * Числа значений полей среди кандидатов (`productsQuery()` с заданным выбором); null — кандидатов больше предела.
-     *
-     * @param   int[]  $fieldIds
-     *
-     * @return  array<int, array<int, int>>|null
-     */
-    private function candidateCounts(FilterState $state, array $fieldIds, int $limit): ?array
+    private function baseFacetsAccessible(): bool
     {
         $db = $this->getDatabase();
-        $candidates = $this->productsQuery($state)->select('p.id');
-        $sql = (string) $candidates;
-        $embed = function (QueryInterface $outer) use ($candidates): void {
-            foreach ($candidates->getBounded() as $key => $bound) {
-                $this->embeddedBinds[(string) $key] = $bound->value;
-                $outer->bind((string) $key, $this->embeddedBinds[(string) $key], $bound->dataType);
-            }
-        };
-
-        // Порог: больше кандидатов — живой подсчёт слишком дорог, остаётся база.
-        $guard = $db->createQuery()->select('COUNT(*)')->from('(' . $sql . ' LIMIT ' . ($limit + 1) . ') AS g');
-        $embed($guard);
-
-        if ((int) $db->setQuery($guard)->loadResult() > $limit) {
-            return null;
-        }
-
-        $outer = $db->createQuery()->select(['fv.field_id', 'fv.option_id', 'COUNT(DISTINCT fv.product_id) AS n'])
-            ->from($db->quoteName('#__dharmashop_field_values', 'fv'))
-            ->join('INNER', '(' . $sql . ') AS c ON c.id = fv.product_id')
-            ->where('fv.field_id IN (' . implode(',', array_map('intval', $fieldIds)) . ')')->where('fv.option_id IS NOT NULL')
-            ->group('fv.field_id, fv.option_id');
-        $embed($outer);
-        $counts = [];
-
-        foreach ($db->setQuery($outer)->loadObjectList() as $row) {
-            $counts[(int) $row->field_id][(int) $row->option_id] = (int) $row->n;
-        }
-
-        return $counts;
+        $levels = implode(',', array_map('intval', $this->getCurrentUser()->getAuthorisedViewLevels()) ?: [0]);
+        return FilterCache::remember('base-access:' . $db->getPrefix() . ':' . $levels, function () use ($db, $levels): bool {
+            $query = $db->createQuery()->select('id')->from('#__categories')
+                ->where("extension='com_dharmashop'")->where('(published<>1 OR access NOT IN (' . $levels . '))');
+            return !$db->setQuery($query, 0, 1)->loadResult();
+        });
     }
 
     /** Текст поискового запроса (`filter[search]`) страницы списка; пусто — без поиска. */
@@ -227,14 +184,17 @@ class CategoryModel extends CategoriesModel
 
         // С фильтром точный подсчёт редкого условия по широкой категории дорог: считаем до потолка (по умолчанию 10 001), дальше — «N+».
         if (!$this->getFilterState()->isEmpty()) {
-            $cap = max(100, (int) ComponentHelper::getParams('com_dharmashop')->get('filter_count_cap', 10001));
-            $found = count($db->setQuery($query->select('DISTINCT ' . $unit), 0, $cap + 1)->loadColumn());
+            $cap = max(101, min(100001, (int) ComponentHelper::getParams('com_dharmashop')->get('filter_count_cap', 10001)));
+            $query->select('DISTINCT ' . $unit);
+            $bindings = array_map(static fn(object $bound): mixed => $bound->value, $query->getBounded());
+            $key = 'total:v2:' . md5($db->replacePrefix((string) $query) . json_encode([$bindings, $cap]));
+            $found = FilterCache::remember($key, fn(): int => count($db->setQuery(QueryBudget::apply($query), 0, $cap + 1)->loadColumn()));
             $this->totalCapped = $found > $cap;
 
             return min($found, $cap);
         }
 
-        return (int) $db->setQuery($query->select($grouped ? 'COUNT(DISTINCT ' . $unit . ')' : 'COUNT(*)'))->loadResult();
+        return (int) $db->setQuery(QueryBudget::apply($query->select($grouped ? 'COUNT(DISTINCT ' . $unit . ')' : 'COUNT(*)')))->loadResult();
     }
 
     /**
@@ -253,15 +213,21 @@ class CategoryModel extends CategoriesModel
         // Форма запроса по плотности условий фильтра (замеры F0): плотное условие — обход индекса сортировки с ранней остановкой.
         $state = $this->getFilterState();
         $this->indexHint = $grouped || $state->isEmpty() || $this->getQueryText() !== '' ? null
-            : Factory::getApplication()->bootComponent('com_dharmashop')->getServices()->filter()->planner()
+            : (new \Dharma\Component\DharmaShop\Administrator\Filter\FilterService($this->getDatabase()))->planner()
                 ->indexHint($state, $this->getFilterDefinition(), (int) $this->getParent()->id, $ordering, max(0, $start), $limit);
         $candidates = $this->productsQuery(forListing: $grouped);
-        $query = ($grouped ? $this->groupListing()->representatives($candidates, $sort, $direction) : clone $candidates)
+        $query = ($grouped ? $this->groupListing()->representatives($candidates, $sort, $direction, (int) $this->getParent()->id) : clone $candidates)
             ->select($db->quoteName(['p.id', 'p.catid', 'p.title', 'p.alias', 'p.cover', 'p.cover_alt',
                 'p.introtext', 'p.group_id', 'p.inherit_images', 'p.price_min', 'p.price_max', 'p.price_zero_free', 'p.in_stock', 'p.unit', 'p.qty_min', 'p.qty_step', 'p.params']))
             ->select($db->quoteName('c.title', 'category_title'))
-            ->order($sort . ' ' . $direction)->order('p.id ' . $direction);
-        $items = $db->setQuery($query, max(0, $start), $limit)->loadObjectList();
+            ->order($sort . ' ' . $direction)->order((!$grouped && (int) $this->getParent()->id > 0 ? 'pc.product_id' : 'p.id') . ' ' . $direction);
+        if ($this->indexHint !== null) {
+            // Dense first-page scan: keep category order and correlated index probes, stop after LIMIT matches.
+            $columns = $query->select->getElements();
+            $columns[0] = 'STRAIGHT_JOIN ' . $columns[0];
+            $query->clear('select')->select($columns);
+        }
+        $items = $db->setQuery(QueryBudget::apply($query), max(0, $start), $limit)->loadObjectList();
         $this->indexHint = null;
 
         $rules = Factory::getApplication()->bootComponent('com_dharmashop')->getServices()->orderRules();
@@ -271,11 +237,18 @@ class CategoryModel extends CategoriesModel
             $item->price_free = $rules->priceIsFree($item);
         }
 
-        if ($grouped) { $this->groupListing()->attach($items, $candidates, $rules); }
+        if ($grouped) {
+            // These groups have already passed the listing scope. Enrich only their matching members,
+            // without materialising the whole category UNION again for each bounded batch query.
+            $groupIds = array_values(array_unique(array_filter(array_map(static fn(object $item): int => (int) $item->group_id, $items))));
+            $members = $groupIds ? $this->productsQuery(forListing: true, knownGroups: $groupIds) : $candidates;
+            $this->groupListing()->attach($items, $members, $rules);
+        }
         foreach ($items as $item) {
             if (GroupCardRenderer::isGroup($item)) {
                 $item->listing_scope = ['view' => $this->taxonomy()->pageView, 'id' => (int) $this->getParent()->id,
-                    'filter' => (array) Factory::getApplication()->getInput()->get('filter', [], 'array'), 'search' => $this->getQueryText()];
+                    'filter' => (array) Factory::getApplication()->getInput()->get('filter', [], 'array'), 'search' => $this->getQueryText(),
+                    'filter_module' => Factory::getApplication()->getInput()->getInt('filter_module'), 'itemid' => Factory::getApplication()->getInput()->getInt('Itemid')];
             }
         }
 
@@ -487,14 +460,19 @@ class CategoryModel extends CategoriesModel
         return (object) ['product_count' => $this->getCountLabel($category), 'price_min' => $range['min'], 'price_max' => $range['max']];
     }
 
-    protected function productsQuery(?FilterState $filterOverride = null, bool $forListing = false): QueryInterface
+    protected function productsQuery(?FilterState $filterOverride = null, bool $forListing = false, array $knownGroups = []): QueryInterface
     {
         $category = (int) $this->getParent()->id;
         $grouped = $forListing && $this->groupsEnabled();
         $db = $this->getDatabase();
         $levels = implode(',', array_map('intval', $this->getCurrentUser()->getAuthorisedViewLevels()) ?: [0]);
-        $query = $db->createQuery()->from($db->quoteName('#__dharmashop_products', 'p'))
-            ->join('INNER', $db->quoteName('#__categories', 'c') . ' ON c.id = p.catid')
+        $orderedScan = !$grouped && $category > 0 && $this->indexHint !== null;
+        $query = $db->createQuery();
+        if ($orderedScan) {
+            $query->from($db->quoteName('#__dharmashop_product_categories', 'pc') . ' FORCE INDEX (' . $this->indexHint . ')')
+                ->join('INNER', $db->quoteName('#__dharmashop_products', 'p') . ' ON p.id=pc.product_id');
+        } else { $query->from($db->quoteName('#__dharmashop_products', 'p')); }
+        $query->join('INNER', $db->quoteName('#__categories', 'c') . ' ON c.id = p.catid')
             ->where('p.state = 1')->where('c.extension = ' . $db->quote('com_dharmashop'))
             ->where('c.published = 1')->where('c.access IN (' . $levels . ')');
         if ($category > 0) {
@@ -502,8 +480,8 @@ class CategoryModel extends CategoriesModel
                 $query->join('LEFT', $db->quoteName('#__dharmashop_product_categories', 'pc') . ' ON pc.product_id=p.id AND pc.catid=:category AND pc.state=1')
                     ->bind(':category', $category, ParameterType::INTEGER);
             } else {
-                $query->join('INNER', $db->quoteName('#__dharmashop_product_categories', 'pc') . ($this->indexHint !== null ? ' FORCE INDEX (' . $this->indexHint . ')' : '') . ' ON pc.product_id = p.id')
-                    ->where('pc.catid = :category')->where('pc.state = 1')->bind(':category', $category, ParameterType::INTEGER);
+                if (!$orderedScan) { $query->join('INNER', $db->quoteName('#__dharmashop_product_categories', 'pc') . ' ON pc.product_id = p.id'); }
+                $query->where('pc.catid = :category')->where('pc.state = 1')->bind(':category', $category, ParameterType::INTEGER);
             }
         }
         // Закрытый или снятый предок основной категории также скрывает товар.
@@ -511,16 +489,17 @@ class CategoryModel extends CategoriesModel
             ->where('blocked.extension = ' . $db->quote('com_dharmashop'))
             ->where('blocked.lft <= c.lft')->where('blocked.rgt >= c.rgt')
             ->where('(blocked.published != 1 OR blocked.access NOT IN (' . $levels . '))');
-        $query->where('NOT EXISTS (' . $blocked . ')');
+        if (!$this->baseFacetsAccessible()) { $query->where('NOT EXISTS (' . $blocked . ')'); }
         if ($grouped) {
-            $this->groupListing()->applyContext($query, $category, $this->taxonomy()->extension, $this->getCurrentUser()->getAuthorisedViewLevels());
+            $this->groupListing()->applyContext($query, $knownGroups ? 0 : $category, $this->taxonomy()->extension, $this->getCurrentUser()->getAuthorisedViewLevels());
+            if ($knownGroups) { $query->whereIn('p.group_id', $knownGroups); }
         }
 
         // Фильтр: условия выбора посетителя (поля, цена, бренд, бейджи, наличие) поверх состава списка.
         $filterState = $filterOverride ?? $this->getFilterState();
 
         if (!$filterState->isEmpty()) {
-            Factory::getApplication()->bootComponent('com_dharmashop')->getServices()->filter()->query()
+            (new \Dharma\Component\DharmaShop\Administrator\Filter\FilterService($this->getDatabase()))->query()
                 ->apply($query, $filterState, $this->getFilterDefinition(), $category > 0 && !$grouped);
         }
 

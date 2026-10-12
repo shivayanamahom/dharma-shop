@@ -665,4 +665,10 @@ class CategoryModel extends AdminModel
 
         return $this->batchParam((array) $pks, (array) $contexts, 'list_limit', $limit);
     }
+
+    protected function cleanCache($group = null)
+    {
+        parent::cleanCache($group);
+        \Dharma\Component\DharmaShop\Administrator\Filter\FilterCache::forget();
+    }
 }

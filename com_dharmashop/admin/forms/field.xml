@@ -27,7 +27,7 @@
         <field name="in_page" type="radio" label="COM_DHARMASHOP_FIELD_DISPLAY_SHOW" layout="joomla.form.field.radio.switcher" default="1" filter="int" validate="options" showon="params.load_page:1"><option value="0">JNO</option><option value="1">JYES</option></field>
     </fieldset>
     <fieldset name="display_filter" label="COM_DHARMASHOP_FIELD_DISPLAY_FILTER">
-        <field name="filterable" type="radio" label="COM_DHARMASHOP_FIELD_DISPLAY_SHOW" description="COM_DHARMASHOP_FIELD_FILTER_PENDING" layout="joomla.form.field.radio.switcher" default="0" filter="int" validate="options" showon="type!:editor[AND]type!:text[AND]type!:files[AND]type!:gallery[AND]type!:video"><option value="0">JNO</option><option value="1">JYES</option></field>
+        <field name="filterable" type="radio" label="COM_DHARMASHOP_FIELD_DISPLAY_SHOW" description="COM_DHARMASHOP_FIELD_FILTER_ENABLED_DESC" layout="joomla.form.field.radio.switcher" default="0" filter="int" validate="options" showon="type!:editor[AND]type!:text[AND]type!:files[AND]type!:gallery[AND]type!:video"><option value="0">JNO</option><option value="1">JYES</option></field>
         <field name="filterable_text_disabled" type="radio" label="COM_DHARMASHOP_FIELD_DISPLAY_SHOW" description="COM_DHARMASHOP_FIELD_FILTER_TEXT_DISABLED" layout="joomla.form.field.radio.switcher" default="0" disabled="true" filter="unset" showon="type:editor,text"><option value="0">JNO</option><option value="1">JYES</option></field>
         <field name="filterable_files_disabled" type="radio" label="COM_DHARMASHOP_FIELD_DISPLAY_SHOW" description="PLG_DHARMASHOPFIELD_BASIC_FILES_NO_FILTER" layout="joomla.form.field.radio.switcher" default="0" disabled="true" filter="unset" showon="type:files"><option value="0">JNO</option><option value="1">JYES</option></field>
         <field name="filterable_gallery_disabled" type="radio" label="COM_DHARMASHOP_FIELD_DISPLAY_SHOW" description="PLG_DHARMASHOPFIELD_BASIC_GALLERY_NO_FILTER" layout="joomla.form.field.radio.switcher" default="0" disabled="true" filter="unset" showon="type:gallery"><option value="0">JNO</option><option value="1">JYES</option></field>
@@ -81,6 +81,16 @@
             </field>
             <field name="group_card_title" type="radio" label="COM_DHARMASHOP_FIELD_SHOW_TITLE" layout="joomla.form.field.radio.switcher" default="1" filter="int" validate="options" showon=".type:list,color[AND]variation:1"><option value="0">JNO</option><option value="1">JYES</option></field>
         </fieldset>
+        <fields name="filter"><fieldset name="display_filter">
+            <field name="logic" type="list" default="or" filter="cmd" validate="options" label="COM_DHARMASHOP_FIELD_FILTER_LOGIC" showon=".filterable:1[AND].type:list,checkbox,color"><option value="or">COM_DHARMASHOP_FIELD_FILTER_OR</option><option value="and">COM_DHARMASHOP_FIELD_FILTER_AND</option></field>
+            <field name="control" type="list" default="auto" filter="cmd" validate="options" label="COM_DHARMASHOP_FIELD_FILTER_CONTROL" showon=".filterable:1[AND].type:list,checkbox,color">
+                <option value="auto">COM_DHARMASHOP_FIELD_FILTER_AUTO</option><option value="checkboxes">COM_DHARMASHOP_FIELD_FILTER_CHECKBOXES</option><option value="select">COM_DHARMASHOP_FIELD_FILTER_SELECT</option><option value="radio">COM_DHARMASHOP_FIELD_FILTER_RADIO</option><option value="buttons">COM_DHARMASHOP_FIELD_FILTER_BUTTONS</option><option value="swatches">COM_DHARMASHOP_FIELD_FILTER_SWATCHES</option><option value="images">COM_DHARMASHOP_FIELD_FILTER_IMAGES</option>
+            </field>
+            <field name="sort" type="list" default="field" filter="cmd" validate="options" label="COM_DHARMASHOP_FIELD_FILTER_SORT" showon=".filterable:1"><option value="field">COM_DHARMASHOP_FIELD_FILTER_SORT_FIELD</option><option value="alpha">COM_DHARMASHOP_FIELD_FILTER_SORT_ALPHA</option><option value="count">COM_DHARMASHOP_FIELD_FILTER_SORT_COUNT</option></field>
+            <field name="limit" type="number" default="0" min="0" max="100" filter="integer" label="COM_DHARMASHOP_FIELD_FILTER_LIMIT" description="COM_DHARMASHOP_FIELD_FILTER_LIMIT_DESC" showon=".filterable:1" />
+            <field name="search" type="radio" layout="joomla.form.field.radio.switcher" default="1" filter="integer" label="COM_DHARMASHOP_FIELD_FILTER_SEARCH" showon=".filterable:1"><option value="0">JNO</option><option value="1">JYES</option></field>
+            <field name="expanded" type="radio" layout="joomla.form.field.radio.switcher" default="1" filter="integer" label="COM_DHARMASHOP_FIELD_FILTER_EXPANDED" showon=".filterable:1"><option value="0">JNO</option><option value="1">JYES</option></field>
+        </fieldset></fields>
     </fields>
     <fieldset name="choices">
         <field name="options" type="subform" label="COM_DHARMASHOP_FIELD_OPTIONS" multiple="true" layout="joomla.form.field.subform.repeatable-table" groupByFieldset="true" filter="array" validate="Subform" showon="type:list,checkbox">

@@ -1,0 +1,78 @@
+/* Only the dual-handle control needs geometry beyond Bootstrap utilities. */
+.dharmaFilterRange {
+  --range-thumb: 1.125rem;
+  --range-from: 0%;
+  --range-to: 100%;
+  position: relative;
+  height: 2.25rem;
+  touch-action: none;
+  cursor: pointer;
+}
+.dharmaFilterRange [data-slider-track] {
+  position: absolute;
+  inset: calc(50% - .1875rem) calc(var(--range-thumb) / 2) auto;
+  height: .375rem;
+  border-radius: 1rem;
+  background: var(--bs-secondary-bg, #e9ecef);
+}
+.dharmaFilterRange [data-slider-track]::after {
+  content: '';
+  position: absolute;
+  inset: 0 calc(100% - var(--range-to)) 0 var(--range-from);
+  border-radius: inherit;
+  background: var(--bs-primary, #0d6efd);
+}
+.dharmaFilterRange input[type='range'] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  background: transparent;
+  pointer-events: none;
+  outline: none;
+}
+.dharmaFilterRange input[type='range']::-webkit-slider-runnable-track {
+  height: .375rem;
+  background: transparent;
+}
+.dharmaFilterRange input[type='range']::-moz-range-track {
+  height: .375rem;
+  background: transparent;
+}
+.dharmaFilterRange input[type='range']::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: var(--range-thumb);
+  height: var(--range-thumb);
+  margin-top: calc((.375rem - var(--range-thumb)) / 2);
+  border: .1875rem solid var(--bs-body-bg, #fff);
+  border-radius: 50%;
+  background: var(--bs-primary, #0d6efd);
+  box-shadow: 0 0 0 1px var(--bs-primary, #0d6efd);
+}
+.dharmaFilterRange input[type='range']::-moz-range-thumb {
+  box-sizing: border-box;
+  width: var(--range-thumb);
+  height: var(--range-thumb);
+  border: .1875rem solid var(--bs-body-bg, #fff);
+  border-radius: 50%;
+  background: var(--bs-primary, #0d6efd);
+  box-shadow: 0 0 0 1px var(--bs-primary, #0d6efd);
+}
+.dharmaFilterRange input[type='range']:focus-visible { z-index: 1; }
+.dharmaFilterRange input[type='range']:focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 .25rem rgba(var(--bs-primary-rgb, 13, 110, 253), .25);
+}
+.dharmaFilterRange input[type='range']:focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 .25rem rgba(var(--bs-primary-rgb, 13, 110, 253), .25);
+}
+@media (forced-colors: active) {
+  .dharmaFilterRange [data-slider-track],
+  .dharmaFilterRange [data-slider-track]::after { background: Highlight; }
+  .dharmaFilterRange input[type='range']::-webkit-slider-thumb { background: Highlight; border-color: Canvas; }
+  .dharmaFilterRange input[type='range']::-moz-range-thumb { background: Highlight; border-color: Canvas; }
+}
