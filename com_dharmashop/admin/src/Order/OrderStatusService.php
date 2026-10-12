@@ -36,6 +36,7 @@ final class OrderStatusService
             if ((int) $status->stock_effect !== $oldEffect) (new StockService($this->db))->applyOrderEffect($orderId,(int) $status->stock_effect,$actor ?: null);
             $this->db->transactionCommit();
         } catch (\Throwable $error) { $this->db->transactionRollback(); throw $error; }
+        if ((int) $status->stock_effect !== $oldEffect) { \Dharma\Component\DharmaShop\Administrator\Filter\FilterCache::forget(); }
         $this->notifications->lifecycle('onDharmaShopOrderStatusChanged', ['order_id'=>$orderId,'history_id'=>$historyId,'previous_status_id'=>$expected,'status_id'=>$statusId]);
         $this->notifications->notify($historyId);
         return true;

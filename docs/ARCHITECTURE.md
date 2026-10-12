@@ -97,7 +97,7 @@ com_dharmashop/
   media/                          joomla.asset.json, административный uploader.css, минимум js; фронтенд — классы Bootstrap без своего CSS
 plg_system_dharmashop/            слияние корзины при входе, хуки жизненного цикла
 plg_system_dharmashopmenu/        раздел «Dharma Shop» в боковом меню админки после «Компонентов» (onPreprocessMenuItems), без записей в БД
-plg_task_dharmashop/              задачи планировщика: старт/конец скидок, очистка корзин, переиндексация
+plg_task_dharmashop/              задачи планировщика Joomla (реализовано): «скидки по датам» (`SaleScheduler::run`) и «сверка счётчиков фильтра» (`FacetIndexer::verify` + пересборка); очистка корзин — план
 plg_dharmashop_imageresize/       C79: размеры по контекстам, производные Joomla Image/GD, кеш с двумя уровнями хеша
 plg_dharmashopshipping_standard/  доставка (обычная): цена, бесплатно от суммы, конструктор полей покупателя (C80)
 plg_dharmashopshipping_courier/   курьер: доставка до двери, поля адреса, цена и «бесплатно от суммы» (C80)
@@ -223,7 +223,7 @@ CREATE TABLE `#__dharmashop_variants` (
 | `#__dharmashop_stock_levels` | `variant_id`, `location_id`, `qty` decimal(12,3), `reserved` decimal(12,3). PK `(variant_id, location_id)` |
 | `#__dharmashop_stock_movements` | журнал: `id` bigint, `variant_id`, `location_id`, `delta`, `reason` (order/manual/import/return/…), `order_id` NULL, `user_id` NULL, `note`, `created`. `KEY (variant_id, created)`, `KEY (order_id)` |
 
-Остаток меняется только через `StockService` (пишет движение, пересчитывает `stock_total`/`in_stock`, вызывает событие).
+Остаток меняется только через `StockService` (пишет движение, пересчитывает `stock_total`/`in_stock` варианта). Событие `onDharmaShopStockChange` запланировано и пока не вызывается. Затем (если вызывающий код не пересчитывает товар сам, как сохранение карточки) наличие переносится на `products.in_stock`, копию `product_categories.in_stock`, итоги группы (`ProductRebuilder::rebuildProducts`, `Indexer::refreshProducts`) и сбрасывается кэш фильтра. Заказ и смена статуса с возвратом остатка повторно сбрасывают кэш уже после коммита.
 
 ### 5.4 Витринный индекс — `#__dharmashop_product_categories`
 

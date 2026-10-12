@@ -249,6 +249,10 @@ class ProductModel extends AdminModel
         unset($data['group_id'], $data['combo_hash']);
         unset($data['custom_fields'], $data['custom_fields_present']);
 
+        // Предрасчёт фильтра: набор строк существующего товара снимается ДО записи карточки (публикация и категория меняются в
+        // `parent::save`; снимок после неё потерял бы вклад товара в охват всего каталога). У нового товара «до» пусто.
+        $facetToken = $isNew ? null : $shop->facets()->begin([(int) $data['id']]);
+
         if (!parent::save($data)) {
             return false;
         }
@@ -258,8 +262,8 @@ class ProductModel extends AdminModel
         $db->transactionStart();
 
         try {
-            // Предрасчёт фильтра: набор строк товара до правки (категории и значения полей); разница применяется перед коммитом.
-            $facetToken = $shop->facets()->begin([$id]);
+            // Разница наборов применяется перед коммитом.
+            $facetToken ??= $shop->facets()->begin([$id]);
             // Итоговые учёт остатков и «продавать без остатка» (товар → категории → настройки) записываем в вариант:
             // от них зависит наличие в списках.
             $row = $db->setQuery($db->createQuery()->select('*')->from('#__dharmashop_products')->where('id = ' . $id))->loadAssoc() ?: [];
@@ -276,7 +280,8 @@ class ProductModel extends AdminModel
                 $variantData['price'] = '0';
             }
             $variantId = $shop->variants()->saveDefault($id, $variantData);
-            $shop->stock()->setQty($variantId, (float) str_replace(',', '.', (string) ($data['stock_qty'] ?? 0)), 'manual', $userId);
+            // Наличие переносится на товар ниже, одним `rebuild()` этого сохранения.
+            $shop->stock()->setQty($variantId, (float) str_replace(',', '.', (string) ($data['stock_qty'] ?? 0)), 'manual', $userId, null, false);
             $shop->rebuilder()->rebuild($id);
             $shop->indexer()->setCategories(
                 $id,
@@ -300,6 +305,8 @@ class ProductModel extends AdminModel
             (new SearchIndexer($db))->rebuild($id);
             $shop->facets()->end($facetToken);
             $db->transactionCommit();
+            // Сброс внутри транзакции мог успеть перезаполниться старыми данными параллельным запросом: повторяем после фиксации.
+            \Dharma\Component\DharmaShop\Administrator\Filter\FilterCache::forget();
         } catch (\Throwable $e) {
             $db->transactionRollback();
             Log::add($e::class . ': ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine(), Log::ERROR, 'com_dharmashop');
@@ -398,11 +405,15 @@ class ProductModel extends AdminModel
             }
         }
 
+        $shop = $this->shop();
+        // Снимок вкладов товаров в предрасчёт фильтра берётся до удаления строки `products` (охват всего каталога читает её).
+        $facetToken = $shop->facets()->begin($ids);
+
         if (!parent::delete($pks)) {
+            $shop->facets()->end($facetToken);
+
             return false;
         }
-
-        $shop = $this->shop();
 
         foreach ($ids as $id) {
             $exists = (int) $db->setQuery($db->createQuery()->select('COUNT(*)')->from('#__dharmashop_products')->where('id = ' . $id))->loadResult();
@@ -411,16 +422,15 @@ class ProductModel extends AdminModel
                 continue;
             }
 
-            $facetToken = $shop->facets()->begin([$id]);
             $files = array_merge($files, $shop->gallery()->deleteForProduct($id));
             $files = array_merge($files, (new FieldValues($db))->deleteEntity('product', $id));
             $shop->variants()->deleteForProduct($id);
             $shop->indexer()->deleteProduct($id);
-            $shop->facets()->end($facetToken);
             $db->setQuery('DELETE FROM #__dharmashop_search WHERE product_id = ' . $id)->execute();
             $db->setQuery('DELETE FROM #__dharmashop_product_axes WHERE product_id = ' . $id)->execute();
         }
 
+        $shop->facets()->end($facetToken);
         foreach ($affectedGroups as $group) { $shop->groups()->rebuild((int) $group); }
 
         // Файлы удалённых товаров: только наши и только если на них больше никто не ссылается.
@@ -493,7 +503,19 @@ class ProductModel extends AdminModel
         $app = Factory::getApplication();
         $user = $app->getIdentity();
         $indexer = $this->shop()->indexer();
+        // Категории, бренды и бейджи меняют предрасчёт фильтра и кэш: снимок вкладов до, разница после (больше порога — пересборка).
+        $facets = $this->shop()->facets();
+        $facetToken = $facets->begin(array_map('intval', $pks));
 
+        try {
+            return $this->batchTaxonomyRows($pks, $change, $db, $app, $user, $indexer);
+        } finally {
+            $facets->end($facetToken);
+        }
+    }
+
+    private function batchTaxonomyRows(array $pks, callable $change, $db, $app, $user, $indexer): bool
+    {
         foreach (array_map('intval', $pks) as $id) {
             $row = $db->setQuery($db->createQuery()->select('id, title, catid, created_by')->from('#__dharmashop_products')->where('id = ' . $id))->loadObject();
 

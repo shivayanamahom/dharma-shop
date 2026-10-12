@@ -12,6 +12,9 @@ declare(strict_types=1);
 
 namespace Dharma\Component\DharmaShop\Administrator\Stock;
 
+use Dharma\Component\DharmaShop\Administrator\Catalog\Indexer;
+use Dharma\Component\DharmaShop\Administrator\Catalog\ProductRebuilder;
+use Dharma\Component\DharmaShop\Administrator\Filter\FilterCache;
 use Dharma\Component\DharmaShop\Administrator\Support\Sql;
 use Joomla\CMS\Date\Date;
 use Joomla\CMS\Language\Text;
@@ -57,7 +60,7 @@ final class StockService
     }
 
     /** Устанавливает остаток основного склада и пишет движение на разницу. */
-    public function setQty(int $variantId, float $qty, string $reason = 'manual', ?int $userId = null, ?string $note = null): void
+    public function setQty(int $variantId, float $qty, string $reason = 'manual', ?int $userId = null, ?string $note = null, bool $propagate = true): void
     {
         $location = $this->defaultLocationId();
         $delta = $qty - $this->getQty($variantId);
@@ -82,11 +85,15 @@ final class StockService
             );
         }
 
-        $this->recalcVariant($variantId);
+        $this->recalcVariant($variantId, $propagate);
     }
 
-    /** Пересчитывает производные поля варианта: доступно (остаток − резерв) и признак наличия. */
-    public function recalcVariant(int $variantId): void
+    /**
+     * Пересчитывает производные поля варианта: доступно (остаток − резерв) и признак наличия.
+     * `$propagate` переносит наличие на товар, витринный индекс и группу и сбрасывает кэш фильтра; выключать можно только там,
+     * где вызывающий код сразу сам пересчитывает товар (сохранение карточки).
+     */
+    public function recalcVariant(int $variantId, bool $propagate = true): void
     {
         $sql = 'UPDATE #__dharmashop_variants v SET v.stock_total = COALESCE((SELECT SUM(l.qty - l.reserved) FROM #__dharmashop_stock_levels l WHERE l.variant_id = v.id), 0)'
             . ' WHERE v.id = :v';
@@ -94,6 +101,27 @@ final class StockService
 
         $sql = 'UPDATE #__dharmashop_variants SET in_stock = IF(stock_tracked = 0 OR stock_total > 0 OR backorder = 1, 1, 0) WHERE id = :v';
         Sql::exec($this->db, $sql, [':v' => [$variantId, ParameterType::INTEGER]]);
+
+        if ($propagate) {
+            $this->propagate($variantId);
+        }
+    }
+
+    /** Наличие варианта → товар (`products.in_stock`), копия в витрине (`product_categories.in_stock`), группа и кэш фильтра. */
+    private function propagate(int $variantId): void
+    {
+        $productId = (int) $this->db->setQuery(Sql::query(
+            $this->db,
+            'SELECT product_id FROM #__dharmashop_variants WHERE id = :v',
+            [':v' => [$variantId, ParameterType::INTEGER]]
+        ))->loadResult();
+
+        if ($productId > 0) {
+            (new ProductRebuilder($this->db))->rebuildProducts([$productId]);
+            (new Indexer($this->db))->refreshProducts([$productId]);
+        }
+
+        FilterCache::forget();
     }
 
     /**

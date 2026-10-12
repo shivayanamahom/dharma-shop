@@ -131,6 +131,8 @@ final class OrderService
             $this->carts->clear($cart);
             $this->db->transactionCommit();
         } catch (\Throwable $error) { $this->db->transactionRollback(); throw $error; }
+        // Остаток изменился: кэш списка и фильтра, заполненный до коммита, устарел.
+        \Dharma\Component\DharmaShop\Administrator\Filter\FilterCache::forget();
         $this->notifications->notify($historyId);
         $this->notifications->lifecycle('onDharmaShopOrderAfterCreate', ['order_id'=>$id,'history_id'=>$historyId]);
         return ['id'=>$id,'number'=>$number];
