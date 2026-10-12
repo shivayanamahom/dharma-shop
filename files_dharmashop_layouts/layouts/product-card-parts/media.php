@@ -16,6 +16,7 @@ $percentText = $discount > 0 && round($discount, 2) === 0.0
     : rtrim(rtrim(number_format($discount, 2, ',', "\u{00A0}"), '0'), ',');
 $saleEnd = (int) ($displayData['saleEndTimestamp'] ?? 0);
 $showSaleCountdown = !empty($displayData['showSaleCountdown']) && $saleEnd > time();
+$favoritesEnabled = !empty($displayData['favoritesEnabled']);
 $saleCountdownLabel = Text::_('COM_DHARMASHOP_SALE_TIME_LEFT');
 $saleCountdownTotalHours = (int) ceil(($saleEnd - time()) / 3600);
 $saleCountdownText = (int) floor($saleCountdownTotalHours / 24) . ' ' . Text::_('COM_DHARMASHOP_SALE_DAY_UNIT') . ' ' . ($saleCountdownTotalHours % 24) . ' ' . Text::_('COM_DHARMASHOP_SALE_HOUR_UNIT');
@@ -95,5 +96,15 @@ $ratio = preg_replace('/[^0-9x]/', '', (string) ($displayData['mediaRatio'] ?? '
                     <span class="badge text-bg-warning" data-dharmashop-sale-countdown data-sale-end="<?php echo $saleEnd; ?>" data-sale-prefix="<?php echo $escape(Text::_('COM_DHARMASHOP_SALE_TIME_FALLBACK')); ?>" data-sale-label="<?php echo $escape($saleCountdownLabel); ?>" data-sale-days="<?php echo $escape(Text::_('COM_DHARMASHOP_SALE_DAY_UNIT')); ?>" data-sale-hours="<?php echo $escape(Text::_('COM_DHARMASHOP_SALE_HOUR_UNIT')); ?>" aria-label="<?php echo $escape($saleCountdownLabel . ' ' . $saleCountdownText); ?>" title="<?php echo $escape($saleCountdownLabel . ' ' . $saleCountdownText); ?>"><?php echo $escape(Text::_('COM_DHARMASHOP_SALE_TIME_FALLBACK') . ' ' . $saleCountdownText); ?></span>
                 <?php endif; ?>
             </div>
+        <?php endif; ?>
+        <?php echo (string) ($displayData['favoriteMediaActions'] ?? ''); ?>
+        <?php if ($favoritesEnabled) : ?>
+            <form class="position-absolute top-0 end-0 m-2 z-2" method="post" action="<?php echo $escape(\Joomla\CMS\Router\Route::_('index.php?option=com_dharmashop&task=favorites.toggle', false)); ?>">
+                <input type="hidden" name="product_id" value="<?php echo (int) $item->id; ?>"><input type="hidden" name="<?php echo $escape($displayData['favoritesTokenName'] ?? ''); ?>" value="1">
+                <?php $activeClass = preg_replace('/[^a-z0-9_-]/i', '', (string) ($displayData['favoriteActiveClass'] ?? 'text-danger')) ?: 'text-danger'; ?>
+                <button type="submit" class="btn btn-light rounded-circle shadow-sm d-inline-flex align-items-center justify-content-center p-2 lh-1<?php echo !empty($displayData['favorite']) ? ' ' . $activeClass : ''; ?>" data-favorites-toggle data-product-id="<?php echo (int) $item->id; ?>" data-token-name="<?php echo $escape($displayData['favoritesTokenName'] ?? ''); ?>" data-favorite-active-class="<?php echo $escape($activeClass); ?>" aria-label="<?php echo $escape(Text::_('COM_DHARMASHOP_FAVORITES_TOGGLE')); ?>" aria-pressed="<?php echo !empty($displayData['favorite']) ? 'true' : 'false'; ?>">
+                    <?php echo (string) ($displayData['favoriteIcon'] ?? ''); ?>
+                </button>
+            </form>
         <?php endif; ?>
     </div>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <config addruleprefix="Dharma\Component\DharmaShop\Administrator\Rule">
-	<!-- Разделы настроек магазина (вкладки): Магазин, Каталог, Изображения, SEO, Оформление заказа, Права. Новые разделы добавляются сюда fieldset-ом. -->
+	<!-- Разделы настроек магазина (вкладки): Магазин, Каталог, Изображения, SEO, Избранное, Оформление заказа, Права. Новые разделы добавляются сюда fieldset-ом. -->
 	<fieldset name="shop" label="COM_DHARMASHOP_CONFIG_SHOP" description="COM_DHARMASHOP_CONFIG_SHOP_DESC">
 		<fieldset name="shop_general" label="COM_DHARMASHOP_SHOP_GENERAL">
 			<field name="_settings_search" type="settingssearch" addfieldprefix="Dharma\Component\DharmaShop\Administrator\Field" />
@@ -26,7 +26,7 @@
 	</fieldset>
 
 	<fieldset name="catalog" label="COM_DHARMASHOP_CONFIG_CATALOG" description="COM_DHARMASHOP_CONFIG_CATALOG_DESC">
-		<fieldset name="catalog_listing" label="COM_DHARMASHOP_PRODUCTS">
+		<fieldset name="catalog_listing" label="COM_DHARMASHOP_PRODUCTS_TITLE">
 		<field name="list_limit" type="integer" label="COM_DHARMASHOP_CONFIG_LIST_LIMIT" description="COM_DHARMASHOP_CONFIG_LIST_LIMIT_DESC" default="24" first="6" last="96" step="6" />
 		<field name="list_ordering" type="list" label="COM_DHARMASHOP_CONFIG_LIST_ORDERING" description="COM_DHARMASHOP_CONFIG_LIST_ORDERING_DESC" default="order" validate="options">
 			<option value="order">COM_DHARMASHOP_CAT_ORDERING_ORDER</option>
@@ -195,6 +195,21 @@
                 <option value="fancybox">COM_DHARMASHOP_GALLERY_LIGHTBOX_FANCYBOX</option>
             </field>
         </fieldset>
+	</fieldset>
+
+	<fieldset name="favorites" label="COM_DHARMASHOP_CONFIG_FAVORITES" description="COM_DHARMASHOP_CONFIG_FAVORITES_DESC">
+		<field name="favorites_enabled" type="radio" label="COM_DHARMASHOP_FAVORITES_ENABLED" description="COM_DHARMASHOP_FAVORITES_ENABLED_DESC" default="1" filter="integer" validate="options" layout="joomla.form.field.radio.switcher">
+			<option value="0">JNO</option>
+			<option value="1">JYES</option>
+		</field>
+		<field name="favorites_columns" type="list" label="COM_DHARMASHOP_FAVORITES_COLUMNS" description="COM_DHARMASHOP_DISPLAY_COLUMNS_DESC" default="3" filter="integer" validate="options">
+			<option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option>
+		</field>
+		<field name="favorites_card_layout_source" type="list" label="COM_DHARMASHOP_FAVORITES_CARD_LAYOUT_SOURCE" description="COM_DHARMASHOP_FAVORITES_CARD_LAYOUT_SOURCE_DESC" default="component" filter="cmd" validate="options">
+			<option value="component">COM_DHARMASHOP_FAVORITES_LAYOUT_COMPONENT</option>
+			<option value="override">COM_DHARMASHOP_FAVORITES_LAYOUT_OVERRIDE</option>
+		</field>
+		<field name="favorites_card_layout" type="layout" layoutgroup="product_card_variant" label="COM_DHARMASHOP_FAVORITES_CARD_LAYOUT" description="COM_DHARMASHOP_FAVORITES_CARD_LAYOUT_DESC" default="grid" validate="options" />
 	</fieldset>
 
 	<fieldset name="cart" label="COM_DHARMASHOP_CONFIG_CART" description="COM_DHARMASHOP_CONFIG_CART_DESC">

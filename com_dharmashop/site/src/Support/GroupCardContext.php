@@ -13,11 +13,12 @@ final class GroupCardContext
 {
     private const PARAMS = ['product_card_images', 'product_card_cart_mode', 'product_card_qty', 'product_card_intro'];
 
-    public static function encode(array $scope, Registry $params, string $mode, array $columns): string
+    public static function encode(array $scope, Registry $params, string $mode, array $columns, string $favoriteActiveClass = 'text-danger'): string
     {
         $display = [];
         foreach (self::PARAMS as $key) { $display[$key] = $params->get($key); }
-        $body = rtrim(strtr(base64_encode(json_encode(['scope' => $scope, 'params' => $display, 'mode' => $mode, 'columns' => $columns], JSON_THROW_ON_ERROR)), '+/', '-_'), '=');
+        $favoriteActiveClass = in_array($favoriteActiveClass, ['text-danger', 'text-primary'], true) ? $favoriteActiveClass : 'text-danger';
+        $body = rtrim(strtr(base64_encode(json_encode(['scope' => $scope, 'params' => $display, 'mode' => $mode, 'columns' => $columns, 'favoriteActiveClass' => $favoriteActiveClass], JSON_THROW_ON_ERROR)), '+/', '-_'), '=');
         return $body . '.' . hash_hmac('sha256', $body, (string) Factory::getApplication()->get('secret'));
     }
 

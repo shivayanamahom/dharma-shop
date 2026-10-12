@@ -14,6 +14,7 @@
 		<action name="dharmashop.payment.manage" title="COM_DHARMASHOP_ACTION_PAYMENT_MANAGE" description="COM_DHARMASHOP_ACTION_PAYMENT_MANAGE_DESC" />
 		<action name="dharmashop.shipping.manage" title="COM_DHARMASHOP_ACTION_SHIPPING_MANAGE" description="COM_DHARMASHOP_ACTION_SHIPPING_MANAGE_DESC" />
 		<action name="dharmashop.customers.view" title="COM_DHARMASHOP_ACTION_CUSTOMERS_VIEW" description="COM_DHARMASHOP_ACTION_CUSTOMERS_VIEW_DESC" />
+		<action name="dharmashop.favorites.view" title="COM_DHARMASHOP_ACTION_FAVORITES_VIEW" description="COM_DHARMASHOP_ACTION_FAVORITES_VIEW_DESC" />
 	</section>
 	<section name="product">
 		<action name="core.delete" title="JACTION_DELETE" description="COM_DHARMASHOP_ACCESS_DELETE_DESC" />

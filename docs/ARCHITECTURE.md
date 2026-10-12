@@ -52,7 +52,7 @@ CatalogModules и system/dharmashoppositions дают три внутренни�
 | События | `onDharmaShop*` (классы — `Dharma\Component\DharmaShop\Administrator\Event\…`) |
 | Группы плагинов | `dharmashop` (интеграции), `dharmashopfield`, `dharmashopshipping`, `dharmashoppayment`, `dharmashopnotify` |
 | Пространство имён плагинов | `Dharma\Plugin\DharmaShopShipping\Standard` и т. п. |
-| Модули | `mod_dharmashop_categories`, `_search`, `_filter` (архитектура и план — `FILTER.md`, C84), `_cart`, `_products` |
+| Модули | `mod_dharmashop_categories`, `_search`, `_filter` (архитектура и план — `FILTER.md`, C84), `_cart`, `_favorites` (C88), `_products` |
 | Языковые ключи | `COM_DHARMASHOP_*`, `PLG_DHARMASHOPSHIPPING_STANDARD_*` |
 | Права | `dharmashop.*` в `access.xml` |
 
@@ -345,6 +345,19 @@ CREATE TABLE `#__dharmashop_field_values` (
 ```
 
 Цена в корзине не хранится: пересчитывается при каждом чтении (`PriceResolver`), в заказ уходит снимок. Итоги собираются событием; плагины добавляют строки «скидка», «налог», «сбор», «доставка».
+
+### 5.7а Избранное (C88)
+
+```
+#__dharmashop_favorites       id, token char(64) NULL UNIQUE, user_id NULL UNIQUE, created, modified
+#__dharmashop_favorite_items  id, favorites_id, product_id, created,
+                              UNIQUE (favorites_id, product_id), KEY (product_id, favorites_id)
+```
+
+Один список на Joomla-аккаунт или гостевой токен. Cookie гостя случайная (256 бит), HttpOnly, SameSite=Lax, Secure на HTTPS; токен не показывается в админке и не используется как ссылка. После входа гостевой список прикрепляется к `user_id` или объединяется с ним с дедупликацией. Пользователи сопоставляются только по Joomla `user_id`, не по контактам. Модуль выводит число и ведёт на `view=favorites`; изменение выполняется POST с CSRF-токеном Joomla. Админский просмотр требует `dharmashop.favorites.view`; гостевые записи остаются анонимными. В v1 сохраняются самостоятельные товары; сравнение использует отдельные данные и обработчики.
+
+Страница `view=favorites` рендерит общие карточки товара. Общие параметры `favorites_card_layout_source`, `favorites_card_layout` и `favorites_columns` задают источник, вид карточек и число колонок по умолчанию; параметры пункта меню с теми же ключами могут переопределить эти значения. В пункте меню также задаются `favorites_show_heading`, `favorites_page_heading`, `favorites_introtext` и `favorites_fulltext`. Вступительный текст выводится перед списком, полный — после него. Переопределение карточек использует обычный путь Joomla `html/layouts/components/dharmashop/product-card/<вариант>.php`; макет самой страницы стандартно переопределяется в `templates/<шаблон>/html/com_dharmashop/favorites/default.php`. Иконка сердца остаётся самостоятельным JLayout без отдельного переключателя.
+
 
 ### 5.8 Покупатели
 

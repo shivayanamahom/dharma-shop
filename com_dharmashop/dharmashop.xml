@@ -40,6 +40,7 @@
 		<submenu>
 			<menu link="option=com_dharmashop&amp;view=orders" view="orders">COM_DHARMASHOP_MENU_ORDERS</menu>
 			<menu link="option=com_dharmashop&amp;view=carts" view="carts">COM_DHARMASHOP_MENU_CARTS</menu>
+			<menu link="option=com_dharmashop&amp;view=favorites" view="favorites">COM_DHARMASHOP_MENU_FAVORITES</menu>
 			<menu link="option=com_dharmashop&amp;view=customers" view="customers">COM_DHARMASHOP_MENU_CUSTOMERS</menu>
 			<menu link="option=com_dharmashop&amp;view=statuses" view="statuses">COM_DHARMASHOP_MENU_STATUSES</menu>
 			<menu link="option=com_dharmashop&amp;view=shippings" view="shippings">COM_DHARMASHOP_MENU_SHIPPING</menu>

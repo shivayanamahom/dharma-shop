@@ -40,6 +40,12 @@
 - **Макет** отвечает за вывод. Переиспользуемые карточки — в общем файловом расширении; страницу и её структуру — в `site/tmpl`. Сохраняйте контракт JLayout и документированные точки вывода.
 - **События** — публичная граница между компонентом и плагинами. Новое событие должно иметь типизированный объект/аргументы, точный момент вызова, поведение ошибок и ограничения на изменение данных.
 
+### Избранное и действия карточки
+
+`Administrator\Favorites\FavoritesService` хранит один список на `user_id` или гостевой cookie-токен; `Site\Support\FavoritesSession` определяет владельца и объединяет список при входе. Кнопки используют CSRF-защищённые POST-действия `favorites.toggle/remove/clear`. Не связывайте guest-списки с аккаунтами по email или телефону (C78). Состояние карточек загружается одним набором ID на рендерер. Точки расширения сравнения: `onDharmaShopProductCardMediaActions`, `onDharmaShopProductCardActions`, `onDharmaShopProductGalleryActions`; контракты — [TRIGGERS.md](TRIGGERS.md).
+
+Общие параметры — вкладка **«Избранное»** в настройках компонента: `favorites_enabled` скрывает кнопки и модуль, не удаляя сохранённые списки; `favorites_card_layout_source` выбирает источник карточки, а `favorites_card_layout` — её вариант (`grid`, `list`, `table`) на странице избранного. `FavoritesSettings` валидирует эти параметры. Для шаблонного варианта штатный Joomla override размещается в `html/layouts/components/dharmashop/product-card/<вариант>.php`. Иконка сердца остаётся отдельным общим JLayout `favorites/icon.php` и не имеет собственного выбора макета.
+
 ## Переключение вида каталога
 
 Общая реализация категорий, брендов и бейджей: `listing.js` и `ListingTrait`. Форма содержит `data-default-sort`; фрагмент сохраняет `[data-dharmashop-pagination]`. Выбранный вид хранится в sessionStorage, переходы выполняются прежним `dharmashop:navigate` с `detail.url`; после замены — `dharmashop:updated`. Догрузка сохраняет массив смещений в `data-dharmashop-loaded-pages` контейнера списка. При переопределении оставляйте непосредственный корень `.row` либо `.table-responsive tbody`: через него объединяются порции после смены вида. Контракт и режимы — [LAYOUTS.md](LAYOUTS.md), [ARCHITECTURE.md](ARCHITECTURE.md).

@@ -4,6 +4,8 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
+python3 dev/check-component-language-keys.py
+
 version=$(sed -n 's:.*<version>\(.*\)</version>.*:\1:p' pkg_dharmashop.xml | head -n1)
 out="$PWD/dist/pkg_dharmashop-${version}.zip"
 stage=$(mktemp -d)
@@ -13,7 +15,7 @@ mkdir -p dist
 rm -f "$out"
 
 # Список расширений пакета (папка = имя zip). Добавляйте сюда новые плагины и модули.
-EXTENSIONS=(plg_system_dharmashoppositions plg_system_dharmashoprelated plg_dharmashop_imageresize files_dharmashop_layouts com_dharmashop plg_dharmashopfield_basic plg_dharmashopnotify_email plg_dharmashopnotify_telegram plg_dharmashopshipping_standard plg_dharmashopshipping_courier plg_dharmashopshipping_pickup plg_dharmashoppayment_standard plg_dharmashoppayment_sandbox plg_dharmashop_social plg_dharmashop_structureddata plg_system_dharmashopswiper plg_system_dharmashopfancybox plg_system_dharmashopmenu mod_dharmashop_cart mod_dharmashop_search mod_dharmashop_filter mod_dharmashop_categories mod_dharmashop_products)
+EXTENSIONS=(plg_system_dharmashoppositions plg_system_dharmashoprelated plg_dharmashop_imageresize files_dharmashop_layouts com_dharmashop plg_dharmashopfield_basic plg_dharmashopnotify_email plg_dharmashopnotify_telegram plg_dharmashopshipping_standard plg_dharmashopshipping_courier plg_dharmashopshipping_pickup plg_dharmashoppayment_standard plg_dharmashoppayment_sandbox plg_dharmashop_social plg_dharmashop_structureddata plg_system_dharmashopswiper plg_system_dharmashopfancybox plg_system_dharmashopmenu mod_dharmashop_cart mod_dharmashop_favorites mod_dharmashop_search mod_dharmashop_filter mod_dharmashop_categories mod_dharmashop_products)
 
 for ext in "${EXTENSIONS[@]}"; do
   if [[ "$ext" == "com_dharmashop" ]]; then

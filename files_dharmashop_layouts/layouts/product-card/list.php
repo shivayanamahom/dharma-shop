@@ -14,7 +14,7 @@ $categoryTitle = (string) ($displayData['categoryTitle'] ?? '');
 $productUrl = (string) ($displayData['productUrl'] ?? '#');
 $part = static fn (string $name, array $extra = []): string => (new FileLayout('components.dharmashop.product-card-parts.' . $name, null, ['component' => 'none', 'client' => 0]))->render($extra + $displayData);
 ?>
-<article class="card h-100 overflow-hidden dharmaCard dharmaCardList">
+<article class="card h-100 overflow-hidden dharmaCard dharmaCardList"<?php if (!empty($displayData['favoritesPage'])) : ?> data-favorite-row="<?php echo (int) $item->id; ?>"<?php endif; ?>>
     <div class="row g-0 h-100">
         <div class="col-12 col-md-4 col-xl-3">
             <?php echo $part('media', ['mediaRounded' => 'start']); ?>

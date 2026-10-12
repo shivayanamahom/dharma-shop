@@ -29,6 +29,7 @@
 		<file type="plugin" id="dharmashopmenu" group="system">plg_system_dharmashopmenu.zip</file>
 		<file type="plugin" id="dharmashoprelated" group="system">plg_system_dharmashoprelated.zip</file>
 		<file type="module" id="mod_dharmashop_cart" client="site">mod_dharmashop_cart.zip</file>
+		<file type="module" id="mod_dharmashop_favorites" client="site">mod_dharmashop_favorites.zip</file>
 		<file type="module" id="mod_dharmashop_search" client="site">mod_dharmashop_search.zip</file>
 		<file type="module" id="mod_dharmashop_filter" client="site">mod_dharmashop_filter.zip</file>
 		<file type="module" id="mod_dharmashop_categories" client="site">mod_dharmashop_categories.zip</file>

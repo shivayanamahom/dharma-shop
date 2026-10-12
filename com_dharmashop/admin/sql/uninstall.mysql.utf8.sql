@@ -19,6 +19,8 @@ DROP TABLE IF EXISTS `#__dharmashop_external_ids`;
 DROP TABLE IF EXISTS `#__dharmashop_customers`;
 DROP TABLE IF EXISTS `#__dharmashop_carts`;
 DROP TABLE IF EXISTS `#__dharmashop_cart_items`;
+DROP TABLE IF EXISTS `#__dharmashop_favorite_items`;
+DROP TABLE IF EXISTS `#__dharmashop_favorites`;
 DROP TABLE IF EXISTS `#__dharmashop_statuses`;
 DROP TABLE IF EXISTS `#__dharmashop_status_transitions`;
 DROP TABLE IF EXISTS `#__dharmashop_shipping_methods`;

@@ -6,9 +6,11 @@ use Dharma\Component\DharmaShop\Site\Placeholder\GlobalValues;
 use Dharma\Component\DharmaShop\Site\Placeholder\ProductValues;
 use Dharma\Component\DharmaShop\Site\Placeholder\Renderer;
 use Joomla\CMS\Component\ComponentHelper;
+use Joomla\CMS\Document\HtmlDocument;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Layout\FileLayout;
 use Joomla\CMS\Router\Route;
+use Joomla\CMS\Session\Session;
 use Joomla\Registry\Registry;
 \defined('_JEXEC') or die;
 /** Общие данные карточек для расширений: цены, изображения, поля и состояние корзины. SQL не выполняется на каждый товар. */
@@ -16,10 +18,13 @@ final class ProductCardRenderer
 {
     private MoneyFormatter $money;
     private array $cart = [];
+    private array $favorites = [];
     private Registry $settings;
+    private bool $favoritesEnabled;
     public function __construct(private readonly Registry $params, ?array $cartQuantities = null)
     {
         $this->settings = ComponentHelper::getParams('com_dharmashop');
+        $this->favoritesEnabled = FavoritesSettings::enabled();
         $this->money = new MoneyFormatter($this->settings);
         if ($cartQuantities !== null) { $this->cart = $cartQuantities; }
         if ($cartQuantities === null && (int) $params->get('catalog_mode', 0) !== 1 && $this->cartMode() === 'stepper') {
@@ -30,6 +35,14 @@ final class ProductCardRenderer
                 $app->allowCache(false);
             }
         }
+        $app = Factory::getApplication();
+        if ($app->isClient('site') && $this->favoritesEnabled) {
+            $app->allowCache(false);
+            $favorites = new FavoritesSession($app->bootComponent('com_dharmashop')->getServices()->favorites(), $app);
+            if ($list = $favorites->current()) {
+                $this->favorites = array_fill_keys($favorites->service()->productIds((int) $list->id), true);
+            }
+        }
     }
     private function cartMode(): string
     {
@@ -38,10 +51,21 @@ final class ProductCardRenderer
         return in_array($mode, ['button','qty','stepper'], true) ? $mode
             : ((int) $this->params->get('product_card_qty', 0) === 1 ? 'qty' : 'stepper');
     }
-    public function data(object $item, string $mode = 'grid', string $context = 'product.category', string $instance = '', bool $loadAssets = true): array
+    public function data(object $item, string $mode = 'grid', string $context = 'product.category', string $instance = '', bool $loadAssets = true, array $extraData = []): array
     {
-        $mode = $mode === 'list' ? 'list' : 'grid';
+        $mode = in_array($mode, ['grid', 'list', 'table'], true) ? $mode : 'grid';
         $settings = $this->settings;
+        $app = Factory::getApplication();
+        if ($loadAssets && $this->favoritesEnabled && $app->getDocument() instanceof HtmlDocument) {
+            $wa = $app->getDocument()->getWebAssetManager();
+            $wa->getRegistry()->addExtensionRegistryFile('com_dharmashop');
+            $wa->useScript('com_dharmashop.favorites');
+            $app->getDocument()->addScriptOptions('com_dharmashop.favorites', [
+                'toggleUrl' => Route::_('index.php?option=com_dharmashop&task=favorites.toggle&format=json', false),
+                'tokenName' => Session::getFormToken(),
+                'error' => \Joomla\CMS\Language\Text::_('COM_DHARMASHOP_FAVORITES_ERROR_GENERIC'),
+            ]);
+        }
         $images = [];
         foreach ($item->images ?? [] as $image) {
             if ($url = MediaUrl::absolute($image->path)) {
@@ -68,8 +92,8 @@ final class ProductCardRenderer
         }
         $showCountdown = (int) $settings->get('product_card_sale_countdown', 1) === 1;
         if ($loadAssets && $showCountdown && !empty($item->sale_end_timestamp)) { $wa->useScript('com_dharmashop.sale-countdown'); }
-        return ['item' => $item, 'params' => clone $this->params, 'mode' => $mode, 'cardLayout' => $mode,
-            'cardFolder' => 'product-card', 'instanceId' => $instance . '-' . (int) $item->id,
+        $data = ['item' => $item, 'params' => clone $this->params, 'mode' => $mode, 'cardLayout' => $mode,
+            'cardFolder' => 'product-card', 'cardLayoutSource' => 'override', 'instanceId' => $instance . '-' . (int) $item->id,
             'imageContext' => $context . '.' . $mode, 'fields' => $item->fields ?? [],
             'productUrl' => Route::_('index.php?option=com_dharmashop&view=product&id=' . (int) $item->id . '&catid=' . (int) $item->catid, false),
             'categoryTitle' => (string) ($item->category_title ?? ''),
@@ -87,10 +111,23 @@ final class ProductCardRenderer
             'images' => $images, 'sliderType' => $slider, 'catalogMode' => $catalog,
             'cartMode' => $cartMode, 'cartText' => trim((string) $settings->get('cart_button_text', '')),
             'inCartQty' => (float) ($this->cart[(int) $item->id]['qty'] ?? 0),
-            'inCartItem' => (int) ($this->cart[(int) $item->id]['item'] ?? 0)];
+            'inCartItem' => (int) ($this->cart[(int) $item->id]['item'] ?? 0),
+            'favoritesEnabled' => $this->favoritesEnabled,
+            'favoriteIcon' => $this->favoritesEnabled ? FavoritesSettings::renderIcon() : '',
+            'favorite' => isset($this->favorites[(int) $item->id]),
+            'favoritesTokenName' => Session::getFormToken()];
+        $data['favoriteMediaActions'] = (new LayoutHooks('productCard', $context, $item, $this->params))->render('mediaActions', [
+            'product' => $item, 'favorite' => $data['favorite'], 'productUrl' => $data['productUrl'],
+        ]);
+        $data['favoriteActions'] = (new LayoutHooks('productCard', $context, $item, $this->params))->render('actions', [
+            'product' => $item, 'favorite' => $data['favorite'], 'productUrl' => $data['productUrl'],
+        ]);
+        return array_merge($data, $extraData);
     }
     public function render(array $data): string
     {
-        return (new FileLayout('components.dharmashop.product-card.default', null, ['component' => 'none','client' => 0]))->render($data);
+        $basePath = ($data['cardLayoutSource'] ?? 'override') === 'component' ? JPATH_ROOT . '/layouts' : null;
+
+        return (new FileLayout('components.dharmashop.product-card.default', $basePath, ['component' => 'none','client' => 0]))->render($data);
     }
 }

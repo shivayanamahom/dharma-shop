@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+	<layout title="COM_DHARMASHOP_FAVORITES_VIEW_DEFAULT_TITLE" option="COM_DHARMASHOP_FAVORITES_VIEW_DEFAULT_OPTION">
+		<message><![CDATA[COM_DHARMASHOP_FAVORITES_VIEW_DEFAULT_DESC]]></message>
+	</layout>
+	<fields name="params">
+		<fieldset name="favorites_page" label="COM_DHARMASHOP_FAVORITES_PAGE_SETTINGS" addfieldprefix="Dharma\Component\DharmaShop\Administrator\Field">
+			<field name="favorites_show_heading" type="list" label="COM_DHARMASHOP_FAVORITES_SHOW_HEADING" default="" validate="options">
+				<option value="">COM_DHARMASHOP_ORDER_INHERIT</option><option value="0">JNO</option><option value="1">JYES</option>
+			</field>
+			<field name="favorites_page_heading" type="text" label="COM_DHARMASHOP_FAVORITES_PAGE_HEADING" filter="string" />
+			<field name="favorites_columns" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS" description="COM_DHARMASHOP_DISPLAY_COLUMNS_DESC" validate="options">
+				<option value="">COM_DHARMASHOP_ORDER_INHERIT</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option>
+			</field>
+			<field name="favorites_card_layout_source" type="list" label="COM_DHARMASHOP_FAVORITES_CARD_LAYOUT_SOURCE" validate="options">
+				<option value="">COM_DHARMASHOP_ORDER_INHERIT</option><option value="component">COM_DHARMASHOP_FAVORITES_LAYOUT_COMPONENT</option><option value="override">COM_DHARMASHOP_FAVORITES_LAYOUT_OVERRIDE</option>
+			</field>
+			<field name="favorites_card_layout" type="layout" layoutgroup="product_card_variant" label="COM_DHARMASHOP_FAVORITES_CARD_LAYOUT" validate="options"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option></field>
+		</fieldset>
+		<fieldset name="favorites_text" label="COM_DHARMASHOP_FAVORITES_PAGE_TEXT">
+			<field name="favorites_introtext" type="editor" label="COM_DHARMASHOP_FAVORITES_INTROTEXT" buttons="true" filter="\Joomla\CMS\Component\ComponentHelper::filterText" />
+			<field name="favorites_fulltext" type="editor" label="COM_DHARMASHOP_FAVORITES_FULLTEXT" buttons="true" filter="\Joomla\CMS\Component\ComponentHelper::filterText" />
+		</fieldset>
+	</fields>
+</metadata>

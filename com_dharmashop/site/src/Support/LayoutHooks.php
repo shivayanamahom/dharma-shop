@@ -44,6 +44,11 @@ final class LayoutHooks
             'beforeDescription' => 'onDharmaShopProductBeforeDescription',
             'afterDescription' => 'onDharmaShopProductAfterDescription',
             'tabs' => 'onDharmaShopProductTabs',
+            'galleryActions' => 'onDharmaShopProductGalleryActions',
+        ],
+        'productCard' => [
+            'mediaActions' => 'onDharmaShopProductCardMediaActions',
+            'actions' => 'onDharmaShopProductCardActions',
         ],
     ];
 
@@ -67,8 +72,7 @@ final class LayoutHooks
             throw new \InvalidArgumentException('Unknown Dharma Shop layout position: ' . $position);
         }
         $app = Factory::getApplication();
-        if (!$app->isClient('site') || $app->getInput()->getCmd('option') !== 'com_dharmashop'
-            || !$app->getDocument() instanceof HtmlDocument) {
+        if (!$app->isClient('site') || !$app->getDocument() instanceof HtmlDocument) {
             return '';
         }
         PluginHelper::importPlugin('dharmashop');

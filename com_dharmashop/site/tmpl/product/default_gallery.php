@@ -15,10 +15,6 @@ use Joomla\CMS\Language\Text;
 $gallery = $this->gallery;
 $images = array_values((array) ($gallery['images'] ?? []));
 
-if (!$images) {
-    return;
-}
-
 $escape = static fn ($value): string => htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 $id = (int) ($gallery['id'] ?? 0);
 $type = ($gallery['type'] ?? 'swiper') === 'bootstrap' ? 'bootstrap' : 'swiper';
@@ -31,7 +27,16 @@ $link = static function (object $image, string $content) use ($escape, $lightbox
         : $content;
 };
 ?>
-<div class="dharmaGallery" id="<?php echo $escape($group); ?>" data-dharmashop-gallery data-type="<?php echo $type; ?>" data-thumbs="<?php echo $thumbs; ?>" data-loop="<?php echo !empty($gallery['loop']) ? '1' : '0'; ?>" data-lightbox="<?php echo $lightbox ? '1' : '0'; ?>">
+<div class="dharmaGallery position-relative" id="<?php echo $escape($group); ?>" data-dharmashop-gallery data-type="<?php echo $type; ?>" data-thumbs="<?php echo $thumbs; ?>" data-loop="<?php echo !empty($gallery['loop']) ? '1' : '0'; ?>" data-lightbox="<?php echo $lightbox ? '1' : '0'; ?>">
+    <?php if ($this->favoritesEnabled) : ?>
+        <form class="position-absolute top-0 end-0 m-2 z-2" method="post" action="<?php echo $escape(\Joomla\CMS\Router\Route::_('index.php?option=com_dharmashop&task=favorites.toggle', false)); ?>">
+            <input type="hidden" name="product_id" value="<?php echo (int) $this->item->id; ?>"><input type="hidden" name="<?php echo $escape($this->favoritesTokenName); ?>" value="1">
+            <button type="submit" class="btn btn-light rounded-circle shadow-sm d-inline-flex align-items-center justify-content-center p-2 lh-1<?php echo !empty($this->favorite) ? ' text-danger' : ''; ?>" data-favorites-toggle data-product-id="<?php echo (int) $this->item->id; ?>" data-token-name="<?php echo $escape($this->favoritesTokenName); ?>" aria-label="<?php echo $escape(Text::_('COM_DHARMASHOP_FAVORITES_TOGGLE')); ?>" aria-pressed="<?php echo !empty($this->favorite) ? 'true' : 'false'; ?>">
+                <?php echo $this->favoritesIcon; ?>
+            </button>
+        </form>
+    <?php endif; ?>
+    <?php echo $this->renderHook('galleryActions', ['product' => $this->item, 'favorite' => $this->favorite]); ?>
     <?php if ($type === 'swiper' && count($images) > 0) : ?>
         <div class="swiper dharmaGalleryMain rounded overflow-hidden">
             <div class="swiper-wrapper">

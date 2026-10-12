@@ -388,6 +388,28 @@ CREATE TABLE IF NOT EXISTS `#__dharmashop_cart_items` (
   KEY `idx_variant` (`variant_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS `#__dharmashop_favorites` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `token` char(64) CHARACTER SET ascii COLLATE ascii_bin NULL,
+  `user_id` int unsigned NULL,
+  `created` datetime NOT NULL,
+  `modified` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_token` (`token`),
+  UNIQUE KEY `uq_user` (`user_id`),
+  KEY `idx_modified` (`modified`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `#__dharmashop_favorite_items` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `favorites_id` int unsigned NOT NULL,
+  `product_id` int unsigned NOT NULL,
+  `created` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_favorites_product` (`favorites_id`,`product_id`),
+  KEY `idx_product` (`product_id`,`favorites_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS `#__dharmashop_statuses` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `title` varchar(255) NOT NULL,

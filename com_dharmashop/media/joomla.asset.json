@@ -218,6 +218,14 @@
 			]
 		},
 		{
+			"name": "com_dharmashop.favorites",
+			"type": "script",
+			"uri": "com_dharmashop/favorites.js",
+			"version": "20261012g",
+			"attributes": { "defer": true },
+			"dependencies": ["core"]
+		},
+		{
 			"name": "com_dharmashop.mini-cart",
 			"type": "script",
 			"uri": "com_dharmashop/mini-cart.js",

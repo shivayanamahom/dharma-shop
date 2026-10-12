@@ -9,6 +9,7 @@ $folder = in_array($folder, ['product-card', 'brand-product-card', 'badge-produc
 $variant = (string) ($displayData['cardLayout'] ?? 'grid');
 $variant = in_array($variant, ['grid', 'list', 'table'], true) ? $variant : 'grid';
 $displayData['imageContext'] ??= (\Joomla\CMS\Factory::getApplication()->getInput()->getCmd('view') === 'search' ? 'search' : 'product.category') . '.' . $variant;
-$layout = new FileLayout('components.dharmashop.' . $folder . '.' . $variant, null, ['component' => 'none', 'client' => 0]);
+$basePath = ($displayData['cardLayoutSource'] ?? 'override') === 'component' ? JPATH_ROOT . '/layouts' : null;
+$layout = new FileLayout('components.dharmashop.' . $folder . '.' . $variant, $basePath, ['component' => 'none', 'client' => 0]);
 
 echo $layout->render($displayData);

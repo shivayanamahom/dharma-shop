@@ -53,6 +53,9 @@
 | `onDharmaShopProductBeforeTabs` / `onDharmaShopProductAfterTabs` | **есть (2026-10-08)** | На всю ширину под тремя колонками, до/после набора вкладок; также если он пуст. |
 | `onDharmaShopProductBeforeDescription` / `onDharmaShopProductAfterDescription` | **есть (2026-10-08)** | Внутри существующей вкладки «Описание», до/после fulltext. |
 | `onDharmaShopProductTabs` | **есть (2026-10-08)** | Дополнительные панели после стандартных вкладок. `data.tabset` — ID уже инициализированного UITab. Работает и при отсутствии описания/групп. |
+| `onDharmaShopProductGalleryActions` | **есть (C88)** | Дополнительные действия поверх галереи страницы товара; в `data` доступны `product` и `favorite`. |
+| `onDharmaShopProductCardMediaActions` | **есть (C88)** | Дополнительные кнопки в области фото каждой карточки, в том числе на страницах модулей; в `data` доступны `product`, `favorite`, `productUrl`. Состояние избранного загружается пачкой, а не отдельным запросом на каждый товар. |
+| `onDharmaShopProductCardActions` | **есть (C88)** | Дополнительные действия карточки рядом с покупкой; те же данные, что у слота фото. Для будущего сравнения используйте отдельную кнопку и отдельное состояние. |
 | `onDharmaShopSettingsPrepareForm`, `AdminToolsCollect` | план | вкладки настроек и панель инструментов от плагинов |
 | `onDharmaShopOrderRulesResolve` | **предложено** | итоговые правила оформления (количество, единица, учёт остатков) для товара: плагин может переопределить результат `Order\OrderRules` (C14), например, для оптовых групп |
 | `onDharmaShopSeoPlaceholders` | **предложено** | плагин добавляет свои подстановки в `Placeholder\Renderer` (значения по области и имени) |
@@ -62,9 +65,9 @@
 
 Группа плагинов `dharmashop`, событие `Site\Event\LayoutRenderEvent` (Joomla CMS immutable event + ResultAware, принимает только строки). Аргументы:
 
-- `entity`: `category` / `product`. Бренды и бейджи используют общий `entity=category`.
-- `view`: `categories` / `category` / `brands` / `brand` / `badges` / `badge` / `product`; `categories` — корневой список категорий, `category` — товары категории, `brands`/`brand` и `badges`/`badge` — списки и отдельные страницы таксономии, `product` — товар.
-- `position`: четыре общие позиции `beforeTitle` / `afterTitle` / `beforeContent` / `afterContent`; у товара также `before/afterGallery`, `before/afterIntro`, `before/afterIntroFields`, `before/afterBuy`, `before/afterPrice`, `before/afterActions`, `before/afterTabs`, `before/afterDescription`, `tabs` (регистр как в LayoutHooks).
+- `entity`: `category` / `product` / `productCard`. Бренды и бейджи используют общий `entity=category`.
+- `view`: `categories` / `category` / `brands` / `brand` / `badges` / `badge` / `product` либо контекст карточки (`product.category`, `module.products` и др.).
+- `position`: общие позиции `beforeTitle` / `afterTitle` / `beforeContent` / `afterContent`; у товара также `before/afterGallery`, `galleryActions`, `before/afterIntro`, `before/afterIntroFields`, `before/afterBuy`, `before/afterPrice`, `before/afterActions`, `before/afterTabs`, `before/afterDescription`, `tabs`; у карточки — `mediaActions` и `actions`.
 - `item`: текущая проверенная моделью категория/товар; на корне списка категорий — виртуальная запись `id=0` из `root_category`, а не запись БД.
 - `items`: записи текущего списка в порядке вывода; на отдельном товаре пустой массив.
 - `params`: копия разрешённых параметров отображения (меню/категория/родители/магазин).
@@ -73,7 +76,7 @@
 
 Обработчик добавляет HTML через `$event->addResult($html)`. Обычный `return $html` диспетчер в результат не собирает. Прямой `echo` нарушает расположение блока; использовать только результат события. Строки объединяются без дополнительной обёртки и экранирования в порядке обработчиков Joomla; HTML, Bootstrap-классы и экранирование данных формирует сам плагин. Пустая строка/отсутствие результата ничего не выводит. Заменять аргументы события нельзя; контекст записи используется для чтения и построения своего блока, не для сохранения данных.
 
-Точки вокруг заголовка вызываются даже при скрытом h1. Точки контента охватывают всё содержимое страницы после заголовка. События не вызываются внутри каждой карточки списка. Только сайт/HTML/com_dharmashop, без запросов БД в механизме вызова. На категории и товаре вызовы используют реальную проверенную запись `item`. `Product\HtmlView::renderHook($position, $data = [])` доступен частичным шаблонам и переопределениям; общая категория продолжает пользоваться LayoutHooks напрямую.
+Точки вокруг заголовка вызываются даже при скрытом h1. Точки контента охватывают всё содержимое страницы после заголовка. События карточек вызываются для каждой карточки после подготовки общего состояния; обработчики не должны выполнять отдельные запросы на каждый товар. Вызов доступен на сайте в HTML-документе, включая карточки модулей вне `com_dharmashop`. На категории и товаре используются проверенные записи `item`; события карточек получают исходный товар в `item`. `Product\HtmlView::renderHook($position, $data = [])` доступен частичным шаблонам и переопределениям.
 
 Пример методов плагина `CMSPlugin implements SubscriberInterface`:
 

@@ -13,6 +13,9 @@ use Dharma\Component\DharmaShop\Site\Seo\ProductMetadata;
 use Dharma\Component\DharmaShop\Administrator\Image\ImageUrl;
 use Dharma\Component\DharmaShop\Site\Support\CartAssets;
 use Dharma\Component\DharmaShop\Site\Support\CartSession;
+use Dharma\Component\DharmaShop\Site\Support\FavoritesSession;
+use Dharma\Component\DharmaShop\Site\Support\FavoritesSettings;
+use Joomla\CMS\Session\Session;
 use Dharma\Component\DharmaShop\Site\Support\RecentProducts;
 use Dharma\Component\DharmaShop\Site\Support\LayoutHooks;
 use Joomla\CMS\Component\ComponentHelper;
@@ -40,6 +43,10 @@ class HtmlView extends BaseHtmlView
     public bool $showSaleCountdown = false;
     /** @var array<string, mixed> параметры макета галереи: type, thumbs, lightbox, loop, id */
     public array $gallery = [];
+    public bool $favorite = false;
+    public bool $favoritesEnabled = true;
+    public string $favoritesTokenName = '';
+    public string $favoritesIcon = '';
     /** @var array<string, mixed> данные блока покупки (макет product-card-parts/actions): cartMode, inCartQty и др. */
     public array $buy = [];
     public string $stepperTemplate = '';
@@ -125,6 +132,7 @@ class HtmlView extends BaseHtmlView
         }
 
         $this->prepareGallery();
+        $this->prepareFavorites();
         $this->prepareFieldGroups();
         $this->prepareBreadcrumbs();
 
@@ -138,8 +146,34 @@ class HtmlView extends BaseHtmlView
 
         $this->getDocument()->getWebAssetManager()->getRegistry()->addExtensionRegistryFile('com_dharmashop');
         $this->getDocument()->getWebAssetManager()->useScript('com_dharmashop.recent-products');
+        if ($this->favoritesEnabled) {
+            $this->getDocument()->getWebAssetManager()->useScript('com_dharmashop.favorites');
+        }
 
         parent::display($tpl);
+    }
+
+    private function prepareFavorites(): void
+    {
+        $this->favoritesEnabled = FavoritesSettings::enabled();
+
+        if (!$this->favoritesEnabled) {
+            return;
+        }
+
+        $app = Factory::getApplication();
+        $app->allowCache(false);
+        $session = new FavoritesSession($app->bootComponent('com_dharmashop')->getServices()->favorites(), $app);
+        if ($list = $session->current()) {
+            $this->favorite = in_array((int) $this->item->id, $session->service()->productIds((int) $list->id), true);
+        }
+        $this->favoritesTokenName = Session::getFormToken();
+        $this->favoritesIcon = FavoritesSettings::renderIcon();
+        $this->getDocument()->addScriptOptions('com_dharmashop.favorites', [
+            'toggleUrl' => Route::_('index.php?option=com_dharmashop&task=favorites.toggle&format=json', false),
+            'tokenName' => $this->favoritesTokenName,
+            'error' => \Joomla\CMS\Language\Text::_('COM_DHARMASHOP_FAVORITES_ERROR_GENERIC'),
+        ]);
     }
 
     /** Тексты страницы товара с однократными подстановками; HTML сохраняется, значения экранируются. */

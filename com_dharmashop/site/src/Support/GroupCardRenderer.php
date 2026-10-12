@@ -25,7 +25,7 @@ final class GroupCardRenderer
     }
 
     /** listing_group содержит показатели подходящего подмножества, а не общий кеш группы. */
-    public function render(object $representative, Registry $params, string $mode, array $fieldColumns = [], ?array $cart = null, string $context = '', string $imageContext = ''): string
+    public function render(object $representative, Registry $params, string $mode, array $fieldColumns = [], ?array $cart = null, string $context = '', string $imageContext = '', string $favoriteActiveClass = ''): string
     {
         $group = $representative->listing_group ?? null;
         if (!is_object($group) || (int) ($group->id ?? 0) < 1 || (int) ($representative->id ?? 0) < 1) {
@@ -36,7 +36,9 @@ final class GroupCardRenderer
         $money = new MoneyFormatter($settings);
         $ajax = $settings->get('group_card_mode', 'simple') === 'ajax';
         $instance = 'dharma-group-' . bin2hex(random_bytes(6));
-        if ($ajax && $context === '') { $context = GroupCardContext::encode($representative->listing_scope ?? [], $params, $mode, $fieldColumns); }
+        $activeClass = in_array($favoriteActiveClass, ['text-danger', 'text-primary'], true) ? $favoriteActiveClass
+            : (str_starts_with($context, 'module.products.') || str_starts_with($imageContext, 'module.products.') ? 'text-primary' : 'text-danger');
+        if ($ajax && $context === '') { $context = GroupCardContext::encode($representative->listing_scope ?? [], $params, $mode, $fieldColumns, $activeClass); }
         $range = $money->range($group->price_min ?? null, $group->price_max ?? null, !empty($group->price_free));
         if ((float) ($group->price_min ?? 0) > 0 && (float) ($group->price_max ?? 0) > (float) $group->price_min) {
             $range = Text::sprintf('COM_DHARMASHOP_GROUP_CARD_PRICE_RANGE', $money->format($group->price_min), $money->format($group->price_max));
@@ -58,12 +60,17 @@ final class GroupCardRenderer
             'selection' => (array) ($representative->group_selection ?? []),
             'ajaxUrl' => Route::_('index.php?option=com_dharmashop&task=groupcard.select&format=json', false),
         ];
+        $document = Factory::getApplication()->getDocument();
+        $html = $document instanceof HtmlDocument;
+        $this->products ??= new ProductCardRenderer($params, $cart);
+        $data['productData'] = $this->products->data($representative, $mode, 'group.teaser', $instance, $html, [
+            'favoriteActiveClass' => $activeClass,
+        ]);
+        foreach (['favoritesEnabled', 'favoriteIcon', 'favorite', 'favoritesTokenName', 'favoriteActiveClass'] as $key) {
+            $data[$key] = $data['productData'][$key] ?? null;
+        }
         if ($ajax) {
-            $document = Factory::getApplication()->getDocument();
-            $html = $document instanceof HtmlDocument;
             if ($html) { self::assets(); }
-            $this->products ??= new ProductCardRenderer($params, $cart);
-            $data['productData'] = $this->products->data($representative, $mode, 'group.teaser', $instance, $html);
             $data['productData']['imageContext'] = $imageContext !== '' ? $imageContext : 'group.teaser.' . $mode;
             $data['productData']['compactActions'] = $mode === 'table';
             $data['image'] = (string) ($data['productData']['images'][0]->url ?? $representative->cover);

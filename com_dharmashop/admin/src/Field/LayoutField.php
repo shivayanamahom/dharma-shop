@@ -30,6 +30,7 @@ class LayoutField extends ListField
         'categories' => 'components/com_dharmashop/tmpl/categories',
         'category_card' => 'layouts/components/dharmashop/category-card',
         'product_card' => 'layouts/components/dharmashop/product-card',
+        'product_card_variant' => 'layouts/components/dharmashop/product-card',
         'brand' => 'components/com_dharmashop/tmpl/brand',
         'badge' => 'components/com_dharmashop/tmpl/badge',
         'brand_product_card' => 'layouts/components/dharmashop/brand-product-card',
@@ -60,6 +61,10 @@ class LayoutField extends ListField
 
             // В папках страниц файлы вида default_items.php — части страницы (loadTemplate), а не самостоятельные макеты.
             if (str_starts_with($directory, 'components/com_dharmashop/tmpl/') && str_contains($matches[1], '_')) {
+                continue;
+            }
+
+            if ($group === 'product_card_variant' && $matches[1] === 'default') {
                 continue;
             }
 

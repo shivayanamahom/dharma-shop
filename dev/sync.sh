@@ -42,6 +42,14 @@ if [ -d "$M" ]; then
   [ -d "$M/media" ] && $R "$M/media/" "$T/media/mod_dharmashop_cart/" || true
   for l in ru-RU en-GB; do cp "$M/language/$l/"*.ini "$T/language/$l/"; done
 fi
+# Module favourites: user-specific count link.
+M="$S/mod_dharmashop_favorites"
+if [ -d "$M" ]; then
+  mkdir -p "$T/modules/mod_dharmashop_favorites"
+  for d in services src tmpl; do $R "$M/$d/" "$T/modules/mod_dharmashop_favorites/$d/"; done
+  cp "$M/mod_dharmashop_favorites.xml" "$T/modules/mod_dharmashop_favorites/"
+  for l in ru-RU en-GB; do cp "$M/language/$l/"*.ini "$T/language/$l/"; done
+fi
 # Модуль поиска: код, media и языковые файлы.
 M="$S/mod_dharmashop_search"
 if [ -d "$M" ]; then

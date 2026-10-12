@@ -27,6 +27,7 @@ $justify = ($displayData['justify'] ?? 'end') === 'start' ? 'start' : 'end';
 $cartText = (string) ($displayData['cartText'] ?? '') !== '' ? (string) $displayData['cartText'] : Text::_('COM_DHARMASHOP_ADD_TO_CART');
 $wide = $stack || ($mode === 'qty' && !$compact) || $mode === 'stepper';
 ?>
+<?php echo (string) ($displayData['favoriteActions'] ?? ''); ?>
         <?php if (empty($displayData['catalogMode']) && $price !== '' && (int) $item->in_stock !== 0) : ?>
             <div class="d-flex <?php echo $stack ? 'flex-column align-items-stretch' : 'align-items-center'; ?> justify-content-<?php echo $justify; ?> gap-2<?php echo $wide ? ' w-100' : ''; ?> dharmaCardActions"<?php if ($mode === 'stepper') : ?> data-dharmashop-cart-control data-mode="stepper" data-product="<?php echo (int) $item->id; ?>" data-step="<?php echo $escape((string) $step); ?>" data-min="<?php echo $escape((string) $min); ?>" data-qty="<?php echo $escape((string) $inCart); ?>" data-item="<?php echo (int) ($displayData['inCartItem'] ?? 0); ?>"<?php endif; ?>>
                 <?php if ($mode === 'qty') : ?>

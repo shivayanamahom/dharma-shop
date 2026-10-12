@@ -24,6 +24,7 @@ $valueLayout = new FileLayout('components.dharmashop.fields.value', null, ['comp
     <td class="w-100 dharmaCardTitle">
         <?php // Миниатюра внутри ячейки названия, а не отдельной колонкой: у img max-width 100% в шаблоне, колонка схлопывается. ?>
         <div class="d-flex gap-3">
+        <div class="position-relative flex-shrink-0">
         <a class="flex-shrink-0 dharmaCardThumb" href="<?php echo $escape($productUrl); ?>" tabindex="-1" aria-hidden="true">
             <?php if ($images) : ?>
                 <img class="rounded object-fit-cover" src="<?php echo $escape(ImageUrl::resolve($images[0]->url, (string) ($displayData['imageContext'] ?? 'product.category.table'))); ?>" width="56" height="56" alt="" loading="lazy" decoding="async">
@@ -31,6 +32,8 @@ $valueLayout = new FileLayout('components.dharmashop.fields.value', null, ['comp
                 <?php echo (new FileLayout('components.dharmashop.media.placeholder', null, ['component' => 'none', 'client' => 0]))->render(['size' => 56]); ?>
             <?php endif; ?>
         </a>
+        <?php echo $part('favorite', ['favoriteButtonClass' => 'btn btn-light rounded-circle shadow-sm d-inline-flex align-items-center justify-content-center p-1 lh-1', 'favoriteFormClass' => 'position-absolute top-0 end-0 m-1 z-2']); ?>
+        </div>
         <div>
         <?php if ($categoryTitle !== '') : ?>
             <div class="small text-body-secondary dharmaCardCategory"><a class="link-secondary text-decoration-none" href="<?php echo $escape($displayData['categoryUrl'] ?? '#'); ?>"><?php echo $escape($categoryTitle); ?></a></div>

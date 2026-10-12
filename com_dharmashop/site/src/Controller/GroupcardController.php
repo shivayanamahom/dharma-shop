@@ -37,7 +37,7 @@ final class GroupcardController extends BaseController
             $limit = in_array($images, ['0', '1', '2', '3', '4', '5'], true) ? (int) $images : 1;
             $item = $model->selectGroupCardProduct($this->input->getInt('source'), (array) $this->input->get('choice', [], 'array'), $limit);
             $result = ['success' => true, 'product' => (int) $item->id,
-                'html' => (new GroupCardRenderer())->render($item, $params, $data['mode'], $data['columns'], null, $token)];
+                'html' => (new GroupCardRenderer())->render($item, $params, $data['mode'], $data['columns'], null, $token, '', (string) ($data['favoriteActiveClass'] ?? 'text-danger'))];
         } catch (\Throwable $error) {
             if ((int) $error->getCode() === 404) { $result['message'] = Text::_('COM_DHARMASHOP_GROUP_CARD_UNAVAILABLE'); $result['reason'] = 'unavailable'; }
             else { \Joomla\CMS\Log\Log::add('Group card selection: ' . $error->getMessage(), \Joomla\CMS\Log\Log::ERROR, 'com_dharmashop'); }

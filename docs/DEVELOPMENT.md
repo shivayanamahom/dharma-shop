@@ -59,6 +59,8 @@ Joomla загружает установленные переводы компо
 
 ## Сборка и установка
 
+`build.sh` перед упаковкой сверяет COM_DHARMASHOP-ключи в Form XML и XML типов пунктов меню с RU/EN словарями администратора. Если перевод пропущен или имя ключа расходится, сборка останавливается с указанием языка, ключа и файла.
+
 ```bash
 ./build.sh                                   # dist/pkg_dharmashop-<версия>.zip
 DHARMA_SITE=/Volumes/Work/Server/www/test php dev/install.php "$PWD/dist/pkg_dharmashop-0.1.0.zip"

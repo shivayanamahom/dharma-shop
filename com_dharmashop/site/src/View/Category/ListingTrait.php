@@ -11,6 +11,7 @@ use Dharma\Component\DharmaShop\Site\Placeholder\Renderer;
 use Dharma\Component\DharmaShop\Site\Support\CartSession;
 use Dharma\Component\DharmaShop\Site\Support\Grid;
 use Dharma\Component\DharmaShop\Site\Support\MediaUrl;
+use Dharma\Component\DharmaShop\Site\Support\ProductCardRenderer;
 use Dharma\Component\DharmaShop\Site\Support\Taxonomy;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
@@ -72,6 +73,7 @@ trait ListingTrait
     public string $cardFolder = 'product-card';
     private MoneyFormatter $money;
     private ?\Dharma\Component\DharmaShop\Site\Support\GroupCardRenderer $groupCards = null;
+    private ?ProductCardRenderer $productCards = null;
 
     /** Тип записей страницы; бренды и бейджи переопределяют. */
     protected function taxonomy(): Taxonomy
@@ -362,7 +364,7 @@ trait ListingTrait
             $intro = (new Renderer())->render($intro, $values);
         }
 
-        return $layout->render(['item' => $item, 'params' => clone $this->params, 'mode' => $this->productView,
+        $displayData = ['item' => $item, 'params' => clone $this->params, 'mode' => $this->productView,
             'cardFolder' => $this->cardFolder, 'cardLayout' => $this->cardLayout,
             'fields' => $item->fields ?? [],
             'fieldColumns' => $this->fieldColumns,
@@ -387,7 +389,18 @@ trait ListingTrait
             'cartText' => trim((string) ComponentHelper::getParams('com_dharmashop')->get('cart_button_text', '')),
             'cartMode' => $this->cartMode(),
             'inCartQty' => (float) ($this->cartProducts[(int) $item->id]['qty'] ?? 0),
-            'inCartItem' => (int) ($this->cartProducts[(int) $item->id]['item'] ?? 0)]);
+            'inCartItem' => (int) ($this->cartProducts[(int) $item->id]['item'] ?? 0)];
+
+        $taxonomy = $this->taxonomy();
+        $context = $taxonomy->pageView === 'search' ? 'search' : 'product.' . $taxonomy->area;
+        $favoriteData = ($this->productCards ??= new ProductCardRenderer($this->params, $this->cartProducts))
+            ->data($item, $this->productView, $context, 'listing-' . $taxonomy->pageView, true);
+        foreach (['favoritesEnabled', 'favoriteIcon', 'favorite', 'favoritesTokenName', 'favoriteMediaActions', 'favoriteActions'] as $key) {
+            $displayData[$key] = $favoriteData[$key] ?? null;
+        }
+        $displayData['imageContext'] = $context . '.' . $this->productView;
+
+        return $layout->render($displayData);
     }
 
     private function mergeDisplay(Registry $source, array $keys): void

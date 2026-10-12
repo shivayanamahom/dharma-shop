@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Dharma\Component\DharmaShop\Administrator\Service;
 
 use Dharma\Component\DharmaShop\Administrator\Cart\CartService;
+use Dharma\Component\DharmaShop\Administrator\Favorites\FavoritesService;
 use Dharma\Component\DharmaShop\Administrator\Customer\CustomerService;
 use Dharma\Component\DharmaShop\Administrator\Order\OrderService;
 use Dharma\Component\DharmaShop\Administrator\Order\OrderStatusService;
@@ -68,6 +69,7 @@ final class ShopServices
     private ?OrderRules $orderRules = null;
 
     private ?CartService $cart = null;
+    private ?FavoritesService $favorites = null;
     private ?CustomerService $customers = null;
     private ?OrderService $orders = null;
     private ?NotificationService $notifications = null;
@@ -165,6 +167,11 @@ final class ShopServices
     public function cart(): CartService
     {
         return $this->cart ??= new CartService($this->db, $this->orderRules());
+    }
+
+    public function favorites(): FavoritesService
+    {
+        return $this->favorites ??= new FavoritesService($this->db);
     }
 
     public function orderRules(): OrderRules
