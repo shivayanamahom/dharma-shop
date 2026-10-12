@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="module" client="site" method="upgrade">
+    <name>MOD_DHARMASHOP_PRODUCTS</name>
+    <author>Dharma</author>
+    <creationDate>2026-10</creationDate>
+    <copyright>(C) 2026 Dharma</copyright>
+    <license>GNU General Public License version 2 or later</license>
+    <version>0.1.0</version>
+    <description>MOD_DHARMASHOP_PRODUCTS_XML_DESCRIPTION</description>
+    <namespace path="src">Dharma\Module\DharmaShopProducts</namespace>
+    <files>
+        <folder module="mod_dharmashop_products">services</folder>
+        <folder>src</folder>
+        <folder>tmpl</folder>
+        <folder>layouts</folder>
+    </files>
+    <media folder="media" destination="mod_dharmashop_products">
+        <folder>js</folder>
+        <filename>joomla.asset.json</filename>
+    </media>
+    <languages>
+        <language tag="ru-RU">language/ru-RU/mod_dharmashop_products.ini</language>
+        <language tag="ru-RU">language/ru-RU/mod_dharmashop_products.sys.ini</language>
+        <language tag="en-GB">language/en-GB/mod_dharmashop_products.ini</language>
+        <language tag="en-GB">language/en-GB/mod_dharmashop_products.sys.ini</language>
+    </languages>
+    <config>
+        <fields name="params">
+            <fieldset name="basic" addfieldprefix="Dharma\Module\DharmaShopProducts\Site\Field">
+                <field name="source" type="list" default="new" filter="cmd" validate="options" label="MOD_DHARMASHOP_PRODUCTS_SOURCE">
+                    <option value="new">MOD_DHARMASHOP_PRODUCTS_NEW</option>
+                    <option value="recent">MOD_DHARMASHOP_PRODUCTS_RECENT</option>
+                </field>
+                <field name="limit" type="number" default="6" min="1" max="100" filter="integer" label="MOD_DHARMASHOP_PRODUCTS_LIMIT" />
+                <field name="sort" type="list" default="created" filter="cmd" validate="options" showon="source:new" label="MOD_DHARMASHOP_PRODUCTS_SORT">
+                    <option value="created">MOD_DHARMASHOP_PRODUCTS_SORT_NEW</option>
+                    <option value="price">MOD_DHARMASHOP_PRODUCTS_SORT_PRICE</option>
+                    <option value="title">MOD_DHARMASHOP_PRODUCTS_SORT_TITLE</option>
+                </field>
+                <field name="sort_direction" type="list" default="DESC" filter="cmd" validate="options" showon="source:new[AND]sort:created,price,title" label="MOD_DHARMASHOP_PRODUCTS_DIRECTION">
+                    <option value="DESC">MOD_DHARMASHOP_PRODUCTS_DESC</option>
+                    <option value="ASC">MOD_DHARMASHOP_PRODUCTS_ASC</option>
+                </field>
+                <field name="categories" type="category" extension="com_dharmashop" multiple="true" layout="joomla.form.field.list-fancy-select" filter="intarray" label="MOD_DHARMASHOP_PRODUCTS_CATEGORIES" description="MOD_DHARMASHOP_PRODUCTS_CATEGORIES_DESC" />
+                <field name="brands" type="category" extension="com_dharmashop.brand" multiple="true" layout="joomla.form.field.list-fancy-select" filter="intarray" label="MOD_DHARMASHOP_PRODUCTS_BRANDS" />
+                <field name="badges" type="category" extension="com_dharmashop.badge" multiple="true" layout="joomla.form.field.list-fancy-select" filter="intarray" label="MOD_DHARMASHOP_PRODUCTS_BADGES" />
+                <field name="field_values" type="fieldvalues" multiple="true" layout="joomla.form.field.list-fancy-select" filter="raw" label="MOD_DHARMASHOP_PRODUCTS_FIELD_VALUES" description="MOD_DHARMASHOP_PRODUCTS_FIELD_VALUES_DESC" />
+                <field name="field_ranges" type="subform" multiple="true" min="0" max="12" buttons="add,remove,move" layout="joomla.form.field.subform.repeatable-table" label="MOD_DHARMASHOP_PRODUCTS_FIELD_RANGES" description="MOD_DHARMASHOP_PRODUCTS_FIELD_RANGES_DESC">
+                    <form>
+                        <field name="field" type="rangefields" filter="string" required="true" label="MOD_DHARMASHOP_PRODUCTS_FIELD" />
+                        <field name="min" type="text" inputmode="decimal" filter="string" label="MOD_DHARMASHOP_PRODUCTS_MIN" />
+                        <field name="max" type="text" inputmode="decimal" filter="string" label="MOD_DHARMASHOP_PRODUCTS_MAX" />
+                    </form>
+                </field>
+                <field name="criteria_logic" type="list" default="and" filter="cmd" validate="options" label="MOD_DHARMASHOP_PRODUCTS_CRITERIA_LOGIC" description="MOD_DHARMASHOP_PRODUCTS_CRITERIA_LOGIC_DESC">
+                    <option value="and">MOD_DHARMASHOP_PRODUCTS_AND</option><option value="or">MOD_DHARMASHOP_PRODUCTS_OR</option>
+                </field>
+                <field name="listing_mode" type="list" default="products" filter="cmd" validate="options" label="MOD_DHARMASHOP_PRODUCTS_LISTING_MODE" description="MOD_DHARMASHOP_PRODUCTS_LISTING_MODE_DESC">
+                    <option value="products">MOD_DHARMASHOP_PRODUCTS_LIST_PRODUCTS</option><option value="meta">MOD_DHARMASHOP_PRODUCTS_LIST_META</option>
+                </field>
+                <field name="display" type="list" default="grid" filter="cmd" validate="options" label="MOD_DHARMASHOP_PRODUCTS_DISPLAY">
+                    <option value="grid">MOD_DHARMASHOP_PRODUCTS_GRID</option><option value="list">MOD_DHARMASHOP_PRODUCTS_LIST</option><option value="slider">MOD_DHARMASHOP_PRODUCTS_SLIDER</option>
+                </field>
+                <field name="component_layouts" type="radio" default="1" filter="integer" layout="joomla.form.field.radio.switcher" label="MOD_DHARMASHOP_PRODUCTS_COMPONENT_LAYOUTS" description="MOD_DHARMASHOP_PRODUCTS_COMPONENT_LAYOUTS_DESC">
+                    <option value="0">JNO</option><option value="1">JYES</option>
+                </field>
+                <field name="exclude_duplicates" type="radio" default="0" filter="integer" layout="joomla.form.field.radio.switcher" label="MOD_DHARMASHOP_PRODUCTS_EXCLUDE_DUPLICATES" description="MOD_DHARMASHOP_PRODUCTS_EXCLUDE_DUPLICATES_DESC">
+                    <option value="0">JNO</option><option value="1">JYES</option>
+                </field>
+            </fieldset>
+            <fieldset name="grid" label="MOD_DHARMASHOP_PRODUCTS_TAB_GRID">
+                <field name="products_columns" type="list" default="3" filter="integer" label="MOD_DHARMASHOP_PRODUCTS_COLUMNS"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+                <field name="products_breakpoints" type="radio" default="0" filter="integer" layout="joomla.form.field.radio.switcher" label="MOD_DHARMASHOP_PRODUCTS_BREAKPOINTS"><option value="0">JNO</option><option value="1">JYES</option></field>
+                <field name="products_columns_xs" type="list" default="1" filter="integer" label="MOD_DHARMASHOP_PRODUCTS_COLUMNS_XS" showon="products_breakpoints:1"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+                <field name="products_columns_sm" type="list" default="1" filter="integer" label="MOD_DHARMASHOP_PRODUCTS_COLUMNS_SM" showon="products_breakpoints:1"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+                <field name="products_columns_md" type="list" default="2" filter="integer" label="MOD_DHARMASHOP_PRODUCTS_COLUMNS_MD" showon="products_breakpoints:1"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+                <field name="products_columns_lg" type="list" default="3" filter="integer" label="MOD_DHARMASHOP_PRODUCTS_COLUMNS_LG" showon="products_breakpoints:1"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+                <field name="products_columns_xl" type="list" default="3" filter="integer" label="MOD_DHARMASHOP_PRODUCTS_COLUMNS_XL" showon="products_breakpoints:1"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+                <field name="products_columns_xxl" type="list" default="3" filter="integer" label="MOD_DHARMASHOP_PRODUCTS_COLUMNS_XXL" showon="products_breakpoints:1"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+            </fieldset>
+            <fieldset name="slider" label="MOD_DHARMASHOP_PRODUCTS_TAB_SLIDER">
+                <field name="slider_columns_xs" type="list" default="1" filter="integer" label="MOD_DHARMASHOP_PRODUCTS_COLUMNS_XS"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+                <field name="slider_columns_sm" type="list" default="2" filter="integer" label="MOD_DHARMASHOP_PRODUCTS_COLUMNS_SM"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+                <field name="slider_columns_md" type="list" default="2" filter="integer" label="MOD_DHARMASHOP_PRODUCTS_COLUMNS_MD"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+                <field name="slider_columns_lg" type="list" default="3" filter="integer" label="MOD_DHARMASHOP_PRODUCTS_COLUMNS_LG"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+                <field name="slider_columns_xl" type="list" default="4" filter="integer" label="MOD_DHARMASHOP_PRODUCTS_COLUMNS_XL"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+                <field name="slider_columns_xxl" type="list" default="4" filter="integer" label="MOD_DHARMASHOP_PRODUCTS_COLUMNS_XXL"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+                <field name="slider_gap" type="number" default="16" min="0" max="64" filter="integer" label="MOD_DHARMASHOP_PRODUCTS_SLIDER_GAP" />
+                <field name="slider_speed" type="number" default="400" min="0" max="3000" filter="integer" label="MOD_DHARMASHOP_PRODUCTS_SLIDER_SPEED" />
+                <field name="slider_delay" type="number" default="5000" min="1000" max="60000" filter="integer" label="MOD_DHARMASHOP_PRODUCTS_SLIDER_DELAY" />
+                <field name="slider_arrows" type="radio" default="1" filter="integer" layout="joomla.form.field.radio.switcher" label="MOD_DHARMASHOP_PRODUCTS_SLIDER_ARROWS"><option value="0">JNO</option><option value="1">JYES</option></field>
+                <field name="slider_pagination" type="radio" default="1" filter="integer" layout="joomla.form.field.radio.switcher" label="MOD_DHARMASHOP_PRODUCTS_SLIDER_PAGINATION"><option value="0">JNO</option><option value="1">JYES</option></field>
+                <field name="slider_loop" type="radio" default="0" filter="integer" layout="joomla.form.field.radio.switcher" label="MOD_DHARMASHOP_PRODUCTS_SLIDER_LOOP"><option value="0">JNO</option><option value="1">JYES</option></field>
+                <field name="slider_autoplay" type="radio" default="0" filter="integer" layout="joomla.form.field.radio.switcher" label="MOD_DHARMASHOP_PRODUCTS_SLIDER_AUTOPLAY"><option value="0">JNO</option><option value="1">JYES</option></field>
+            </fieldset>
+            <fieldset name="advanced">
+                <field name="layout" type="modulelayout" label="JFIELD_ALT_LAYOUT_LABEL" class="form-select" validate="moduleLayout" />
+                <field name="moduleclass_sfx" type="textarea" label="COM_MODULES_FIELD_MODULECLASS_SFX_LABEL" rows="3" validate="CssIdentifier" />
+                <field name="cache" type="list" default="0" label="COM_MODULES_FIELD_CACHING_LABEL"><option value="0">COM_MODULES_FIELD_VALUE_NOCACHING</option><option value="1">COM_MODULES_FIELD_VALUE_CACHECONSERVATIVE</option><option value="2">COM_MODULES_FIELD_VALUE_CACHEPROGRESSIVE</option></field>
+            </fieldset>
+        </fields>
+    </config>
+</extension>

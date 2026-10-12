@@ -28,6 +28,7 @@ GROUPS = [
             "SEARCH",
             "LAYOUTS",
             "MODULE_CATEGORIES",
+            "MODULE_PRODUCTS",
             "CHECKOUT",
             "SHIPPING",
             "PAYMENTS",

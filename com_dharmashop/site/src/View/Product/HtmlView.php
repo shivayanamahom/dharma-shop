@@ -13,6 +13,7 @@ use Dharma\Component\DharmaShop\Site\Seo\ProductMetadata;
 use Dharma\Component\DharmaShop\Administrator\Image\ImageUrl;
 use Dharma\Component\DharmaShop\Site\Support\CartAssets;
 use Dharma\Component\DharmaShop\Site\Support\CartSession;
+use Dharma\Component\DharmaShop\Site\Support\RecentProducts;
 use Dharma\Component\DharmaShop\Site\Support\LayoutHooks;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
@@ -74,11 +75,17 @@ class HtmlView extends BaseHtmlView
         // Несемантические адреса (`/component/dharmashop/product/205`, `?option=com_dharmashop&view=product&id=205`) — 301 на ЧПУ.
         // Адрес через другой пункт меню (штатное поведение Joomla: ветка меню сохраняется) остаётся рабочим, его склеивает canonical.
         $app = Factory::getApplication();
+        $this->getDocument()->addScriptOptions('com_dharmashop.recentProducts', [
+            'productId' => (int) $this->item->id,
+            'cookieName' => RecentProducts::cookieName($app),
+            'cookiePath' => RecentProducts::cookiePath(),
+        ]);
         $requestUri = Uri::getInstance();
 
         if ($app->getInput()->getMethod() === 'GET' && (str_contains($requestUri->getPath(), '/component/dharmashop/') || $requestUri->hasVar('option'))) {
             $app->redirect($url, 301);
         }
+
 
         // Пункт меню этого товара: его заголовок и метаданные важнее общих правил, а цепочка крошек — сам пункт меню.
         $active = $app->getMenu()->getActive();
@@ -128,6 +135,9 @@ class HtmlView extends BaseHtmlView
             $this->getDocument()->getWebAssetManager()->getRegistry()->addExtensionRegistryFile('com_dharmashop');
             $this->getDocument()->getWebAssetManager()->useScript('com_dharmashop.sale-countdown');
         }
+
+        $this->getDocument()->getWebAssetManager()->getRegistry()->addExtensionRegistryFile('com_dharmashop');
+        $this->getDocument()->getWebAssetManager()->useScript('com_dharmashop.recent-products');
 
         parent::display($tpl);
     }

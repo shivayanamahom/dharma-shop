@@ -25,7 +25,7 @@ final class GroupCardRenderer
     }
 
     /** listing_group содержит показатели подходящего подмножества, а не общий кеш группы. */
-    public function render(object $representative, Registry $params, string $mode, array $fieldColumns = [], ?array $cart = null, string $context = ''): string
+    public function render(object $representative, Registry $params, string $mode, array $fieldColumns = [], ?array $cart = null, string $context = '', string $imageContext = ''): string
     {
         $group = $representative->listing_group ?? null;
         if (!is_object($group) || (int) ($group->id ?? 0) < 1 || (int) ($representative->id ?? 0) < 1) {
@@ -49,7 +49,7 @@ final class GroupCardRenderer
             'url' => Route::_('index.php?option=com_dharmashop&view=product&id=' . (int) $representative->id . '&catid=' . (int) $representative->catid, false),
             'image' => $image,
             'imageAlt' => (string) ($group->cover_alt ?? $group->title ?? ''),
-            'imageContext' => 'group.teaser.' . $mode,
+            'imageContext' => $imageContext !== '' ? $imageContext : 'group.teaser.' . $mode,
             'productCount' => isset($group->product_count) ? (int) $group->product_count : null,
             'choiceFields' => (array) ($group->choice_fields ?? []),
             'priceRange' => $range,
@@ -64,7 +64,7 @@ final class GroupCardRenderer
             if ($html) { self::assets(); }
             $this->products ??= new ProductCardRenderer($params, $cart);
             $data['productData'] = $this->products->data($representative, $mode, 'group.teaser', $instance, $html);
-            $data['productData']['imageContext'] = 'group.teaser.' . $mode;
+            $data['productData']['imageContext'] = $imageContext !== '' ? $imageContext : 'group.teaser.' . $mode;
             $data['productData']['compactActions'] = $mode === 'table';
             $data['image'] = (string) ($data['productData']['images'][0]->url ?? $representative->cover);
             $data['title'] = (string) $representative->title;

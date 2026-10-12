@@ -245,6 +245,16 @@
 			}
 		},
 		{
+			"name": "com_dharmashop.recent-products",
+			"version": "20261012a",
+			"type": "script",
+			"uri": "com_dharmashop/recent-products.js",
+			"attributes": {
+				"defer": true
+			},
+			"dependencies": ["core"]
+		},
+		{
 			"name": "com_dharmashop.uploader",
 			"type": "script",
 			"uri": "com_dharmashop/uploader.js",

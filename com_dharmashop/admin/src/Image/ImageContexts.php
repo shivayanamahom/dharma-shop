@@ -34,6 +34,7 @@ final class ImageContexts
         'module.products.grid' => [600, 600],
         'module.products.list' => [240, 240],
         'module.products.table' => [112, 112],
+        'module.products.slider' => [600, 600],
         'module.categories.grid' => [600, 400],
         'module.categories.accordion' => [600, 400],
         'module.categories.slider' => [600, 400],
@@ -85,7 +86,7 @@ final class ImageContexts
         $configured = [];
         foreach ($rows as $row) { $configured[(string) (((array) $row)['context'] ?? '')] = true; }
         foreach (self::defaults() as $row) {
-            if ((str_starts_with($row['context'], 'module.categories.') || str_starts_with($row['context'], 'field.color.') || $row['context'] === 'field.option.filter' || $row['context'] === 'group.choice' || $row['context'] === 'admin.group' || str_starts_with($row['context'], 'group.teaser.') || str_starts_with($row['context'], 'admin.picker.')) && !isset($configured[$row['context']])) {
+            if ((str_starts_with($row['context'], 'module.categories.') || str_starts_with($row['context'], 'module.products.') || str_starts_with($row['context'], 'field.color.') || $row['context'] === 'field.option.filter' || $row['context'] === 'group.choice' || $row['context'] === 'admin.group' || str_starts_with($row['context'], 'group.teaser.') || str_starts_with($row['context'], 'admin.picker.')) && !isset($configured[$row['context']])) {
                 $rows[] = $row;
             }
         }

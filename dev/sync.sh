@@ -70,4 +70,12 @@ if [ -d "$M" ]; then
   $R "$M/media/" "$T/media/mod_dharmashop_categories/"
   for l in ru-RU en-GB; do cp "$M/language/$l/"*.ini "$T/language/$l/"; done
 fi
+M="$S/mod_dharmashop_products"
+if [ -d "$M" ]; then
+  mkdir -p "$T/modules/mod_dharmashop_products" "$T/media/mod_dharmashop_products"
+  for d in services src tmpl layouts; do $R "$M/$d/" "$T/modules/mod_dharmashop_products/$d/"; done
+  cp "$M/mod_dharmashop_products.xml" "$T/modules/mod_dharmashop_products/"
+  $R "$M/media/" "$T/media/mod_dharmashop_products/"
+  for l in ru-RU en-GB; do cp "$M/language/$l/"*.ini "$T/language/$l/"; done
+fi
 echo synced

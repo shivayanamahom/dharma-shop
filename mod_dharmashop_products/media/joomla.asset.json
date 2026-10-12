@@ -1,0 +1,15 @@
+{
+    "$schema": "https://developer.joomla.org/schemas/json-schema/web_assets.json",
+    "name": "mod_dharmashop_products",
+    "version": "0.1.0",
+    "assets": [
+        {
+            "name": "mod_dharmashop_products.slider",
+            "type": "script",
+            "uri": "mod_dharmashop_products/slider.js",
+            "version": "20261012a",
+            "attributes": { "defer": true },
+            "dependencies": [ "dharmashop.swiper" ]
+        }
+    ]
+}
