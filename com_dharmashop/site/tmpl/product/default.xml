@@ -8,4 +8,16 @@
 			<field name="id" type="modal_product" label="COM_DHARMASHOP_MENU_PRODUCT" required="true" />
 		</fieldset>
 	</fields>
+	<fields name="params">
+		<fieldset name="product_display" label="COM_DHARMASHOP_CONFIG_DISPLAY" addfieldprefix="Dharma\Component\DharmaShop\Administrator\Field">
+			<field name="product_layout" type="layout" layoutgroup="product" label="COM_DHARMASHOP_LAYOUT_PRODUCT_LABEL" description="COM_DHARMASHOP_LAYOUT_PRODUCT_DESC" default="" validate="options"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option></field>
+			<field name="product_gallery_type" type="list" label="COM_DHARMASHOP_GALLERY_TYPE" description="COM_DHARMASHOP_GALLERY_TYPE_DESC" default="" validate="options"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option><option value="swiper">COM_DHARMASHOP_GALLERY_TYPE_SWIPER</option><option value="bootstrap">COM_DHARMASHOP_GALLERY_TYPE_BOOTSTRAP</option></field>
+			<field name="product_gallery_thumbs" type="list" label="COM_DHARMASHOP_GALLERY_THUMBS" description="COM_DHARMASHOP_GALLERY_THUMBS_DESC" default="" validate="options"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option><option value="bottom">COM_DHARMASHOP_GALLERY_THUMBS_BOTTOM</option><option value="none">COM_DHARMASHOP_GALLERY_THUMBS_NONE</option></field>
+			<field name="product_gallery_loop" type="list" label="COM_DHARMASHOP_GALLERY_LOOP" description="COM_DHARMASHOP_GALLERY_LOOP_DESC" default="" validate="options"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option><option value="0">JNO</option><option value="1">JYES</option></field>
+			<field name="product_gallery_lightbox" type="list" label="COM_DHARMASHOP_GALLERY_LIGHTBOX" description="COM_DHARMASHOP_GALLERY_LIGHTBOX_DESC" default="" validate="options"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option><option value="none">COM_DHARMASHOP_GALLERY_LIGHTBOX_NONE</option><option value="fancybox">COM_DHARMASHOP_GALLERY_LIGHTBOX_FANCYBOX</option></field>
+			<field name="product_page_show_discount" type="list" label="COM_DHARMASHOP_CONFIG_DISCOUNT_PAGE_SHOW" description="COM_DHARMASHOP_CONFIG_DISCOUNT_PAGE_SHOW_DESC" default="" validate="options"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option><option value="0">JNO</option><option value="1">JYES</option></field>
+			<field name="product_page_discount_display" type="list" label="COM_DHARMASHOP_CONFIG_DISCOUNT_PAGE_DISPLAY" description="COM_DHARMASHOP_CONFIG_DISCOUNT_DISPLAY_DESC" default="" validate="options"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option><option value="amount">COM_DHARMASHOP_CONFIG_DISCOUNT_AMOUNT</option><option value="percent">COM_DHARMASHOP_CONFIG_DISCOUNT_PERCENT</option></field>
+			<field name="product_page_sale_countdown" type="list" label="COM_DHARMASHOP_CONFIG_SALE_COUNTDOWN_PAGE" description="COM_DHARMASHOP_CONFIG_SALE_COUNTDOWN_PAGE_DESC" default="" validate="options"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option><option value="0">JNO</option><option value="1">JYES</option></field>
+		</fieldset>
+	</fields>
 </metadata>

@@ -68,7 +68,7 @@ class HtmlView extends BaseHtmlView
         if ($this->items) {
             $settings = ComponentHelper::getParams('com_dharmashop');
 
-            if ((int) $settings->get('product_card_sale_countdown', 1) === 1
+            if ((int) $this->params->get('product_card_sale_countdown', $settings->get('product_card_sale_countdown', 1)) === 1
                 && array_filter($this->items, static fn (object $item): bool => !empty($item->sale_end_timestamp))) {
                 $wa->useScript('com_dharmashop.sale-countdown');
             }

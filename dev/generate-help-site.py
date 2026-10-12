@@ -20,6 +20,7 @@ GROUPS = [
         [
             "HELP",
             "SETTINGS_REFERENCE",
+            "DISPLAY_SETTINGS",
             "FIELDS",
             "FILES_FIELD",
             "VARIANTS",

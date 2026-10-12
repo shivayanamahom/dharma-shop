@@ -9,6 +9,7 @@ use Dharma\Component\DharmaShop\Site\Placeholder\GlobalValues;
 use Dharma\Component\DharmaShop\Site\Placeholder\ProductValues;
 use Dharma\Component\DharmaShop\Site\Placeholder\Renderer;
 use Dharma\Component\DharmaShop\Site\Support\CartSession;
+use Dharma\Component\DharmaShop\Site\Support\DisplaySettings;
 use Dharma\Component\DharmaShop\Site\Support\Grid;
 use Dharma\Component\DharmaShop\Site\Support\MediaUrl;
 use Dharma\Component\DharmaShop\Site\Support\ProductCardRenderer;
@@ -89,7 +90,8 @@ trait ListingTrait
         return array_merge(Grid::keys('category'), Grid::keys($taxonomy->gridPrefix()), ['category_layout', 'product_card_layout',
             'product_card_intro', 'product_card_qty', 'product_card_cart_mode', 'product_card_images', 'category_product_count', 'category_price_range', $taxonomy->cardKey('layout'),
             $taxonomy->cardKey('intro'), $taxonomy->cardKey('count'), $taxonomy->cardKey('prices'), 'list_limit', 'list_ordering',
-            'category_default_view', 'table_show_fields', 'subcategory_show_image', 'category_page_show_image']);
+            'category_default_view', 'category_listing_mode', 'table_show_fields', 'subcategory_show_image', 'category_page_show_image',
+            'product_card_show_discount', 'product_card_discount_display', 'product_card_sale_countdown']);
     }
 
     /** Собирает параметры, вид и сортировку; возвращает параметры пункта меню этого вида. Товары не читает. */
@@ -124,6 +126,7 @@ trait ListingTrait
         $menu = $ownView ? $active->getParams() : new Registry();
         $this->menuId = $ownView ? (int) $active->id : 0;
         $this->mergeDisplay($menu, $keys);
+        $model->setListingMode((string) $this->params->get('category_listing_mode', 'products'));
         $this->money = new MoneyFormatter($settings);
         $this->catalogMode = (int) $settings->get('catalog_mode', 0) === 1;
 
@@ -375,10 +378,10 @@ trait ListingTrait
             'oldPrice' => $item->base_price !== null ? $this->money->format($item->base_price) : '',
             'discountAmount' => $item->discount_amount !== null ? $this->money->format($item->discount_amount) : '',
             'discountPercent' => (float) $item->discount_percent,
-            'showDiscount' => (int) $settings->get('product_card_show_discount', 1) === 1,
-            'discountDisplay' => $settings->get('product_card_discount_display', 'percent') === 'amount' ? 'amount' : 'percent',
+            'showDiscount' => (int) $this->params->get('product_card_show_discount', $settings->get('product_card_show_discount', 1)) === 1,
+            'discountDisplay' => $this->params->get('product_card_discount_display', $settings->get('product_card_discount_display', 'percent')) === 'amount' ? 'amount' : 'percent',
             'saleEndTimestamp' => (int) ($item->sale_end_timestamp ?? 0),
-            'showSaleCountdown' => (int) $settings->get('product_card_sale_countdown', 1) === 1,
+            'showSaleCountdown' => (int) $this->params->get('product_card_sale_countdown', $settings->get('product_card_sale_countdown', 1)) === 1,
             'saleBadgeId' => (int) $settings->get('sale_badge_id', 0),
             'badges' => array_map(fn (object $badge): object => (object) ((array) $badge + ['url' => $this->badgeRoute($badge->id)]), $item->badges),
             'categoryTitle' => (string) ($item->category_title ?? ''),
@@ -405,12 +408,12 @@ trait ListingTrait
 
     private function mergeDisplay(Registry $source, array $keys): void
     {
-        foreach ($keys as $key) {
-            $value = $source->get($key);
+        $keys = array_values(array_filter($keys, static fn (string $key): bool => $key !== 'list_limit'));
+        DisplaySettings::merge($this->params, $source, $keys);
 
-            if ($value !== null && $value !== '' && !($key === 'list_limit' && (int) $value === 0)) {
-                $this->params->set($key, $value);
-            }
+        $limit = $source->get('list_limit');
+        if ($limit !== null && $limit !== '' && (int) $limit !== 0) {
+            $this->params->set('list_limit', $limit);
         }
     }
 

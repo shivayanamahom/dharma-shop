@@ -45,6 +45,9 @@ class CategoryModel extends CategoriesModel
     private ?string $indexHint = null;
     private ?GroupListing $groupListing = null;
 
+    /** Переопределяемый режим выдачи из общих настроек → категории → пункта меню. */
+    private ?string $listingMode = null;
+
     private ?Registry $filterModule = null;
 
     public function setFilterModule(Registry $params): void
@@ -58,13 +61,20 @@ class CategoryModel extends CategoriesModel
         return $this->filterModule ??= FilterRequest::params();
     }
 
+    public function setListingMode(string $mode): void
+    {
+        $this->listingMode = in_array($mode, ['products', 'groups_products'], true) ? $mode : null;
+    }
+
     public function groupsEnabled(): bool
     {
         if (!$this->getFilterState()->isEmpty()) {
             $policy = (string) $this->filterModule()->get('filtered_listing', 'inherit');
             if (in_array($policy, ['groups', 'products'], true)) { return $policy === 'groups'; }
         }
-        return ComponentHelper::getParams('com_dharmashop')->get('category_listing_mode', 'products') === 'groups_products';
+        $mode = $this->listingMode ?? (string) ComponentHelper::getParams('com_dharmashop')->get('category_listing_mode', 'products');
+
+        return $mode === 'groups_products';
     }
 
     private function groupListing(): GroupListing

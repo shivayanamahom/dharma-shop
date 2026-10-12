@@ -56,7 +56,7 @@ $renderCard = function (object $item): string {
                     </table>
                 </div>
             <?php else : ?>
-                <div class="<?php echo $this->cardLayout === 'list' ? 'row row-cols-1 g-3' : 'row row-cols-1 row-cols-md-' . min(2, $this->columns) . ' row-cols-xl-' . $this->columns . ' g-3'; ?>">
+                <div class="<?php echo $this->cardLayout === 'list' ? 'row row-cols-1 g-3' : $this->escape($this->gridClasses); ?>">
                     <?php foreach ($this->items as $item) : ?><div class="col"><?php echo $renderCard($item); ?></div><?php endforeach; ?>
                 </div>
             <?php endif; ?>

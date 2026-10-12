@@ -97,6 +97,12 @@ if ($canQuickCreate) { $wa->useScript('com_dharmashop.admin-quick-create'); }
         <fieldset class="options-form">
             <legend><?php echo Text::_('COM_DHARMASHOP_TAB_DISPLAY'); ?></legend>
             <?php echo $this->form->renderField('product_layout', 'params'); ?>
+            <fieldset class="options-form">
+                <legend><?php echo Text::_('COM_DHARMASHOP_CONFIG_PRODUCT_PAGE'); ?></legend>
+                <?php foreach (['product_gallery_type', 'product_gallery_thumbs', 'product_gallery_loop', 'product_gallery_lightbox', 'product_page_show_discount', 'product_page_discount_display', 'product_page_sale_countdown'] as $name) : ?>
+                    <?php echo $this->form->renderField($name, 'params'); ?>
+                <?php endforeach; ?>
+            </fieldset>
         </fieldset>
         <?php echo HTMLHelper::_('uitab.endTab'); ?>
 

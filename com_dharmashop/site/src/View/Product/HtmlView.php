@@ -15,6 +15,7 @@ use Dharma\Component\DharmaShop\Site\Support\CartAssets;
 use Dharma\Component\DharmaShop\Site\Support\CartSession;
 use Dharma\Component\DharmaShop\Site\Support\FavoritesSession;
 use Dharma\Component\DharmaShop\Site\Support\FavoritesSettings;
+use Dharma\Component\DharmaShop\Site\Support\DisplaySettings;
 use Joomla\CMS\Session\Session;
 use Dharma\Component\DharmaShop\Site\Support\RecentProducts;
 use Dharma\Component\DharmaShop\Site\Support\LayoutHooks;
@@ -59,6 +60,19 @@ class HtmlView extends BaseHtmlView
     {
         $this->item = $this->getModel()->getItem();
         $this->params = ComponentHelper::getParams('com_dharmashop');
+        $app = Factory::getApplication();
+        $active = $app->getMenu()->getActive();
+        $this->menuOwnsPage = $active !== null && ($active->query['view'] ?? '') === 'product'
+            && (int) ($active->query['id'] ?? 0) === (int) $this->item->id;
+        $displayKeys = [
+            'product_gallery_type', 'product_gallery_thumbs', 'product_gallery_loop', 'product_gallery_lightbox',
+            'product_page_show_discount', 'product_page_discount_display', 'product_page_sale_countdown',
+        ];
+        DisplaySettings::merge($this->params, $this->item->params, $displayKeys);
+        if ($this->menuOwnsPage) {
+            DisplaySettings::merge($this->params, $active->getParams(), $displayKeys);
+        }
+
         $money = new MoneyFormatter($this->params);
         $this->price = $money->range($this->item->price_min, $this->item->price_max, !empty($this->item->price_free));
         $this->showDiscount = (int) $this->params->get('product_page_show_discount', 1) === 1 && $this->item->base_price !== null;
@@ -81,7 +95,6 @@ class HtmlView extends BaseHtmlView
         $url = preg_match('~^https?://~i', $route) ? $route : rtrim(Uri::root(), '/') . '/' . ltrim($route, '/');
         // Несемантические адреса (`/component/dharmashop/product/205`, `?option=com_dharmashop&view=product&id=205`) — 301 на ЧПУ.
         // Адрес через другой пункт меню (штатное поведение Joomla: ветка меню сохраняется) остаётся рабочим, его склеивает canonical.
-        $app = Factory::getApplication();
         $this->getDocument()->addScriptOptions('com_dharmashop.recentProducts', [
             'productId' => (int) $this->item->id,
             'cookieName' => RecentProducts::cookieName($app),
@@ -95,12 +108,8 @@ class HtmlView extends BaseHtmlView
 
 
         // Пункт меню этого товара: его заголовок и метаданные важнее общих правил, а цепочка крошек — сам пункт меню.
-        $active = $app->getMenu()->getActive();
-        $ownMenu = $active !== null && ($active->query['view'] ?? '') === 'product' && (int) ($active->query['id'] ?? 0) === (int) $this->item->id;
-        $this->menuOwnsPage = $ownMenu;
-
         $seo = new PageSeo($this->params);
-        $this->seo = $seo->resolve('product', $this->item, ProductValues::build($this->item, new MoneyFormatter($this->params)), $ownMenu ? $active->getParams() : new Registry(), $url);
+        $this->seo = $seo->resolve('product', $this->item, ProductValues::build($this->item, new MoneyFormatter($this->params)), $this->menuOwnsPage ? $active->getParams() : new Registry(), $url);
         $content = null;
         if ((int) $this->params->get('seo_structureddata', 1) === 1) {
             $min = $this->item->price_min;
@@ -118,7 +127,16 @@ class HtmlView extends BaseHtmlView
         }
         $seo->apply($this->seo, $this->getDocument(), $content);
 
-        $layout = (string) $this->params->get('product_layout', 'default');
+        $layout = trim((string) $this->item->params->get('product_layout', ''));
+        if ($layout === '') {
+            $layout = (string) $this->params->get('product_layout', 'default');
+        }
+        if ($this->menuOwnsPage) {
+            $menuLayout = trim((string) $active->getParams()->get('product_layout', ''));
+            if ($menuLayout !== '') {
+                $layout = $menuLayout;
+            }
+        }
         $layout = preg_match('/^[a-z0-9_-]+$/i', $layout) && is_file(JPATH_ROOT . '/components/com_dharmashop/tmpl/product/' . $layout . '.php')
             ? $layout : 'default';
         $this->setLayout($layout);

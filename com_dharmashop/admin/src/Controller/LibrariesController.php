@@ -56,8 +56,8 @@ class LibrariesController extends BaseController
         $updater = new LibraryUpdater();
 
         if ($action === 'check') {
-            $updater->forgetCache();
-            $this->setRedirect($url, Text::_('COM_DHARMASHOP_LIB_CHECKED'));
+            $checked = $updater->checkLatestVersions();
+            $this->setRedirect($url, Text::_($checked ? 'COM_DHARMASHOP_LIB_CHECKED' : 'COM_DHARMASHOP_LIB_CHECK_FAILED'), $checked ? 'message' : 'warning');
 
             return;
         }

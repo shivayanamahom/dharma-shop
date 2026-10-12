@@ -117,16 +117,20 @@ final class LibraryUpdater
         ];
     }
 
-    /** Сбрасывает кеш номеров версий («Проверить сейчас»). */
-    public function forgetCache(): void
+    /** Проверяет последние версии только по явному действию пользователя. */
+    public function checkLatestVersions(): bool
     {
-        foreach (array_keys(self::LIBRARIES) as $key) {
-            $file = $this->cacheFile($key);
+        $success = true;
 
-            if (is_file($file)) {
-                @unlink($file);
+        foreach (array_keys(self::LIBRARIES) as $key) {
+            try {
+                $this->latestVersion($key, true);
+            } catch (\Throwable) {
+                $success = false;
             }
         }
+
+        return $success;
     }
 
     /** Установленная версия — из joomla.asset.json плагина. */

@@ -5,6 +5,7 @@ namespace Dharma\Component\DharmaShop\Site\Support;
 
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Layout\FileLayout;
+use Joomla\Registry\Registry;
 
 \defined('_JEXEC') or die;
 
@@ -35,6 +36,21 @@ final class FavoritesSettings
         $columns = (int) ComponentHelper::getParams('com_dharmashop')->get('favorites_columns', 3);
 
         return max(1, min(6, $columns));
+    }
+
+    public static function gridClasses(?Registry $menuParams = null): string
+    {
+        $params = clone ComponentHelper::getParams('com_dharmashop');
+        if ($menuParams !== null) {
+            foreach (Grid::keys('favorites') as $key) {
+                $value = $menuParams->get($key);
+                if ($value !== null && $value !== '') {
+                    $params->set($key, $value);
+                }
+            }
+        }
+
+        return Grid::classes($params, 'favorites', 'g-3');
     }
 
     public static function renderIcon(int $size = 20): string

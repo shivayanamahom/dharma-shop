@@ -40,12 +40,16 @@ class LibrariesField extends FormField
         $rows = '';
 
         foreach (array_keys($updater->libraries()) as $key) {
-            $status = $updater->status($key);
+            // Страница настроек не должна обращаться к GitHub. Актуальность обновляется кнопкой ниже.
+            $status = $updater->status($key, false);
             $installed = $status['installed'] ?? Text::_('COM_DHARMASHOP_LIB_NOT_INSTALLED');
             $state = '';
             $buttons = '';
 
-            if ($status['error'] !== null) {
+            if ($status['latest'] === null) {
+                $latest = '—';
+                $state = '<span class="badge text-bg-secondary">' . $escape(Text::_('COM_DHARMASHOP_LIB_NOT_CHECKED')) . '</span>';
+            } elseif ($status['error'] !== null) {
                 $latest = '—';
                 $state = '<span class="text-danger">' . $escape(str_starts_with((string) $status['error'], 'COM_DHARMASHOP_') ? Text::_($status['error']) : Text::_('COM_DHARMASHOP_LIB_ERROR_GENERIC')) . '</span>';
             } else {

@@ -90,7 +90,7 @@ final class ProductCardRenderer
             CartAssets::use(Factory::getApplication()->getDocument());
             if ($cartMode === 'qty') { $wa->useScript('com_dharmashop.qty'); }
         }
-        $showCountdown = (int) $settings->get('product_card_sale_countdown', 1) === 1;
+        $showCountdown = (int) $this->params->get('product_card_sale_countdown', $settings->get('product_card_sale_countdown', 1)) === 1;
         if ($loadAssets && $showCountdown && !empty($item->sale_end_timestamp)) { $wa->useScript('com_dharmashop.sale-countdown'); }
         $data = ['item' => $item, 'params' => clone $this->params, 'mode' => $mode, 'cardLayout' => $mode,
             'cardFolder' => 'product-card', 'cardLayoutSource' => 'override', 'instanceId' => $instance . '-' . (int) $item->id,
@@ -103,8 +103,8 @@ final class ProductCardRenderer
             'oldPrice' => $item->base_price !== null ? $this->money->format($item->base_price) : '',
             'discountAmount' => $item->discount_amount !== null ? $this->money->format($item->discount_amount) : '',
             'discountPercent' => (float) $item->discount_percent,
-            'showDiscount' => (int) $settings->get('product_card_show_discount', 1) === 1,
-            'discountDisplay' => $settings->get('product_card_discount_display', 'percent') === 'amount' ? 'amount' : 'percent',
+            'showDiscount' => (int) $this->params->get('product_card_show_discount', $settings->get('product_card_show_discount', 1)) === 1,
+            'discountDisplay' => $this->params->get('product_card_discount_display', $settings->get('product_card_discount_display', 'percent')) === 'amount' ? 'amount' : 'percent',
             'saleEndTimestamp' => (int) ($item->sale_end_timestamp ?? 0), 'showSaleCountdown' => $showCountdown,
             'saleBadgeId' => (int) $settings->get('sale_badge_id', 0),
             'badges' => array_map(static fn (object $badge): object => (object) ((array) $badge + ['url' => Route::_('index.php?option=com_dharmashop&view=badge&id=' . (int) $badge->id, false)]), $item->badges ?? []),

@@ -26,6 +26,7 @@ class HtmlView extends BaseHtmlView
     public string $clearUrl = '';
     public int $count = 0;
     public int $columns = 3;
+    public string $gridClasses = '';
     public string $cardLayout = 'grid';
     public string $cardLayoutSource = 'component';
     public string $pageHeading = '';
@@ -53,6 +54,7 @@ class HtmlView extends BaseHtmlView
         }
         $columns = $menuParams->get('favorites_columns', '');
         $this->columns = max(1, min(6, (int) ($columns === '' ? FavoritesSettings::columns() : $columns)));
+        $this->gridClasses = FavoritesSettings::gridClasses($menuParams);
         $heading = trim((string) $menuParams->get('favorites_page_heading', ''));
         $this->pageHeading = $heading !== '' ? $heading : Text::_('COM_DHARMASHOP_FAVORITES_TITLE');
         $showHeading = $menuParams->get('favorites_show_heading', '');
