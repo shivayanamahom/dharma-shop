@@ -196,8 +196,25 @@ final class Indexer
      */
     public function rebuildProducts(array $productIds, int $chunk = 500): void
     {
-        foreach (array_chunk(array_values(array_unique(array_map('intval', $productIds))), $chunk) as $ids) {
-            (new \Dharma\Component\DharmaShop\Administrator\Filter\FacetIndexer($this->db))->track($ids, function () use ($ids): void {
+        $all = array_values(array_unique(array_filter(array_map('intval', $productIds))));
+        $facets = new \Dharma\Component\DharmaShop\Administrator\Filter\FacetIndexer($this->db);
+
+        // Много товаров (перенос поддерева): относительный учёт по каждому куску дал бы повторную пересборку одних и тех же категорий
+        // и всего каталога на каждые 500 товаров. Принадлежность меняет только категории — пересобираем их один раз по объединению.
+        if (count($all) > \Dharma\Component\DharmaShop\Administrator\Filter\FacetIndexer::TRACK_LIMIT) {
+            $categories = $facets->categoriesOf($all);
+
+            foreach (array_chunk($all, $chunk) as $ids) {
+                $this->rebuildParentsForProducts($ids);
+            }
+
+            $facets->rebuildCategories(array_merge($categories, $facets->categoriesOf($all)));
+
+            return;
+        }
+
+        foreach (array_chunk($all, $chunk) as $ids) {
+            $facets->track($ids, function () use ($ids): void {
                 $this->rebuildParentsForProducts($ids);
             });
         }

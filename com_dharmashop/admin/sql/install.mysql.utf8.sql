@@ -44,6 +44,8 @@ CREATE TABLE IF NOT EXISTS `#__dharmashop_products` (
   UNIQUE KEY `uq_group_combo` (`group_id`, `combo_hash`),
   UNIQUE KEY `uq_cat_alias` (`catid`, `alias`),
   KEY `idx_state_created` (`state`, `created`),
+  KEY `idx_state_price` (`state`, `price_min`, `id`),
+  KEY `idx_state_title` (`state`, `title`, `id`),
   KEY `idx_modified` (`modified`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -330,6 +332,7 @@ CREATE TABLE IF NOT EXISTS `#__dharmashop_search` (
   `title_norm` varchar(255) NOT NULL DEFAULT '',
   `body` mediumtext NULL,
   PRIMARY KEY (`product_id`),
+  KEY `idx_title` (`title_norm`),
   FULLTEXT KEY `ft_search` (`title_norm`, `body`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

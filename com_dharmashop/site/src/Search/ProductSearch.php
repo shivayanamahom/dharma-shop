@@ -65,6 +65,7 @@ final class ProductSearch
         $groups = [];
         $score = '';
         $where = '';
+        $shortWords = [];
         $counter = 0;
         $bind = static function (string $value) use (&$binds, &$counter): string {
             $name = ':dsv' . $counter++;
@@ -91,7 +92,7 @@ final class ProductSearch
             // Совпадение слова в начале слова названия: для слов короче 3 символов это же и условие отбора (FULLTEXT их не знает).
             $like = [];
 
-            foreach ($words as $word) {
+            foreach ($long ? $words : [] as $word) {
                 $like[] = 'title_norm LIKE ' . $bind($word . '%') . ' OR title_norm LIKE ' . $bind('% ' . $word . '%');
             }
 
@@ -101,8 +102,25 @@ final class ProductSearch
                 // Совпадение в названии важнее совпадения в описании: +100 за слово запроса в названии.
                 $score .= ' + IF(' . implode(' OR ', $like) . ', 100, 0)';
             } else {
-                $where .= ' AND (' . implode(' OR ', $like) . ')';
+                $shortWords[] = $words;
             }
+        }
+
+        // Слова короче порога FULLTEXT не знает. Рядом с длинным словом это дешёвое уточнение уже найденных строк (любая позиция в
+        // названии). Если длинных слов нет, условие отбирает строки само: ведущий `%` читал бы всю таблицу, поэтому только начало
+        // названия — по префиксному индексу `idx_title`.
+        foreach ($shortWords as $words) {
+            $parts = [];
+
+            foreach ($words as $word) {
+                $parts[] = 'title_norm LIKE ' . $bind($word . '%');
+
+                if ($groups) {
+                    $parts[] = 'title_norm LIKE ' . $bind('% ' . $word . '%');
+                }
+            }
+
+            $where .= ' AND (' . implode(' OR ', $parts) . ')';
         }
 
         if ($groups) {

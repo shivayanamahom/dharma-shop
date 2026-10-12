@@ -26,15 +26,29 @@ final class GroupListing
         return 'CASE WHEN p.group_id>0 THEN -CAST(p.group_id AS SIGNED) ELSE p.id END';
     }
 
-    /** Group taxonomy decides where the group appears; a visible member is still required. */
-    public function applyContext(QueryInterface $query, int $category, string $extension, array $access): void
+    /**
+     * Group taxonomy decides where the group appears; a visible member is still required.
+     *
+     * `$materialize`: without a selective filter/search almost every product is a candidate, and a correlated probe per product
+     * (twice for the category test) costs seconds at 100k. Then group visibility and the groups of the category are computed once
+     * as derived tables over groups, and the category scope is limited through an indexed join. With a selective filter the
+     * correlated probes only touch the few matching products and stay cheaper.
+     */
+    public function applyContext(QueryInterface $query, int $category, string $extension, array $access, bool $materialize = false): void
     {
         $this->access = array_map('intval', $access) ?: [0];
         $levels = implode(',', $this->access);
         $catalog = $this->db->quote('com_dharmashop');
-        $query->join('LEFT', '#__dharmashop_product_groups AS lg ON lg.id=p.group_id')
-            ->join('LEFT', '#__categories AS lgc ON lgc.id=lg.catid');
+        $query->join('LEFT', '#__dharmashop_product_groups AS lg ON lg.id=p.group_id');
         $ungrouped = '(p.group_id IS NULL OR p.group_id=0)';
+
+        if ($materialize) {
+            $this->applyMaterialized($query, $category, $extension, $levels, $catalog, $ungrouped);
+
+            return;
+        }
+
+        $query->join('LEFT', '#__categories AS lgc ON lgc.id=lg.catid');
         $visible = "lg.state=1 AND ((lg.catid=1 AND lgc.extension='system' AND lgc.parent_id=0) OR (lgc.extension=$catalog AND lgc.published=1 AND lgc.access IN ($levels)"
             . " AND NOT EXISTS (SELECT 1 FROM #__categories lgb WHERE lgb.extension=$catalog AND lgb.lft<=lgc.lft AND lgb.rgt>=lgc.rgt AND (lgb.published<>1 OR lgb.access NOT IN ($levels)))))";
         $query->where("($ungrouped OR ($visible))");
@@ -49,6 +63,30 @@ final class GroupListing
                 . " AND (lgh.published<>1 OR lgh.access NOT IN ($levels)))";
             $query->where("(($ungrouped AND pc.product_id IS NOT NULL) OR (p.group_id>0 AND EXISTS ($members)))");
         }
+    }
+
+    /** Same visibility and category rules as the correlated form, evaluated once per group instead of once per product. */
+    private function applyMaterialized(QueryInterface $query, int $category, string $extension, string $levels, string $catalog, string $ungrouped): void
+    {
+        $blocked = fn (string $alias, string $ext): string => "NOT EXISTS (SELECT 1 FROM #__categories lgb WHERE lgb.extension=$ext AND lgb.lft<=$alias.lft AND lgb.rgt>=$alias.rgt AND (lgb.published<>1 OR lgb.access NOT IN ($levels)))";
+        $visible = 'SELECT g.id FROM #__dharmashop_product_groups g LEFT JOIN #__categories gc ON gc.id=g.catid WHERE g.state=1'
+            . " AND ((g.catid=1 AND gc.extension='system' AND gc.parent_id=0) OR (gc.extension=$catalog AND gc.published=1 AND gc.access IN ($levels) AND " . $blocked('gc', $catalog) . '))';
+        $query->join('LEFT', "($visible) AS vg ON vg.id=p.group_id");
+        $query->where("($ungrouped OR vg.id IS NOT NULL)");
+
+        if ($category <= 0) {
+            return;
+        }
+
+        $ext = $this->db->quote($extension);
+        $inCategory = 'SELECT DISTINCT lgt.group_id AS id FROM #__dharmashop_group_categories lgt INNER JOIN #__categories lga ON lga.id=lgt.catid'
+            . ' INNER JOIN #__categories lgs ON lgs.id=' . $category
+            . " WHERE lga.extension=$ext AND lga.lft>=lgs.lft AND lga.rgt<=lgs.rgt AND lga.published=1 AND lga.access IN ($levels) AND " . $blocked('lga', $ext);
+        // Products of the category: ungrouped ones through the storefront index, grouped ones through the groups placed there.
+        $scope = 'SELECT sp.product_id AS id FROM #__dharmashop_product_categories sp INNER JOIN #__dharmashop_products spp ON spp.id=sp.product_id'
+            . ' AND (spp.group_id IS NULL OR spp.group_id=0) WHERE sp.catid=' . $category . ' AND sp.state=1'
+            . " UNION ALL SELECT gp.id FROM ($inCategory) sg INNER JOIN #__dharmashop_products gp ON gp.group_id=sg.id";
+        $query->join('INNER', "($scope) AS scope ON scope.id=p.id");
     }
 
     /** Keep the first matching member under this sort, BEFORE LIMIT/OFFSET. */

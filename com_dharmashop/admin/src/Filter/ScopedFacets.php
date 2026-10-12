@@ -54,7 +54,7 @@ final class ScopedFacets
             }
             foreach ($groups as $group) {
                 $query = $source($group['state']);
-                if (!$this->withinLimit($query)) { $fallbackFields($group['fields']); continue; }
+                if (!$this->withinLimit($query, $group['state']->key())) { $fallbackFields($group['fields']); continue; }
                 try {
                     $subset = new FilterDefinition($definition->catid, $group['fields']);
                     $values = $this->values($query, $subset);
@@ -67,7 +67,7 @@ final class ScopedFacets
             foreach (['brand' => $definition->brands, 'badge' => $definition->badges, 'cat' => $definition->subcategories, 'price' => []] as $key => $directory) {
                 $query = $source($state->withoutSystem($key));
                 try {
-                    if (!$this->withinLimit($query)) { throw new \RuntimeException('Candidate limit', 3024); }
+                    if (!$this->withinLimit($query, $state->withoutSystem($key)->key())) { throw new \RuntimeException('Candidate limit', 3024); }
                     if ($key === 'price') { $result['price'] = $this->price($query); }
                     else { $result['directories'][$key] = $this->directory($query, array_keys($directory), $key !== 'cat'); }
                 } catch (\Throwable $error) {
@@ -113,13 +113,24 @@ final class ScopedFacets
         return QueryBudget::apply($query, $remaining);
     }
 
-    private function withinLimit(QueryInterface $source): bool
+    /** @var array<string, bool> результат проверки по состоянию (ключ `FilterState::key()`): справочники без своего выбора считаются по тому же набору, что и поля */
+    private array $within = [];
+
+    private function withinLimit(QueryInterface $source, ?string $stateKey = null): bool
     {
+        if ($stateKey !== null && isset($this->within[$stateKey])) {
+            return $this->within[$stateKey];
+        }
+
         $limit = max(100, min(100000, (int) ComponentHelper::getParams('com_dharmashop')->get('filter_live_limit', 20000)));
         $bounded = clone $source;
         $bounded->setLimit($limit + 1);
-        try { return (int) $this->db->setQuery($this->outer($bounded, ['COUNT(*)']))->loadResult() <= $limit; }
-        catch (\Throwable $error) { if (self::timeout($error)) { return false; } throw $error; }
+        try { $ok = (int) $this->db->setQuery($this->outer($bounded, ['COUNT(*)']))->loadResult() <= $limit; }
+        catch (\Throwable $error) { if (!self::timeout($error)) { throw $error; } $ok = false; }
+
+        if ($stateKey !== null) { $this->within[$stateKey] = $ok; }
+
+        return $ok;
     }
 
     private function values(QueryInterface $source, FilterDefinition $definition): array

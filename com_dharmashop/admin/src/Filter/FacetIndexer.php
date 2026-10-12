@@ -30,7 +30,7 @@ use Joomla\Database\ParameterType;
 final class FacetIndexer
 {
     /** Предел товаров в одном `track()`: больше — слишком дорого, нужна пересборка. */
-    private const TRACK_LIMIT = 300;
+    public const TRACK_LIMIT = 1000;
 
     public function __construct(private readonly DatabaseInterface $db)
     {
@@ -178,6 +178,19 @@ final class FacetIndexer
         FilterCache::forget();
     }
 
+    /**
+     * Категории витрины, в которых сейчас числятся товары (для пересборки предрасчёта). Без «всего каталога» (0): для операций,
+     * меняющих только принадлежность категориям, охват каталога не меняется.
+     *
+     * @param   int[]  $ids
+     *
+     * @return  int[]
+     */
+    public function categoriesOf(array $ids): array
+    {
+        return array_values(array_diff($this->affectedCategories($ids), [0]));
+    }
+
     private function affectedCategories(array $ids): array
     {
         $categories = [0];
@@ -301,7 +314,7 @@ final class FacetIndexer
         }
 
         $rows = $db->setQuery(
-            'SELECT pc.product_id, pc.catid, v.field_id, v.option_id, f.store FROM ' . $db->quoteName('#__dharmashop_product_categories', 'pc')
+            'SELECT pc.product_id, pc.catid, v.field_id, v.option_id, f.store, MIN(v.num) AS mn, MAX(COALESCE(v.num_end, v.num)) AS mx FROM ' . $db->quoteName('#__dharmashop_product_categories', 'pc')
             . ' JOIN ' . $db->quoteName('#__dharmashop_field_values', 'v') . ' ON v.product_id = pc.product_id'
             . ' JOIN ' . $db->quoteName('#__dharmashop_fields', 'f') . ' ON f.id = v.field_id AND ' . $this->eligible('f', "'option','number','range'")
             . " WHERE pc.state = 1 AND pc.product_id IN ($list) AND (v.option_id IS NOT NULL OR v.num IS NOT NULL) GROUP BY pc.product_id, pc.catid, v.field_id, v.option_id, f.store"
@@ -309,7 +322,7 @@ final class FacetIndexer
 
         // Весь каталог (catid = 0) — опубликованные товары без витрины.
         $rows = array_merge($rows, $db->setQuery(
-            'SELECT p.id AS product_id, 0 AS catid, v.field_id, v.option_id, f.store FROM ' . $db->quoteName('#__dharmashop_products', 'p')
+            'SELECT p.id AS product_id, 0 AS catid, v.field_id, v.option_id, f.store, MIN(v.num) AS mn, MAX(COALESCE(v.num_end, v.num)) AS mx FROM ' . $db->quoteName('#__dharmashop_products', 'p')
             . ' JOIN ' . $db->quoteName('#__dharmashop_field_values', 'v') . ' ON v.product_id = p.id'
             . ' JOIN ' . $db->quoteName('#__dharmashop_fields', 'f') . ' ON f.id = v.field_id AND ' . $this->eligible('f', "'option','number','range'")
             . " WHERE p.state = 1 AND p.id IN ($list) AND (v.option_id IS NOT NULL OR v.num IS NOT NULL) GROUP BY p.id, v.field_id, v.option_id, f.store"
@@ -319,7 +332,8 @@ final class FacetIndexer
             if ($row->store === 'option') {
                 $out[(int) $row->product_id]['facets'][(int) $row->catid . ':' . (int) $row->field_id . ':' . (int) $row->option_id] = true;
             } else {
-                $out[(int) $row->product_id]['ranges'][(int) $row->catid . ':' . (int) $row->field_id] = true;
+                // Границы значений самого товара: по ним решается, нужен ли пересчёт границ категории (см. apply()).
+                $out[(int) $row->product_id]['ranges'][(int) $row->catid . ':' . (int) $row->field_id] = $row->mn === null ? true : [(float) $row->mn, (float) $row->mx];
             }
         }
 
@@ -346,10 +360,35 @@ final class FacetIndexer
                 $db->setQuery("UPDATE $facets SET products = GREATEST(products - 1, 0) WHERE catid = $catid AND field_id = $field AND option_id = $option")->execute();
             }
 
-            // Границы чисел пересчитываются живым запросом по затронутым категориям и полям (убрать значение из границ относительно нельзя).
-            foreach ([$old['ranges'], $new['ranges']] as $ranges) {
-                foreach (array_keys($ranges) as $key) {
-                    $recompute[(string) $key] = true;
+            // Границы чисел: пересчёт живым запросом (он читает все значения категории, ~135 мс при 100 тыс. товаров) нужен только если
+            // товар был краем границы или его границы неизвестны; иначе новые значения лишь расширяют границу, а внутренние ничего не меняют.
+            foreach (array_unique(array_merge(array_keys($old['ranges']), array_keys($new['ranges']))) as $key) {
+                $key = (string) $key;
+                $was = $old['ranges'][$key] ?? null;
+                $now = $new['ranges'][$key] ?? null;
+
+                if (isset($recompute[$key]) || $was === $now) {
+                    continue;
+                }
+
+                if (($was !== null && !is_array($was)) || ($now !== null && !is_array($now))) {
+                    $recompute[$key] = true;
+
+                    continue;
+                }
+
+                [$catid, $field] = array_map('intval', explode(':', $key));
+                $stored = $this->storedRange($catid, $field);
+
+                if ($was !== null && ($stored === null || abs($was[0] - $stored[0]) < 1.0E-6 || abs($was[1] - $stored[1]) < 1.0E-6)) {
+                    $recompute[$key] = true;
+
+                    continue;
+                }
+
+                if ($now !== null) {
+                    $db->setQuery('INSERT INTO ' . $db->quoteName('#__dharmashop_filter_ranges') . " (catid, field_id, num_min, num_max) VALUES ($catid, $field, " . $db->quote((string) $now[0]) . ', ' . $db->quote((string) $now[1])
+                        . ') ON DUPLICATE KEY UPDATE num_min = LEAST(num_min, VALUES(num_min)), num_max = GREATEST(num_max, VALUES(num_max))')->execute();
                 }
             }
         }
@@ -358,6 +397,14 @@ final class FacetIndexer
             [$catid, $field] = array_map('intval', explode(':', (string) $key));
             $this->recomputeRange($catid, $field);
         }
+    }
+
+    /** @return array{0: float, 1: float}|null текущие сохранённые границы категории и поля */
+    private function storedRange(int $catid, int $fieldId): ?array
+    {
+        $row = $this->db->setQuery('SELECT num_min, num_max FROM ' . $this->db->quoteName('#__dharmashop_filter_ranges') . " WHERE catid = $catid AND field_id = $fieldId")->loadObject();
+
+        return $row && $row->num_min !== null ? [(float) $row->num_min, (float) $row->num_max] : null;
     }
 
     private function recomputeRange(int $catid, int $fieldId): void

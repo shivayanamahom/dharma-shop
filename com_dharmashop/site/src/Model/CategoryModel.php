@@ -98,7 +98,13 @@ class CategoryModel extends CategoriesModel
         $this->searchFuzzy = false;
 
         if ((int) ComponentHelper::getParams('com_dharmashop')->get('search_fuzzy', 1) === 1) {
-            $this->searchFuzzy = (int) $this->getDatabase()->setQuery($this->productsQuery(forListing: $this->groupsEnabled())->select('COUNT(*)'))->loadResult() === 0;
+            // Нужна лишь проверка «есть ли хоть одна строка»; решение зависит от запроса и области, не от страницы, поэтому кэшируется
+            // (раньше каждая страница выдачи заново считала все совпадения).
+            $db = $this->getDatabase();
+            $probe = $this->productsQuery(forListing: $this->groupsEnabled())->select('1');
+            $bindings = array_map(static fn(object $bound): mixed => $bound->value, $probe->getBounded());
+            $this->searchFuzzy = FilterCache::remember('fuzzy:v1:' . md5($db->replacePrefix((string) $probe) . json_encode($bindings)),
+                static fn(): bool => !$db->setQuery(QueryBudget::hard($probe), 0, 1)->loadResult());
         }
 
         return $this->searchFuzzy;
@@ -198,13 +204,29 @@ class CategoryModel extends CategoriesModel
             $query->select('DISTINCT ' . $unit);
             $bindings = array_map(static fn(object $bound): mixed => $bound->value, $query->getBounded());
             $key = 'total:v2:' . md5($db->replacePrefix((string) $query) . json_encode([$bindings, $cap]));
-            $found = FilterCache::remember($key, fn(): int => count($db->setQuery(QueryBudget::apply($query), 0, $cap + 1)->loadColumn()));
+            try {
+                $found = FilterCache::remember($key, fn(): int => count($db->setQuery(QueryBudget::apply($query), 0, $cap + 1)->loadColumn()));
+            } catch (\Throwable $error) {
+                // Подсчёт не уложился в бюджет: страница показывается с «N+», а не ошибкой (результат не кэшируется).
+                if (!QueryBudget::isTimeout($error)) { throw $error; }
+                $found = $cap + 1;
+            }
             $this->totalCapped = $found > $cap;
 
             return min($found, $cap);
         }
 
-        return (int) $db->setQuery(QueryBudget::apply($query->select($grouped ? 'COUNT(DISTINCT ' . $unit . ')' : 'COUNT(*)')))->loadResult();
+        $query->select($grouped ? 'COUNT(DISTINCT ' . $unit . ')' : 'COUNT(*)');
+        $count = fn(): int => (int) $db->setQuery(QueryBudget::hard($query))->loadResult();
+
+        // Без фильтра подсчёт всей области на каждой странице стоил 65–90 мс (групп — секунды) при 100 тыс.: кэшируем, запись каталога сбрасывает.
+        if ($this->getQueryText() !== '') {
+            return $count();
+        }
+
+        $bindings = array_map(static fn(object $bound): mixed => $bound->value, $query->getBounded());
+
+        return (int) FilterCache::remember('total:v3:' . md5($db->replacePrefix((string) $query) . json_encode($bindings)), $count);
     }
 
     /**
@@ -226,18 +248,26 @@ class CategoryModel extends CategoriesModel
             : (new \Dharma\Component\DharmaShop\Administrator\Filter\FilterService($this->getDatabase()))->planner()
                 ->indexHint($state, $this->getFilterDefinition(), (int) $this->getParent()->id, $ordering, max(0, $start), $limit);
         $candidates = $this->productsQuery(forListing: $grouped);
-        $query = ($grouped ? $this->groupListing()->representatives($candidates, $sort, $direction, (int) $this->getParent()->id) : clone $candidates)
-            ->select($db->quoteName(['p.id', 'p.catid', 'p.title', 'p.alias', 'p.cover', 'p.cover_alt',
-                'p.introtext', 'p.group_id', 'p.inherit_images', 'p.price_min', 'p.price_max', 'p.price_zero_free', 'p.in_stock', 'p.unit', 'p.qty_min', 'p.qty_step', 'p.params']))
-            ->select($db->quoteName('c.title', 'category_title'))
-            ->order(($grouped ? 'listing_ranked.listing_sort' : $sort) . ' ' . $direction)->order((!$grouped && (int) $this->getParent()->id > 0 ? 'pc.product_id' : 'p.id') . ' ' . $direction);
-        if ($this->indexHint !== null) {
-            // Dense first-page scan: keep category order and correlated index probes, stop after LIMIT matches.
-            $columns = $query->select->getElements();
-            $columns[0] = 'STRAIGHT_JOIN ' . $columns[0];
-            $query->clear('select')->select($columns);
+        $ranked = $grouped ? $this->groupListing()->representatives($candidates, $sort, $direction, (int) $this->getParent()->id) : clone $candidates;
+        $columns = ['p.id', 'p.catid', 'p.title', 'p.alias', 'p.cover', 'p.cover_alt',
+            'p.introtext', 'p.group_id', 'p.inherit_images', 'p.price_min', 'p.price_max', 'p.price_zero_free', 'p.in_stock', 'p.unit', 'p.qty_min', 'p.qty_step', 'p.params'];
+        $rankOrder = [($grouped ? 'listing_ranked.listing_sort' : $sort) . ' ' . $direction, (!$grouped && (int) $this->getParent()->id > 0 ? 'pc.product_id' : 'p.id') . ' ' . $direction];
+
+        if ($grouped && $state->isEmpty() && $this->getQueryText() === '' && max(0, $start) + $limit <= self::$rankCap) {
+            // Нефильтрованная выдача групп: порядок единиц одинаков для всех посетителей и меняется только записью каталога.
+            // Он считается один раз (оконная функция по всему каталогу — сотни миллисекунд), страница берётся срезом, карточки читаются по ключу.
+            $items = $this->rankedPage($ranked, $rankOrder, $columns, max(0, $start), $limit);
+        } else {
+            $query = (clone $ranked)->select($db->quoteName($columns))->select($db->quoteName('c.title', 'category_title'))
+                ->order($rankOrder[0])->order($rankOrder[1]);
+            if ($this->indexHint !== null) {
+                // Dense first-page scan: keep category order and correlated index probes, stop after LIMIT matches.
+                $selectColumns = $query->select->getElements();
+                $selectColumns[0] = 'STRAIGHT_JOIN ' . $selectColumns[0];
+                $query->clear('select')->select($selectColumns);
+            }
+            $items = $db->setQuery(QueryBudget::hard($query), max(0, $start), $limit)->loadObjectList();
         }
-        $items = $db->setQuery(QueryBudget::apply($query), max(0, $start), $limit)->loadObjectList();
         $this->indexHint = null;
 
         $rules = Factory::getApplication()->bootComponent('com_dharmashop')->getServices()->orderRules();
@@ -257,8 +287,48 @@ class CategoryModel extends CategoriesModel
         foreach ($items as $item) {
             if (GroupCardRenderer::isGroup($item)) {
                 $item->listing_scope = ['view' => $this->taxonomy()->pageView, 'id' => (int) $this->getParent()->id,
-                    'filter' => (array) Factory::getApplication()->getInput()->get('filter', [], 'array'), 'search' => $this->getQueryText(),
+                    // Подписанный контекст несёт нормализованное состояние (алиасы), а не сырой массив запроса.
+                    'filter' => $this->getFilterState()->toArray($this->getFilterDefinition()), 'search' => $this->getQueryText(),
                     'filter_module' => Factory::getApplication()->getInput()->getInt('filter_module'), 'itemid' => Factory::getApplication()->getInput()->getInt('Itemid')];
+            }
+        }
+
+        return $items;
+    }
+
+    /** Сколько первых единиц нефильтрованной выдачи групп хранится в кэше порядка (дальше страницы считаются запросом). */
+    public static int $rankCap = 5000;
+
+    /**
+     * Страница выдачи групп по кэшированному порядку: идентификаторы представителей считаются одним запросом на область и сортировку,
+     * строки карточек читаются по первичному ключу. Запись каталога сбрасывает кэш.
+     *
+     * @param   string[]  $order    выражения ORDER BY
+     * @param   string[]  $columns  столбцы карточки
+     *
+     * @return  object[]
+     */
+    private function rankedPage(QueryInterface $ranked, array $order, array $columns, int $start, int $limit): array
+    {
+        $db = $this->getDatabase();
+        $idQuery = (clone $ranked)->select('p.id')->order($order[0])->order($order[1]);
+        $bindings = array_map(static fn(object $bound): mixed => $bound->value, $idQuery->getBounded());
+        $ids = FilterCache::remember('rank:v1:' . md5($db->replacePrefix((string) $idQuery) . json_encode($bindings)),
+            static fn(): array => array_map('intval', $db->setQuery(QueryBudget::hard($idQuery), 0, self::$rankCap)->loadColumn()));
+        $page = array_slice($ids, $start, $limit);
+
+        if (!$page) {
+            return [];
+        }
+
+        $rows = $db->setQuery($db->createQuery()->select($db->quoteName($columns))->select($db->quoteName('c.title', 'category_title'))
+            ->from($db->quoteName('#__dharmashop_products', 'p'))->join('INNER', $db->quoteName('#__categories', 'c') . ' ON c.id = p.catid')
+            ->whereIn('p.id', $page))->loadObjectList('id');
+        $items = [];
+
+        foreach ($page as $id) {
+            if (isset($rows[$id])) {
+                $items[] = $rows[$id];
             }
         }
 
@@ -501,7 +571,9 @@ class CategoryModel extends CategoriesModel
             ->where('(blocked.published != 1 OR blocked.access NOT IN (' . $levels . '))');
         if (!$this->baseFacetsAccessible()) { $query->where('NOT EXISTS (' . $blocked . ')'); }
         if ($grouped) {
-            $this->groupListing()->applyContext($query, $knownGroups ? 0 : $category, $this->taxonomy()->extension, $this->getCurrentUser()->getAuthorisedViewLevels());
+            // Без выборочного фильтра и поиска кандидатов почти весь каталог: видимость групп и состав категории считаются один раз.
+            $materialize = !$knownGroups && ($filterOverride ?? $this->getFilterState())->isEmpty() && $this->getQueryText() === '';
+            $this->groupListing()->applyContext($query, $knownGroups ? 0 : $category, $this->taxonomy()->extension, $this->getCurrentUser()->getAuthorisedViewLevels(), $materialize);
             if ($knownGroups) { $query->whereIn('p.group_id', $knownGroups); }
         }
 

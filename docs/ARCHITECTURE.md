@@ -10,6 +10,8 @@ ScopedFacets использует запрос CategoryModel, DISTINCT unit (т�
 
 CatalogModules и system/dharmashoppositions дают три внутренние позиции, соблюдая native menu/ACL. FilterController::refresh — read-only GET формы для button-mode каскада, no-store/noindex, без карточек. AJAX списка сохраняет обычный серверный HTML и историю. Локальные ресурсы подключаются только по функциям; исключение CSS ограничено геометрией range. Фактические пределы скорости, включая недостигнутую цель для большой групповой категории, — BENCHMARKS_NOTES.md.
 
+Правки по ревью 2026-10-12 (подробно FILTER_IMPLEMENTATION.md, `docs/REVIEW_CLAUDE.md`): `FilterCache` — один расчёт на ключ (`GET_LOCK`); нефильтрованный total и порядок первых 5000 единиц выдачи групп кэшируются до записи каталога; список и total используют `QueryBudget::hard()` (10 с) вместо узкого бюджета фасетов; `GroupListing::applyContext($materialize)` считает видимость групп и состав категории один раз для выдачи без выборочного фильтра; границы чисел `filter_ranges` пересчитываются только когда товар был краевым значением; поиск коротких слов идёт по `search.idx_title`.
+
 Статус: первоначальная модель утверждена 2026-10-06; 2026-10-09 C87 заменяет её самостоятельными товарами и группами выбора (VARIANTS.md §12–14). Схема БД реализуется поэтапно (раздел 10). Если реализация расходится с документом, правится документ.
 
 Для тех, кто продолжает работу (человек или ИИ): сначала `START_HERE.md` (исходное задание), затем `DECISIONS.md`, затем этот файл.
@@ -177,6 +179,8 @@ CREATE TABLE `#__dharmashop_products` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `uq_cat_alias` (`catid`, `alias`),
   KEY `idx_state_created` (`state`, `created`),
+  KEY `idx_state_price` (`state`, `price_min`, `id`),   -- сортировки страниц без категории (корень, поиск, модуль товаров)
+  KEY `idx_state_title` (`state`, `title`, `id`),
   KEY `idx_modified` (`modified`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 ```

@@ -13,9 +13,10 @@ declare(strict_types=1);
 namespace Dharma\Component\DharmaShop\Administrator\Filter;
 
 use Joomla\CMS\Cache\CacheControllerFactoryInterface;
-use Joomla\CMS\Cache\Controller\CallbackController;
+use Joomla\CMS\Cache\CacheController;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Component\ComponentHelper;
+use Joomla\Database\DatabaseInterface;
 
 \defined('_JEXEC') or die;
 
@@ -27,7 +28,7 @@ final class FilterCache
 {
     public const GROUP = 'com_dharmashop_filter';
 
-    private static ?CallbackController $controller = null;
+    private static ?CacheController $controller = null;
 
     /** Минут; запись каталога сбрасывает группу, время жизни — страховка. */
     private static int $lifetime = 10;
@@ -49,8 +50,91 @@ final class FilterCache
             return $compute();
         }
 
-        // Контроллер «callback» хранит результат вычисления (в том числе false и пустые значения) и сам возвращает его при повторном вызове.
-        return $cache->get($compute, [], md5($key));
+        $id = md5($key);
+        $hit = self::read($cache, $id);
+
+        if ($hit !== null) {
+            return $hit['v'];
+        }
+
+        // Одно вычисление на ключ: после сброса кэша десятки параллельных запросов не считают одно и то же (штатный «callback»
+        // держит блокировку только на чтение/запись, но не на вычисление). Остальные ждут готовый результат до ~3 с.
+        $db = self::database();
+        $lock = $db === null ? '' : 'dsfc_' . substr(md5($db->getPrefix() . $id), 0, 32);
+        $state = $lock === '' ? -1 : self::acquire($db, $lock);
+        $owned = $state === 1;
+
+        try {
+            if ($state === 0) {
+                for ($i = 0; $i < 30 && !$owned; ++$i) {
+                    usleep(100000);
+
+                    if (($hit = self::read($cache, $id)) !== null) {
+                        return $hit['v'];
+                    }
+
+                    $owned = self::acquire($db, $lock) === 1;
+                }
+            }
+
+            if ($owned && ($hit = self::read($cache, $id)) !== null) {
+                return $hit['v'];
+            }
+
+            $value = $compute();
+
+            try {
+                $cache->store(['v' => $value], $id);
+            } catch (\Throwable $error) {
+                // Кэш — оптимизация: сбой записи не ломает страницу.
+            }
+
+            return $value;
+        } finally {
+            if ($owned) {
+                self::release($db, $lock);
+            }
+        }
+    }
+
+    /** @return array{v: mixed}|null */
+    private static function read(CacheController $cache, string $id): ?array
+    {
+        try {
+            $data = $cache->get($id);
+        } catch (\Throwable $error) {
+            return null;
+        }
+
+        return is_array($data) && array_key_exists('v', $data) ? $data : null;
+    }
+
+    private static function database(): ?DatabaseInterface
+    {
+        try {
+            return Factory::getContainer()->get(DatabaseInterface::class);
+        } catch (\Throwable $error) {
+            return null;
+        }
+    }
+
+    /** 1 — блокировка получена, 0 — занята другим запросом, −1 — блокировки недоступны (вычисляем без ожидания). */
+    private static function acquire(DatabaseInterface $db, string $lock): int
+    {
+        try {
+            return (int) $db->setQuery('SELECT GET_LOCK(' . $db->quote($lock) . ', 0)')->loadResult() === 1 ? 1 : 0;
+        } catch (\Throwable $error) {
+            return -1;
+        }
+    }
+
+    private static function release(DatabaseInterface $db, string $lock): void
+    {
+        try {
+            $db->setQuery('SELECT RELEASE_LOCK(' . $db->quote($lock) . ')')->loadResult();
+        } catch (\Throwable $error) {
+            // Блокировка снимется при закрытии соединения.
+        }
     }
 
     /** Сбросить весь кэш фильтра (после записи товаров, полей, категорий, остатков). */
@@ -70,15 +154,15 @@ final class FilterCache
         self::$controller = null;
     }
 
-    private static function controller(): ?CallbackController
+    private static function controller(): ?CacheController
     {
         if (self::$controller !== null) {
             return self::$controller;
         }
 
         try {
-            /** @var CallbackController $controller */
-            $controller = Factory::getContainer()->get(CacheControllerFactoryInterface::class)->createCacheController('callback', [
+            /** @var CacheController $controller */
+            $controller = Factory::getContainer()->get(CacheControllerFactoryInterface::class)->createCacheController('output', [
                 'defaultgroup' => self::GROUP,
                 'caching' => true,
                 'lifetime' => max(1, min(60, (int) ComponentHelper::getParams('com_dharmashop')->get('filter_cache_minutes', self::$lifetime))),
