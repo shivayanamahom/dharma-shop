@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Dharma\Module\DharmaShopProducts\Site\Helper;
 
 use Dharma\Component\DharmaShop\Administrator\Filter\FilterDefinitionLoader;
+use Dharma\Component\DharmaShop\Administrator\Filter\FilterCache;
 use Dharma\Component\DharmaShop\Administrator\Filter\FilterField;
 use Dharma\Component\DharmaShop\Administrator\Filter\FilterQuery;
 use Dharma\Component\DharmaShop\Administrator\Filter\FilterState;
@@ -47,11 +48,37 @@ final class Products
 
         if ($grouped) {
             $listing = new GroupListing($this->db);
-            $listing->applyContext($query, 0, 'com_dharmashop', $levels);
+            // Без выборочных условий кандидатов почти весь каталог: видимость групп считается один раз (иначе — проверка на каждый товар).
+            $selective = $mode === 'recent' || (array) $params->get('categories', []) || (array) $params->get('brands', [])
+                || (array) $params->get('badges', []) || (array) $params->get('field_values', []) || (array) $params->get('field_ranges', []);
+            $listing->applyContext($query, 0, 'com_dharmashop', $levels, !$selective);
             $result = $listing->representatives($query, $sort, $direction);
-            $this->selectProducts($result);
-            $result->order('listing_ranked.listing_sort ' . $direction)->order('p.id ASC');
-            $items = $this->db->setQuery($result, 0, $limit)->loadObjectList();
+
+            if ($mode === 'recent') {
+                $this->selectProducts($result);
+                $result->order('listing_ranked.listing_sort ' . $direction)->order('p.id ASC');
+                $items = $this->db->setQuery($result, 0, $limit)->loadObjectList();
+            } else {
+                // Порядок единиц одинаков для всех посетителей и меняется только записью каталога: считается раз на сортировку и условия
+                // модуля (оконная функция по всему каталогу стоит сотни миллисекунд на каждом показе страницы), карточки читаются по ключу.
+                $idQuery = (clone $result)->select('p.id')->order('listing_ranked.listing_sort ' . $direction)->order('p.id ASC');
+                $bindings = array_map(static fn(object $bound): mixed => $bound->value, $idQuery->getBounded());
+                $db = $this->db;
+                $ids = FilterCache::remember('modrank:v1:' . md5($db->replacePrefix((string) $idQuery) . json_encode($bindings)),
+                    static fn(): array => array_map('intval', $db->setQuery($idQuery, 0, $limit)->loadColumn()));
+                $items = [];
+
+                if ($ids) {
+                    $rows = $this->db->createQuery()->from($this->db->quoteName('#__dharmashop_products', 'p'))
+                        ->join('INNER', $this->db->quoteName('#__categories', 'c') . ' ON c.id=p.catid')->whereIn('p.id', $ids);
+                    $this->selectProducts($rows);
+                    $byId = $this->db->setQuery($rows)->loadObjectList('id');
+
+                    foreach ($ids as $id) {
+                        if (isset($byId[$id])) { $items[] = $byId[$id]; }
+                    }
+                }
+            }
             $this->prepareItems($items);
             $component = $this->app->bootComponent('com_dharmashop');
             $listing->attach($items, $query, $component->getServices()->orderRules());
