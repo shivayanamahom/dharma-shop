@@ -33,9 +33,9 @@ trait ListingTrait
     public function filterHiddenInputs(): string
     {
         $model = $this->getModel();
-        $values = ['filter' => $model->getFilterState()->toArray($model->getFilterDefinition())];
+        $values = ['filter' => $model->getVisitorFilterState()->toArray($model->getFilterDefinition())];
         $module = Factory::getApplication()->getInput()->getInt('filter_module');
-        if ($module > 0 && !$model->getFilterState()->isEmpty()) { $values['filter_module'] = $module; }
+        if ($module > 0 && !$model->getVisitorFilterState()->isEmpty()) { $values['filter_module'] = $module; }
         $html = '';
         $walk = function (array $values, string $prefix = '') use (&$walk, &$html): void {
             foreach ($values as $key => $value) {
@@ -176,7 +176,7 @@ trait ListingTrait
             return;
         }
 
-        $canonical = $model->getFilterState()->toArray($model->getFilterDefinition());
+        $canonical = $model->getVisitorFilterState()->toArray($model->getFilterDefinition());
         $keep = $this->searchQuery !== '' ? ['search' => $this->searchQuery] : [];
         $target = $canonical + $keep;
 
@@ -245,7 +245,7 @@ trait ListingTrait
             $pagination->setAdditionalUrlParam('sort', $query->exists('sort') && $this->ordering !== $this->defaultOrdering ? $this->ordering : null);
             $pagination->setAdditionalUrlParam('product_view', $query->exists('product_view') ? $this->productView : null);
             // Условия фильтра и поиск остаются в ссылках страниц (канонический вид: алиасы).
-            $filterParams = $model->getFilterState()->toArray($model->getFilterDefinition()) + ($this->searchQuery !== '' ? ['search' => $this->searchQuery] : []);
+            $filterParams = $model->getVisitorFilterState()->toArray($model->getFilterDefinition()) + ($this->searchQuery !== '' ? ['search' => $this->searchQuery] : []);
             $pagination->setAdditionalUrlParam('filter', $filterParams ?: null);
             $pagination->setAdditionalUrlParam('filter_module', $filterParams ? ($query->getInt('filter_module') ?: null) : null);
         }

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+	<layout title="COM_DHARMASHOP_LANDING_VIEW_LANDING_TITLE" option="COM_DHARMASHOP_LANDING_VIEW_LANDING_OPTION">
+		<message><![CDATA[COM_DHARMASHOP_LANDING_VIEW_LANDING_DESC]]></message>
+	</layout>
+	<fields name="request">
+		<fieldset name="request">
+			<field name="id" type="sql" label="COM_DHARMASHOP_LANDING_FIELD_PAGE" query="SELECT id, title FROM #__dharmashop_landing_pages WHERE state IN (0, 1) ORDER BY title" key_field="id" value_field="title" required="true" layout="joomla.form.field.list-fancy-select" />
+		</fieldset>
+	</fields>
+</metadata>

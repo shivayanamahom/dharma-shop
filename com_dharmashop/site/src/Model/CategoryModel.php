@@ -81,6 +81,15 @@ class CategoryModel extends CategoriesModel
         return $this->getFilterState()->isEmpty() ? $this->indexScope() : null;
     }
 
+    /**
+     * Список ограничен условием, которого нет в индексах витрины (например, ручной список посадочной страницы): индексный путь
+     * тогда не применяется. Наследники переопределяют.
+     */
+    protected function listingRestricted(): bool
+    {
+        return false;
+    }
+
     /** Область, читаемая по индексам групп: группы включены, нет поиска, индекс построен, категории доступны (фильтр не учитывается). */
     private function indexScope(): ?IndexedListing
     {
@@ -90,7 +99,7 @@ class CategoryModel extends CategoriesModel
 
         $this->indexed = null;
 
-        if (!IndexedListing::$enabled || !$this->groupsEnabled() || $this->getQueryText() !== '') {
+        if (!IndexedListing::$enabled || !$this->groupsEnabled() || $this->getQueryText() !== '' || $this->listingRestricted()) {
             return null;
         }
 
@@ -170,6 +179,15 @@ class CategoryModel extends CategoriesModel
         }
 
         return $this->filterState;
+    }
+
+    /**
+     * Условия, выбранные посетителем (без фиксированных условий страницы): по ним строятся адреса формы и страниц, `noindex`
+     * и канонический адрес. У категории совпадают с полным состоянием; посадочная страница отделяет свои сохранённые условия.
+     */
+    public function getVisitorFilterState(): FilterState
+    {
+        return $this->getFilterState();
     }
 
     /**

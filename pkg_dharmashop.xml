@@ -12,6 +12,7 @@
 	<files>
 		<file type="file" id="files_dharmashop_layouts">files_dharmashop_layouts.zip</file>
 		<file type="component" id="com_dharmashop">com_dharmashop.zip</file>
+		<file type="component" id="com_dharmashop_landing">com_dharmashop_landing.zip</file>
 		<file type="plugin" id="basic" group="dharmashopfield">plg_dharmashopfield_basic.zip</file>
 		<file type="plugin" id="email" group="dharmashopnotify">plg_dharmashopnotify_email.zip</file>
 		<file type="plugin" id="telegram" group="dharmashopnotify">plg_dharmashopnotify_telegram.zip</file>
