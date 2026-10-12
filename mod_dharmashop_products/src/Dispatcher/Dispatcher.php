@@ -71,7 +71,7 @@ final class Dispatcher extends AbstractModuleDispatcher
         $data['renderCard'] = static function (object $item) use ($products, $groups, $componentParams, $useComponentLayouts, $cardMode, $context, $productLayout, $groupLayout, $money, $moduleId): string {
             if (GroupCardRenderer::isGroup($item)) {
                 if ($useComponentLayouts) { return $groups->render($item, $componentParams, $cardMode, [], null, '', $context); }
-                $card = $products->data($item, $cardMode, $context, 'dharma-products-' . $moduleId, true, ['favoriteActiveClass' => 'text-primary']);
+                $card = $products->data($item, $cardMode, $context, 'dharma-products-' . $moduleId, true);
                 $card['imageContext'] = $context;
                 $card['priceRange'] = $money->range($item->listing_group->price_min ?? null, $item->listing_group->price_max ?? null, !empty($item->listing_group->price_free));
                 return $groupLayout->render($card + ['item' => $item, 'group' => $item->listing_group, 'mode' => $cardMode,
@@ -79,11 +79,11 @@ final class Dispatcher extends AbstractModuleDispatcher
                     'imageContext' => $context, 'priceRange' => $money->range($item->listing_group->price_min ?? null, $item->listing_group->price_max ?? null, !empty($item->listing_group->price_free))]);
             }
             if ($useComponentLayouts) {
-                $card = $products->data($item, $cardMode, 'module.products', 'dharma-products-' . $moduleId, true, ['favoriteActiveClass' => 'text-primary']);
+                $card = $products->data($item, $cardMode, 'module.products', 'dharma-products-' . $moduleId, true);
                 if ($context === 'module.products.slider') { $card['imageContext'] = $context; }
                 return $products->render($card);
             }
-            $card = $products->data($item, $cardMode, 'module.products', 'dharma-products-' . $moduleId, true, ['favoriteActiveClass' => 'text-primary']);
+            $card = $products->data($item, $cardMode, 'module.products', 'dharma-products-' . $moduleId, true);
             $card['imageContext'] = $context;
             return $productLayout->render($card + ['item' => $item, 'mode' => $cardMode, 'imageContext' => $context,
                 'url' => \Joomla\CMS\Router\Route::_('index.php?option=com_dharmashop&view=product&id=' . (int) $item->id . '&catid=' . (int) $item->catid, false),

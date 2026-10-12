@@ -51,7 +51,8 @@ final class Products
             // Без выборочных условий кандидатов почти весь каталог: видимость групп считается один раз (иначе — проверка на каждый товар).
             $selective = $mode === 'recent' || (array) $params->get('categories', []) || (array) $params->get('brands', [])
                 || (array) $params->get('badges', []) || (array) $params->get('field_values', []) || (array) $params->get('field_ranges', []);
-            $listing->applyContext($query, 0, 'com_dharmashop', $levels, !$selective);
+            $index = new \Dharma\Component\DharmaShop\Administrator\Catalog\GroupIndex($this->db);
+            $listing->applyContext($query, 0, 'com_dharmashop', $levels, !$selective, $index->ready() && $index->accessible(array_map('intval', $levels)));
             $result = $listing->representatives($query, $sort, $direction);
 
             if ($mode === 'recent') {
@@ -200,8 +201,9 @@ final class Products
     {
         $ids = array_slice(array_values(array_unique(array_filter(array_map('intval', $ids), static fn(int $id): bool => $id > 1))), 0, 100);
         if (!$ids) { return []; }
+        // Номера приведены к целым и вставляются в текст: вложенный запрос превращается в строку и теряет привязанные параметры.
         $selected = $this->db->createQuery()->select('s.id')->from($this->db->quoteName('#__categories', 's'))
-            ->whereIn('s.id', $ids)->where('s.extension=' . $this->db->quote('com_dharmashop'))->where('s.published=1')
+            ->where('s.id IN (' . implode(',', $ids) . ')')->where('s.extension=' . $this->db->quote('com_dharmashop'))->where('s.published=1')
             ->where('s.access IN (' . $levelsSql . ')');
         $blocked = $this->db->createQuery()->select('b.id')->from($this->db->quoteName('#__categories', 'b'))
             ->where('b.extension=' . $this->db->quote('com_dharmashop'))->where('b.lft<=c.lft')->where('b.rgt>=c.rgt')

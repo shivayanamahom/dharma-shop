@@ -92,6 +92,9 @@ final class Indexer
                 $this->setCategoryOrder($productId, [(int) $catid => ['action' => $position]]);
             }
         }
+
+        // Привязки участника меняют место его группы в индексе выдачи (C89).
+        (new GroupIndex($this->db))->rebuildForProducts([$productId]);
     }
 
     /** @return int[] Категории магазина, в которых индекс уже содержит товар (прямые и унаследованные). */
@@ -304,6 +307,9 @@ final class Indexer
                 [':s' => [$sortOrder, ParameterType::INTEGER], ':p' => [$productId, ParameterType::INTEGER], ':c' => [$catid, ParameterType::INTEGER]]
             );
         }
+
+        // Порядок участника входит в строку его группы в индексе выдачи (C89).
+        (new GroupIndex($db))->rebuildForProducts([$productId]);
     }
 
     /**
@@ -327,6 +333,9 @@ final class Indexer
         if ($ids) {
             $this->rebuildProducts($ids);
         }
+
+        // Место групп зависит от дерева категорий их привязок и участников.
+        (new GroupIndex($this->db))->rebuildForCategory($categoryId);
 
         return count($ids);
     }

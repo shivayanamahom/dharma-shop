@@ -88,6 +88,7 @@ class ProductgroupTable extends Table
                 return false;
             }
             if (!parent::delete($id)) { $db->transactionRollback(); return false; }
+            (new \Dharma\Component\DharmaShop\Administrator\Catalog\GroupIndex($db))->delete([$id]);
             foreach (['group_axes', 'group_media', 'group_categories', 'group_field_values', 'group_field_texts', 'group_field_media'] as $suffix) {
                 $db->setQuery('DELETE FROM #__dharmashop_' . $suffix . ' WHERE group_id=' . $id)->execute();
             }

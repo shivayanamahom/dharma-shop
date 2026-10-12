@@ -48,3 +48,7 @@ DROP TABLE IF EXISTS `#__dharmashop_group_categories`;
 DROP TABLE IF EXISTS `#__dharmashop_group_field_values`;
 DROP TABLE IF EXISTS `#__dharmashop_group_field_texts`;
 DROP TABLE IF EXISTS `#__dharmashop_group_field_media`;
+
+DROP TABLE IF EXISTS `#__dharmashop_group_listing`;
+DROP TABLE IF EXISTS `#__dharmashop_group_keys`;
+DROP TABLE IF EXISTS `#__dharmashop_group_bounds`;

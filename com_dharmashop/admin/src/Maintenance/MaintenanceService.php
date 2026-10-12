@@ -118,6 +118,8 @@ final class MaintenanceService
                     $this->db->setQuery(
                         'DELETE pc FROM #__dharmashop_product_categories pc LEFT JOIN #__dharmashop_products p ON p.id = pc.product_id WHERE p.id IS NULL'
                     )->execute();
+                    // Индекс выдачи групп зависит от строк витрины товаров и дерева категорий (C89).
+                    (new \Dharma\Component\DharmaShop\Administrator\Catalog\GroupIndex($this->db))->rebuild(null);
                 }
 
                 return ['processed' => $processed, 'cursor' => 0, 'done' => true];

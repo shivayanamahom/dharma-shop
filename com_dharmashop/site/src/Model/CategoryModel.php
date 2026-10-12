@@ -12,6 +12,7 @@ use Dharma\Component\DharmaShop\Site\Support\FilterRequest;
 use Dharma\Component\DharmaShop\Site\Search\ProductSearch;
 use Dharma\Component\DharmaShop\Site\Support\SaleCountdown;
 use Dharma\Component\DharmaShop\Site\Support\GroupListing;
+use Dharma\Component\DharmaShop\Site\Support\IndexedListing;
 use Dharma\Component\DharmaShop\Site\Support\GroupCardRenderer;
 use Dharma\Component\DharmaShop\Site\Support\VariantSelection;
 use Joomla\CMS\Component\ComponentHelper;
@@ -54,6 +55,7 @@ class CategoryModel extends CategoriesModel
     {
         $this->filterModule = clone $params;
         $this->filterDefinition = $this->filterState = null;
+        $this->indexed = false;
     }
 
     private function filterModule(): Registry
@@ -64,6 +66,42 @@ class CategoryModel extends CategoriesModel
     public function setListingMode(string $mode): void
     {
         $this->listingMode = in_array($mode, ['products', 'groups_products'], true) ? $mode : null;
+        $this->indexed = false;
+    }
+
+    /** null — индекс выдачи групп не подходит; false — ещё не проверялся. */
+    private IndexedListing|null|false $indexed = false;
+
+    /**
+     * Нефильтрованная выдача групп по индексам (C89): без фильтра и поиска, при построенном индексе групп и доступных посетителю
+     * категориях. Иначе null — работает запрос с выбором представителя.
+     */
+    private function indexedListing(): ?IndexedListing
+    {
+        return $this->getFilterState()->isEmpty() ? $this->indexScope() : null;
+    }
+
+    /** Область, читаемая по индексам групп: группы включены, нет поиска, индекс построен, категории доступны (фильтр не учитывается). */
+    private function indexScope(): ?IndexedListing
+    {
+        if ($this->indexed !== false) {
+            return $this->indexed;
+        }
+
+        $this->indexed = null;
+
+        if (!IndexedListing::$enabled || !$this->groupsEnabled() || $this->getQueryText() !== '') {
+            return null;
+        }
+
+        $levels = array_map('intval', $this->getCurrentUser()->getAuthorisedViewLevels());
+        $index = new \Dharma\Component\DharmaShop\Administrator\Catalog\GroupIndex($this->getDatabase());
+
+        if (!$index->ready() || !$index->accessible($levels)) {
+            return null;
+        }
+
+        return $this->indexed = new IndexedListing($this->getDatabase(), $levels, !$this->baseFacetsAccessible(), (int) $this->getParent()->id);
     }
 
     public function groupsEnabled(): bool
@@ -155,6 +193,11 @@ class CategoryModel extends CategoriesModel
         if (!$grouped && $this->getQueryText() === '' && $this->baseFacetsAccessible()) {
             $stored = (new \Dharma\Component\DharmaShop\Administrator\Filter\FilterService($this->getDatabase()))->facets()->base((int) $this->getParent()->id);
         }
+        // Режим групп без поиска: базовые числа из сводных таблиц групп и индексов вместо обхода всех участников (C89).
+        if ($stored === null && $grouped && $this->getQueryText() === '' && ($scope = $this->indexScope()) !== null) {
+            $stored = static fn(): array => $scope->facets($definition);
+        }
+
         return (new ScopedFacets($db))->build($source, $definition, $this->getFilterState(), $mode, $cacheKey, $stored);
     }
 
@@ -216,6 +259,14 @@ class CategoryModel extends CategoriesModel
             return min($found, $cap);
         }
 
+        if ($grouped && ($indexed = $this->indexedListing()) !== null) {
+            // Единицы выдачи считаются по индексам: одиночные товары категории + строки групп (кэш до записи каталога).
+            $levels = implode(',', array_map('intval', $this->getCurrentUser()->getAuthorisedViewLevels()));
+
+            return (int) FilterCache::remember('total:v4:idx:' . md5($db->getPrefix() . ':' . (int) $this->getParent()->id . ':' . $levels . ':' . (int) !$this->baseFacetsAccessible()),
+                static fn(): int => $indexed->total());
+        }
+
         $query->select($grouped ? 'COUNT(DISTINCT ' . $unit . ')' : 'COUNT(*)');
         $count = fn(): int => (int) $db->setQuery(QueryBudget::hard($query))->loadResult();
 
@@ -251,9 +302,16 @@ class CategoryModel extends CategoriesModel
         $ranked = $grouped ? $this->groupListing()->representatives($candidates, $sort, $direction, (int) $this->getParent()->id) : clone $candidates;
         $columns = ['p.id', 'p.catid', 'p.title', 'p.alias', 'p.cover', 'p.cover_alt',
             'p.introtext', 'p.group_id', 'p.inherit_images', 'p.price_min', 'p.price_max', 'p.price_zero_free', 'p.in_stock', 'p.unit', 'p.qty_min', 'p.qty_step', 'p.params'];
-        $rankOrder = [($grouped ? 'listing_ranked.listing_sort' : $sort) . ' ' . $direction, (!$grouped && (int) $this->getParent()->id > 0 ? 'pc.product_id' : 'p.id') . ' ' . $direction];
+        // Равные значения: сначала товары, затем группы, внутри — по номеру в направлении сортировки (так же порядок строит IndexedListing).
+        $rankOrder = [($grouped ? 'listing_ranked.listing_sort' : $sort) . ' ' . $direction,
+            $grouped ? '(CASE WHEN p.group_id > 0 THEN 1 ELSE 0 END) ASC, (CASE WHEN p.group_id > 0 THEN p.group_id ELSE p.id END) ' . $direction
+                : (((int) $this->getParent()->id > 0 ? 'pc.product_id' : 'p.id') . ' ' . $direction)];
+        $effective = $ordering === 'relevance' ? 'order' : $ordering;
+        $indexed = $grouped && IndexedListing::supports($effective) ? $this->indexedListing() : null;
 
-        if ($grouped && $state->isEmpty() && $this->getQueryText() === '' && max(0, $start) + $limit <= self::$rankCap) {
+        if ($indexed !== null) {
+            $items = $this->unitItems($indexed->page($effective, max(0, $start), $limit), $sort, $direction, $columns);
+        } elseif ($grouped && $state->isEmpty() && $this->getQueryText() === '' && max(0, $start) + $limit <= self::$rankCap) {
             // Нефильтрованная выдача групп: порядок единиц одинаков для всех посетителей и меняется только записью каталога.
             // Он считается один раз (оконная функция по всему каталогу — сотни миллисекунд), страница берётся срезом, карточки читаются по ключу.
             $items = $this->rankedPage($ranked, $rankOrder, $columns, max(0, $start), $limit);
@@ -298,6 +356,62 @@ class CategoryModel extends CategoriesModel
 
     /** Сколько первых единиц нефильтрованной выдачи групп хранится в кэше порядка (дальше страницы считаются запросом). */
     public static int $rankCap = 5000;
+
+    /**
+     * Карточки страницы из единиц выдачи: товар — как есть, у группы представитель выбирается среди её подходящих участников
+     * (оконная функция только по группам страницы, не по каталогу).
+     *
+     * @param   array<int, array{kind: int, id: int}>  $units
+     * @param   string[]                               $columns
+     *
+     * @return  object[]
+     */
+    private function unitItems(array $units, string $sort, string $direction, array $columns): array
+    {
+        if (!$units) {
+            return [];
+        }
+
+        $db = $this->getDatabase();
+        $groupIds = array_values(array_map(static fn(array $unit): int => $unit['id'], array_filter($units, static fn(array $unit): bool => $unit['kind'] === 1)));
+        $representative = [];
+
+        if ($groupIds) {
+            $query = $this->groupListing()->representatives($this->productsQuery(forListing: true, knownGroups: $groupIds), $sort, $direction, (int) $this->getParent()->id)
+                ->select('p.id')->select($db->quoteName('p.group_id', 'rep_group'));
+
+            foreach ($db->setQuery(QueryBudget::hard($query))->loadObjectList() as $row) {
+                $representative[(int) $row->rep_group] = (int) $row->id;
+            }
+        }
+
+        $ids = [];
+
+        foreach ($units as $unit) {
+            $id = $unit['kind'] === 1 ? ($representative[$unit['id']] ?? 0) : $unit['id'];
+
+            if ($id > 0) {
+                $ids[] = $id;
+            }
+        }
+
+        if (!$ids) {
+            return [];
+        }
+
+        $rows = $db->setQuery($db->createQuery()->select($db->quoteName($columns))->select($db->quoteName('c.title', 'category_title'))
+            ->from($db->quoteName('#__dharmashop_products', 'p'))->join('INNER', $db->quoteName('#__categories', 'c') . ' ON c.id = p.catid')
+            ->whereIn('p.id', $ids))->loadObjectList('id');
+        $items = [];
+
+        foreach ($ids as $id) {
+            if (isset($rows[$id])) {
+                $items[] = $rows[$id];
+            }
+        }
+
+        return $items;
+    }
 
     /**
      * Страница выдачи групп по кэшированному порядку: идентификаторы представителей считаются одним запросом на область и сортировку,
@@ -573,7 +687,7 @@ class CategoryModel extends CategoriesModel
         if ($grouped) {
             // Без выборочного фильтра и поиска кандидатов почти весь каталог: видимость групп и состав категории считаются один раз.
             $materialize = !$knownGroups && ($filterOverride ?? $this->getFilterState())->isEmpty() && $this->getQueryText() === '';
-            $this->groupListing()->applyContext($query, $knownGroups ? 0 : $category, $this->taxonomy()->extension, $this->getCurrentUser()->getAuthorisedViewLevels(), $materialize);
+            $this->groupListing()->applyContext($query, $knownGroups ? 0 : $category, $this->taxonomy()->extension, $this->getCurrentUser()->getAuthorisedViewLevels(), $materialize, $this->indexScope() !== null);
             if ($knownGroups) { $query->whereIn('p.group_id', $knownGroups); }
         }
 

@@ -210,14 +210,34 @@ final class GroupService
     public function rebuild(int $id): void
     {
         \Dharma\Component\DharmaShop\Administrator\Filter\FilterCache::forget();
+        // Строки выдачи, ключи и границы группы (C89) пересобираются вместе с её итогами: нефильтрованный список читает их, а не участников.
+        (new GroupIndex($this->db))->rebuild([$id]);
         Sql::exec($this->db, 'UPDATE #__dharmashop_product_groups g LEFT JOIN (SELECT group_id,MIN(CASE WHEN state=1 THEN price_min END) mn,MAX(CASE WHEN state=1 THEN price_max END) mx,MAX(CASE WHEN state=1 THEN in_stock ELSE 0 END) ins,COUNT(*) cnt FROM #__dharmashop_products WHERE group_id=:id GROUP BY group_id) p ON p.group_id=g.id SET g.price_min=p.mn,g.price_max=p.mx,g.in_stock=COALESCE(p.ins,0),g.members_count=COALESCE(p.cnt,0) WHERE g.id=:target', [':id'=>[$id],':target'=>[$id]]);
+    }
+
+    /**
+     * Итоги и индекс выдачи нескольких групп одним набором запросов (пакетные операции, планировщик скидок): по группе их
+     * не нужно пересчитывать отдельно.
+     *
+     * @param   int[]  $groupIds
+     */
+    public function rebuildMany(array $groupIds): void
+    {
+        $groupIds = array_values(array_unique(array_filter(array_map('intval', $groupIds))));
+        if (!$groupIds) { return; }
+        \Dharma\Component\DharmaShop\Administrator\Filter\FilterCache::forget();
+        (new GroupIndex($this->db))->rebuild($groupIds);
+        foreach (array_chunk($groupIds, 1000) as $chunk) {
+            $in = implode(',', $chunk);
+            $this->db->setQuery('UPDATE #__dharmashop_product_groups g LEFT JOIN (SELECT group_id,MIN(CASE WHEN state=1 THEN price_min END) mn,MAX(CASE WHEN state=1 THEN price_max END) mx,MAX(CASE WHEN state=1 THEN in_stock ELSE 0 END) ins,COUNT(*) cnt FROM #__dharmashop_products WHERE group_id IN (' . $in . ') GROUP BY group_id) p ON p.group_id=g.id SET g.price_min=p.mn,g.price_max=p.mx,g.in_stock=COALESCE(p.ins,0),g.members_count=COALESCE(p.cnt,0) WHERE g.id IN (' . $in . ')')->execute();
+        }
     }
 
     public function refreshProducts(array $ids): void
     {
         $ids = array_values(array_unique(array_filter(array_map('intval', $ids))));
         if (!$ids) { return; }
-        foreach ($this->db->setQuery('SELECT DISTINCT group_id FROM #__dharmashop_products WHERE id IN (' . implode(',', $ids) . ') AND group_id IS NOT NULL')->loadColumn() as $group) { $this->rebuild((int) $group); }
+        $this->rebuildMany(array_map('intval', $this->db->setQuery('SELECT DISTINCT group_id FROM #__dharmashop_products WHERE id IN (' . implode(',', $ids) . ') AND group_id IS NOT NULL')->loadColumn()));
     }
 
     public function media(int $id): array

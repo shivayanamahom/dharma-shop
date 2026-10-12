@@ -18,7 +18,7 @@ final class ScopedFacets
     public function __construct(private readonly DatabaseInterface $db) {}
 
     /** $source возвращает запрос кандидатов с id, unit, price_min/max. */
-    public function build(callable $source, FilterDefinition $definition, FilterState $state, string $mode, string $cacheKey, ?array $stored = null): array
+    public function build(callable $source, FilterDefinition $definition, FilterState $state, string $mode, string $cacheKey, array|\Closure|null $stored = null): array
     {
         $this->deadline = microtime(true) + max(50, min(10000, (int) ComponentHelper::getParams('com_dharmashop')->get('filter_query_ms', 1500))) / 1000;
         $base = fn(): array => FilterCache::remember('scoped:v3:' . $cacheKey, function () use ($source, $definition, $stored): array {
@@ -82,8 +82,15 @@ final class ScopedFacets
         });
     }
 
-    private function aggregate(QueryInterface $source, FilterDefinition $definition, ?array $stored): array
+    private function aggregate(QueryInterface $source, FilterDefinition $definition, array|\Closure|null $stored): array
     {
+        // Замыкание вычисляется только при промахе кэша; полное состояние (с ценой и справочниками) заменяет и их подсчёт.
+        $stored = $stored instanceof \Closure ? $stored() : $stored;
+
+        if ($stored !== null && array_key_exists('directories', $stored) && array_key_exists('price', $stored)) {
+            return ['options' => $stored['options'], 'ranges' => $stored['ranges'], 'price' => $stored['price'], 'directories' => $stored['directories']];
+        }
+
         $values = $stored ?? $this->values($source, $definition);
         $directories = ['brand' => [], 'badge' => [], 'cat' => []];
         $ids = array_unique(array_merge(array_keys($definition->brands), array_keys($definition->badges), array_keys($definition->subcategories)));

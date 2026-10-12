@@ -29,18 +29,32 @@ final class GroupListing
     /**
      * Group taxonomy decides where the group appears; a visible member is still required.
      *
+     * `$indexed`: use the group listing index (C89) for visibility and category membership.
      * `$materialize`: without a selective filter/search almost every product is a candidate, and a correlated probe per product
      * (twice for the category test) costs seconds at 100k. Then group visibility and the groups of the category are computed once
      * as derived tables over groups, and the category scope is limited through an indexed join. With a selective filter the
      * correlated probes only touch the few matching products and stay cheaper.
      */
-    public function applyContext(QueryInterface $query, int $category, string $extension, array $access, bool $materialize = false): void
+    public function applyContext(QueryInterface $query, int $category, string $extension, array $access, bool $materialize = false, bool $indexed = false): void
     {
         $this->access = array_map('intval', $access) ?: [0];
         $levels = implode(',', $this->access);
         $catalog = $this->db->quote('com_dharmashop');
         $query->join('LEFT', '#__dharmashop_product_groups AS lg ON lg.id=p.group_id');
         $ungrouped = '(p.group_id IS NULL OR p.group_id=0)';
+
+        if ($indexed) {
+            // Индекс выдачи групп (C89, доступ посетителя проверен вызывающим): строка группы в этой области уже означает «группа видна
+            // и показывается здесь», это точечный поиск по первичному ключу вместо двух коррелированных проверок на каждый товар.
+            $query->join('LEFT', '#__dharmashop_group_listing AS glx ON glx.group_id=p.group_id AND glx.catid=' . max(0, $category));
+            $query->where("($ungrouped OR glx.group_id IS NOT NULL)");
+
+            if ($category > 0) {
+                $query->where("(($ungrouped AND pc.product_id IS NOT NULL) OR (p.group_id>0 AND glx.group_id IS NOT NULL))");
+            }
+
+            return;
+        }
 
         if ($materialize) {
             $this->applyMaterialized($query, $category, $extension, $levels, $catalog, $ungrouped);

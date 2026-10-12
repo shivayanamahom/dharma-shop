@@ -12,6 +12,7 @@ declare(strict_types=1);
 
 namespace Dharma\Plugin\Task\DharmaShop\Extension;
 
+use Dharma\Component\DharmaShop\Administrator\Catalog\GroupIndex;
 use Dharma\Component\DharmaShop\Administrator\Filter\FacetIndexer;
 use Dharma\Component\DharmaShop\Administrator\Filter\FilterCache;
 use Joomla\CMS\Factory;
@@ -29,7 +30,7 @@ use Joomla\Event\SubscriberInterface;
  *
  * - `sales`: пересчёт цены у вариантов, чья скидка началась или закончилась (`SaleScheduler::run()`). Без неё стоимость в корзине
  *   меняется только по кнопке «Пересчитать скидки по датам».
- * - `facets`: сверка предрасчёта фильтра с живым подсчётом (`FacetIndexer::verify()`); при расхождениях — полная пересборка.
+ * - `facets`: сверка предрасчёта фильтра с живым подсчётом (`FacetIndexer::verify()`) и индекса выдачи групп (`GroupIndex::verify()`); при расхождениях — полная пересборка.
  */
 final class DharmaShopTask extends CMSPlugin implements SubscriberInterface
 {
@@ -78,6 +79,17 @@ final class DharmaShopTask extends CMSPlugin implements SubscriberInterface
             FilterCache::forget();
         } else {
             $this->logTask('Dharma Shop: предрасчёт фильтра согласован');
+        }
+
+        // Индекс выдачи групп (C89): строки по категориям, ключи значений и границы.
+        $groups = new GroupIndex($db);
+        $groupBad = $groups->verify(100000);
+
+        if ($groupBad) {
+            $this->logTask('Dharma Shop: расхождений индекса групп ' . $groupBad . ', выполняется пересборка');
+            $groups->rebuild(null);
+        } else {
+            $this->logTask('Dharma Shop: индекс групп согласован');
         }
 
         return TaskStatus::OK;

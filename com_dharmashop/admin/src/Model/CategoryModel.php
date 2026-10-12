@@ -252,6 +252,7 @@ class CategoryModel extends AdminModel
         unset($data['custom_fields'], $data['custom_fields_present']);
 
         $oldParent = $id > 0 ? $this->getParentOf($id) : null;
+        $oldPublished = $id > 0 ? (int) $this->getDatabase()->setQuery('SELECT published FROM #__categories WHERE id = ' . $id)->loadResult() : null;
         $oldOrderParams = $id > 0 ? $this->orderParams($this->paramsOf($id)) : [];
 
         if (!parent::save($data)) {
@@ -288,12 +289,32 @@ class CategoryModel extends AdminModel
 
         $this->applyOrderRules($id, $oldOrderParams, $table);
 
+        // Публикация категории меняет, где показываются привязанные к ней группы (индекс выдачи групп, C89).
+        if ($oldPublished !== null && $oldPublished !== (int) $table->published) {
+            (new \Dharma\Component\DharmaShop\Administrator\Catalog\GroupIndex($this->getDatabase()))->rebuildForCategory($id);
+        }
+
         // Перемещение в дереве меняет родительские строки витринного индекса у товаров поддерева.
         if ($oldParent !== null && $oldParent !== (int) $table->parent_id) {
             Factory::getApplication()->bootComponent('com_dharmashop')->getServices()->indexer()->rebuildCategorySubtree($id);
         }
 
         return true;
+    }
+
+    public function publish(&$pks, $value = 1)
+    {
+        $result = parent::publish($pks, $value);
+
+        if ($result) {
+            $index = new \Dharma\Component\DharmaShop\Administrator\Catalog\GroupIndex($this->getDatabase());
+
+            foreach (array_map('intval', (array) $pks) as $pk) {
+                $index->rebuildForCategory($pk);
+            }
+        }
+
+        return $result;
     }
 
     /** Удаление только пустых записей: без вложенных и без товаров (штатное удаление дерева удалило бы потомков). */

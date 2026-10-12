@@ -100,7 +100,7 @@ try {
   $indexer=new FacetIndexer($bench);$indexer->rebuildAll();$bad=$indexer->verify(10000);if($bad)throw new RuntimeException('Precalculation mismatch: '.json_encode(array_slice($bad,0,3)));
   $report['sizes'][$n]=['generate_seconds'=>round((hrtime(true)-$generate)/1e9,2),'value_rows'=>(int)$bench->setQuery('SELECT COUNT(*) FROM #__dharmashop_field_values')->loadResult(),'verify'=>'pass','cases'=>[]];
   // ---- Проверки правок по REVIEW_CLAUDE.md (A1 остаток, A3 пакетные операции, A4 границы чисел, кэш порядка групп) ----
-  foreach(['stock_levels','stock_movements','stock_locations','search'] as $s){ $make('dharmashop_'.$s); }
+  foreach(['stock_levels','stock_movements','stock_locations','search','group_listing','group_keys','group_bounds'] as $s){ $make('dharmashop_'.$s); }
   $fi=new FacetIndexer($bench); $idx=new Dharma\Component\DharmaShop\Administrator\Catalog\Indexer($bench);
   $cp=Joomla\CMS\Component\ComponentHelper::getParams('com_dharmashop');
   $Cat=Dharma\Component\DharmaShop\Site\Model\CategoryModel::class;
@@ -151,14 +151,76 @@ try {
   $check('остаток: возврат возвращает наличие товару',(int)$bench->setQuery("SELECT in_stock FROM #__dharmashop_products WHERE id=$pid")->loadResult()===1);
   // Кэш порядка групп = прямой запрос
   $app->getInput()->set('filter',[]);
+  $L=Dharma\Component\DharmaShop\Site\Support\IndexedListing::class; $L::$enabled=false;
   $diffs=0;
   foreach([0,$catid] as $scope){ foreach(['order','new','title','price_asc','price_desc'] as $sort){ foreach([0,24,48,240] as $start){
     $ids=[];$tot=[];
     foreach([5000,0] as $cap){ $Cat::$rankCap=$cap; FilterCache::forget(); $m=$mk([],'groups',$scope); $ids[$cap]=array_map(fn($i)=>(int)$i->id,$m->getProducts($sort,24,$start)); $tot[$cap]=$m->getTotal(); }
     if($ids[5000]!==$ids[0] || $tot[5000]!==$tot[0])++$diffs;
   }}}
-  $Cat::$rankCap=5000;
+  $Cat::$rankCap=5000; $L::$enabled=true;
   $check('кэш порядка групп даёт те же страницы и total, что прямой запрос',$diffs===0);
+  // C89: индекс выдачи групп
+  $bench->setQuery('UPDATE #__dharmashop_product_categories pc JOIN #__dharmashop_products p ON p.id=pc.product_id SET pc.title_sort=LEFT(LOWER(p.title),60), pc.sort_order=(p.id*7)%1013, pc.created=DATE_ADD(\'2026-01-01\', INTERVAL (p.id*13)%9000 MINUTE)')->execute();
+  $bench->setQuery('UPDATE #__dharmashop_products SET created=DATE_ADD(\'2026-01-01\', INTERVAL (id*13)%9000 MINUTE)')->execute();
+  $gi=new Dharma\Component\DharmaShop\Administrator\Catalog\GroupIndex($bench); $gs=new Dharma\Component\DharmaShop\Administrator\Catalog\GroupService($bench);
+  $gi->rebuild(null);
+  $check('индекс групп: сверка после полной сборки',$gi->verify(100000)===0);
+  $scopes=[0,$catid];
+  $same=function(string $name)use($mk,$L,$Cat,$scopes,$check){
+    $diffs=0;
+    foreach($scopes as $scope){ foreach(['order','new','title','price_asc','price_desc'] as $sort){ foreach([0,24,240] as $start){
+      $res=[];
+      foreach([true,false] as $on){ $L::$enabled=$on; $Cat::$rankCap=0; FilterCache::forget(); $m=$mk([],'groups',$scope); $res[$on]=[array_map(fn($i)=>(int)$i->id,$m->getProducts($sort,24,$start)),$m->getTotal()]; }
+      if($res[true]!==$res[false])++$diffs;
+    }}}
+    $L::$enabled=true; $Cat::$rankCap=5000;
+    $check($name,$diffs===0);
+  };
+  $same('индексный список = запрос с оконной функцией (2 области, 5 сортировок, 3 смещения)');
+  // изменение участника: цена и дата → пересборка группы
+  $gid=(int)$bench->setQuery('SELECT group_id FROM #__dharmashop_products WHERE group_id>0 ORDER BY id LIMIT 1')->loadResult();
+  $mid=(int)$bench->setQuery("SELECT id FROM #__dharmashop_products WHERE group_id=$gid ORDER BY id LIMIT 1")->loadResult();
+  $bench->setQuery("UPDATE #__dharmashop_products SET price_min=1, price_max=99999, created='2030-01-01 00:00:00' WHERE id=$mid")->execute();
+  $gs->refreshProducts([$mid]);
+  $check('индекс групп: изменение участника подхвачено',$gi->verify(100000)===0 && (float)$bench->setQuery("SELECT price_min FROM #__dharmashop_group_listing WHERE catid=0 AND group_id=$gid")->loadResult()===1.0);
+  $same('индексный список после изменения участника');
+  // группа снята с публикации
+  $bench->setQuery("UPDATE #__dharmashop_product_groups SET state=0 WHERE id=$gid")->execute();
+  $gs->rebuildMany([$gid]);
+  $check('индекс групп: снятая группа исчезла из выдачи',(int)$bench->setQuery("SELECT COUNT(*) FROM #__dharmashop_group_listing WHERE group_id=$gid")->loadResult()===0 && $gi->verify(100000)===0);
+  $same('индексный список после снятия группы');
+  // счётчики по сводным таблицам = подсчёт по кандидатам
+  $norm=function(array $f){ unset($f['counts'],$f['approximate'],$f['unavailable']); ksort($f); foreach(['options','ranges','directories'] as $k){ if(isset($f[$k])){ ksort($f[$k]); foreach($f[$k] as &$v){ if(is_array($v)) ksort($v);} unset($v);} } return $f; };
+  $fd=0;
+  foreach($scopes as $scope){ $r=[]; foreach([true,false] as $on){ $L::$enabled=$on; FilterCache::forget(); $m=$mk([],'groups',$scope); $r[$on]=$norm($m->getFacets('base')); } if($r[true]!==$r[false])++$fd; }
+  $L::$enabled=true;
+  $check('счётчики фильтра групп по сводным таблицам = подсчёт по участникам',$fd===0);
+  // verify() ловит устаревшие ключи значений и границы (изменение значений мимо GroupService), rebuild() исправляет
+  $gid2=(int)$bench->setQuery("SELECT DISTINCT group_id FROM #__dharmashop_products WHERE group_id>0 AND state=1 ORDER BY group_id DESC LIMIT 1")->loadResult();
+  $gm=(int)$bench->setQuery("SELECT id FROM #__dharmashop_products WHERE group_id=$gid2 AND state=1 ORDER BY id LIMIT 1")->loadResult();
+  $bench->setQuery("DELETE FROM #__dharmashop_field_values WHERE product_id=$gm AND field_id=".(int)$weight->id)->execute();
+  $stale=$gi->verify(100000);
+  $gi->rebuildForProducts([$gm]);
+  $check('индекс групп: сверка замечает устаревшие границы, пересборка исправляет',$stale>0 && $gi->verify(100000)===0);
+  // публикация категории: группы привязанных веток пересобираются
+  $bench->setQuery("UPDATE #__categories SET published=0 WHERE id=$catid")->execute();
+  $gi->rebuildForCategory($catid);
+  $hidden=(int)$bench->setQuery('SELECT COUNT(*) FROM #__dharmashop_group_listing')->loadResult();
+  $bench->setQuery("UPDATE #__categories SET published=1 WHERE id=$catid")->execute();
+  $gi->rebuildForCategory($catid);
+  $check('индекс групп: снятая с публикации категория убирает строки, возврат восстанавливает',$hidden===0 && $gi->verify(100000)===0 && (int)$bench->setQuery('SELECT COUNT(*) FROM #__dharmashop_group_listing')->loadResult()>0);
+  // Выдача с фильтром: видимость и состав категории по индексу групп = коррелированные проверки
+  $filters=['color'=>['f'=>[$color->alias=>[$colorOptions[0]->alias]]],'brand+memory'=>['brand'=>[$definition->brands[$brands[0]]['alias']],'f'=>[$memory->alias=>[$memoryOptions[0]->alias]]],
+            'memory+color+feat'=>['f'=>[$memory->alias=>[$memoryOptions[0]->alias],$color->alias=>[$colorOptions[0]->alias],$features->alias=>[$featureOptions[0]->alias]]]];
+  $fdiff=0;
+  foreach($filters as $label=>$flt){ foreach($scopes as $scope){ foreach([0,24] as $start){
+    $r=[]; foreach([true,false] as $on){ $L::$enabled=$on; $Cat::$rankCap=0; FilterCache::forget(); $app->getInput()->set('filter',$flt);
+      $m=$model($flt,'groups',$scope); $cp->set('category_listing_mode','groups_products');
+      $r[$on]=[array_map(fn($i)=>(int)$i->id,$m->getProducts('new',24,$start)),$m->getTotal()]; }
+    if($r[true]!==$r[false])++$fdiff; }}}
+  $L::$enabled=true; $Cat::$rankCap=5000; $app->getInput()->set('filter',[]);
+  $check('выдача групп с фильтром: индекс групп = коррелированные проверки (3 фильтра, 2 области, 2 смещения)',$fdiff===0);
   echo "$pass проверок пройдено, $fail не пройдено\n";
   if($fail)exit(1);
  }

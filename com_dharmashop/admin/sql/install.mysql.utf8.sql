@@ -694,3 +694,42 @@ CREATE TABLE IF NOT EXISTS `#__dharmashop_group_field_media` (
   PRIMARY KEY (`id`),
   KEY `idx_group` (`group_id`, `field_id`, `ordering`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Индекс выдачи групп (C89): строка на группу в каждой категории, где она показывается (0 = весь каталог), со столбцами сортировки.
+-- Производные данные, источник правды: product_groups, group_categories, products. Пересобирает Catalog\GroupIndex.
+CREATE TABLE IF NOT EXISTS `#__dharmashop_group_listing` (
+  `catid` int unsigned NOT NULL,
+  `group_id` int unsigned NOT NULL,
+  `sort_order` int NOT NULL DEFAULT 0,
+  `price_min` decimal(15,2) NULL,
+  `price_max` decimal(15,2) NULL,
+  `created` datetime NOT NULL,
+  `title_sort` varchar(60) NOT NULL DEFAULT '',
+  `in_stock` tinyint unsigned NOT NULL DEFAULT 0,
+  PRIMARY KEY (`catid`, `group_id`),
+  KEY `idx_g_order` (`catid`, `sort_order`, `group_id`),
+  KEY `idx_g_price` (`catid`, `price_min`, `group_id`),
+  KEY `idx_g_pricemax` (`catid`, `price_max`, `group_id`),
+  KEY `idx_g_new` (`catid`, `created`, `group_id`),
+  KEY `idx_g_title` (`catid`, `title_sort`, `group_id`),
+  KEY `idx_group` (`group_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Ключи значений группы: объединение по её участникам (kind: 1 значение поля, 2 бренд, 3 бейдж, 4 категория витрины), для счётчиков фильтра.
+CREATE TABLE IF NOT EXISTS `#__dharmashop_group_keys` (
+  `group_id` int unsigned NOT NULL,
+  `kind` tinyint unsigned NOT NULL,
+  `ref` int unsigned NOT NULL,
+  `opt` int unsigned NOT NULL DEFAULT 0,
+  PRIMARY KEY (`group_id`, `kind`, `ref`, `opt`),
+  KEY `idx_key` (`kind`, `ref`, `opt`, `group_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Границы чисел группы по участникам (ref = поле, 0 = цена).
+CREATE TABLE IF NOT EXISTS `#__dharmashop_group_bounds` (
+  `group_id` int unsigned NOT NULL,
+  `ref` int unsigned NOT NULL,
+  `num_min` decimal(18,6) NULL,
+  `num_max` decimal(18,6) NULL,
+  PRIMARY KEY (`group_id`, `ref`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

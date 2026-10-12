@@ -156,6 +156,8 @@ class ProductgroupModel extends AdminModel
             $service->configure($id, $axes, $members, $media);
             $taxonomyService->store($id, $taxonomy);
             $fieldValues->save('product', $id, $common);
+            // Название, состояние и привязки группы входят в индекс выдачи (C89): пересобираем после записи таксономии.
+            $service->rebuild($id);
             $db->transactionCommit();
             Factory::getApplication()->setUserState('com_dharmashop.group.selection', null);
             if (array_key_exists('executions', $draft)) { Factory::getApplication()->setUserState('com_dharmashop.generator.' . $id, $draft); }
@@ -201,6 +203,18 @@ class ProductgroupModel extends AdminModel
     }
 
     /** Keep each optional block independent; the native AdminModel dispatcher handles authorization and selection. */
+    /** Публикация и снятие групп меняют их место в индексе выдачи. */
+    public function publish(&$pks, $value = 1)
+    {
+        $result = parent::publish($pks, $value);
+
+        if ($result) {
+            (new GroupService($this->getDatabase()))->rebuildMany(array_map('intval', (array) $pks));
+        }
+
+        return $result;
+    }
+
     public function batch($commands, $pks, $contexts)
     {
         foreach (array_keys($this->batch_commands) as $block) {
@@ -246,6 +260,7 @@ class ProductgroupModel extends AdminModel
                 $record = (object) ['id' => $id, 'catid' => $prepared['catid'], 'brand_id' => $prepared['brand_id'] ?: null, 'revision' => $revision + 1];
                 $db->updateObject('#__dharmashop_product_groups', $record, 'id', true);
                 $taxonomy->store($id, $prepared);
+                (new GroupService($db))->rebuild($id);
                 $db->transactionCommit();
                 $started = false;
             } catch (\Throwable $error) {

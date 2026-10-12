@@ -23,6 +23,10 @@ final class GroupStorage
    $keys=[]; foreach($db->getTableKeys($table) as $key) {$keys[$key->Key_name]=true;}
    foreach($wanted as $name=>$definition) {if(!isset($keys[$name])) {$db->setQuery('ALTER TABLE '.$db->quoteName($table).' ADD '.$definition)->execute();}}
   }
+  // Индекс выдачи групп (C89): таблицы созданы файлом groups.mysql.utf8.sql выше, строки строятся из групп и товаров (идемпотентно).
+  require_once __DIR__ . '/../Filter/FilterCache.php';
+  require_once __DIR__ . '/GroupIndex.php';
+  (new GroupIndex($db))->rebuild(null);
  }
  public static function upgradeGenerator(DatabaseInterface $db): void
  {

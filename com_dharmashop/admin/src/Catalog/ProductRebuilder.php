@@ -53,7 +53,7 @@ final class ProductRebuilder
             ':t2' => [$to, ParameterType::INTEGER],
         ]);
         $groups = $this->db->setQuery('SELECT DISTINCT group_id FROM #__dharmashop_products WHERE id BETWEEN ' . $from . ' AND ' . $to . ' AND group_id IS NOT NULL')->loadColumn();
-        foreach ($groups as $group) { (new GroupService($this->db))->rebuild((int) $group); }
+        (new GroupService($this->db))->rebuildMany(array_map('intval', $groups));
     }
 
     /** Rebuilds only an explicit selection, avoiding a potentially wide sparse ID range. @param int[] $productIds */
@@ -70,8 +70,7 @@ final class ProductRebuilder
             . 'WHERE p.id IN (' . $ids . ')';
         Sql::exec($this->db, $sql, [':pl' => [$priceList, ParameterType::INTEGER]]);
         $groups = $this->db->setQuery('SELECT DISTINCT group_id FROM #__dharmashop_products WHERE id IN (' . $ids . ') AND group_id IS NOT NULL')->loadColumn();
-        $service = new GroupService($this->db);
-        foreach ($groups as $group) { $service->rebuild((int) $group); }
+        (new GroupService($this->db))->rebuildMany(array_map('intval', $groups));
     }
 
     /** Пересчитывает производные поля товаров, основная категория которых входит в список. @param int[] $catids */
@@ -94,8 +93,6 @@ final class ProductRebuilder
             . 'WHERE p.catid IN (' . $in . ')';
 
         Sql::exec($this->db, $sql, [':pl' => [$priceList, ParameterType::INTEGER]]);
-        foreach ($this->db->setQuery('SELECT DISTINCT group_id FROM #__dharmashop_products WHERE catid IN (' . $in . ') AND group_id IS NOT NULL')->loadColumn() as $group) {
-            (new GroupService($this->db))->rebuild((int) $group);
-        }
+        (new GroupService($this->db))->rebuildMany(array_map('intval', $this->db->setQuery('SELECT DISTINCT group_id FROM #__dharmashop_products WHERE catid IN (' . $in . ') AND group_id IS NOT NULL')->loadColumn()));
     }
 }
