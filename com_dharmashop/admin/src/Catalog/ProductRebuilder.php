@@ -56,6 +56,24 @@ final class ProductRebuilder
         foreach ($groups as $group) { (new GroupService($this->db))->rebuild((int) $group); }
     }
 
+    /** Rebuilds only an explicit selection, avoiding a potentially wide sparse ID range. @param int[] $productIds */
+    public function rebuildProducts(array $productIds): void
+    {
+        $ids = implode(',', array_values(array_unique(array_filter(array_map('intval', $productIds)))));
+        if ($ids === '') { return; }
+        $priceList = $this->priceListId;
+        $sql = 'UPDATE #__dharmashop_products p LEFT JOIN ('
+            . 'SELECT v.product_id AS pid, MIN(vp.price_final) AS mn, MAX(vp.price_final) AS mx, MAX(v.in_stock) AS ins, COUNT(*) AS c, MAX(CASE WHEN vp.price_final < vp.price THEN 1 ELSE 0 END) AS sale '
+            . 'FROM #__dharmashop_variants v LEFT JOIN #__dharmashop_variant_prices vp ON vp.variant_id=v.id AND vp.price_list_id=:pl '
+            . 'WHERE v.product_id IN (' . $ids . ') AND v.state=1 GROUP BY v.product_id'
+            . ') a ON a.pid=p.id SET p.price_min=a.mn,p.price_max=a.mx,p.in_stock=COALESCE(a.ins,0),p.variants_count=COALESCE(a.c,0),p.on_sale=COALESCE(a.sale,0) '
+            . 'WHERE p.id IN (' . $ids . ')';
+        Sql::exec($this->db, $sql, [':pl' => [$priceList, ParameterType::INTEGER]]);
+        $groups = $this->db->setQuery('SELECT DISTINCT group_id FROM #__dharmashop_products WHERE id IN (' . $ids . ') AND group_id IS NOT NULL')->loadColumn();
+        $service = new GroupService($this->db);
+        foreach ($groups as $group) { $service->rebuild((int) $group); }
+    }
+
     /** Пересчитывает производные поля товаров, основная категория которых входит в список. @param int[] $catids */
     public function rebuildCategories(array $catids): void
     {

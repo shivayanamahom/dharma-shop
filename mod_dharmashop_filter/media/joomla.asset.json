@@ -9,7 +9,7 @@
       "name": "mod_dharmashop_filter.filter",
       "type": "script",
       "uri": "mod_dharmashop_filter/filter.js",
-      "version": "c521d44d7674",
+      "version": "2df42322beca",
       "attributes": {
         "defer": true
       }

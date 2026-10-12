@@ -47,8 +47,9 @@ $icons = [
     <div class="row g-4 dharmaCatalogColumns">
         <?php if ($slots['left'] !== '') : ?><aside class="col-12 col-lg-3 dharmaCatalogLeft" data-dharmashop-module-position="dharmashop-products-left"><?php echo $slots['left']; ?></aside><?php endif; ?>
         <div class="col-12 col-lg-<?php echo 12 - ($slots['left'] !== '' ? 3 : 0) - ($slots['right'] !== '' ? 3 : 0); ?> dharmaCatalogMain">
-    <form action="<?php echo $this->escape($this->categoryRoute((int) $this->item->id)); ?>" method="get" class="mb-4" data-dharmashop-listing-controls>
+    <form action="<?php echo $this->escape($this->categoryRoute((int) $this->item->id)); ?>" method="get" class="mb-4" data-dharmashop-listing-controls data-default-sort="<?php echo $this->escape($this->defaultOrdering); ?>">
         <?php echo $this->filterHiddenInputs(); ?>
+        <?php if ($this->start > 0) : ?><input type="hidden" name="start" value="<?php echo $this->start; ?>"><?php endif; ?>
         <?php if ($this->searchQuery !== '') : ?><input type="hidden" name="filter[search]" value="<?php echo $this->escape($this->searchQuery); ?>"><?php endif; ?>
         <div class="d-flex flex-column flex-lg-row align-items-lg-end justify-content-between gap-3">
             <div>

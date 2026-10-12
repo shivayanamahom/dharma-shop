@@ -13,7 +13,9 @@ declare(strict_types=1);
 namespace Dharma\Component\DharmaShop\Administrator\Controller;
 
 use Dharma\Component\DharmaShop\Administrator\Support\CategoryTypes;
+use Dharma\Component\DharmaShop\Administrator\Support\BatchProgressResponse;
 use Joomla\CMS\MVC\Controller\FormController;
+use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 
 \defined('_JEXEC') or die;
@@ -23,6 +25,8 @@ use Joomla\CMS\Router\Route;
  */
 class CategoryController extends FormController
 {
+    use QuickCreateTrait;
+
     protected $option = 'com_dharmashop';
 
     protected $text_prefix = 'COM_DHARMASHOP';
@@ -75,6 +79,12 @@ class CategoryController extends FormController
         return CategoryTypes::normalize($extension);
     }
 
+    protected function postSaveHook(\Joomla\CMS\MVC\Model\BaseDatabaseModel $model, $validData = [])
+    {
+        parent::postSaveHook($model, $validData);
+        $this->completeQuickCreate();
+    }
+
     /** Пакетная обработка выбранных записей (окно «Пакетная обработка» на списке). Права проверяются по ресурсам «<тип>.category.<id>». */
     public function batch($model = null)
     {
@@ -85,6 +95,19 @@ class CategoryController extends FormController
         $this->context = 'category';
 
         $model = $this->getModel('Category', 'Administrator', []);
+        if ($this->input->getBool('batch_ajax')) {
+            $user = $this->app->getIdentity();
+            if (!$user->authorise('core.create', 'com_dharmashop') || !$user->authorise('core.edit', 'com_dharmashop')) {
+                BatchProgressResponse::send(['success' => false, 'error' => Text::_('JLIB_APPLICATION_ERROR_ACCESS_FORBIDDEN')], 403);
+            }
+            $ids = array_values(array_filter((array) $this->input->post->get('cid', [], 'int')));
+            $contexts = [];
+            foreach ($ids as $id) { $contexts[$id] = $extension . '.category.' . $id; }
+            $ok = $model->batch((array) $this->input->post->get('batch', [], 'array'), $ids, $contexts);
+            BatchProgressResponse::send($ok
+                ? ['success' => true, 'processed' => count($ids)]
+                : ['success' => false, 'error' => $model->getError()], $ok ? 200 : 400);
+        }
         $this->setRedirect(Route::_('index.php?option=com_dharmashop&view=categories&extension=' . $extension, false));
 
         return parent::batch($model);

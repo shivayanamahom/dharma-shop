@@ -16,6 +16,7 @@ use Joomla\CMS\MVC\Controller\FormController;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
+use Dharma\Component\DharmaShop\Administrator\Support\BatchProgressResponse;
 
 \defined('_JEXEC') or die;
 
@@ -24,6 +25,8 @@ use Joomla\CMS\Router\Route;
  */
 class ProductController extends FormController
 {
+    use QuickCreateTrait;
+
     protected $option = 'com_dharmashop';
 
     protected $text_prefix = 'COM_DHARMASHOP';
@@ -52,6 +55,41 @@ class ProductController extends FormController
             && (int) ($data['created_by'] ?? 0) === (int) $user->id;
     }
 
+    protected function preprocessSaveData(array $data): array
+    {
+        $data = parent::preprocessSaveData($data);
+
+        // A copied variant becomes an independent product; it must not be attached to
+        // the original group as a duplicate combination.
+        if ($this->getTask() === 'save2copy') {
+            $db = $this->getModel()->getDatabase();
+            $baseTitle = Text::sprintf('COM_DHARMASHOP_COPY_TITLE', (string) ($data['title'] ?? ''));
+            $title = $baseTitle;
+            $copyNumber = 2;
+
+            do {
+                $query = $db->createQuery()->select('id')->from($db->quoteName('#__dharmashop_products'))
+                    ->where('catid = ' . (int) ($data['catid'] ?? 0))
+                    ->where('title = ' . $db->quote($title));
+                $exists = (bool) $db->setQuery($query, 0, 1)->loadResult();
+
+                if ($exists) {
+                    $title = Text::sprintf('COM_DHARMASHOP_COPY_TITLE_NUMBERED', $copyNumber++, $baseTitle);
+                }
+            } while ($exists);
+
+            $data['title'] = mb_substr($title, 0, 255);
+            $data['alias'] = '';
+            $data['group_id'] = 0;
+            $data['sku'] = '';
+            $data['inherit_intro'] = 0;
+            $data['inherit_full'] = 0;
+            $data['inherit_images'] = 0;
+        }
+
+        return $data;
+    }
+
     /** Save the entire product through Joomla before opening a prefilled, unsaved group. */
     public function createGroup(): void
     {
@@ -71,6 +109,7 @@ class ProductController extends FormController
     protected function postSaveHook(BaseDatabaseModel $model, $validData = [])
     {
         parent::postSaveHook($model, $validData);
+        $this->completeQuickCreate();
         if (strtolower($this->getTask()) !== 'creategroup') { return; }
         $id = (int) $model->getState('product.id');
         $seed = ['id' => 0, 'title' => $validData['title'], 'state' => 0, 'axes' => [], 'members' => [['product_id' => $id]], 'revision' => 0];
@@ -86,6 +125,19 @@ class ProductController extends FormController
         $this->checkToken();
 
         $model = $this->getModel('Product', 'Administrator', []);
+        if ($this->input->getBool('batch_ajax')) {
+            $user = $this->app->getIdentity();
+            if (!$user->authorise('core.create', 'com_dharmashop') || !$user->authorise('core.edit', 'com_dharmashop')) {
+                BatchProgressResponse::send(['success' => false, 'error' => Text::_('JLIB_APPLICATION_ERROR_ACCESS_FORBIDDEN')], 403);
+            }
+            $ids = array_values(array_filter((array) $this->input->post->get('cid', [], 'int')));
+            $contexts = [];
+            foreach ($ids as $id) { $contexts[$id] = 'com_dharmashop.product.' . $id; }
+            $ok = $model->batch((array) $this->input->post->get('batch', [], 'array'), $ids, $contexts);
+            BatchProgressResponse::send($ok
+                ? ['success' => true, 'processed' => count($ids)]
+                : ['success' => false, 'error' => $model->getError()], $ok ? 200 : 400);
+        }
         $this->setRedirect(Route::_('index.php?option=com_dharmashop&view=products' . $this->getRedirectToListAppend(), false));
 
         return parent::batch($model);

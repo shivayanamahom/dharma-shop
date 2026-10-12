@@ -12,6 +12,21 @@ final class ImageInventory
 {
     public function __construct(private readonly DatabaseInterface $db, private readonly Registry $settings) {}
 
+    /** Количество записей, которые будет просматривать подготовка изображений или защита кеша. */
+    public function countRecords(): int
+    {
+        $sql = "SELECT (SELECT COUNT(*) FROM #__dharmashop_products)"
+            . " + (SELECT COUNT(*) FROM #__dharmashop_field_media WHERE mime IS NULL OR mime LIKE 'application/vnd.dharmashop.video.%')"
+            . " + (SELECT COUNT(*) FROM #__dharmashop_category_field_media WHERE mime IS NULL)"
+            . " + (SELECT COUNT(*) FROM #__categories WHERE extension IN ('com_dharmashop','com_dharmashop.brand','com_dharmashop.badge'))"
+            . " + (SELECT COUNT(*) FROM #__dharmashop_field_options)"
+            . " + (SELECT COUNT(*) FROM #__dharmashop_group_media)"
+            . " + (SELECT COUNT(*) FROM #__dharmashop_group_field_media WHERE mime IS NULL OR mime LIKE 'application/vnd.dharmashop.video.%' OR mime LIKE 'video/%' OR mime IN ('application/mp4','application/ogg'))"
+            . ' + 1';
+
+        return (int) $this->db->setQuery($sql)->loadResult();
+    }
+
     /** One record per step; cursor is kept server-side. Null means the inventory is exhausted. */
     public function next(array &$cursor): ?array
     {

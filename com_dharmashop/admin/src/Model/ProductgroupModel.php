@@ -24,6 +24,14 @@ class ProductgroupModel extends AdminModel
     protected $text_prefix = 'COM_DHARMASHOP';
     public $typeAlias = 'com_dharmashop.productgroup';
 
+    protected $batch_copymove = '';
+    protected $batch_commands = [
+        'category' => 'batchCategory',
+        'extra_categories' => 'batchExtraCategories',
+        'brand' => 'batchBrand',
+        'badges' => 'batchBadges',
+    ];
+
     public function getTable($name = 'Productgroup', $prefix = 'Administrator', $options = []): Table
     {
         return parent::getTable($name, $prefix, $options);
@@ -190,5 +198,118 @@ class ProductgroupModel extends AdminModel
     protected function canDelete($record): bool
     {
         return (int) $record->state === -2 && parent::canDelete($record);
+    }
+
+    /** Keep each optional block independent; the native AdminModel dispatcher handles authorization and selection. */
+    public function batch($commands, $pks, $contexts)
+    {
+        foreach (array_keys($this->batch_commands) as $block) {
+            $value = (array) ($commands[$block] ?? []);
+            $action = (string) ($value['action'] ?? 'skip');
+            $ids = $value['value'] ?? '';
+            $allowsEmptySelection = in_array($action, ['clear', 'replace'], true);
+            if ($action === 'skip' || (!$allowsEmptySelection && (is_array($ids) ? !array_filter($ids) : trim((string) $ids) === ''))) {
+                unset($commands[$block]);
+                continue;
+            }
+            $commands[$block] = ['action' => $action, 'value' => $ids];
+        }
+        return parent::batch($commands, $pks, $contexts);
+    }
+
+    private function batchGroups(array $pks, callable $change): bool
+    {
+        $db = $this->getDatabase();
+        $app = Factory::getApplication();
+        $user = $app->getIdentity();
+        $taxonomy = new GroupTaxonomy($db);
+        foreach (array_values(array_unique(array_filter(array_map('intval', $pks)))) as $id) {
+            $row = $db->setQuery('SELECT title,catid FROM #__dharmashop_product_groups WHERE id=' . $id)->loadObject();
+            if (!$row) { continue; }
+            if (!$user->authorise('core.edit', 'com_dharmashop')) {
+                $app->enqueueMessage(Text::sprintf('COM_DHARMASHOP_BATCH_ENTRY_SKIP_NO_ACCESS', $row->title), 'warning');
+                continue;
+            }
+            $started = false;
+            try {
+                $db->transactionStart();
+                $started = true;
+                $revision = (int) $db->setQuery('SELECT revision FROM #__dharmashop_product_groups WHERE id=' . $id . ' FOR UPDATE')->loadResult();
+                if (!$revision) { $db->transactionRollback(); $started = false; continue; }
+                $current = $taxonomy->get($id);
+                $next = $change($id, $current);
+                if ($next === null) { $db->transactionCommit(); $started = false; continue; }
+                $prepared = $taxonomy->prepare($next);
+                if ((int) $prepared['catid'] !== (int) $current['catid'] && !$user->authorise('core.create', 'com_dharmashop.category.' . (int) $prepared['catid'])) {
+                    throw new \RuntimeException('COM_DHARMASHOP_BATCH_ERROR_CREATE_DENIED');
+                }
+                $record = (object) ['id' => $id, 'catid' => $prepared['catid'], 'brand_id' => $prepared['brand_id'] ?: null, 'revision' => $revision + 1];
+                $db->updateObject('#__dharmashop_product_groups', $record, 'id', true);
+                $taxonomy->store($id, $prepared);
+                $db->transactionCommit();
+                $started = false;
+            } catch (\Throwable $error) {
+                if ($started) { $db->transactionRollback(); }
+                $app->enqueueMessage(Text::sprintf('COM_DHARMASHOP_BATCH_ENTRY_SKIP', $row->title, Text::_($error->getMessage())), 'warning');
+            }
+        }
+        return true;
+    }
+
+    protected function batchCategory($value, $pks, $contexts): bool
+    {
+        if (!in_array($value['action'] ?? '', ['set'], true)) { $this->setError(Text::_('COM_DHARMASHOP_BATCH_ERROR_VALUE')); return false; }
+        $target = (int) ($value['value'] ?? 0);
+        return $this->batchGroups((array) $pks, static function ($id, array $taxonomy) use ($target): ?array {
+            if ($taxonomy['catid'] === $target) { return null; }
+            $taxonomy['catid'] = $target;
+            return $taxonomy;
+        });
+    }
+
+    protected function batchExtraCategories($value, $pks, $contexts): bool
+    {
+        $ids = array_values(array_unique(array_filter(array_map('intval', (array) ($value['value'] ?? [])))));
+        $action = (string) ($value['action'] ?? '');
+        if (!in_array($action, ['add', 'remove', 'replace'], true)) { $this->setError(Text::_('COM_DHARMASHOP_BATCH_ERROR_VALUE')); return false; }
+        return $this->batchGroups((array) $pks, static function ($id, array $taxonomy) use ($ids, $action): ?array {
+            $old = $taxonomy['extra_catids'];
+            $taxonomy['extra_catids'] = match ($action) {
+                'add' => array_values(array_unique(array_merge($old, $ids))),
+                'remove' => array_values(array_diff($old, $ids)),
+                'replace' => $ids,
+                default => $old,
+            };
+            return $taxonomy['extra_catids'] === $old ? null : $taxonomy;
+        });
+    }
+
+    protected function batchBrand($value, $pks, $contexts): bool
+    {
+        $action = (string) ($value['action'] ?? '');
+        if (!in_array($action, ['set', 'clear'], true)) { $this->setError(Text::_('COM_DHARMASHOP_BATCH_ERROR_VALUE')); return false; }
+        $brand = $action === 'clear' ? 0 : (int) ($value['value'] ?? 0);
+        return $this->batchGroups((array) $pks, static function ($id, array $taxonomy) use ($brand): ?array {
+            if ($taxonomy['brand_id'] === $brand) { return null; }
+            $taxonomy['brand_id'] = $brand;
+            return $taxonomy;
+        });
+    }
+
+    protected function batchBadges($value, $pks, $contexts): bool
+    {
+        $ids = array_values(array_unique(array_filter(array_map('intval', (array) ($value['value'] ?? [])))));
+        $action = (string) ($value['action'] ?? '');
+        if (!in_array($action, ['add', 'remove', 'replace'], true)) { $this->setError(Text::_('COM_DHARMASHOP_BATCH_ERROR_VALUE')); return false; }
+        return $this->batchGroups((array) $pks, static function ($id, array $taxonomy) use ($ids, $action): ?array {
+            $old = $taxonomy['badge_ids'];
+            $taxonomy['badge_ids'] = match ($action) {
+                'add' => array_values(array_unique(array_merge($old, $ids))),
+                'remove' => array_values(array_diff($old, $ids)),
+                'replace' => $ids,
+                default => $old,
+            };
+            return $taxonomy['badge_ids'] === $old ? null : $taxonomy;
+        });
     }
 }

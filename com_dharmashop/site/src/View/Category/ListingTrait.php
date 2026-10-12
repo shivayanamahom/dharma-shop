@@ -53,6 +53,7 @@ trait ListingTrait
     public string $cardLayout = 'grid';
     public string $productView = 'grid';
     public string $ordering = 'order';
+    public string $defaultOrdering = 'order';
     public int $menuId = 0;
     public int $start = 0;
     public bool $catalogMode = false;
@@ -139,6 +140,7 @@ trait ListingTrait
         $this->gridClasses = Grid::classes($this->params, 'category');
         $ordering = $app->getInput()->getCmd('sort', (string) $this->params->get('list_ordering', 'order'));
         $this->searchQuery = $model->getQueryText();
+        $this->defaultOrdering = $this->searchQuery !== '' ? 'relevance' : (string) $this->params->get('list_ordering', 'order');
         $this->redirectToCanonicalFilter($model);
         // С поисковым запросом по умолчанию — по релевантности.
         $this->ordering = $this->searchQuery !== '' && !$app->getInput()->exists('sort') ? 'relevance'
@@ -235,7 +237,7 @@ trait ListingTrait
             $query = Factory::getApplication()->getInput()->get;
             $pagination->setAdditionalUrlParam('format', null);
 
-            $pagination->setAdditionalUrlParam('sort', $query->exists('sort') ? $this->ordering : null);
+            $pagination->setAdditionalUrlParam('sort', $query->exists('sort') && $this->ordering !== $this->defaultOrdering ? $this->ordering : null);
             $pagination->setAdditionalUrlParam('product_view', $query->exists('product_view') ? $this->productView : null);
             // Условия фильтра и поиск остаются в ссылках страниц (канонический вид: алиасы).
             $filterParams = $model->getFilterState()->toArray($model->getFilterDefinition()) + ($this->searchQuery !== '' ? ['search' => $this->searchQuery] : []);

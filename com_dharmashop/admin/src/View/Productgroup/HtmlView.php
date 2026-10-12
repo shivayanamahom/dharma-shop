@@ -12,6 +12,7 @@ namespace Dharma\Component\DharmaShop\Administrator\View\Productgroup;
 
 use Joomla\CMS\Factory;
 use Dharma\Component\DharmaShop\Administrator\Support\FieldGroupTabs;
+use Dharma\Component\DharmaShop\Administrator\Support\QuickCreateToolbar;
 use Joomla\Database\DatabaseInterface;
 use Joomla\CMS\Form\Form;
 use Joomla\CMS\Helper\ContentHelper;
@@ -29,11 +30,20 @@ class HtmlView extends BaseHtmlView
     protected $option = 'com_dharmashop';
     protected ?Form $form = null;
     protected ?object $item = null;
+    /** После сохранения открыть диалог быстрого создания поля. */
+    public ?string $quickCreate = null;
+    public array $quickFieldIds = [];
     protected array $fieldGroups = [];
     protected int $commonFieldCount = 0;
 
     public function display($tpl = null): void
     {
+        $app = Factory::getApplication();
+        $this->quickCreate = $app->getUserState('com_dharmashop.quick_create');
+        $app->setUserState('com_dharmashop.quick_create', null);
+        $this->quickFieldIds = (array) $app->getUserState('com_dharmashop.quick_field_ids', []);
+        $app->setUserState('com_dharmashop.quick_field_ids', []);
+
         $model = $this->getModel();
         $this->item = $model->getItem();
 
@@ -70,12 +80,28 @@ class HtmlView extends BaseHtmlView
 
         if ($isNew ? $canDo->get('core.create') : $canDo->get('core.edit')) {
             $toolbar->apply('productgroup.apply');
-            $toolbar->save('productgroup.save');
+            $saveGroup = $toolbar->dropdownButton('save-group');
+            $saveGroup->configure(function (Toolbar $childBar) use ($canDo, $isNew): void {
+                $childBar->save('productgroup.save');
 
-            if ($canDo->get('core.create')) {
-                $toolbar->save2new('productgroup.save2new');
-            }
+                if ($canDo->get('core.create')) {
+                    $childBar->save2new('productgroup.save2new');
+
+                    if (!$isNew) {
+                        $childBar->save2copy('productgroup.save2copy');
+                    }
+                }
+            });
+
         }
+
+        $canSave = $isNew ? $canDo->get('core.create') : $canDo->get('core.edit');
+        QuickCreateToolbar::add(
+            $toolbar,
+            'productgroup',
+            'productgroup-form',
+            $canSave && $canDo->get('core.create')
+        );
 
         $toolbar->cancel('productgroup.cancel', $isNew ? 'JTOOLBAR_CANCEL' : 'JTOOLBAR_CLOSE');
         parent::display($tpl);

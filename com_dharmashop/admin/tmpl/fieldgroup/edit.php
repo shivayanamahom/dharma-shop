@@ -14,11 +14,17 @@ use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Layout\LayoutHelper;
 use Joomla\CMS\Router\Route;
+use Joomla\CMS\Factory;
 
 /** @var \Dharma\Component\DharmaShop\Administrator\View\Fieldgroup\HtmlView $this */
 $this->getDocument()->getWebAssetManager()->useScript('keepalive')->useScript('form.validate');
+$quickInput = Factory::getApplication()->getInput();
+$quickCreateQuery = $quickInput->getBool('quick_create')
+    ? '&tmpl=component&quick_create=1&quick_target=' . $quickInput->getCmd('quick_target', 'product')
+        . '&quick_fields=' . rawurlencode($quickInput->getString('quick_fields', ''))
+    : '';
 ?>
-<form action="<?php echo Route::_('index.php?option=com_dharmashop&view=fieldgroup&layout=edit&id=' . (int) $this->item->id); ?>" method="post" name="adminForm" id="fieldgroup-form" class="form-validate" aria-label="<?php echo Text::_('COM_DHARMASHOP_FIELDGROUP_FORM_LABEL', true); ?>">
+<form action="<?php echo Route::_('index.php?option=com_dharmashop&view=fieldgroup&layout=edit&id=' . (int) $this->item->id . $quickCreateQuery); ?>" method="post" name="adminForm" id="fieldgroup-form" class="form-validate" aria-label="<?php echo Text::_('COM_DHARMASHOP_FIELDGROUP_FORM_LABEL', true); ?>">
     <?php echo LayoutHelper::render('joomla.edit.title_alias', $this); ?>
     <div class="row">
         <div class="col-lg-9">

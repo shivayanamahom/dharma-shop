@@ -43,3 +43,4 @@ $phase = $this->job['phase'] ?? '';
     <input type="hidden" name="task" value="">
     <?php echo HTMLHelper::_('form.token'); ?>
 </form>
+<?php echo \Joomla\CMS\Layout\LayoutHelper::render('batch-progress', [], JPATH_ADMINISTRATOR . '/components/com_dharmashop/layouts'); ?>

@@ -5,6 +5,7 @@
 use Dharma\Component\DharmaShop\Administrator\Image\ImageUrl;
 
 use Joomla\CMS\Language\Text;
+use Joomla\CMS\Layout\FileLayout;
 
 $item = $displayData['item'];
 $imageContext = (string) ($displayData['imageContext'] ?? 'product.category.grid');
@@ -77,6 +78,10 @@ $ratio = preg_replace('/[^0-9x]/', '', (string) ($displayData['mediaRatio'] ?? '
                 <?php if ($images) : ?>
                     <a class="d-block w-100 h-100 text-reset" href="<?php echo $escape($productUrl); ?>" aria-label="<?php echo $escape($item->title); ?>">
                         <img class="w-100 h-100 object-fit-cover" src="<?php echo $escape(ImageUrl::resolve($images[0]->url, $imageContext)); ?>" alt="<?php echo $escape($images[0]->alt); ?>" loading="lazy" decoding="async">
+                    </a>
+                <?php else : ?>
+                    <a class="d-block w-100 h-100 text-reset" href="<?php echo $escape($productUrl); ?>" aria-label="<?php echo $escape($item->title); ?>">
+                        <?php echo (new FileLayout('components.dharmashop.media.placeholder', null, ['component' => 'none', 'client' => 0]))->render([]); ?>
                     </a>
                 <?php endif; ?>
             </div>

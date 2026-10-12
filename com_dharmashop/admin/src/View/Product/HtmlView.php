@@ -14,6 +14,7 @@ namespace Dharma\Component\DharmaShop\Administrator\View\Product;
 
 use Dharma\Component\DharmaShop\Administrator\Seo\PlaceholderCatalog;
 use Dharma\Component\DharmaShop\Administrator\Support\FieldGroupTabs;
+use Dharma\Component\DharmaShop\Administrator\Support\QuickCreateToolbar;
 use Dharma\Component\DharmaShop\Site\Placeholder\ProductValues;
 use Dharma\Component\DharmaShop\Site\Placeholder\GlobalValues;
 use Joomla\Database\DatabaseInterface;
@@ -41,6 +42,10 @@ class HtmlView extends BaseHtmlView
 
     protected ?object $item = null;
 
+    /** После сохранения открыть диалог быстрого создания поля. */
+    public ?string $quickCreate = null;
+    public array $quickFieldIds = [];
+
     /** Опубликованные группы соответствующего назначения для вкладок дополнительных полей. */
     protected array $fieldGroups = [];
 
@@ -55,6 +60,12 @@ class HtmlView extends BaseHtmlView
 
     public function display($tpl = null): void
     {
+        $app = Factory::getApplication();
+        $this->quickCreate = $app->getUserState('com_dharmashop.quick_create');
+        $app->setUserState('com_dharmashop.quick_create', null);
+        $this->quickFieldIds = (array) $app->getUserState('com_dharmashop.quick_field_ids', []);
+        $app->setUserState('com_dharmashop.quick_field_ids', []);
+
         /** @var \Dharma\Component\DharmaShop\Administrator\Model\ProductModel $model */
         $model = $this->getModel();
 
@@ -136,15 +147,29 @@ class HtmlView extends BaseHtmlView
             $toolbar->apply('product.apply');
             $saveGroup = $toolbar->dropdownButton('save-group');
             $saveGroup->configure(
-                function (Toolbar $childBar) use ($canDo) {
+                function (Toolbar $childBar) use ($canDo, $isNew) {
                     $childBar->save('product.save');
 
                     if ($canDo->get('core.create')) {
                         $childBar->save2new('product.save2new');
+
+                        if (!$isNew) {
+                            $childBar->save2copy('product.save2copy');
+                        }
                     }
                 }
             );
         }
+
+        QuickCreateToolbar::add(
+            $toolbar,
+            'product',
+            'product-form',
+            $canSave && $user->authorise('core.create', 'com_dharmashop'),
+            !empty($this->item->id) && (int) $this->item->state === 1
+                ? Route::link('site', 'index.php?option=com_dharmashop&view=product&id=' . (int) $this->item->id . '&catid=' . (int) $this->item->catid, false, Route::TLS_IGNORE, true)
+                : ''
+        );
 
         $toolbar->cancel('product.cancel', $isNew ? 'JTOOLBAR_CANCEL' : 'JTOOLBAR_CLOSE');
     }

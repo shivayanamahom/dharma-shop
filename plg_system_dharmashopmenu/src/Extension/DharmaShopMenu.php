@@ -46,6 +46,9 @@ final class DharmaShopMenu extends CMSPlugin implements SubscriberInterface
             ['COM_DHARMASHOP_MENU_WAREHOUSES', 'index.php?option=com_dharmashop&view=warehouses'],
             ['COM_DHARMASHOP_MENU_SETTINGS', 'index.php?option=com_config&view=component&component=com_dharmashop'],
         ],
+        [
+            ['COM_DHARMASHOP_MENU_HELP', 'index.php?option=com_dharmashop&view=help'],
+        ],
     ];
 
     public static function getSubscribedEvents(): array

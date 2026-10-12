@@ -106,7 +106,7 @@ class HtmlView extends BaseHtmlView
         if ($canDo->get('core.edit.state') || $canDo->get('core.delete')) {
             $dropdown = $toolbar->dropdownButton('status-group')
                 ->toggleSplit(false)
-                ->text('JTOOLBAR_CHANGE_STATUS')
+                ->text('COM_DHARMASHOP_SELECTED_ACTIONS')
                 ->icon('icon-ellipsis-h')
                 ->buttonClass('btn btn-action')
                 ->listCheck(true);

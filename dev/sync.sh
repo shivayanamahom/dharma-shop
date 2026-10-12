@@ -51,7 +51,6 @@ if [ -d "$M" ]; then
   [ -d "$M/media" ] && $R "$M/media/" "$T/media/mod_dharmashop_search/" || true
   for l in ru-RU en-GB; do cp "$M/language/$l/"*.ini "$T/language/$l/"; done
 fi
-echo synced
 # Модуль фильтра: код, макеты элементов (modules/…/layouts), media и языковые файлы.
 M="$S/mod_dharmashop_filter"
 if [ -d "$M" ]; then
@@ -71,3 +70,4 @@ if [ -d "$M" ]; then
   $R "$M/media/" "$T/media/mod_dharmashop_categories/"
   for l in ru-RU en-GB; do cp "$M/language/$l/"*.ini "$T/language/$l/"; done
 fi
+echo synced

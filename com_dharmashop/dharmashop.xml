@@ -53,11 +53,13 @@
 			<menu link="option=com_dharmashop&amp;view=fields" view="fields">COM_DHARMASHOP_MENU_FIELDS</menu>
 			<menu link="option=com_dharmashop&amp;view=fieldgroups" view="fieldgroups">COM_DHARMASHOP_MENU_FIELDGROUPS</menu>
 			<menu link="option=com_config&amp;view=component&amp;component=com_dharmashop">COM_DHARMASHOP_MENU_SETTINGS</menu>
+			<menu link="option=com_dharmashop&amp;view=help" view="help">COM_DHARMASHOP_MENU_HELP</menu>
 		</submenu>
 		<files folder="admin">
 			<filename>access.xml</filename>
 			<filename>config.xml</filename>
 			<folder>forms</folder>
+			<folder>help</folder>
 			<folder>language</folder>
 			<folder>layouts</folder>
 			<folder>services</folder>

@@ -58,7 +58,8 @@ final class GroupListing
         $ranked = clone $candidates;
         // Rank only narrow matching rows once. Repeating a correlated full category scope per member
         // was much slower for large groups/catalogues and unstable across MySQL query plans.
-        $ranked->select(['p.id', 'ROW_NUMBER() OVER (PARTITION BY ' . self::unit() . ' ORDER BY ' . $sort . ' ' . $direction . ',p.id ' . $direction . ') AS listing_rank']);
+        // Keep the sort value across the derived-table boundary (search's m.score exists only inside).
+        $ranked->select(['p.id', $sort . ' AS listing_sort', 'ROW_NUMBER() OVER (PARTITION BY ' . self::unit() . ' ORDER BY ' . $sort . ' ' . $direction . ',p.id ' . $direction . ') AS listing_rank']);
         $sql = $this->embed($ranked, $query);
         return $query->from('(' . $sql . ') AS listing_ranked')
             ->join('INNER', '#__dharmashop_products p ON p.id=listing_ranked.id')

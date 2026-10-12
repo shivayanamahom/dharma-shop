@@ -17,6 +17,8 @@ use Joomla\CMS\MVC\Controller\FormController;
 /** Группы характеристик: нативные сохранение, отмена и блокировка формы Joomla. */
 class FieldController extends FormController
 {
+    use QuickCreateCompletionTrait;
+
     protected $option = 'com_dharmashop';
     protected $text_prefix = 'COM_DHARMASHOP';
     protected $view_list = 'fields';

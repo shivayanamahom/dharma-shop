@@ -23,7 +23,8 @@ use Joomla\Registry\Registry;
 /** @var \Dharma\Component\DharmaShop\Administrator\View\Categories\HtmlView $this */
 
 $wa = $this->getDocument()->getWebAssetManager();
-$wa->useScript('table.columns')->useScript('multiselect');
+$wa->useScript('table.columns')->useScript('multiselect')->useScript('com_dharmashop.admin-batch-progress');
+foreach (['COM_DHARMASHOP_PROGRESS_BATCH', 'COM_DHARMASHOP_PROGRESS_RECORDS', 'COM_DHARMASHOP_PROGRESS_RELOAD', 'COM_DHARMASHOP_PROGRESS_RESPONSE_ERROR', 'COM_DHARMASHOP_PROGRESS_FAILED', 'COM_DHARMASHOP_PROGRESS_ERROR', 'COM_DHARMASHOP_PROGRESS_BAR', 'COM_DHARMASHOP_PROGRESS_RUNNING', 'COM_DHARMASHOP_PROGRESS_DONE', 'COM_DHARMASHOP_PROGRESS_REVIEW', 'COM_DHARMASHOP_PROGRESS_CONFIRM', 'COM_DHARMASHOP_PROGRESS_DISMISS', 'COM_DHARMASHOP_PROGRESS_DONE_HELP', 'COM_DHARMASHOP_PROGRESS_REVIEW_HELP', 'COM_DHARMASHOP_PROGRESS_RUNNING_HELP', 'JGLOBAL_NO_ITEM_SELECTED'] as $languageKey) { Text::script($languageKey); }
 
 $user = $this->getCurrentUser();
 $userId = (int) $user->id;
@@ -89,7 +90,7 @@ $ordering = $this->ordering;
                                     <td class="text-center"><input type="checkbox" class="form-check-input" disabled aria-label="<?php echo Text::_('COM_DHARMASHOP_ROOT_CATEGORY', true); ?>"></td>
                                     <td class="text-center d-none d-md-table-cell"><span class="sortable-handler inactive"><span class="icon-ellipsis-v"></span></span></td>
                                     <td class="text-center"><?php echo HTMLHelper::_('jgrid.published', 1, 0, 'categories.', false); ?></td>
-                                    <td class="text-center d-none d-md-table-cell"><span class="icon-image text-body-secondary" aria-hidden="true"></span></td>
+                                    <td class="text-center d-none d-md-table-cell"><?php echo LayoutHelper::render('no-image', ['size' => 48], JPATH_ADMINISTRATOR . '/components/com_dharmashop/layouts'); ?></td>
                                     <th scope="row">
                                         <?php if ($user->authorise('core.edit', 'com_dharmashop')) : ?>
                                             <a href="<?php echo Route::_('index.php?option=com_dharmashop&task=root.edit&extension=' . $extension); ?>" title="<?php echo Text::_('JACTION_EDIT'); ?>">
@@ -160,7 +161,9 @@ $ordering = $this->ordering;
                                     <td class="text-center"><?php echo HTMLHelper::_('jgrid.published', $item->published, $i, 'categories.', $canChange); ?></td>
                                     <td class="text-center d-none d-md-table-cell">
                                         <?php if ($image !== '') : ?>
-                                            <img src="<?php echo $this->escape(\Dharma\Component\DharmaShop\Administrator\Image\ImageUrl::resolve($image, 'admin.category')); ?>" alt="" width="48" height="48" loading="lazy" style="object-fit:cover">
+                                            <img src="<?php echo $this->escape(\Dharma\Component\DharmaShop\Administrator\Image\ImageUrl::resolve($image, 'admin.category')); ?>" alt="" width="48" height="48" loading="lazy" class="object-fit-cover rounded">
+                                        <?php else : ?>
+                                            <?php echo LayoutHelper::render('no-image', ['size' => 48], JPATH_ADMINISTRATOR . '/components/com_dharmashop/layouts'); ?>
                                         <?php endif; ?>
                                     </td>
                                     <th scope="row">
@@ -226,3 +229,4 @@ $ordering = $this->ordering;
         </div>
     </div>
 </form>
+<?php echo LayoutHelper::render('batch-progress', [], JPATH_ADMINISTRATOR . '/components/com_dharmashop/layouts'); ?>

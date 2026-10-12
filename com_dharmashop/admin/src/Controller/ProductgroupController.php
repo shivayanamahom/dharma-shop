@@ -17,6 +17,8 @@ use Joomla\CMS\MVC\Controller\FormController;
 /** Группы товаров: нативные сохранение, отмена и блокировка формы Joomla. */
 class ProductgroupController extends FormController
 {
+    use QuickCreateTrait;
+
     protected $option = 'com_dharmashop';
     protected $text_prefix = 'COM_DHARMASHOP';
     protected $view_list = 'productgroups';
@@ -34,6 +36,27 @@ class ProductgroupController extends FormController
         $result = parent::cancel($key);
         if ($result) { $this->app->setUserState('com_dharmashop.group.selection', null); }
         return $result;
+    }
+
+    protected function preprocessSaveData(array $data): array
+    {
+        $data = parent::preprocessSaveData($data);
+
+        // Save As Copy duplicates the group's configuration, not its live product
+        // assignments or an in-progress generation draft.
+        if ($this->getTask() === 'save2copy') {
+            $data['members'] = [];
+            $data['executions'] = [];
+            $data['revision'] = 0;
+        }
+
+        return $data;
+    }
+
+    protected function postSaveHook(\Joomla\CMS\MVC\Model\BaseDatabaseModel $model, $validData = [])
+    {
+        parent::postSaveHook($model, $validData);
+        $this->completeQuickCreate();
     }
 
     public function generationFields(): void { $this->generatorAction('fields'); }

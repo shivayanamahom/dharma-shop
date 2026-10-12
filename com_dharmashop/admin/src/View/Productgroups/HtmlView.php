@@ -31,6 +31,7 @@ class HtmlView extends BaseHtmlView
     protected ?Pagination $pagination = null;
     public ?Form $filterForm = null;
     public array $activeFilters = [];
+    public ?Form $batchForm = null;
 
     public function display($tpl = null): void
     {
@@ -39,6 +40,9 @@ class HtmlView extends BaseHtmlView
         $this->pagination = $model->getPagination();
         $this->filterForm = $model->getFilterForm();
         $this->activeFilters = $model->getActiveFilters();
+        if ($this->getLayout() !== 'modal') {
+            $this->batchForm = Form::getInstance('com_dharmashop.batch.productgroup', JPATH_ADMINISTRATOR . '/components/com_dharmashop/forms/batch_productgroup.xml', ['control' => '']);
+        }
 
         if ($errors = $model->getErrors()) {
             throw new GenericDataException(implode("\n", $errors), 500);
@@ -67,14 +71,31 @@ class HtmlView extends BaseHtmlView
             $toolbar->addNew('productgroup.add');
         }
 
-        if ($canDo->get('core.edit.state')) {
-            $toolbar->publish('productgroups.publish')->listCheck(true);
-            $toolbar->unpublish('productgroups.unpublish')->listCheck(true);
-            $toolbar->archive('productgroups.archive')->listCheck(true);
-            $toolbar->checkin('productgroups.checkin');
+        if ($canDo->get('core.edit.state') || ($canDo->get('core.create') && $canDo->get('core.edit'))) {
+            $dropdown = $toolbar->dropdownButton('group-actions')
+                ->toggleSplit(false)
+                ->text('COM_DHARMASHOP_SELECTED_ACTIONS')
+                ->icon('icon-ellipsis-h')
+                ->buttonClass('btn btn-action')
+                ->listCheck(false);
 
-            if ((int) $model->getState('filter.published') !== -2) {
-                $toolbar->trash('productgroups.trash')->listCheck(true);
+            $childBar = $dropdown->getChildToolbar();
+            if ($canDo->get('core.edit.state')) {
+                $childBar->publish('productgroups.publish')->listCheck(true);
+                $childBar->unpublish('productgroups.unpublish')->listCheck(true);
+                $childBar->archive('productgroups.archive')->listCheck(true);
+                $childBar->checkin('productgroups.checkin');
+                if ((int) $model->getState('filter.published') !== -2) { $childBar->trash('productgroups.trash')->listCheck(true); }
+            }
+
+            if ($canDo->get('core.create') && $canDo->get('core.edit')) {
+                $childBar->popupButton('batch', 'JTOOLBAR_BATCH')
+                    ->popupType('inline')
+                    ->textHeader(Text::_('COM_DHARMASHOP_BATCH_OPTIONS_PRODUCTGROUPS'))
+                    ->url('#joomla-dialog-batch-productgroups')
+                    ->modalWidth('1200px')
+                    ->modalHeight('fit-content')
+                    ->listCheck(true);
             }
         }
 

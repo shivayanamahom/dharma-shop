@@ -31,7 +31,7 @@
     const wrapper = container.querySelector('[data-dharmashop-pagination]');
     if (!wrapper || container.querySelector('[data-dharmashop-more]')) return;
     const hasNext = !!nextUrl(wrapper);
-    wrapper.hidden = hasNext;
+    wrapper.hidden = hasNext || JSON.parse(container.dataset.dharmashopLoadedPages || '[]').length > 1;
     if (!hasNext) return;
 
     // Скрытая навигация текущей порции: из неё берётся адрес следующей страницы.
@@ -69,12 +69,18 @@
           return response.text();
         })
         .then((html) => {
+          // Смена вида могла заменить список, пока порция загружалась.
+          if (!root.isConnected || itemsRoot(container) !== root) return;
           const template = document.createElement('template');
           template.innerHTML = html;
           const incoming = itemsRoot(template.content);
           const pagination = template.content.querySelector('[data-dharmashop-pagination]');
           if (!incoming || !pagination) throw new Error('no items');
           root.append(...incoming.children);
+          const query = new URL(window.location.href).searchParams;
+          const pages = JSON.parse(container.dataset.dharmashopLoadedPages || JSON.stringify([Number(query.get('start') || query.get('limitstart') || 0)]));
+          pages.push(Number(url.searchParams.get('start') || url.searchParams.get('limitstart') || 0));
+          container.dataset.dharmashopLoadedPages = JSON.stringify([...new Set(pages)]);
           current.replaceWith(pagination);
           current = pagination;
           current.hidden = true;
@@ -86,7 +92,7 @@
         .finally(() => {
           busy = false;
           button.disabled = false;
-          container.removeAttribute('aria-busy');
+          if (root.isConnected) container.removeAttribute('aria-busy');
           // Если кнопка всё ещё в зоне видимости (высокий экран), наблюдатель должен сработать снова.
           if (observer && holder.isConnected) {
             observer.unobserve(holder);

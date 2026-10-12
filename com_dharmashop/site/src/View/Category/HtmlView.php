@@ -89,7 +89,7 @@ class HtmlView extends BaseHtmlView
         $query = $app->getInput()->get;
         $variant = $query->exists('sort') || $query->exists('product_view') || $this->searchQuery !== '' || !$model->getFilterState()->isEmpty();
         $filtered = !$model->getFilterState()->isEmpty();
-        $canonical = $this->absoluteRoute((int) $this->item->id) . (!$variant && $this->start ? '?start=' . $this->start : '');
+        $canonical = $this->absoluteRoute((int) $this->item->id) . (!$filtered && $this->searchQuery === '' && $this->start ? '?start=' . $this->start : '');
         if ($filtered && (string)$settings->get('filter_canonical','category') === 'self') {
             $parts=['filter'=>$model->getFilterState()->toArray($model->getFilterDefinition())];
             if ($app->getInput()->getInt('filter_module')) { $parts['filter_module']=$app->getInput()->getInt('filter_module'); }

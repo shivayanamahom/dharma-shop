@@ -14,6 +14,7 @@ namespace Dharma\Component\DharmaShop\Administrator\View\Category;
 
 use Dharma\Component\DharmaShop\Administrator\Seo\PlaceholderCatalog;
 use Dharma\Component\DharmaShop\Administrator\Support\FieldGroupTabs;
+use Dharma\Component\DharmaShop\Administrator\Support\QuickCreateToolbar;
 use Joomla\Database\DatabaseInterface;
 use Dharma\Component\DharmaShop\Administrator\Support\CategoryTypes;
 use Joomla\CMS\Component\ComponentHelper;
@@ -38,6 +39,10 @@ class HtmlView extends BaseHtmlView
 
     protected ?object $item = null;
 
+    /** После сохранения открыть диалог быстрого создания поля. */
+    public ?string $quickCreate = null;
+    public array $quickFieldIds = [];
+
     /** Опубликованные группы соответствующего назначения для вкладок дополнительных полей. */
     protected array $fieldGroups = [];
 
@@ -57,6 +62,12 @@ class HtmlView extends BaseHtmlView
 
     public function display($tpl = null): void
     {
+        $app = Factory::getApplication();
+        $this->quickCreate = $app->getUserState('com_dharmashop.quick_create');
+        $app->setUserState('com_dharmashop.quick_create', null);
+        $this->quickFieldIds = (array) $app->getUserState('com_dharmashop.quick_field_ids', []);
+        $app->setUserState('com_dharmashop.quick_field_ids', []);
+
         /** @var \Dharma\Component\DharmaShop\Administrator\Model\CategoryModel $model */
         $model = $this->getModel();
         $item = $model->getItem();
@@ -128,14 +139,25 @@ class HtmlView extends BaseHtmlView
         $toolbar->apply('category.apply');
         $saveGroup = $toolbar->dropdownButton('save-group');
         $saveGroup->configure(
-            function (Toolbar $childBar) use ($canCreate) {
+            function (Toolbar $childBar) use ($canCreate, $isNew) {
                 $childBar->save('category.save');
 
                 if ($canCreate) {
                     $childBar->save2new('category.save2new');
+
+                    if (!$isNew) {
+                        $childBar->save2copy('category.save2copy');
+                    }
                 }
             }
         );
+
+        $canQuickCreate = $this->extension === CategoryTypes::CATEGORY && $canCreate;
+        $previewUrl = $this->extension === CategoryTypes::CATEGORY && (int) ($this->item->published ?? $this->item->state ?? 0) === 1
+            ? Route::link('site', 'index.php?option=com_dharmashop&view=category&id=' . (int) $this->item->id, false, Route::TLS_IGNORE, true)
+            : '';
+        QuickCreateToolbar::add($toolbar, 'category', 'category-form', $canQuickCreate, $previewUrl);
+
         $toolbar->cancel('category.cancel', $isNew ? 'JTOOLBAR_CANCEL' : 'JTOOLBAR_CLOSE');
     }
 }

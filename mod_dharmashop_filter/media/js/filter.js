@@ -66,6 +66,8 @@
       const active = document.activeElement;
       const focus = active && formOf(active) && active.name ? { form: formOf(active).id, name: active.name, value: active.value, type: active.type } : null;
 
+      // Новые условия начинают выдачу заново; смещения прежней догрузки больше не относятся к этому списку.
+      delete box.dataset.dharmashopLoadedPages;
       box.innerHTML = next.innerHTML;
       const oldControls=document.querySelector('[data-dharmashop-listing-controls]');
       const nextControls=doc.querySelector('[data-dharmashop-listing-controls]');

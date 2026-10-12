@@ -55,6 +55,8 @@ final class FacetIndexer
 
         if ($cursorCatid <= 0) {
             $this->rebuildCategories([0]);
+            // The whole-catalog scope is rebuilt once, before positive category IDs.
+            ++$processed;
         }
 
         while (true) {

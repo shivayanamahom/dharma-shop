@@ -48,6 +48,7 @@ class HtmlView extends BaseHtmlView
 
     /** Форма окна «Пакетная обработка» (forms/batch_product.xml). */
     public ?Form $batchForm = null;
+    public ?Form $batchPriceForm = null;
 
     public function display($tpl = null): void
     {
@@ -59,6 +60,7 @@ class HtmlView extends BaseHtmlView
         $this->filterForm = $model->getFilterForm();
         $this->activeFilters = $model->getActiveFilters();
         $this->batchForm = Form::getInstance('com_dharmashop.batch.product', JPATH_ADMINISTRATOR . '/components/com_dharmashop/forms/batch_product.xml', ['control' => '']);
+        $this->batchPriceForm = Form::getInstance('com_dharmashop.batch.prices', JPATH_ADMINISTRATOR . '/components/com_dharmashop/forms/batch_prices.xml', ['control' => '']);
 
         if ($errors = $model->getErrors()) {
             throw new GenericDataException(implode("\n", $errors), 500);
@@ -91,10 +93,10 @@ class HtmlView extends BaseHtmlView
             if ($canDo->get('core.edit')) { $toolbar->standardButton('combine', 'COM_DHARMASHOP_GROUP_COMBINE', 'products.combine')->icon('icon-cubes')->listCheck(true); }
         }
 
-        if ($canDo->get('core.edit.state') || $canDo->get('core.delete')) {
+        if ($canDo->get('core.edit.state') || $canDo->get('core.delete') || $canDo->get('core.edit')) {
             $dropdown = $toolbar->dropdownButton('status-group')
                 ->toggleSplit(false)
-                ->text('JTOOLBAR_CHANGE_STATUS')
+                ->text('COM_DHARMASHOP_SELECTED_ACTIONS')
                 ->icon('icon-ellipsis-h')
                 ->buttonClass('btn btn-action')
                 ->listCheck(true);
@@ -122,13 +124,19 @@ class HtmlView extends BaseHtmlView
                     ->modalWidth('1200px')
                     ->modalHeight('fit-content')
                     ->listCheck(true);
+
+            }
+            if ($canDo->get('core.edit')) {
+                $childBar->popupButton('batch-prices', 'COM_DHARMASHOP_BATCH_PRICES')
+                    ->popupType('inline')->textHeader(Text::_('COM_DHARMASHOP_BATCH_PRICES'))
+                    ->url('#joomla-dialog-batch-prices')->modalWidth('1000px')->modalHeight('fit-content')->listCheck(true);
             }
         }
 
         if ($canDo->get('core.manage')) {
-            $commands = $toolbar->dropdownButton('commands-group')
+            $commands = $toolbar->dropdownButton('catalog-maintenance-group')
                 ->toggleSplit(false)
-                ->text('COM_DHARMASHOP_COMMANDS')
+                ->text('COM_DHARMASHOP_CATALOG_MAINTENANCE')
                 ->icon('icon-terminal')
                 ->buttonClass('btn btn-action');
             $commandsBar = $commands->getChildToolbar();
@@ -136,8 +144,14 @@ class HtmlView extends BaseHtmlView
             foreach (MaintenanceService::COMMANDS as $name => $label) {
                 $commandsBar->standardButton('cmd-' . $name, $label, 'products.cmd' . ucfirst($name))->icon('icon-terminal')->listCheck(false);
             }
+            $images = $toolbar->dropdownButton('image-operations-group')
+                ->toggleSplit(false)
+                ->text('COM_DHARMASHOP_IMAGE_OPERATIONS')
+                ->icon('icon-images')
+                ->buttonClass('btn btn-action');
+            $imagesBar = $images->getChildToolbar();
             foreach (['prepare'=>'PREPARE', 'clear'=>'CLEAR'] as $operation=>$label) {
-                $commandsBar->linkButton('images-'.$operation, 'COM_DHARMASHOP_IMAGE_COMMAND_'.$label)
+                $imagesBar->linkButton('images-'.$operation, 'COM_DHARMASHOP_IMAGE_COMMAND_'.$label)
                     ->url(Route::_('index.php?option=com_dharmashop&view=imagecommands&operation='.$operation, false))
                     ->icon('icon-images');
             }

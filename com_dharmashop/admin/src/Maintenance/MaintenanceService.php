@@ -54,6 +54,23 @@ final class MaintenanceService
         return isset(self::COMMANDS[$name]);
     }
 
+    /** Число объектов, которые затрагивает команда, для достоверного прогресса в админке. */
+    public function countTotal(string $command): int
+    {
+        if ($command === 'sales') {
+            return $this->sales->countPending();
+        }
+
+        $sql = match ($command) {
+            'index', 'products' => 'SELECT COUNT(*) FROM #__dharmashop_products',
+            'facets' => 'SELECT COUNT(DISTINCT catid) FROM (SELECT 0 AS catid UNION SELECT catid FROM #__dharmashop_product_categories UNION SELECT catid FROM #__dharmashop_filter_facets UNION SELECT catid FROM #__dharmashop_filter_ranges) AS categories',
+            'webp' => 'SELECT (SELECT COUNT(*) FROM #__dharmashop_products) + (SELECT COUNT(*) FROM #__categories WHERE extension = ' . $this->db->quote('com_dharmashop') . ') + (SELECT COUNT(*) FROM #__dharmashop_field_media WHERE mime IS NULL) + (SELECT COUNT(*) FROM #__dharmashop_group_field_media WHERE mime IS NULL OR (alt <> \'\' AND (mime LIKE \'application/vnd.dharmashop.video.%\' OR mime LIKE \'video/%\' OR mime IN (\'application/mp4\',\'application/ogg\')))) + (SELECT COUNT(*) FROM #__extensions WHERE type = ' . $this->db->quote('component') . ' AND element = ' . $this->db->quote('com_dharmashop') . ')',
+            default => throw new \InvalidArgumentException('Unknown maintenance command.'),
+        };
+
+        return (int) $this->db->setQuery($sql)->loadResult();
+    }
+
     /**
      * @param   string  $command   index | products | sales
      * @param   int|array  $cursor  курсор товара или этапа обработки изображений
@@ -68,7 +85,7 @@ final class MaintenanceService
         }
 
         if ($command === 'sales') {
-            return ['processed' => $this->sales->run(), 'cursor' => 0, 'done' => true];
+            return $this->sales->runStep(is_int($cursor) ? $cursor : 0, 200);
         }
 
         if ($command === 'facets') {
@@ -114,7 +131,9 @@ final class MaintenanceService
             } else {
                 $this->rules->materializeRange($from, $to);
                 $this->rebuilder->rebuildRange($from, $to);
-                $this->indexer->refreshRange($from, $to);
+                // Полный пересчёт также чинит связи категорий и поисковый индекс; команда index оставляет
+                // возможность отдельно восстановить только эти производные таблицы.
+                $this->indexer->rebuildRange($from, $to);
             }
 
             $cursor = $to;

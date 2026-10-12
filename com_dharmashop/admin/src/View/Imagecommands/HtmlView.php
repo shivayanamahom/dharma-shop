@@ -19,6 +19,8 @@ final class HtmlView extends BaseHtmlView
     protected string $contextLabel;
     public function display($tpl = null): void
     {
+        $this->getDocument()->getWebAssetManager()->useScript('com_dharmashop.admin-batch-progress');
+        foreach (['COM_DHARMASHOP_PROGRESS_COMMAND', 'COM_DHARMASHOP_PROGRESS_RECORDS', 'COM_DHARMASHOP_PROGRESS_RELOAD', 'COM_DHARMASHOP_PROGRESS_RESPONSE_ERROR', 'COM_DHARMASHOP_PROGRESS_FAILED', 'COM_DHARMASHOP_PROGRESS_ERROR', 'COM_DHARMASHOP_PROGRESS_BAR', 'COM_DHARMASHOP_PROGRESS_RUNNING', 'COM_DHARMASHOP_PROGRESS_DONE', 'COM_DHARMASHOP_PROGRESS_REVIEW', 'COM_DHARMASHOP_PROGRESS_CONFIRM', 'COM_DHARMASHOP_PROGRESS_DISMISS', 'COM_DHARMASHOP_PROGRESS_DONE_HELP', 'COM_DHARMASHOP_PROGRESS_REVIEW_HELP', 'COM_DHARMASHOP_PROGRESS_RUNNING_HELP', 'COM_DHARMASHOP_IMAGE_COMMAND_COUNT_FILES', 'COM_DHARMASHOP_IMAGE_COMMAND_COUNT_DELETED', 'COM_DHARMASHOP_IMAGE_COMMAND_COUNT_PROTECTED'] as $languageKey) { Text::script($languageKey); }
         $app = Factory::getApplication();
         if (!$this->getCurrentUser()->authorise('core.manage','com_dharmashop')) throw new \RuntimeException(Text::_('JERROR_ALERTNOAUTHOR'),403);
         $this->operation = $app->getInput()->getCmd('operation','prepare');

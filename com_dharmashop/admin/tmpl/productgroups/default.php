@@ -5,7 +5,8 @@ use Joomla\CMS\Layout\LayoutHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 use Dharma\Component\DharmaShop\Administrator\Image\ImageUrl;
-$this->getDocument()->getWebAssetManager()->useScript('table.columns')->useScript('multiselect');
+$this->getDocument()->getWebAssetManager()->useScript('table.columns')->useScript('multiselect')->useScript('com_dharmashop.admin-batch-progress');
+foreach (['COM_DHARMASHOP_PROGRESS_BATCH', 'COM_DHARMASHOP_PROGRESS_RECORDS', 'COM_DHARMASHOP_PROGRESS_RELOAD', 'COM_DHARMASHOP_PROGRESS_RESPONSE_ERROR', 'COM_DHARMASHOP_PROGRESS_FAILED', 'COM_DHARMASHOP_PROGRESS_ERROR', 'COM_DHARMASHOP_PROGRESS_BAR', 'COM_DHARMASHOP_PROGRESS_RUNNING', 'COM_DHARMASHOP_PROGRESS_DONE', 'COM_DHARMASHOP_PROGRESS_REVIEW', 'COM_DHARMASHOP_PROGRESS_CONFIRM', 'COM_DHARMASHOP_PROGRESS_DISMISS', 'COM_DHARMASHOP_PROGRESS_DONE_HELP', 'COM_DHARMASHOP_PROGRESS_REVIEW_HELP', 'COM_DHARMASHOP_PROGRESS_RUNNING_HELP', 'JGLOBAL_NO_ITEM_SELECTED'] as $languageKey) { Text::script($languageKey); }
 $user = $this->getCurrentUser();
 $canEdit = $user->authorise('core.edit', 'com_dharmashop');
 $canChange = $user->authorise('core.edit.state', 'com_dharmashop');
@@ -42,7 +43,7 @@ $catLink = function (object $entry) use ($user): string {
                     <?php if ($cover !== '') : ?>
                         <img src="<?php echo $this->escape(ImageUrl::resolve($cover, 'admin.group')); ?>" alt="" width="48" height="48" loading="lazy" class="rounded object-fit-cover">
                     <?php else : ?>
-                        <span class="icon-image text-body-secondary" aria-hidden="true"></span>
+                        <?php echo LayoutHelper::render('no-image', ['size' => 48], JPATH_ADMINISTRATOR . '/components/com_dharmashop/layouts'); ?>
                     <?php endif; ?>
                 </td>
                 <th scope="row" class="break-word">
@@ -109,4 +110,8 @@ $catLink = function (object $entry) use ($user): string {
     </tbody>
 </table>
 <?php echo $this->pagination->getListFooter(); ?>
+<?php if ($this->batchForm && $user->authorise('core.create', 'com_dharmashop') && $user->authorise('core.edit', 'com_dharmashop')) : ?>
+    <template id="joomla-dialog-batch-productgroups"><?php echo $this->loadTemplate('batch_body'); ?></template>
+<?php endif; ?>
 <input type="hidden" name="task" value=""><input type="hidden" name="boxchecked" value="0"><?php echo HTMLHelper::_('form.token'); ?></form>
+<?php echo LayoutHelper::render('batch-progress', [], JPATH_ADMINISTRATOR . '/components/com_dharmashop/layouts'); ?>

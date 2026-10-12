@@ -29,7 +29,7 @@ final class ImageMaintenance
         if ($context !== '' && !isset($this->presets[$context])) throw new \RuntimeException('COM_DHARMASHOP_IMAGE_COMMAND_CONTEXT');
         return ['operation'=>$operation, 'context'=>$context, 'fingerprint'=>$this->fingerprint(),
             'phase'=>$operation === 'prepare' ? 'prepare' : 'protect', 'inventory'=>[], 'walk'=>[],
-            'protected'=>[], 'pending'=>[], 'records'=>0, 'processed'=>0, 'ready'=>0, 'skipped'=>0, 'failed'=>0,
+            'protected'=>[], 'pending'=>[], 'records'=>0, 'record_total'=>$this->inventory->countRecords(), 'processed'=>0, 'ready'=>0, 'skipped'=>0, 'failed'=>0,
             'files'=>0, 'bytes'=>0, 'deleted'=>0, 'cutoff'=>time()-1];
     }
     public function confirm(array $state): array

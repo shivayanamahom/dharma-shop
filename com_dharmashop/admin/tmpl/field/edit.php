@@ -6,9 +6,15 @@ use Joomla\CMS\HTML\HTMLHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Layout\LayoutHelper;
 use Joomla\CMS\Router\Route;
+use Joomla\CMS\Factory;
 $this->getDocument()->getWebAssetManager()->useScript('keepalive')->useScript('form.validate');
+$quickInput = Factory::getApplication()->getInput();
+$quickCreateQuery = $quickInput->getBool('quick_create')
+    ? '&tmpl=component&quick_create=1&quick_target=' . $quickInput->getCmd('quick_target', 'product')
+        . '&quick_fields=' . rawurlencode($quickInput->getString('quick_fields', ''))
+    : '';
 ?>
-<form action="<?php echo Route::_('index.php?option=com_dharmashop&view=field&layout=edit&id=' . (int) $this->item->id); ?>" method="post" name="adminForm" id="field-form" class="form-validate">
+<form action="<?php echo Route::_('index.php?option=com_dharmashop&view=field&layout=edit&id=' . (int) $this->item->id . $quickCreateQuery); ?>" method="post" name="adminForm" id="field-form" class="form-validate">
     <?php echo LayoutHelper::render('joomla.edit.title_alias', $this); ?>
     <div class="row"><div class="col-lg-9"><div class="main-card">
         <?php echo HTMLHelper::_('uitab.startTabSet', 'fieldTab', ['active'=>'details','recall'=>true,'breakpoint'=>768]); ?>

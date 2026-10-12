@@ -55,27 +55,43 @@ final class SaleScheduler
     ) {
     }
 
-    /** @return int число затронутых товаров */
-    public function run(): int
+    /** Число товаров, у которых вычисленная цена расходится с актуальным периодом скидки. */
+    public function countPending(): int
     {
         $now = (new Date())->toSql();
         $products = Sql::query(
             $this->db,
-            'SELECT DISTINCT v.product_id FROM #__dharmashop_variant_prices vp JOIN #__dharmashop_variants v ON v.id = vp.variant_id '
+            'SELECT COUNT(DISTINCT v.product_id) FROM #__dharmashop_variant_prices vp JOIN #__dharmashop_variants v ON v.id = vp.variant_id '
             . 'WHERE NOT (vp.price_final <=> (' . self::finalExpr('a') . '))',
             self::nowParams($now, 'a')
         );
-        $ids = array_map('intval', $this->db->setQuery($products)->loadColumn());
+        return (int) $this->db->setQuery($products)->loadResult();
+    }
+
+    /** Обработка ограниченной порции товаров; курсор позволяет показать живой прогресс и не держать долгий запрос. */
+    public function runStep(int $cursor = 0, int $limit = 200): array
+    {
+        $now = (new Date())->toSql();
+        $query = Sql::query(
+            $this->db,
+            'SELECT DISTINCT v.product_id FROM #__dharmashop_variant_prices vp JOIN #__dharmashop_variants v ON v.id = vp.variant_id '
+            . 'WHERE v.product_id > :cursor AND NOT (vp.price_final <=> (' . self::finalExpr('a') . ')) ORDER BY v.product_id',
+            self::nowParams($now, 'a') + [':cursor' => [$cursor, \Joomla\Database\ParameterType::INTEGER]]
+        );
+        $ids = array_map('intval', $this->db->setQuery($query, 0, $limit)->loadColumn());
 
         if (!$ids) {
-            return 0;
+            return ['processed' => 0, 'cursor' => 0, 'done' => true];
         }
 
-        Sql::exec(
+        $idList = implode(',', $ids);
+        $update = Sql::query(
             $this->db,
-            'UPDATE #__dharmashop_variant_prices vp SET vp.price_final = ' . self::finalExpr('b') . ' WHERE NOT (vp.price_final <=> (' . self::finalExpr('c') . '))',
+            'UPDATE #__dharmashop_variant_prices vp JOIN #__dharmashop_variants v ON v.id = vp.variant_id '
+            . 'SET vp.price_final = ' . self::finalExpr('b') . ' WHERE v.product_id IN (' . $idList . ') AND NOT (vp.price_final <=> (' . self::finalExpr('c') . '))',
             self::nowParams($now, 'b', 'c')
         );
+        $this->db->setQuery($update)->execute();
 
         foreach (array_chunk($ids, 500) as $chunk) {
             foreach ($chunk as $id) {
@@ -86,6 +102,19 @@ final class SaleScheduler
         }
 
         \Dharma\Component\DharmaShop\Administrator\Filter\FilterCache::forget();
-        return count($ids);
+        return ['processed' => count($ids), 'cursor' => (int) end($ids), 'done' => count($ids) < $limit];
+    }
+
+    /** @return int число затронутых товаров */
+    public function run(): int
+    {
+        $cursor = 0;
+        $processed = 0;
+        do {
+            $step = $this->runStep($cursor);
+            $processed += $step['processed'];
+            $cursor = $step['cursor'];
+        } while (!$step['done']);
+        return $processed;
     }
 }

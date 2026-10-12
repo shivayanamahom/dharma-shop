@@ -8,9 +8,15 @@ $wa = $this->getDocument()->getWebAssetManager();
 $wa->getRegistry()->addExtensionRegistryFile('com_dharmashop');
 foreach (['COM_DHARMASHOP_GENERATOR_COUNT', 'COM_DHARMASHOP_GENERATOR_CLEAR_CONFIRM'] as $key) { Text::script($key); }
 $wa->useScript('keepalive')->useScript('form.validate')->useScript('com_dharmashop.group-members')->useScript('com_dharmashop.group-generator')->useScript('webcomponent.toolbar-button');
+$canQuickCreate = $this->getCurrentUser()->authorise('core.create', 'com_dharmashop');
+if ($canQuickCreate) { $wa->useScript('com_dharmashop.admin-quick-create'); }
 ?>
 <form action="<?php echo Route::_('index.php?option=com_dharmashop&view=productgroup&layout=edit&id='.(int)$this->item->id); ?>" method="post" name="adminForm" id="productgroup-form" class="form-validate">
 <?php echo LayoutHelper::render('joomla.edit.title_alias',$this); ?>
+<?php echo LayoutHelper::render('quick-create', [
+    'formId' => 'productgroup-form', 'taskPrefix' => 'productgroup', 'canCreate' => $canQuickCreate,
+    'autoCreate' => $this->quickCreate, 'fieldIds' => $this->quickFieldIds,
+], JPATH_ADMINISTRATOR . '/components/com_dharmashop/layouts'); ?>
 <div class="row"><div class="col-lg-9"><div class="main-card p-4">
 <?php echo HTMLHelper::_('uitab.startTabSet','groupTabs',['active'=>'details']); ?>
 <?php echo HTMLHelper::_('uitab.addTab','groupTabs','details',Text::_('COM_DHARMASHOP_GROUP_TAB_PRODUCTS')); ?>

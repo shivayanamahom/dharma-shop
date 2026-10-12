@@ -8,6 +8,9 @@
     <version>0.1.0</version>
     <description>FILES_DHARMASHOP_LAYOUTS_DESCRIPTION</description>
     <fileset>
+        <files folder="layouts/media" target="layouts/components/dharmashop/media">
+            <filename>placeholder.php</filename>
+        </files>
         <files folder="layouts/fields" target="layouts/components/dharmashop/fields">
             <filename>default.php</filename>
             <filename>value.php</filename>

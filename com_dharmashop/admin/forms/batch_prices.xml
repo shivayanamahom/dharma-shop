@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form>
+    <fields name="batch_prices">
+        <fieldset name="base_price" label="COM_DHARMASHOP_BATCH_PRICE_BASE" description="COM_DHARMASHOP_BATCH_PRICE_BASE_DESC">
+            <field name="price_action" type="list" label="COM_DHARMASHOP_BATCH_PRICE_ACTION" default="skip" validate="options">
+                <option value="skip">COM_DHARMASHOP_BATCH_ACTION_SKIP</option>
+                <option value="set">COM_DHARMASHOP_BATCH_PRICE_SET</option>
+                <option value="increase">COM_DHARMASHOP_BATCH_PRICE_INCREASE</option>
+                <option value="decrease">COM_DHARMASHOP_BATCH_PRICE_DECREASE</option>
+                <option value="increase_percent">COM_DHARMASHOP_BATCH_PRICE_INCREASE_PERCENT</option>
+                <option value="decrease_percent">COM_DHARMASHOP_BATCH_PRICE_DECREASE_PERCENT</option>
+            </field>
+            <field name="price_value" type="number" label="COM_DHARMASHOP_BATCH_PRICE_VALUE" min="0" step="0.01" default="0" />
+        </fieldset>
+        <fieldset name="discount" label="COM_DHARMASHOP_BATCH_PRICE_DISCOUNT" description="COM_DHARMASHOP_BATCH_PRICE_DISCOUNT_DESC">
+            <field name="discount_action" type="list" label="COM_DHARMASHOP_BATCH_PRICE_ACTION" default="skip" validate="options">
+                <option value="skip">COM_DHARMASHOP_BATCH_ACTION_SKIP</option><option value="set">COM_DHARMASHOP_BATCH_PRICE_SET_DISCOUNT</option><option value="clear">COM_DHARMASHOP_BATCH_PRICE_CLEAR_DISCOUNT</option>
+            </field>
+            <field name="discount_value" type="number" label="COM_DHARMASHOP_FIELD_DISCOUNT_LABEL" min="0" step="0.01" default="0" />
+            <field name="discount_percent" type="list" label="COM_DHARMASHOP_BATCH_PRICE_DISCOUNT_TYPE" default="0" validate="options">
+                <option value="0">COM_DHARMASHOP_BATCH_PRICE_DISCOUNT_AMOUNT</option><option value="1">COM_DHARMASHOP_BATCH_PRICE_DISCOUNT_PERCENT</option>
+            </field>
+        </fieldset>
+        <fieldset name="period" label="COM_DHARMASHOP_BATCH_PRICE_PERIOD" description="COM_DHARMASHOP_BATCH_PRICE_PERIOD_DESC">
+            <field name="period_action" type="list" label="COM_DHARMASHOP_BATCH_PRICE_ACTION" default="skip" validate="options">
+                <option value="skip">COM_DHARMASHOP_BATCH_ACTION_SKIP</option><option value="set">COM_DHARMASHOP_BATCH_PRICE_SET_PERIOD</option><option value="clear">COM_DHARMASHOP_BATCH_PRICE_CLEAR_PERIOD</option>
+            </field>
+            <field name="discount_start" type="calendar" label="COM_DHARMASHOP_FIELD_DISCOUNT_START_LABEL" translateformat="true" showtime="true" filter="user_utc" />
+            <field name="discount_end" type="calendar" label="COM_DHARMASHOP_FIELD_DISCOUNT_END_LABEL" translateformat="true" showtime="true" filter="user_utc" />
+        </fieldset>
+    </fields>
+</form>

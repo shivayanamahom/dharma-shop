@@ -28,7 +28,7 @@ $valueLayout = new FileLayout('components.dharmashop.fields.value', null, ['comp
             <?php if ($images) : ?>
                 <img class="rounded object-fit-cover" src="<?php echo $escape(ImageUrl::resolve($images[0]->url, (string) ($displayData['imageContext'] ?? 'product.category.table'))); ?>" width="56" height="56" alt="" loading="lazy" decoding="async">
             <?php else : ?>
-                <span class="d-block rounded bg-body-tertiary p-4"></span>
+                <?php echo (new FileLayout('components.dharmashop.media.placeholder', null, ['component' => 'none', 'client' => 0]))->render(['size' => 56]); ?>
             <?php endif; ?>
         </a>
         <div>

@@ -6,6 +6,33 @@
 	"license": "GPL-2.0-or-later",
 	"assets": [
 		{
+			"name": "com_dharmashop.admin-quick-create",
+			"version": "68889f63b6e2",
+			"type": "script",
+			"uri": "com_dharmashop/admin-quick-create.js",
+			"attributes": {
+				"defer": true
+			},
+			"dependencies": [
+				"joomla.dialog",
+				"webcomponent.toolbar-button",
+				"bootstrap.modal"
+			]
+		},
+		{
+			"name": "com_dharmashop.admin-batch-progress",
+			"version": "6c812fe929d5",
+			"type": "script",
+			"uri": "com_dharmashop/admin-batch-progress.js",
+			"attributes": {
+				"defer": true
+			},
+			"dependencies": [
+				"core",
+				"bootstrap.modal"
+			]
+		},
+		{
 			"name": "com_dharmashop.product-choice",
 			"version": "a772e8970bc7",
 			"type": "script",
@@ -99,6 +126,7 @@
 			"name": "com_dharmashop.listing",
 			"type": "script",
 			"uri": "com_dharmashop/listing.js",
+			"version": "276c7d0db329",
 			"attributes": {
 				"defer": true
 			}
@@ -118,6 +146,7 @@
 			"name": "com_dharmashop.loadmore",
 			"type": "script",
 			"uri": "com_dharmashop/loadmore.js",
+			"version": "71d612929bbb",
 			"attributes": {
 				"defer": true
 			},

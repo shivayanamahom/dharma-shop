@@ -26,14 +26,20 @@ $wa = $this->getDocument()->getWebAssetManager();
 $wa->useScript('keepalive')->useScript('form.validate');
 
 $canAdmin = $this->getCurrentUser()->authorise('core.admin', 'com_dharmashop');
+$canQuickCreate = $this->extension === CategoryTypes::CATEGORY && $this->getCurrentUser()->authorise('core.create', 'com_dharmashop');
 $isBadge = $this->extension === CategoryTypes::BADGE;
 $typeLabel = CategoryTypes::all()[$this->extension];
 $extraFieldsets = array_filter(['dharmashop_brand', 'dharmashop_badge'], fn (string $name) => (bool) $this->form->getFieldset($name));
 
 $placeholdersButton = PlaceholderPanel::button();
+if ($canQuickCreate) { $wa->useScript('com_dharmashop.admin-quick-create'); }
 ?>
 <form action="<?php echo Route::_('index.php?option=com_dharmashop&layout=edit&id=' . (int) $this->item->id . '&extension=' . $this->extension); ?>" method="post" name="adminForm" id="category-form" aria-label="<?php echo Text::_('COM_DHARMASHOP_CATEGORY_FORM_LABEL', true); ?>" class="form-validate">
     <?php echo LayoutHelper::render('joomla.edit.title_alias', $this); ?>
+    <?php echo LayoutHelper::render('quick-create', [
+        'formId' => 'category-form', 'taskPrefix' => 'category', 'canCreate' => $canQuickCreate,
+        'autoCreate' => $this->quickCreate, 'fieldIds' => $this->quickFieldIds,
+    ], JPATH_ADMINISTRATOR . '/components/com_dharmashop/layouts'); ?>
 
     <?php echo PlaceholderPanel::dialog($this->placeholders); ?>
 

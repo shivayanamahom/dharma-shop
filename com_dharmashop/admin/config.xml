@@ -26,6 +26,7 @@
 	</fieldset>
 
 	<fieldset name="catalog" label="COM_DHARMASHOP_CONFIG_CATALOG" description="COM_DHARMASHOP_CONFIG_CATALOG_DESC">
+		<fieldset name="catalog_listing" label="COM_DHARMASHOP_PRODUCTS">
 		<field name="list_limit" type="integer" label="COM_DHARMASHOP_CONFIG_LIST_LIMIT" description="COM_DHARMASHOP_CONFIG_LIST_LIMIT_DESC" default="24" first="6" last="96" step="6" />
 		<field name="list_ordering" type="list" label="COM_DHARMASHOP_CONFIG_LIST_ORDERING" description="COM_DHARMASHOP_CONFIG_LIST_ORDERING_DESC" default="order" validate="options">
 			<option value="order">COM_DHARMASHOP_CAT_ORDERING_ORDER</option>
@@ -49,6 +50,7 @@
 			<option value="1">JYES</option>
 		</field>
 		<field name="sale_badge_id" type="badge" addfieldprefix="Dharma\Component\DharmaShop\Administrator\Field" label="COM_DHARMASHOP_CONFIG_SALE_BADGE" description="COM_DHARMASHOP_CONFIG_SALE_BADGE_DESC" default="0" filter="integer" showon="auto_sale_badge:1" />
+		</fieldset>
 		<fieldset name="catalog_search" label="COM_DHARMASHOP_CONFIG_SEARCH" description="COM_DHARMASHOP_CONFIG_SEARCH_DESC">
 		<field name="search_in_synonyms" type="radio" layout="joomla.form.field.radio.switcher" default="1" filter="integer" label="COM_DHARMASHOP_CONFIG_SEARCH_SYNONYMS" description="COM_DHARMASHOP_CONFIG_SEARCH_SYNONYMS_DESC">
 			<option value="0">JNO</option>

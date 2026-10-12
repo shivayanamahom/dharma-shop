@@ -220,7 +220,7 @@ class CategoryModel extends CategoriesModel
             ->select($db->quoteName(['p.id', 'p.catid', 'p.title', 'p.alias', 'p.cover', 'p.cover_alt',
                 'p.introtext', 'p.group_id', 'p.inherit_images', 'p.price_min', 'p.price_max', 'p.price_zero_free', 'p.in_stock', 'p.unit', 'p.qty_min', 'p.qty_step', 'p.params']))
             ->select($db->quoteName('c.title', 'category_title'))
-            ->order($sort . ' ' . $direction)->order((!$grouped && (int) $this->getParent()->id > 0 ? 'pc.product_id' : 'p.id') . ' ' . $direction);
+            ->order(($grouped ? 'listing_ranked.listing_sort' : $sort) . ' ' . $direction)->order((!$grouped && (int) $this->getParent()->id > 0 ? 'pc.product_id' : 'p.id') . ' ' . $direction);
         if ($this->indexHint !== null) {
             // Dense first-page scan: keep category order and correlated index probes, stop after LIMIT matches.
             $columns = $query->select->getElements();

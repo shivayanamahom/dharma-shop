@@ -24,9 +24,15 @@ $wa = $this->getDocument()->getWebAssetManager();
 $wa->useScript('keepalive')->useScript('form.validate');
 
 $canAdmin = $this->getCurrentUser()->authorise('core.admin', 'com_dharmashop');
+$canQuickCreate = $this->getCurrentUser()->authorise('core.create', 'com_dharmashop');
+if ($canQuickCreate) { $wa->useScript('com_dharmashop.admin-quick-create'); }
 ?>
 <form action="<?php echo Route::_('index.php?option=com_dharmashop&layout=edit&id=' . (int) $this->item->id); ?>" method="post" name="adminForm" id="product-form" aria-label="<?php echo Text::_('COM_DHARMASHOP_PRODUCT_FORM_LABEL', true); ?>" class="form-validate">
     <?php echo LayoutHelper::render('joomla.edit.title_alias', $this); ?>
+    <?php echo LayoutHelper::render('quick-create', [
+        'formId' => 'product-form', 'taskPrefix' => 'product', 'canCreate' => $canQuickCreate,
+        'autoCreate' => $this->quickCreate, 'fieldIds' => $this->quickFieldIds,
+    ], JPATH_ADMINISTRATOR . '/components/com_dharmashop/layouts'); ?>
     <?php echo PlaceholderPanel::dialog($this->placeholders); ?>
 
     <div class="row">
