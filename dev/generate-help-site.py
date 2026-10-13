@@ -25,11 +25,14 @@ GROUPS = [
             "ADMIN_MODULES",
             "MODULE_PRODUCTS",
             "ADMIN_FAVORITES",
+            "ADMIN_LANDING",
+            "ADMIN_SEO",
             "ADMIN_ORDERS",
             "ADMIN_SETTINGS",
             "ADMIN_TROUBLESHOOTING",
             "BATCH_PROCESSING",
             "FILES_FIELD",
+            "PRODUCTION_CHECKLIST",
             "SETTINGS_REFERENCE",
         ],
     ),
@@ -45,6 +48,8 @@ GROUPS = [
             "IMAGE_RESIZE",
             "FILTER_IMPLEMENTATION",
             "SECURITY",
+            "LANDING",
+            "SEO",
         ],
     ),
 ]
@@ -59,6 +64,9 @@ TITLES = {
     "IMAGE_RESIZE": "Размеры изображений",
     "FILTER_IMPLEMENTATION": "Фильтр: устройство и проверки",
     "SECURITY": "Проверки безопасности",
+    "LANDING": "Посадочные страницы: архитектура",
+    "SEO": "SEO и разметка: устройство",
+    "PRODUCTION_CHECKLIST": "Запуск на боевом сайте",
 }
 
 

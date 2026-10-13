@@ -163,6 +163,8 @@
 ## Другие документы
 
 - [Полный справочник настроек](SETTINGS_REFERENCE.md)
+- [Посадочные страницы: руководство](ADMIN_LANDING.md) и [SEO и микроразметка](ADMIN_SEO.md)
+- [Запуск на боевом сайте](PRODUCTION_CHECKLIST.md) и [проверки безопасности](SECURITY.md)
 - [Архитектура и схема данных](ARCHITECTURE.md)
 - [Разработка и сборка](DEVELOPMENT.md)
 - [План и текущее состояние](ROADMAP.md)

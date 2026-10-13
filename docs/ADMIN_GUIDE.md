@@ -12,6 +12,9 @@
 - [Разместить модуль товаров или категорий](ADMIN_MODULES.md)
 - [Обработать заказ](ADMIN_ORDERS.md)
 - [Настроить избранное](ADMIN_FAVORITES.md)
+- [Создать посадочную страницу](ADMIN_LANDING.md)
+- [Настроить SEO и микроразметку](ADMIN_SEO.md)
+- [Подготовить сайт к запуску](PRODUCTION_CHECKLIST.md)
 - [Найти нужную настройку](ADMIN_SETTINGS.md)
 - [Разобраться, почему товар не отображается](ADMIN_TROUBLESHOOTING.md)
 
