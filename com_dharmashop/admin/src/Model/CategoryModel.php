@@ -228,6 +228,18 @@ class CategoryModel extends AdminModel
 
     public function save($data): bool
     {
+        $db = $this->getDatabase();
+        // Nested-set writes share one advisory lock with checked import patches.
+        if (!(int) $db->setQuery("SELECT GET_LOCK('dharma.categories', 10)")->loadResult()) {
+            $this->setError(Text::_('COM_DHARMASHOP_GROUP_CHANGED'));
+            return false;
+        }
+        try { return $this->saveData($data); }
+        finally { $db->setQuery("DO RELEASE_LOCK('dharma.categories')")->execute(); }
+    }
+
+    private function saveData($data): bool
+    {
         $id = (int) ($data['id'] ?? 0);
         $extension = $id > 0 ? $this->getExtensionOf($id) : CategoryTypes::normalize((string) ($data['extension'] ?? ''));
         $data['extension'] = $extension;

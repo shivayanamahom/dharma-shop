@@ -165,6 +165,13 @@ for xml_path in sorted((ROOT / "com_dharmashop/admin/forms").rglob("*.xml")):
         f"Форма компонента / `{relative.as_posix()}`",
     ))
 
+for extension in ("com_dharmashop_export", "com_dharmashop_import"):
+    component_forms.extend(fields_for(
+        ROOT / extension / "admin/forms/profile.xml",
+        ROOT / extension / "admin/language/ru-RU" / f"{extension}.ini",
+        f"Профиль `{extension}`",
+    ))
+
 content = [
     "# Полный справочник настроек Dharma Shop", "",
     "Список собран из XML-форм Joomla: ID, заголовки, значения по умолчанию и условия показа сверяются с кодом. Подсказка берётся из RU-языкового файла формы. Это справочник полей интерфейса, не описание внутреннего хранения. Включены общие настройки магазина, все четыре модуля, формы записей компонента и формы типов плагинов (в том числе вложенные настройки доставки, оплаты и связанных товаров).",

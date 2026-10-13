@@ -14,6 +14,8 @@
 		<file type="component" id="com_dharmashop">com_dharmashop.zip</file>
 		<file type="component" id="com_dharmashop_landing">com_dharmashop_landing.zip</file>
 		<file type="component" id="com_dharmashop_export">com_dharmashop_export.zip</file>
+		<file type="component" id="com_dharmashop_import">com_dharmashop_import.zip</file>
+		<file type="plugin" id="xlsx" group="dharmashopimport">plg_dharmashopimport_xlsx.zip</file>
 		<file type="plugin" id="xlsx" group="dharmashopexport">plg_dharmashopexport_xlsx.zip</file>
 		<file type="plugin" id="yml" group="dharmashopexport">plg_dharmashopexport_yml.zip</file>
 		<file type="plugin" id="dharmashopexport" group="console">plg_console_dharmashopexport.zip</file>

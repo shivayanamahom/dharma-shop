@@ -114,7 +114,8 @@ final class ExportCommand extends AbstractCommand
 		$stream = null;
 		try {
 			$source = (new Files($job['snapshot']['storage']))->stream((int) $job['id'], 'artifact.php');
-			if (fread($source, strlen(Files::GUARD)) !== Files::GUARD || ($stream = fopen($temp, 'wb')) === false || stream_copy_to_stream($source, $stream) === false) {
+			// Files::stream() has already consumed the protected-container header.
+			if (($stream = fopen($temp, 'wb')) === false || stream_copy_to_stream($source, $stream) === false) {
 				throw new \RuntimeException(Text::_('PLG_CONSOLE_DHARMASHOPEXPORT_OUTPUT_WRITE'));
 			}
 			fclose($stream);

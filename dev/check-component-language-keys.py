@@ -46,12 +46,13 @@ form_xml += sorted((ROOT / "com_dharmashop/admin/forms").rglob("*.xml"))
 manifest = ROOT / "com_dharmashop/dharmashop.xml"
 menu_xml = sorted((ROOT / "com_dharmashop/site/tmpl").rglob("*.xml"))
 errors: list[str] = []
+form_xml += sorted((ROOT / "com_dharmashop_import/admin/forms").rglob("*.xml"))
 
 for language in LANGUAGES:
     ini = ROOT / f"com_dharmashop/admin/language/{language}/com_dharmashop.ini"
     sys_ini = ROOT / f"com_dharmashop/admin/language/{language}/com_dharmashop.sys.ini"
     form_keys = keys_in(form_xml)
-    for key in sorted(form_keys - defined_keys([ini, sys_ini])):
+    for key in sorted(form_keys - defined_keys([ini, sys_ini, ROOT / f"com_dharmashop_import/admin/language/{language}/com_dharmashop_import.ini"])):
         source = next((path for path in form_xml if key in KEY.findall(path.read_text(encoding="utf-8"))), None)
         errors.append(f"{language}: {key} referenced by {source.relative_to(ROOT) if source else 'administrator forms'} has no admin translation")
 

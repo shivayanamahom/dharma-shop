@@ -240,6 +240,90 @@
     detail.append(actions);
   };
 
+  // Импорт в одном окне прогресса: проверка → сводка → подтверждение → применение. Каталог меняется только после нажатия «Применить».
+  const runImport = async (trigger) => {
+    const form = document.querySelector('#adminForm');
+    const panel = makePanel();
+    const unit = text('COM_DHARMASHOP_PROGRESS_RECORDS', 'записей');
+    const token = Array.from(form.querySelectorAll('input[type="hidden"]')).find((input) => input.value === '1' && /^[0-9a-f]{32}$/.test(input.name));
+    const active = ['reading', 'checking', 'media', 'finalizing', 'applying'];
+    const call = (task, id) => {
+      const data = new FormData();
+      data.set(token.name, '1');
+      data.set('id', String(id));
+      return post({ action: `index.php?option=com_dharmashop_import&task=${task}&format=json` }, data);
+    };
+    const sleep = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
+    const detail = () => panel.querySelector('[data-progress-detail]');
+    const addButton = (box, label, className) => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = className;
+      button.textContent = label;
+      box.append(button);
+      return button;
+    };
+    const addLink = (box, label, href, className) => {
+      const link = document.createElement('a');
+      link.className = className;
+      link.href = href;
+      link.textContent = label;
+      box.append(link);
+    };
+    const line = (s, applied) => {
+      const key = applied ? 'RES' : 'SUM';
+      return [[`COM_DHARMASHOP_IMPORT_${key}_CREATE`, s.create], [`COM_DHARMASHOP_IMPORT_${key}_UPDATE`, s.update], [`COM_DHARMASHOP_IMPORT_${key}_UNCHANGED`, s.unchanged], ['COM_DHARMASHOP_IMPORT_SUM_ERRORS', s.errors]]
+        .map(([k, n]) => `${text(k, k)}: ${n}`).join(' · ');
+    };
+    update(panel, trigger.dataset.importTitle || text('COM_DHARMASHOP_IMPORT_RESULT', 'Импорт'), 0, 0, unit, false);
+    let payload = trigger.dataset.dharmashopImportStart
+      ? await call('job.start', trigger.dataset.dharmashopImportStart)
+      : { id: trigger.dataset.dharmashopImportRun, state: 'reading' };
+    const id = payload.id;
+    for (;;) {
+      while (active.includes(payload.state)) {
+        update(panel, payload.title || '', Number(payload.processed), Number(payload.total), unit, false, `${payload.phase} · ${text('COM_DHARMASHOP_IMPORT_ERRORS', 'Ошибок')}: ${payload.errors}`);
+        await sleep(80);
+        payload = await call('job.step', id);
+      }
+      const box = document.createElement('div');
+      box.className = 'd-flex flex-wrap align-items-center gap-2 mt-3';
+      if (payload.state === 'checked') {
+        update(panel, payload.title, Number(payload.total), Number(payload.total), unit, true, line(payload.summary, false));
+        setStatus(panel, 'review');
+        panel.querySelector('[data-progress-help]').textContent = payload.errors
+          ? text('COM_DHARMASHOP_IMPORT_REVIEW_ERRORS', 'Есть строки с ошибками: исправьте файл или разрешите пропуск ошибочных строк в профиле.')
+          : text('COM_DHARMASHOP_IMPORT_REVIEW_HELP', 'Проверьте сводку: каталог пока не изменён.');
+        const apply = payload.canApply ? addButton(box, text('COM_DHARMASHOP_IMPORT_APPLY', 'Применить'), 'btn btn-success') : null;
+        if (payload.errorsUrl) addLink(box, text('COM_DHARMASHOP_IMPORT_ERRORS_CSV', 'Скачать ошибки (CSV)'), payload.errorsUrl, 'btn btn-outline-danger');
+        addLink(box, text('COM_DHARMASHOP_IMPORT_RESULT', 'Отчёт'), payload.url, 'btn btn-outline-secondary');
+        detail().append(box);
+        if (!apply) return;
+        await new Promise((resolve) => apply.addEventListener('click', resolve, { once: true }));
+        box.remove();
+        payload = await call('job.approve', id);
+        continue;
+      }
+      if (payload.state === 'failed') {
+        update(panel, payload.title, Number(payload.processed), Number(payload.total), unit, false, payload.error);
+        setStatus(panel, 'error');
+        const resume = addButton(box, text('COM_DHARMASHOP_IMPORT_CONTINUE', 'Продолжить'), 'btn btn-primary');
+        addLink(box, text('COM_DHARMASHOP_IMPORT_RESULT', 'Отчёт'), payload.url, 'btn btn-outline-secondary');
+        detail().append(box);
+        await new Promise((resolve) => resume.addEventListener('click', resolve, { once: true }));
+        box.remove();
+        payload = await call('job.resume', id);
+        continue;
+      }
+      update(panel, payload.title, Number(payload.total), Number(payload.total), unit, payload.state === 'done', payload.summary ? line(payload.summary, true) : '');
+      if (payload.state !== 'done') setStatus(panel, 'error');
+      if (payload.errorsUrl) addLink(box, text('COM_DHARMASHOP_IMPORT_ERRORS_CSV', 'Скачать ошибки (CSV)'), payload.errorsUrl, 'btn btn-outline-danger');
+      addLink(box, text('COM_DHARMASHOP_IMPORT_RESULT', 'Отчёт'), payload.url, 'btn btn-primary');
+      detail().append(box);
+      return;
+    }
+  };
+
   const runImageCommand = async (initialTask) => {
     const form = document.querySelector('#adminForm');
     const panel = makePanel();
@@ -266,6 +350,7 @@
     const isElement = (node) => node?.nodeType === 1 && typeof node.matches === 'function';
     const batchTrigger = path.find((node) => isElement(node) && node.matches('[data-dharmashop-batch-task]'));
     const commandTrigger = path.find((node) => isElement(node) && node.localName === 'joomla-toolbar-button' && /^(products\.cmd|imagecommands\.(start|proceed|confirm))/.test(node.getAttribute('task') || ''));
+    const importTrigger = path.find((node) => isElement(node) && node.matches('[data-dharmashop-import-run], [data-dharmashop-import-start]'));
     const exportTrigger = path.find((node) => isElement(node) && node.matches('[data-dharmashop-export-run]'));
     const reloadButton = path.find((node) => isElement(node) && node.matches('[data-progress-reload]'));
     const dismissButton = path.find((node) => isElement(node) && node.matches('[data-progress-dismiss]'));
@@ -275,7 +360,7 @@
       window.bootstrap?.Modal.getOrCreateInstance(progressModal()).hide();
       return;
     }
-    if (!batchTrigger && !commandTrigger && !exportTrigger) return;
+    if (!batchTrigger && !commandTrigger && !exportTrigger && !importTrigger) return;
 
     event.preventDefault();
     event.stopImmediatePropagation();
@@ -284,6 +369,7 @@
     try {
       if (batchTrigger) await runBatch(batchTrigger);
       else if (exportTrigger) await runExport(exportTrigger);
+      else if (importTrigger) await runImport(importTrigger);
       else if ((commandTrigger.getAttribute('task') || '').startsWith('imagecommands.')) await runImageCommand(commandTrigger.getAttribute('task'));
       else await runCommand(commandTrigger.getAttribute('task'));
     } catch (error) {
@@ -295,4 +381,7 @@
       }
     } finally { busy = false; }
   }, true);
+  const autoImport = () => document.querySelector('[data-dharmashop-import-auto]')?.click();
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', autoImport, { once: true });
+  else autoImport();
 })();

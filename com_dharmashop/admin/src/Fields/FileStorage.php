@@ -177,9 +177,28 @@ final class FileStorage
         if (($upload['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK || !is_uploaded_file((string) ($upload['tmp_name'] ?? ''))) {
             throw new \InvalidArgumentException('COM_DHARMASHOP_UPLOAD_ERROR_NO_FILE');
         }
+        return $this->commit($upload, $owner, true);
+    }
+
+    /** Internal caller only: downloaded/validated temporary document, with normal field checks. */
+    public function inspectPrepared(string $path, string $name): array
+    {
+        if (!is_file($path) || is_link($path)) { throw new \InvalidArgumentException('COM_DHARMASHOP_UPLOAD_ERROR_NO_FILE'); }
+        return $this->validate($path, strtolower(pathinfo($name, PATHINFO_EXTENSION)), true);
+    }
+
+    public function storePrepared(string $path, string $name, array $owner): array
+    {
+        if (!is_file($path) || is_link($path)) { throw new \InvalidArgumentException('COM_DHARMASHOP_UPLOAD_ERROR_NO_FILE'); }
+        $this->inspectPrepared($path, $name);
+        return $this->commit(['tmp_name'=>$path, 'name'=>$name], $owner, false);
+    }
+
+    private function commit(array $upload, array $owner, bool $uploaded): array
+    {
         $original = basename(str_replace('\\', '/', (string) ($upload['name'] ?? '')));
         $extension = strtolower(pathinfo($original, PATHINFO_EXTENSION));
-        $metadata = $this->validate($upload['tmp_name'], $extension, true);
+        $metadata = $this->validate($upload['tmp_name'], $extension, $uploaded);
         $filename = $this->filename($original);
         $base = 'images/dharmashop/' . $this->base;
         if (!in_array($owner['target'] ?? '', ['product', 'category', 'group'], true)) { throw new \InvalidArgumentException('COM_DHARMASHOP_UPLOAD_ERROR_STORE'); }
@@ -217,7 +236,7 @@ final class FileStorage
         }
         if ($directory === '') { throw new \RuntimeException('COM_DHARMASHOP_UPLOAD_ERROR_STORE'); }
         $path = $directory . '/' . $filename;
-        if (!move_uploaded_file($upload['tmp_name'], $this->root . '/' . $path)) { throw new \RuntimeException('COM_DHARMASHOP_UPLOAD_ERROR_STORE'); }
+        if (!($uploaded ? move_uploaded_file($upload['tmp_name'], $this->root . '/' . $path) : copy($upload['tmp_name'], $this->root . '/' . $path))) { throw new \RuntimeException('COM_DHARMASHOP_UPLOAD_ERROR_STORE'); }
         return ['path'=>$path, 'filename'=>$filename] + $metadata;
     }
 

@@ -18,9 +18,9 @@ final class Catalog {
   if(!in_array($entity,self::ENTITIES,true)) { throw new \InvalidArgumentException('COM_DHARMASHOP_EXPORT_INVALID'); }
   $keys=['id'=>'number','title'=>'text','alias'=>'text','state'=>'number'];
   if(in_array($entity,['products','groups'],true)) {
-   $keys+=['category_id'=>'number','category'=>'text','category_path'=>'text','category_alias'=>'text','category_ids'=>'items','brand_id'=>'number','brand'=>'text','brand_alias'=>'text','brand_path'=>'text','badge_ids'=>'items','badges'=>'items','badge_aliases'=>'items','introtext'=>'html','fulltext'=>'html','cover'=>'url','cover_alt'=>'text','gallery'=>'items','price'=>'number','in_stock'=>'number','public'=>'number','url'=>'url'];
+   $keys+=['category_id'=>'number','category'=>'text','category_path'=>'text','category_alias'=>'text','category_ids'=>'items','brand_id'=>'number','brand'=>'text','brand_alias'=>'text','brand_path'=>'text','badge_ids'=>'items','badges'=>'items','badge_aliases'=>'items','introtext'=>'html','fulltext'=>'html','cover'=>'url','cover_alt'=>'text','gallery'=>'items','gallery_json'=>'text','price'=>'number','in_stock'=>'number','public'=>'number','url'=>'url'];
   }
-  if($entity==='products') { $keys+=['sku'=>'text','variant_id'=>'number','group_id'=>'number','group'=>'text','base_price'=>'number','discount'=>'text','discount_amount'=>'number','discount_start'=>'text','discount_end'=>'text','stock'=>'number','unit'=>'text','weight'=>'number','weight_unit'=>'text','length'=>'number','width'=>'number','height'=>'number','dimension_unit'=>'text','created'=>'text','modified'=>'text','metakey'=>'text','metadesc'=>'text','metadata'=>'text','params'=>'text','inherit_intro'=>'text','inherit_full'=>'text','inherit_images'=>'text']; }
+  if($entity==='products') { $keys+=['category_paths_extra'=>'items','sku'=>'text','variant_id'=>'number','group_id'=>'number','group'=>'text','base_price'=>'number','discount'=>'text','discount_amount'=>'number','discount_start'=>'text','discount_end'=>'text','stock'=>'number','stock_qty'=>'number','unit'=>'text','weight'=>'number','weight_unit'=>'text','length'=>'number','width'=>'number','height'=>'number','dimension_unit'=>'text','created'=>'text','modified'=>'text','metakey'=>'text','metadesc'=>'text','metadata'=>'text','params'=>'text','inherit_intro'=>'text','inherit_full'=>'text','inherit_images'=>'text']; }
   if($entity==='groups') { $keys+=['member_ids'=>'items','member_skus'=>'items','axes'=>'items','price_max'=>'number','display_mode'=>'text','title_template'=>'text','copy_fields'=>'number']; }
   if(in_array($entity,['categories','brands','badges'],true)) { $keys+=['parent_id'=>'number','path'=>'text','description'=>'html','introtext'=>'html','cover'=>'url','params'=>'text','metadesc'=>'text','metakey'=>'text','access'=>'number']; }
   if($entity==='fields') { $keys+=['target'=>'text','type'=>'text','store'=>'text','group_id'=>'number','group'=>'text','unit'=>'text','required'=>'number','all_categories'=>'number','category_ids'=>'items','options'=>'text','params'=>'text','level'=>'number','filterable'=>'number','sortable'=>'number','in_card'=>'number','in_page'=>'number','is_cover'=>'number','ordering'=>'number','access'=>'number']; }
@@ -30,7 +30,8 @@ final class Catalog {
   if(in_array($entity,['products','groups','categories','brands','badges'],true)) {
    $target=in_array($entity,['products','groups'],true)?'product':'category';
    foreach($this->rows('SELECT id,alias,title,store FROM #__dharmashop_fields WHERE state >= 0 AND target='.$this->db->quote($target).' ORDER BY group_id,ordering,id') as $f) {
-    foreach([''=>'','@alias'=>' (alias)','@id'=>' (ID)'] as $suffix=>$label) { $out['field.'.$f['alias'].$suffix]=['label'=>$f['title'].$label,'type'=>'items','field_id'=>(int)$f['id'],'store'=>(string)$f['store']]; }
+    // У медиа-полей есть вариант @json: ссылки с подписями (alt/title) для обратного импорта без потерь.
+    foreach([''=>'','@alias'=>' (alias)','@id'=>' (ID)']+($f['store']==='media'?['@json'=>' (JSON)']:[]) as $suffix=>$label) { $out['field.'.$f['alias'].$suffix]=['label'=>$f['title'].$label,'type'=>'items','field_id'=>(int)$f['id'],'store'=>(string)$f['store']]; }
    }
   }
   return $this->schemas[$entity]=$out;
@@ -97,7 +98,7 @@ final class Catalog {
   $schema=$this->schema($e);$fieldIds=[];
   foreach($keys as $k) { if(isset($schema[$k]['field_id'])) { $fieldIds[$schema[$k]['field_id']]=true; } }
   if($e==='products') {
-   foreach($this->rows('SELECT v.id AS variant_id,v.product_id,v.sku,v.stock_total AS stock,v.weight,v.weight_unit,v.length,v.width,v.height,v.dimension_unit,vp.price AS base_price,vp.price_final AS price,vp.discount,vp.discount_percent,vp.discount_start,vp.discount_end FROM #__dharmashop_variants v LEFT JOIN #__dharmashop_variant_prices vp ON vp.variant_id=v.id AND vp.price_list_id=(SELECT id FROM #__dharmashop_price_lists WHERE is_default=1 ORDER BY id LIMIT 1) WHERE v.product_id IN ('.$ids.')') as $v) {
+   foreach($this->rows('SELECT v.id AS variant_id,v.product_id,v.sku,v.stock_total AS stock,(SELECT COALESCE(SUM(l.qty),0) FROM #__dharmashop_stock_levels l WHERE l.variant_id=v.id) AS stock_qty,v.weight,v.weight_unit,v.length,v.width,v.height,v.dimension_unit,vp.price AS base_price,vp.price_final AS price,vp.discount,vp.discount_percent,vp.discount_start,vp.discount_end FROM #__dharmashop_variants v LEFT JOIN #__dharmashop_variant_prices vp ON vp.variant_id=v.id AND vp.price_list_id=(SELECT id FROM #__dharmashop_price_lists WHERE is_default=1 ORDER BY id LIMIT 1) WHERE v.product_id IN ('.$ids.')') as $v) {
     $by[(int)$v['product_id']]=array_merge($by[(int)$v['product_id']],$v);
    }
    $gids=array_filter(array_unique(array_map(fn($r)=>(int)($r['group_id']??0),$by)));
@@ -123,22 +124,24 @@ final class Catalog {
   }
   if($fieldIds) { $this->fields($by,$e,array_keys($fieldIds),$p); }
   $gallery=[];
-  if($e==='products' && in_array('gallery',$keys,true)) {
-   foreach($this->rows('SELECT product_id AS owner,path FROM #__dharmashop_field_media WHERE product_id IN ('.$ids.') AND field_id=0 AND variant_id IS NULL ORDER BY ordering,id') as $m) {$gallery[$m['owner']][]=$this->absolute($m['path'],$p);}
+  $wantGallery=(bool)array_intersect(['gallery','gallery_json'],$keys);
+  if($e==='products' && $wantGallery) {
+   foreach($this->rows('SELECT product_id AS owner,path,alt,title FROM #__dharmashop_field_media WHERE product_id IN ('.$ids.') AND field_id=0 AND variant_id IS NULL ORDER BY ordering,id') as $m) {$gallery[$m['owner']][]=['url'=>$this->absolute($m['path'],$p),'alt'=>(string)$m['alt'],'title'=>(string)$m['title']];}
   }
   $gids=$e==='groups'?array_keys($by):array_filter(array_unique(array_map(fn($r)=>(int)($r['group_id']??0),$by)));$groupGallery=[];
-  if($gids && in_array('gallery',$keys,true)) { foreach($this->rows('SELECT group_id,path FROM #__dharmashop_group_media WHERE group_id IN ('.implode(',',$gids).') ORDER BY ordering,id') as $m) {$groupGallery[$m['group_id']][]=$this->absolute($m['path'],$p);} }
+  if($gids && $wantGallery) { foreach($this->rows('SELECT group_id,path,alt,title FROM #__dharmashop_group_media WHERE group_id IN ('.implode(',',$gids).') ORDER BY ordering,id') as $m) {$groupGallery[$m['group_id']][]=['url'=>$this->absolute($m['path'],$p),'alt'=>(string)$m['alt'],'title'=>(string)$m['title']];} }
   foreach($by as $id=>&$r) {
    if(in_array($e,['products','groups'],true)) {
     $r['public']=(int)$r['state']===1 && ($visible[$id]??false) ? 1 : 0;
     $r['category_id']=$r['catid'];$r['price']=$r['price']??$r['price_min'];
     foreach($tax[$id]??[] as $t) {
-     if($t['extension']==='com_dharmashop') { $r['category_ids'][]=$t['id'];if((int)$r['catid']===(int)$t['id']) {$r['category']=$t['title'];$r['category_alias']=$t['alias'];$r['category_path']=$t['path'];} }
+     if($t['extension']==='com_dharmashop') { $r['category_ids'][]=$t['id'];if((int)$r['catid']===(int)$t['id']) {$r['category']=$t['title'];$r['category_alias']=$t['alias'];$r['category_path']=$t['path'];}elseif($e==='products'){$r['category_paths_extra'][]=$t['path'];} }
      if($t['extension']==='com_dharmashop.brand') {$r['brand_id']=$t['id'];$r['brand']=$t['title'];$r['brand_alias']=$t['alias'];$r['brand_path']=$t['path'];}
      if($t['extension']==='com_dharmashop.badge') {$r['badge_ids'][]=$t['id'];$r['badges'][]=$t['title'];$r['badge_aliases'][]=$t['alias'];}
     }
     $r['cover']=$this->absolute($r['cover']??'',$p);
-    $r['gallery']=$e==='groups'?($groupGallery[$id]??[]):match($r['inherit_images']){'group'=>$groupGallery[$r['group_id']]??[],'empty'=>[],default=>$gallery[$id]??[]};
+    $items=$e==='groups'?($groupGallery[$id]??[]):match($r['inherit_images']){'group'=>$groupGallery[$r['group_id']]??[],'empty'=>[],default=>$gallery[$id]??[]};
+    $r['gallery']=array_column($items,'url');$r['gallery_json']=$items?json_encode($items,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES):'';
     $r['url']=$this->productUrl($e==='products'?$id:(int)($r['member_ids'][0]??0),(int)$r['catid'],$p);
    }elseif(in_array($e,['categories','brands','badges'],true)) { $params=json_decode((string)$r['params'],true)?:[];$r['introtext']=$params['introtext']??'';$r['cover']=$this->absolute($params['image']??'',$p); }
   }unset($r);
@@ -153,7 +156,12 @@ final class Catalog {
    $key='field.'.$v['alias'];$by[$v['owner']][$key][]=$value;$by[$v['owner']][$key.'@alias'][]=$v['option_alias']??$value;$by[$v['owner']][$key.'@id'][]=$v['option_id']??$value;
   }
   foreach($this->rows('SELECT v.'.$owner.' AS owner,f.alias,v.value FROM '.$prefix.'field_texts v JOIN #__dharmashop_fields f ON f.id=v.field_id WHERE '.$where.' ORDER BY v.id') as $v) {foreach(['','@alias','@id'] as $s){$by[$v['owner']]['field.'.$v['alias'].$s]=$v['value'];}}
-  foreach($this->rows('SELECT v.'.$owner.' AS owner,f.alias,v.path FROM '.$prefix.'field_media v JOIN #__dharmashop_fields f ON f.id=v.field_id WHERE '.$where.' ORDER BY v.ordering,v.id') as $v) {foreach(['','@alias','@id'] as $s){$by[$v['owner']]['field.'.$v['alias'].$s][]=$this->absolute($v['path'],$p);}}
+  $json=[];
+  foreach($this->rows('SELECT v.'.$owner.' AS owner,f.alias,v.path,v.alt,v.title FROM '.$prefix.'field_media v JOIN #__dharmashop_fields f ON f.id=v.field_id WHERE '.$where.' ORDER BY v.ordering,v.id') as $v) {
+   $url=$this->absolute($v['path'],$p);foreach(['','@alias','@id'] as $s){$by[$v['owner']]['field.'.$v['alias'].$s][]=$url;}
+   $json[$v['owner']]['field.'.$v['alias'].'@json'][]=['url'=>$url,'alt'=>(string)$v['alt'],'title'=>(string)$v['title']];
+  }
+  foreach($json as $owner=>$keysJson){foreach($keysJson as $key=>$items){$by[$owner][$key]=json_encode($items,JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES);}}
  }
  private function decimal(string $v):string {return str_contains($v,'.')?rtrim(rtrim($v,'0'),'.'):$v;}
  /** Адрес карточки на витрине: ЧПУ через маршрутизатор сайта (если он доступен вне консоли), иначе обычная ссылка компонента. Начинается с site_url профиля. */

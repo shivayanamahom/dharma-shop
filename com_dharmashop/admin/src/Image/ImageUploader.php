@@ -135,21 +135,14 @@ final class ImageUploader
      *
      * @throws  \RuntimeException  с языковым ключом сообщения
      */
-    public function store(array $file, string $folder, ?string $fieldScope = null, bool $uploaded = true): array
+    /** Same upload policy without promoting the prepared file into public storage. */
+    public function inspectPrepared(string $path, string $name): array
     {
-        $error = (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE);
-
-        if ($error === UPLOAD_ERR_INI_SIZE || $error === UPLOAD_ERR_FORM_SIZE) {
-            throw new \RuntimeException('COM_DHARMASHOP_UPLOAD_ERROR_SIZE');
-        }
-
-        if ($error !== UPLOAD_ERR_OK || empty($file['tmp_name']) || ($uploaded ? !is_uploaded_file($file['tmp_name']) : !is_file($file['tmp_name']))) {
-            throw new \RuntimeException('COM_DHARMASHOP_UPLOAD_ERROR_NO_FILE');
-        }
-
+        if (!is_file($path) || is_link($path)) { throw new \RuntimeException('COM_DHARMASHOP_UPLOAD_ERROR_NO_FILE'); }
+        $file = ['tmp_name'=>$path, 'name'=>$name];
         $max = $this->maxBytes();
 
-        if ($max > 0 && (int) $file['size'] > $max) {
+        if ($max > 0 && (int) filesize($file['tmp_name']) > $max) {
             throw new \RuntimeException('COM_DHARMASHOP_UPLOAD_ERROR_SIZE');
         }
 
@@ -189,6 +182,24 @@ final class ImageUploader
                 throw new \RuntimeException('COM_DHARMASHOP_UPLOAD_ERROR_TYPE');
             }
         }
+
+        return compact('original', 'extension', 'width', 'height', 'svgClean');
+    }
+
+    public function store(array $file, string $folder, ?string $fieldScope = null, bool $uploaded = true): array
+    {
+        $error = (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE);
+
+        if ($error === UPLOAD_ERR_INI_SIZE || $error === UPLOAD_ERR_FORM_SIZE) {
+            throw new \RuntimeException('COM_DHARMASHOP_UPLOAD_ERROR_SIZE');
+        }
+
+        if ($error !== UPLOAD_ERR_OK || empty($file['tmp_name']) || ($uploaded ? !is_uploaded_file($file['tmp_name']) : !is_file($file['tmp_name']))) {
+            throw new \RuntimeException('COM_DHARMASHOP_UPLOAD_ERROR_NO_FILE');
+        }
+
+        ['original'=>$original,'extension'=>$extension,'width'=>$width,'height'=>$height,'svgClean'=>$svgClean]
+            = $this->inspectPrepared($file['tmp_name'], (string) ($file['name'] ?? ''));
 
         if (in_array($folder, ['field-galleries', 'field-video-posters'], true) && $fieldScope !== null
             && preg_match('/^[1-9][0-9]{0,8}\/[a-z0-9_-]{1,50}$/D', $fieldScope)) {

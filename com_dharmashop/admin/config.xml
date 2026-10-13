@@ -430,6 +430,11 @@
 	</fieldset>
 
  <fieldset name="exchange" label="COM_DHARMASHOP_CONFIG_EXCHANGE">
+  <field name="import_folder" type="Exportfolder" label="COM_DHARMASHOP_CONFIG_IMPORT_FOLDER" description="COM_DHARMASHOP_CONFIG_IMPORT_FOLDER_DESC" default="files/import" layout="joomla.form.field.list-fancy-select"/>
+  <field name="import_media_max_files" type="number" label="COM_DHARMASHOP_CONFIG_IMPORT_MEDIA_MAX_FILES" default="5000" min="1" max="50000" filter="integer"/>
+  <field name="import_media_max_mb" type="number" label="COM_DHARMASHOP_CONFIG_IMPORT_MEDIA_MAX_MB" default="512" min="16" max="10240" filter="integer"/>
+  <field name="import_inbox" type="text" label="COM_DHARMASHOP_CONFIG_IMPORT_INBOX" description="COM_DHARMASHOP_CONFIG_IMPORT_INBOX_DESC" default="files/import/inbox"/>
+
   <field name="export_folder" type="Exportfolder" label="COM_DHARMASHOP_CONFIG_EXPORT_FOLDER" description="COM_DHARMASHOP_CONFIG_EXPORT_FOLDER_DESC" default="files/export" layout="joomla.form.field.list-fancy-select"/>
   <field name="export_keep" type="number" label="COM_DHARMASHOP_CONFIG_EXPORT_KEEP" description="COM_DHARMASHOP_CONFIG_EXPORT_KEEP_DESC" default="10" min="1" max="200" filter="integer"/>
   <field name="export_batch" type="number" label="COM_DHARMASHOP_CONFIG_EXPORT_BATCH" default="200" min="10" max="2000" filter="integer"/>

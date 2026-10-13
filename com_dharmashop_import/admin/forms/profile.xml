@@ -1,0 +1,126 @@
+<form addfieldprefix="Dharma\Component\DharmaShopImport\Administrator\Field">
+  <fieldset name="main" label="COM_DHARMASHOP_IMPORT_PROFILE">
+    <field name="id" type="hidden" label="COM_DHARMASHOP_IMPORT_ID" default="0" />
+    <field name="title" type="text" label="COM_DHARMASHOP_IMPORT_TITLE" required="true" maxlength="255" />
+    <field name="state" type="radio" layout="joomla.form.field.radio.switcher" label="COM_DHARMASHOP_IMPORT_STATE" default="1">
+      <option value="1">JENABLED</option>
+      <option value="0">JDISABLED</option>
+    </field>
+    <field name="entity" type="list" label="COM_DHARMASHOP_IMPORT_ENTITY" default="categories">
+      <option value="categories">COM_DHARMASHOP_IMPORT_CATEGORIES</option>
+      <option value="brands">COM_DHARMASHOP_IMPORT_BRANDS</option>
+      <option value="badges">COM_DHARMASHOP_IMPORT_BADGES</option>
+      <option value="products">COM_DHARMASHOP_IMPORT_PRODUCTS</option>
+    </field>
+    <field name="format" type="list" label="COM_DHARMASHOP_IMPORT_FORMAT" default="csv">
+      <option value="csv">COM_DHARMASHOP_IMPORT_CSV</option>
+      <option value="xlsx">COM_DHARMASHOP_IMPORT_XLSX</option>
+    </field>
+  </fieldset>
+  <fields name="params">
+    <fieldset name="main" label="COM_DHARMASHOP_IMPORT_PROFILE">
+      <field name="separator" type="list" label="COM_DHARMASHOP_IMPORT_SEPARATOR" default="auto" showon="format:csv">
+        <option value="auto">COM_DHARMASHOP_IMPORT_AUTO</option>
+        <option value=";">COM_DHARMASHOP_IMPORT_SEMICOLON</option>
+        <option value=",">COM_DHARMASHOP_IMPORT_COMMA</option>
+        <option value="tab">COM_DHARMASHOP_IMPORT_TAB</option>
+      </field>
+      <field name="encoding" type="list" label="COM_DHARMASHOP_IMPORT_ENCODING" default="UTF-8" showon="format:csv">
+        <option value="UTF-8">COM_DHARMASHOP_IMPORT_UTF8</option>
+        <option value="Windows-1251">COM_DHARMASHOP_IMPORT_CP1251</option>
+      </field>
+      <field name="xlsx_sheet" type="Sheet" label="COM_DHARMASHOP_IMPORT_XLSX_SHEET" default="" showon="format:xlsx" description="COM_DHARMASHOP_IMPORT_XLSX_SHEET_DESC" />
+      <field name="header" type="radio" layout="joomla.form.field.radio.switcher" label="COM_DHARMASHOP_IMPORT_HEADER" default="1">
+        <option value="1">JYES</option>
+        <option value="0">JNO</option>
+      </field>
+      <field name="skip_rows" type="number" label="COM_DHARMASHOP_IMPORT_SKIP_ROWS" description="COM_DHARMASHOP_IMPORT_SKIP_ROWS_DESC" default="0" min="0" max="1000" filter="integer" />
+      <field name="source_type" type="list" label="COM_DHARMASHOP_IMPORT_SOURCE_TYPE" default="upload">
+        <option value="upload">COM_DHARMASHOP_IMPORT_UPLOAD_SOURCE</option>
+        <option value="url">COM_DHARMASHOP_IMPORT_URL_SOURCE</option>
+        <option value="path">COM_DHARMASHOP_IMPORT_PATH_SOURCE</option>
+      </field>
+      <field name="source_file" type="Source" label="COM_DHARMASHOP_IMPORT_SOURCE_FILE" showon="source_type:upload" filter="raw" />
+      <field name="source_url" type="text" label="COM_DHARMASHOP_IMPORT_SOURCE_URL" showon="source_type:url" filter="string" hint="https://example.ru/catalog.csv" />
+      <field name="source_path" type="text" label="COM_DHARMASHOP_IMPORT_SOURCE_PATH" showon="source_type:path" hint="catalog.csv" description="COM_DHARMASHOP_IMPORT_SOURCE_PATH_DESC" />
+      <field name="sample_help" type="note" label="COM_DHARMASHOP_IMPORT_SAMPLE_HELP" description="COM_DHARMASHOP_IMPORT_SAMPLE_HELP_DESC" class="alert alert-info" />
+    </fieldset>
+    <fieldset name="mapping" label="COM_DHARMASHOP_IMPORT_MAPPING">
+      <field name="mapping_help" type="note" label="COM_DHARMASHOP_IMPORT_MAPPING_HELP" description="COM_DHARMASHOP_IMPORT_MAPPING_HELP_DESC" class="alert alert-info" />
+      <field name="mapping" type="subform" label="COM_DHARMASHOP_IMPORT_MAPPING" multiple="true" max="200" buttons="add,remove" layout="import.subform.mapping" layoutIncludePath="administrator/components/com_dharmashop_import/layouts">
+        <form addfieldprefix="Dharma\Component\DharmaShopImport\Administrator\Field">
+          <field name="column" type="Column" label="COM_DHARMASHOP_IMPORT_COLUMN" filter="integer" layout="joomla.form.field.list-fancy-select" />
+          <field name="target" type="Destination" label="COM_DHARMASHOP_IMPORT_DESTINATION" layout="joomla.form.field.list-fancy-select">
+            <option value="">COM_DHARMASHOP_IMPORT_IGNORE</option>
+          </field>
+          <field name="field_title" type="text" label="COM_DHARMASHOP_IMPORT_NEW_FIELD_TITLE" maxlength="255" showon="target:__new_field" />
+          <field name="field_alias" type="text" label="COM_DHARMASHOP_IMPORT_NEW_FIELD_ALIAS" maxlength="190" showon="target:__new_field" />
+          <field name="field_type" type="list" label="COM_DHARMASHOP_IMPORT_NEW_FIELD_TYPE" default="text" showon="target:__new_field">
+            <option value="text">COM_DHARMASHOP_IMPORT_TYPE_TEXT</option>
+            <option value="editor">COM_DHARMASHOP_IMPORT_TYPE_EDITOR</option>
+            <option value="number">COM_DHARMASHOP_IMPORT_TYPE_NUMBER</option>
+            <option value="range">COM_DHARMASHOP_IMPORT_TYPE_RANGE</option>
+            <option value="checkbox">COM_DHARMASHOP_IMPORT_TYPE_CHECKBOX</option>
+            <option value="list">COM_DHARMASHOP_IMPORT_TYPE_LIST</option>
+          </field>
+        </form>
+      </field>
+    </fieldset>
+    <fieldset name="rules" label="COM_DHARMASHOP_IMPORT_RULES">
+      <field name="source_code" type="text" label="COM_DHARMASHOP_IMPORT_SOURCE_CODE" required="true" maxlength="50" default="catalog" description="COM_DHARMASHOP_IMPORT_SOURCE_CODE_DESC" />
+      <field name="key" type="list" label="COM_DHARMASHOP_IMPORT_KEY" default="external_id">
+        <option value="external_id">COM_DHARMASHOP_IMPORT_KEY_EXTERNAL</option>
+        <option value="id">COM_DHARMASHOP_IMPORT_KEY_ID</option>
+        <option value="sku">COM_DHARMASHOP_IMPORT_KEY_SKU</option>
+        <option value="alias">COM_DHARMASHOP_IMPORT_KEY_ALIAS</option>
+      </field>
+      <field name="create_new" type="radio" layout="joomla.form.field.radio.switcher" label="COM_DHARMASHOP_IMPORT_CREATE_NEW" default="1">
+        <option value="1">JYES</option>
+        <option value="0">JNO</option>
+      </field>
+      <field name="update_existing" type="radio" layout="joomla.form.field.radio.switcher" label="COM_DHARMASHOP_IMPORT_UPDATE_EXISTING" default="1">
+        <option value="1">JYES</option>
+        <option value="0">JNO</option>
+      </field>
+      <field name="skip_errors" type="radio" layout="joomla.form.field.radio.switcher" label="COM_DHARMASHOP_IMPORT_SKIP_ERRORS" default="0">
+        <option value="1">JYES</option>
+        <option value="0">JNO</option>
+      </field>
+      <field name="new_state" type="radio" layout="joomla.form.field.radio.switcher" label="COM_DHARMASHOP_IMPORT_NEW_STATE" default="0">
+        <option value="1">JYES</option>
+        <option value="0">JNO</option>
+      </field>
+      <field name="default_category" type="sql" label="COM_DHARMASHOP_IMPORT_DEFAULT_CATEGORY" query="SELECT id AS value,title AS text FROM #__categories WHERE extension='com_dharmashop' AND parent_id&gt;0 ORDER BY lft" key_field="value" value_field="text" showon=".entity:products" />
+      <field name="list_separator" type="text" label="COM_DHARMASHOP_IMPORT_LIST_SEPARATOR" default=" | " maxlength="20" filter="raw" />
+      <field name="create_missing_fields" type="radio" layout="joomla.form.field.radio.switcher" label="COM_DHARMASHOP_IMPORT_CREATE_MISSING_FIELDS" default="0" showon=".entity:products,categories" description="COM_DHARMASHOP_IMPORT_CREATE_MISSING_FIELDS_DESC">
+        <option value="0">JNO</option>
+        <option value="1">JYES</option>
+      </field>
+      <field name="create_missing_categories" type="radio" layout="joomla.form.field.radio.switcher" label="COM_DHARMASHOP_IMPORT_CREATE_MISSING_CATEGORIES" default="0" showon=".entity:products" description="COM_DHARMASHOP_IMPORT_CREATE_MISSING_CATEGORIES_DESC">
+        <option value="0">JNO</option>
+        <option value="1">JYES</option>
+      </field>
+      <field name="category_separator" type="text" label="COM_DHARMASHOP_IMPORT_CATEGORY_SEPARATOR" default="/" maxlength="10" showon=".entity:products" filter="raw" />
+      <field name="create_missing_options" type="radio" layout="joomla.form.field.radio.switcher" label="COM_DHARMASHOP_IMPORT_CREATE_MISSING_OPTIONS" default="0" showon=".entity:products,categories" description="COM_DHARMASHOP_IMPORT_CREATE_MISSING_OPTIONS_DESC">
+        <option value="0">JNO</option>
+        <option value="1">JYES</option>
+      </field>
+    </fieldset>
+    <fieldset name="media" label="COM_DHARMASHOP_IMPORT_MEDIA">
+      <field name="media_base_url" type="text" label="COM_DHARMASHOP_IMPORT_MEDIA_BASE" hint="https://example.ru/" />
+      <field name="media_hosts" type="textarea" label="COM_DHARMASHOP_IMPORT_MEDIA_HOSTS" rows="4" description="COM_DHARMASHOP_IMPORT_MEDIA_HOSTS_DESC" />
+      <field name="download_images" type="radio" layout="joomla.form.field.radio.switcher" label="COM_DHARMASHOP_IMPORT_DOWNLOAD_IMAGES" default="1">
+        <option value="1">JYES</option>
+        <option value="0">JNO</option>
+      </field>
+      <field name="download_files" type="radio" layout="joomla.form.field.radio.switcher" label="COM_DHARMASHOP_IMPORT_DOWNLOAD_FILES" default="1">
+        <option value="1">JYES</option>
+        <option value="0">JNO</option>
+      </field>
+      <field name="allow_http" type="radio" layout="joomla.form.field.radio.switcher" label="COM_DHARMASHOP_IMPORT_ALLOW_HTTP" default="0">
+        <option value="1">JYES</option>
+        <option value="0">JNO</option>
+      </field>
+    </fieldset>
+  </fields>
+</form>

@@ -61,6 +61,35 @@ class ProductModel extends AdminModel
     /** Поля формы, которые относятся к варианту, а не к карточке. */
     private const VARIANT_FIELDS = ['sku', 'weight', 'weight_unit', 'length', 'width', 'height', 'dimension_unit', 'price', 'discount', 'discount_start', 'discount_end'];
 
+    /** null: full native form; array: explicitly selected patch blocks. */
+    private ?array $patchKeys = null;
+
+    public const PATCH_FIELDS = ['title','alias','state','catid','extra_catids','brand_id','badge_ids','group_id','introtext','fulltext','metakey','metadesc','metadata','params','unit','qty_min','qty_step','qty_max','stock_tracked','backorder','price_zero_free','inherit_intro','inherit_full','inherit_images','gallery','cover_alt','sku','price','discount','discount_start','discount_end','stock_qty','weight','weight_unit','length','width','height','dimension_unit','custom_fields','custom_fields_present'];
+
+    /** Writes only selected blocks; a price-only change never writes an old stock snapshot. */
+    public function savePatch(int $id, array $patch, ?array $expected = null): bool
+    {
+        if ($id < 1 || array_diff(array_keys($patch), self::PATCH_FIELDS)) { throw new \InvalidArgumentException('Invalid product patch.'); }
+        $db = $this->getDatabase();
+        $lock = 'dharma.product.' . $id;
+        if (!(int) $db->setQuery('SELECT GET_LOCK(' . $db->quote($lock) . ', 10)')->loadResult()) { throw new \RuntimeException('COM_DHARMASHOP_GROUP_CHANGED'); }
+        try {
+            $current = (array) $this->getItem($id);
+            if (empty($current['id'])) { throw new \RuntimeException('COM_DHARMASHOP_PRODUCT_NOT_FOUND'); }
+            if (isset($patch['custom_fields'])) { $current['custom_fields'] = (new FieldValues($db))->values('product', $current); }
+            foreach ($expected ?? [] as $key => $value) {
+                if (\Dharma\Component\DharmaShop\Administrator\Catalog\PatchValues::hash($current[$key] ?? null) !== \Dharma\Component\DharmaShop\Administrator\Catalog\PatchValues::hash($value)) { throw new \RuntimeException('COM_DHARMASHOP_GROUP_CHANGED'); }
+            }
+            $this->patchKeys = array_fill_keys(array_keys($patch), true);
+            if (!isset($patch['gallery'])) { unset($current['gallery']); }
+            if (!isset($patch['custom_fields'])) { unset($current['custom_fields'], $current['custom_fields_present']); }
+            return $this->saveData(array_intersect_key(array_replace($current, $patch), array_fill_keys(array_merge(self::PATCH_FIELDS, ['id', 'category_order']), true)));
+        } finally {
+            $this->patchKeys = null;
+            $db->setQuery('DO RELEASE_LOCK(' . $db->quote($lock) . ')')->execute();
+        }
+    }
+
     public function getTable($name = 'Product', $prefix = 'Administrator', $options = []): Table
     {
         return parent::getTable($name, $prefix, $options);
@@ -206,6 +235,16 @@ class ProductModel extends AdminModel
      */
     public function save($data): bool
     {
+        $id = (int) ($data['id'] ?? 0);
+        if (!$id) { return $this->saveData($data); }
+        $db = $this->getDatabase(); $lock = 'dharma.product.' . $id;
+        if (!(int) $db->setQuery('SELECT GET_LOCK(' . $db->quote($lock) . ', 10)')->loadResult()) { $this->setError(Text::_('COM_DHARMASHOP_GROUP_CHANGED')); return false; }
+        try { return $this->saveData($data); }
+        finally { $db->setQuery('DO RELEASE_LOCK(' . $db->quote($lock) . ')')->execute(); }
+    }
+
+    private function saveData($data): bool
+    {
         $db = $this->getDatabase();
         $shop = $this->shop();
         $userId = (int) Factory::getApplication()->getIdentity()->id;
@@ -279,10 +318,14 @@ class ProductModel extends AdminModel
             if (trim((string) ($variantData['price'] ?? '')) === '' && trim((string) ($variantData['discount'] ?? '')) === '') {
                 $variantData['price'] = '0';
             }
-            $variantId = $shop->variants()->saveDefault($id, $variantData);
+            $writeVariant = $this->patchKeys === null || (bool) array_intersect_key($this->patchKeys, array_flip(array_merge(self::VARIANT_FIELDS, ['stock_tracked','backorder','catid','params'])));
+            $variantId = $writeVariant ? $shop->variants()->saveDefault($id, $variantData) : (int) $shop->variants()->getDefault($id)->id;
             // Наличие переносится на товар ниже, одним `rebuild()` этого сохранения.
-            $shop->stock()->setQty($variantId, (float) str_replace(',', '.', (string) ($data['stock_qty'] ?? 0)), 'manual', $userId, null, false);
+            if ($this->patchKeys === null || isset($this->patchKeys['stock_qty'])) {
+                $shop->stock()->setQty($variantId, (float) str_replace(',', '.', (string) ($data['stock_qty'] ?? 0)), $this->patchKeys === null ? 'manual' : 'import', $userId, null, false);
+            }
             $shop->rebuilder()->rebuild($id);
+            if ($this->patchKeys === null || $writeVariant || array_intersect_key($this->patchKeys, array_flip(['catid','extra_catids','brand_id','badge_ids','state']))) {
             $shop->indexer()->setCategories(
                 $id,
                 (int) $data['catid'],
@@ -294,6 +337,7 @@ class ProductModel extends AdminModel
                     ->forCategories(array_merge([(int) $data['catid']], array_map('intval', (array) ($data['extra_catids'] ?? []))))
             );
             $shop->indexer()->setCategoryOrder($id, (array) ($data['category_order'] ?? []));
+            }
 
             // Галерея: обложка товара — первое изображение. Ключа нет, если вкладка не выводилась (пакетная обработка, консоль).
             if (array_key_exists('gallery', $data)) {

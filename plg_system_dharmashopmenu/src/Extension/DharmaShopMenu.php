@@ -42,6 +42,7 @@ final class DharmaShopMenu extends CMSPlugin implements SubscriberInterface
         ],
         [
             ['COM_DHARMASHOP_EXPORT', 'index.php?option=com_dharmashop_export&view=profiles', 'com_dharmashop_export', 'core.manage'],
+            ['COM_DHARMASHOP_IMPORT', 'index.php?option=com_dharmashop_import&view=profiles', 'com_dharmashop_import', 'core.manage'],
             ['COM_DHARMASHOP_LANDING_MENU', 'index.php?option=com_dharmashop_landing&view=pages', 'com_dharmashop_landing', 'core.manage'],
         ],
         [

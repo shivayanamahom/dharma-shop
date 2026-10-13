@@ -14,7 +14,7 @@ class ProfileModel extends AdminModel {
  protected $option='com_dharmashop_export';protected $text_prefix='COM_DHARMASHOP_EXPORT';public $typeAlias='com_dharmashop_export.profile';
  public function getTable($name='Profile',$prefix='Administrator',$options=[]) {return parent::getTable($name,$prefix,$options);}
  protected function loadFormData():mixed {
-  $item=Factory::getApplication()->getUserState($this->option.'.edit.profile.data',[])?:$this->getItem();
+  $item=Factory::getApplication()->getUserState($this->option.'.edit.profile.data',[])?:$this->getItem()?:[];
   if(is_object($item) && empty($item->id)){$item->entity='products';$item->format='csv';$item->state=1;$item->params=['site_url'=>rtrim(preg_replace('~/administrator/?$~','',Uri::root()),'/')];}
   return $item;
  }

@@ -114,6 +114,12 @@ final class FieldValues
     }
 
     /** Prevalidate before Joomla Table::store. Absent form keys preserve existing values. */
+    /** Applicable native definitions for read-only import validation. */
+    public function applicableIds(string $target, array $data): array
+    {
+        return array_keys($this->definitions($target, $data));
+    }
+
     public function prepare(string $target, array $data): array
     {
         if (!array_key_exists('custom_fields', $data) && !array_key_exists('custom_fields_present', $data)) { return []; }

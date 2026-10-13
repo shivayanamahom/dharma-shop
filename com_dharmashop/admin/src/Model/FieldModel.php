@@ -108,6 +108,17 @@ class FieldModel extends AdminModel
     public function save($data)
     {
         $db = $this->getDatabase();
+        if (!(int) $db->setQuery("SELECT GET_LOCK('dharma.fields',10)")->loadResult()) {
+            $this->setError(Text::_('COM_DHARMASHOP_GROUP_CHANGED'));
+            return false;
+        }
+        try { return $this->saveData($data); }
+        finally { $db->setQuery("DO RELEASE_LOCK('dharma.fields')")->execute(); }
+    }
+
+    private function saveData($data)
+    {
+        $db = $this->getDatabase();
         $id = (int) ($data['id'] ?? $this->getState('field.id'));
         $existing = $id > 0 ? $this->getItem($id) : null;
         $snapshot = null;
