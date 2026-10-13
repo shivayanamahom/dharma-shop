@@ -127,14 +127,15 @@ class Site:
         page = self.get(edit_url)
         action, fields = self.parse_form(page.text)
         data: list[tuple[str, str]] = [(k, v) for k, v in fields if k != "task"]
+        # Старые строки формы (например, колонки профиля) убираем до подстановки новых значений.
+        for prefix in remove_prefixes:
+            data = [(k, v) for k, v in data if not k.startswith(prefix)]
         for name, value in (overrides or {}).items():
             data = [(k, v) for k, v in data if k != name]
             if value is None:
                 continue
             for item in (value if isinstance(value, list) else [value]):
                 data.append((name, str(item)))
-        for prefix in remove_prefixes:
-            data = [(k, v) for k, v in data if not k.startswith(prefix)]
         data.append(("task", task))
         target = urllib.parse.urljoin(page.url, action) if action else page.url
         r = self.post(target, data)

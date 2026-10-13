@@ -3,7 +3,7 @@
 находки (предупреждения PHP, ответы 5xx) собираются клиентом и печатаются в конце.
 
   SCENARIO_URL=… SCENARIO_USER=… SCENARIO_PASS=… SCENARIO_SITE_PATH=… python3 dev/scenario/scenarios.py [раздел …]
-Разделы: browse, product, favorites, cart, checkout, landing, admin, users, perf, all
+Разделы: browse, product, favorites, cart, checkout, landing, admin, users, export, perf, all
 """
 from __future__ import annotations
 
@@ -713,6 +713,322 @@ def users(g: Site) -> None:
     g.problems.extend(a.problems)
 
 
+def export(g: Site) -> None:
+    print("\n== экспорт: профили, запуск, файлы, сверка с витриной, права")
+    import csv
+    import hashlib
+    import io
+    import secrets  # noqa: F401
+    import urllib.parse
+    import xml.etree.ElementTree as ET
+    import zipfile
+    from fixture import Fixture
+
+    a = Site()
+    a.login()
+    E = "/administrator/index.php?option=com_dharmashop_export"
+    site_url = os.environ["SCENARIO_URL"].rstrip("/")
+    token = lambda: a.token(a.get(E + "&view=profiles").text)  # noqa: E731
+    keys = ["id", "title", "sku", "category", "brand", "price", "base_price", "discount", "discount_amount", "stock", "in_stock", "public", "url", "cover"]
+
+    def q(value: str) -> str:
+        return value.replace("'", "\\'")
+
+    def fields_for(fmt: str, title: str, columns: list[str]) -> dict:
+        f = {"jform[title]": title, "jform[state]": "1", "jform[entity]": "products", "jform[format]": fmt, "jform[params][filter_state]": "*",
+             "jform[params][in_stock]": "0", "jform[params][visibility]": "private", "jform[params][file_name]": f"qa-{fmt}",
+             "jform[params][site_url]": site_url, "jform[params][sef_urls]": "1", "jform[params][csv_separator]": ";", "jform[params][csv_bom]": "1"}
+        for i, k in enumerate(columns):
+            f[f"jform[params][columns_products][columns_products{i}][key]"] = k
+            f[f"jform[params][columns_products][columns_products{i}][header]"] = k
+            f[f"jform[params][columns_products][columns_products{i}][mode]"] = ""
+        return f
+
+    def ensure_profile(fmt: str, title: str, columns: list[str]) -> int:
+        """Профиль создаётся формой админки; при повторном запуске сценария та же запись правится через форму."""
+        rows = db(f"SELECT id FROM PFX_dharmashop_export_profiles WHERE title = '{q(title)}' ORDER BY id LIMIT 1")
+        fields = fields_for(fmt, title, columns)
+        if rows:
+            r = a.submit_form(E + f"&task=profile.edit&id={rows[0][0]}", fields, task="profile.save", remove_prefixes=("jform[params][columns_products]",))
+        else:
+            r = a.submit_form(E + "&task=profile.add", fields, task="profile.save")
+        ok(any("saved" in m.lower() or "сохранен" in m.lower() for m in a.messages(r.text)), f"профиль «{title}» сохранён через форму ({'правка' if rows else 'создание'}) {a.messages(r.text)[:1]}", R)
+        rows = db(f"SELECT id FROM PFX_dharmashop_export_profiles WHERE title = '{q(title)}' ORDER BY id LIMIT 1")
+        return int(rows[0][0])
+
+    def job_row(jid: int) -> dict:
+        r = db(f"SELECT state, processed, written, skipped, total, bytes, sha256, COALESCE(error, ''), COALESCE(issues, '') FROM PFX_dharmashop_export_jobs WHERE id = {jid}")[0]
+        return dict(zip(["state", "processed", "written", "skipped", "total", "bytes", "sha", "error", "issues"], r))
+
+    def run_job(pid: int) -> int:
+        """Запуск как у человека: POST «Запустить» с токеном, затем шаги так же, как их делает автообновление страницы запуска."""
+        tok = token()
+        r = a.post(E, {"id": pid, "task": "job.start", tok: "1"})
+        m = re.search(r"[?&]id=(\d+)", r.url)
+        assert m and "view=job" in r.url, f"запуск не открыл страницу запуска: {r.url} {a.messages(r.text)[:2]}"
+        jid = int(m.group(1))
+        for _ in range(120):
+            if job_row(jid)["state"] != "running":
+                break
+            a.get(E + f"&task=job.step&id={jid}&{tok}=1")
+        return jid
+
+    def download(jid: int):
+        return a.get(E + f"&task=job.download&id={jid}&{token()}=1")
+
+    def storefront(url: str) -> tuple[float | None, str]:
+        """Цена и наличие из микроразметки страницы; на странице варианта группы перечислены все варианты — берём предложение с адресом этой страницы."""
+        r = g.get(url)
+        found = []
+        for blob in ld(r.text):
+            for prod in walk(blob, "Product"):
+                offers = prod.get("offers") or {}
+                for offer in (offers if isinstance(offers, list) else [offers]):
+                    if offer:
+                        found.append(offer)
+        mine = [o for o in found if str(o.get("url", "")).rstrip("/") == url.rstrip("/")] or found[:1]
+        if not mine:
+            return None, ""
+        price = mine[0].get("price")
+        return (float(price) if price not in (None, "") else None), str(mine[0].get("availability", ""))
+
+    # --- меню: «Экспорт» только в ветке магазина, не в «Компонентах»
+    page = a.get("/administrator/index.php?option=com_dharmashop&view=products")
+    ok('option=com_dharmashop_export&view=profiles' in page.text and 'href="index.php?option=com_dharmashop_export"' not in page.text, "меню: «Экспорт» в ветке магазина, дубля в «Компонентах» нет", R)
+
+    # --- товар с названием-формулой (потом удаляется по id)
+    title_formula = f"=SUM(1+1)*QA экспорт {RUN}"
+    sku_formula = f"QA-EXP-{RUN}"
+    before_count = int(db("SELECT COUNT(*) FROM PFX_dharmashop_products")[0][0])
+    # Товары «под заказ» (заказ без остатка): наличие в каталоге «да», а микроразметка витрины это пока не учитывает (находка, отдельная задача) — для них сверяем только цену.
+    backorder_ids = {r_[0] for r_ in db("SELECT product_id FROM PFX_dharmashop_variants WHERE backorder = 1")}
+    fx = Fixture()
+    formula_id = fx.product(title_formula, "Дом", None, "100", sku_formula, 3, "Проверка экранирования формул.", images=0)
+    ok(formula_id is not None, f"создан тестовый товар с названием «={title_formula[1:12]}…» (id {formula_id})", R)
+    try:
+        # --- CSV
+        pid = ensure_profile("csv", "QA экспорт: товары CSV", keys)
+        pv = a.get(E + f"&view=preview&id={pid}")
+        ok(pv.status_code == 200 and "<table" in pv.text, "предпросмотр профиля открывается и показывает строки", R)
+        # повторный запуск при активном — тот же запуск; без токена запуск не создаётся
+        n0 = int(db("SELECT COUNT(*) FROM PFX_dharmashop_export_jobs")[0][0])
+        a.post(E, {"id": pid, "task": "job.start"})
+        ok(int(db("SELECT COUNT(*) FROM PFX_dharmashop_export_jobs")[0][0]) == n0, "запуск без токена формы отклонён (CSRF)", R)
+        tok = token()
+        r1 = a.post(E, {"id": pid, "task": "job.start", tok: "1"})
+        r2 = a.post(E, {"id": pid, "task": "job.start", tok: "1"})
+        j1 = int(re.search(r"id=(\d+)", r1.url).group(1))
+        ok(r1.url == r2.url, "повторное нажатие «Запустить» при активном запуске возвращает тот же запуск", R)
+        a.get(E + f"&task=job.step&id={j1}")  # без токена: шаг не выполняется
+        ok(job_row(j1)["processed"] == "0", "шаг без токена не двигает запуск", R)
+        for _ in range(60):
+            if job_row(j1)["state"] != "running":
+                break
+            a.get(E + f"&task=job.step&id={j1}&{tok}=1")
+        jr = job_row(j1)
+        total = int(db("SELECT COUNT(*) FROM PFX_dharmashop_products WHERE state >= 0")[0][0])
+        ok(jr["state"] == "done" and int(jr["written"]) == total, f"CSV: запуск завершён, записано {jr['written']} из {total} товаров", R)
+        d = download(j1)
+        ok(d.status_code == 200 and "attachment" in d.headers.get("content-disposition", "") and d.headers.get("x-content-type-options") == "nosniff", "скачивание: вложение с nosniff", R)
+        ok(hashlib.sha256(d.content).hexdigest() == jr["sha"] and len(d.content) == int(jr["bytes"]), "скачанный файл совпадает с записанными размером и SHA-256", R)
+        rows = list(csv.DictReader(io.StringIO(d.content.decode("utf-8-sig")), delimiter=";"))
+        ok(list(rows[0].keys()) == keys, "CSV: заголовки колонок как в профиле", R)
+        ok(len(rows) == total, f"CSV: число строк равно числу товаров ({len(rows)})", R)
+        # цены и остатки против БД и витрины
+        base = {r_[0]: r_ for r_ in db("SELECT p.id, vp.price, vp.price_final, v.stock_total, v.sku FROM PFX_dharmashop_products p JOIN PFX_dharmashop_variants v ON v.product_id = p.id "
+                                         "LEFT JOIN PFX_dharmashop_variant_prices vp ON vp.variant_id = v.id")}
+        bad_db, bad_shop, checked = [], [], 0
+        for row in rows:
+            ref = base[row["id"]]
+            if abs(float(row["price"] or 0) - float(ref[2] or 0)) > 0.005 or abs(float(row["base_price"] or 0) - float(ref[1] or 0)) > 0.005 or abs(float(row["stock"] or 0) - float(ref[3])) > 0.0005 or row["sku"] != ref[4]:
+                bad_db.append(row["id"])
+            if row["public"] == "1" and row["id"] != str(formula_id) and row["url"]:
+                price, availability = storefront(row["url"])
+                if price is not None:
+                    checked += 1
+                    expected = "InStock" if row["in_stock"] == "1" else "OutOfStock"
+                    if abs(price - float(row["price"])) > 0.005 or (row["id"] not in backorder_ids and not availability.endswith(expected)):
+                        bad_shop.append((row["id"], price, row["price"], availability, row["in_stock"]))
+        ok(not bad_db, f"цены, базовые цены, остатки и артикулы в CSV равны данным каталога {bad_db[:3]}", R)
+        ok(checked >= 10 and not bad_shop, f"цена и наличие в CSV совпадают со страницами витрины ({checked} товаров) {bad_shop[:3]}", R)
+        ok(all(r_["url"].startswith(site_url) and "option=" not in r_["url"] for r_ in rows if r_["url"]), "ссылки на товары в CSV — ЧПУ адреса витрины", R)
+        formula = next(r_ for r_ in rows if r_["sku"] == sku_formula)
+        ok(formula["title"].startswith("'=SUM"), f"CSV: название-формула экранировано апострофом ({formula['title'][:12]!r})", R)
+        ok(all(not r_["price"].startswith("'") and not r_["stock"].startswith("'") for r_ in rows), "числа не получают апостроф", R)
+        disc = {r_[0]: r_ for r_ in db("SELECT p.id, vp.discount, vp.discount_percent FROM PFX_dharmashop_products p JOIN PFX_dharmashop_variants v ON v.product_id = p.id JOIN PFX_dharmashop_variant_prices vp ON vp.variant_id = v.id WHERE vp.discount > 0")}
+        bad_disc = [r_["id"] for r_ in rows if r_["id"] in disc and (not r_["discount"].startswith(disc[r_["id"]][1].rstrip("0").rstrip(".")) or abs(float(r_["discount_amount"]) - (float(r_["base_price"]) - float(r_["price"]))) > 0.005)]
+        ok(disc and not bad_disc and all(r_["discount"] == "" for r_ in rows if r_["id"] not in disc), f"CSV: колонки скидки заполнены у товаров со скидкой ({len(disc)}) и пусты у остальных {bad_disc[:3]}", R)
+        # повторный запуск того же профиля при неизменном каталоге
+        j2 = run_job(pid)
+        ok(j2 != j1 and job_row(j2)["state"] == "done" and job_row(j2)["sha"] == jr["sha"], "повторный запуск создаёт новый запуск с тем же содержимым (SHA-256)", R)
+        # занятый запуск не двигается; отмена и продолжение после сбоя
+        j3 = int(re.search(r"id=(\d+)", a.post(E, {"id": pid, "task": "job.start", token(): "1"}).url).group(1))
+        db(f"UPDATE PFX_dharmashop_export_jobs SET lease = 'qa', lease_until = DATE_ADD(UTC_TIMESTAMP(), INTERVAL 2 MINUTE) WHERE id = {j3}")
+        a.get(E + f"&task=job.step&id={j3}&{token()}=1")
+        ok(job_row(j3)["processed"] == "0" and job_row(j3)["state"] == "running", "запуск, занятый другим исполнителем, не двигается", R)
+        db(f"UPDATE PFX_dharmashop_export_jobs SET lease = NULL, lease_until = NULL, state = 'failed', error = 'COM_DHARMASHOP_EXPORT_WRITE_ERROR' WHERE id = {j3}")
+        page = a.get(E + f"&view=job&id={j3}")
+        ok("job.resume" in page.text, "страница сбойного запуска предлагает «Продолжить»", R)
+        a.post(E, {"id": j3, "task": "job.resume", token(): "1"})
+        ok(job_row(j3)["state"] == "running", "продолжение возвращает запуск в работу", R)
+        for _ in range(60):
+            if job_row(j3)["state"] != "running":
+                break
+            a.get(E + f"&task=job.step&id={j3}&{token()}=1")
+        ok(job_row(j3)["state"] == "done" and job_row(j3)["sha"] == jr["sha"], "после продолжения файл тот же, без дублей строк", R)
+        j4 = int(re.search(r"id=(\d+)", a.post(E, {"id": pid, "task": "job.start", token(): "1"}).url).group(1))
+        a.post(E, {"id": j4, "task": "job.cancel", token(): "1"})
+        ok(job_row(j4)["state"] == "cancelled" and db(f"SELECT COUNT(*) FROM PFX_dharmashop_export_jobs WHERE profile_id = {pid} AND state = 'running'")[0][0] == "0", "отмена закрывает запуск и освобождает профиль", R)
+
+        # --- защита файлов
+        for path in (f"/files/export/private/{j1}/artifact.php", f"/files/export/private/{j1}/part-0.php", "/files/export/private/", "/files/export/"):
+            r = g.get(path)
+            ok(r.status_code in (403, 404) and "AUR-SND-1" not in r.text, f"прямой адрес {path[-34:]} не отдаёт данные ({r.status_code})", R)
+
+        # открытие сохранённого профиля: значения форм должны вернуться (колонки, адрес, настройки формата)
+        edit = a.get(E + f"&task=profile.edit&id={pid}")
+        fields = dict(Site.parse_form(edit.text)[1])
+        ok(fields.get("jform[title]") == "QA экспорт: товары CSV" and fields.get("jform[params][site_url]") == site_url and fields.get("jform[params][csv_separator]") == ";", "открытие профиля: название, адрес магазина и настройки формата возвращаются в форму", R)
+        saved_keys = [v for k, v in Site.parse_form(edit.text)[1] if k.startswith("jform[params][columns_products]") and k.endswith("[key]")]
+        ok(saved_keys == keys, f"открытие профиля: сохранённые колонки возвращаются в таблицу колонок ({len(saved_keys)} из {len(keys)})", R)
+        a.get(E + f"&task=profile.cancel&id={pid}")
+
+        # --- XLSX
+        xp = ensure_profile("xlsx", "QA экспорт: товары XLSX", keys)
+        jx = run_job(xp)
+        jrx = job_row(jx)
+        ok(jrx["state"] == "done" and int(jrx["written"]) == total, f"XLSX: запуск завершён ({jrx['written']} строк) {jrx['error']}", R)
+        dx = download(jx)
+        z = zipfile.ZipFile(io.BytesIO(dx.content))
+        ok({"[Content_Types].xml", "xl/workbook.xml", "xl/worksheets/sheet1.xml"} <= set(z.namelist()) and z.testzip() is None, "XLSX: архив целый, есть xl/worksheets/sheet1.xml", R)
+        try:
+            import openpyxl
+            ws = openpyxl.load_workbook(io.BytesIO(dx.content)).active
+            vals = list(ws.values)
+            ok(ws.max_row == total + 1 and [str(c) for c in vals[0]] == keys, f"XLSX открывается библиотекой openpyxl: {ws.max_row} строк, заголовки верны", R)
+            fx_row = next(v for v in vals[1:] if v[2] == sku_formula)
+            ok(str(fx_row[1]).startswith("'=SUM") and isinstance(vals[1][5], (int, float)), "XLSX: формула экранирована, цена — число", R)
+        except ImportError:
+            sheet = ET.fromstring(z.read("xl/worksheets/sheet1.xml"))
+            ok(len(sheet.findall(".//{*}row")) == total + 1, "XLSX: число строк верно (openpyxl не установлен)", R)
+
+        # --- YML
+        yp = ensure_profile("yml", "QA экспорт: фид YML", keys)
+        jy = run_job(yp)
+        jry = job_row(jy)
+        ok(jry["state"] == "done", f"YML: запуск завершён {jry['error']}", R)
+        feed = g.get(f"/files/export/qa-yml-{yp}.yml")
+        ok(feed.status_code == 200 and "xml" in feed.headers.get("content-type", ""), f"YML: публичная ссылка отдаёт фид без входа ({feed.status_code} {feed.headers.get('content-type')})", R)
+        root = ET.fromstring(feed.content)
+        shop = root.find("shop")
+        cats = {c.get("id") for c in shop.findall("categories/category")}
+        offers = shop.findall("offers/offer")
+        ok(root.tag == "yml_catalog" and shop.find("name") is not None and shop.find("currencies/currency") is not None and cats, "YML: корневые элементы, валюта и категории на месте", R)
+        ok(len(offers) == int(jry["written"]) and int(jry["written"]) + int(jry["skipped"]) == int(jry["processed"]), f"YML: предложений {len(offers)}, пропущено {jry['skipped']} (учтены в журнале)", R)
+        bad = []
+        for off in offers:
+            price, availability = storefront(off.findtext("url") or "/")
+            expected = "true" if (availability.endswith("InStock")) else "false"
+            if off.get("id") in backorder_ids:
+                expected = "true"
+            if price is None or abs(price - float(off.findtext("price"))) > 0.005 or off.get("available") != expected or off.findtext("categoryId") not in cats or not (off.findtext("picture") or "").startswith("http"):
+                bad.append((off.get("id"), price, off.findtext("price"), off.get("available"), availability[-8:]))
+        ok(offers and not bad, f"YML: цена, наличие, категория и картинка каждого предложения совпадают с витриной {bad[:3]}", R)
+        ok(formula_id is not None and not any(o.get("id") == str(formula_id) for o in offers), "YML: товар без картинки пропущен и записан в журнал", R)
+
+        # --- список профилей: запуск, последний файл, ссылка для площадки, планировщик
+        lst = a.get(E + "&view=profiles")
+        ok(all(f'data-dharmashop-export-run="{p_}"' in lst.text for p_ in (pid, xp, yp)) and "view=preview" not in lst.text, "список профилей: у каждого профиля кнопка «Запустить», кнопки «Предпросмотр» нет", R)
+        ok(f"task=job.download&amp;id={j2}" in lst.text or f"task=job.download&amp;id={j3}" in lst.text, "список профилей: кнопка «Скачать» ведёт на последний готовый файл", R)
+        ok(f"{site_url}/files/export/qa-yml-{yp}.yml" in lst.text, "список профилей: у публичного YML есть прямая ссылка для площадки", R)
+        sch = a.get(E + f"&task=profile.schedule&id={yp}&{token()}=1")
+        sel = BeautifulSoup(sch.text, "html.parser").find("select", attrs={"name": "jform[params][profile_id]"})
+        chosen = [o_.get("value") for o_ in (sel.find_all("option") if sel else []) if o_.has_attr("selected")]
+        ok("view=task" in sch.url and chosen == [str(yp)] and "dharmashop.export" in sch.text, "«В планировщик»: форма задачи открывается с типом и профилем (YML) уже выбранными", R)
+        # запуск окном прогресса: JSON-шаги, как у общего окна
+        tok = token()
+        st = a.post(E + "&task=job.start&format=json", {"id": pid, tok: "1"}).json()
+        ok(st.get("success") and st["state"] == "running" and st["total"] == total, f"окно прогресса: старт возвращает запуск и общее число записей ({st.get('total')})", R)
+        for _ in range(60):
+            if st["state"] != "running":
+                break
+            st = a.post(E + "&task=job.step&format=json", {"id": st["id"], tok: "1"}).json()
+        ok(st["state"] == "done" and st["processed"] == total and st["download"] and job_row(st["id"])["sha"] == jr["sha"], "окно прогресса: шаги доводят выгрузку до конца, есть ссылка «Скачать», файл тот же", R)
+        bad = a.post(E + "&task=job.step&format=json", {"id": st["id"]})
+        ok(bad.status_code == 403 and bad.json().get("success") is False, "окно прогресса: шаг без токена отклоняется JSON-ответом 403", R)
+
+        # --- история: удаление поштучно и очистка
+        keep_failed = int(re.search(r"id=(\d+)", a.post(E, {"id": pid, "task": "job.start", token(): "1"}).url).group(1))
+        db(f"UPDATE PFX_dharmashop_export_jobs SET state = 'failed', error = 'COM_DHARMASHOP_EXPORT_WRITE_ERROR' WHERE id = {keep_failed}")
+        victim = st["id"]  # запуск, сделанный окном прогресса
+        files_dir = os.path.join(os.environ["SCENARIO_SITE_PATH"], "files", "export", "private", str(victim))
+        ok(os.path.isdir(files_dir), f"запуск #{victim} хранит файлы в закрытой папке", R)
+        hist = a.get(E + "&view=jobs")
+        ok(hist.status_code == 200 and f'value="{victim}"' in hist.text and "jobs.delete" in hist.text and "jobs.clear" in hist.text, "история: у запусков есть флажки, в панели «Удалить» и «Очистить историю»", R)
+        a.post(E + "&view=jobs", {"cid[]": str(victim), "task": "jobs.delete", token(): "1", "boxchecked": "1"})
+        ok(db(f"SELECT COUNT(*) FROM PFX_dharmashop_export_jobs WHERE id = {victim}")[0][0] == "0" and not os.path.exists(files_dir), "удаление запуска поштучно: запись и папка с файлами удалены", R)
+        others = int(db("SELECT COUNT(*) FROM PFX_dharmashop_export_jobs WHERE state = 'done'")[0][0])
+        ok(others >= 2, f"остальные готовые запуски остались ({others})", R)
+        a.post(E + "&view=jobs", {"task": "jobs.clear", token(): "1"})
+        left = db("SELECT state FROM PFX_dharmashop_export_jobs")
+        ok(all(r_[0] in ("failed", "running") for r_ in left) and any(r_[0] == "failed" for r_ in left), f"очистка истории удалила завершённые и отменённые, прерванный запуск остался ({len(left)})", R)
+        a.post(E, {"id": keep_failed, "task": "job.cancel", token(): "1"})
+        a.post(E + "&view=jobs", {"cid[]": str(keep_failed), "task": "jobs.delete", token(): "1", "boxchecked": "1"})
+        ok(db("SELECT COUNT(*) FROM PFX_dharmashop_export_jobs")[0][0] == "0", "служебный прерванный запуск закрыт и удалён, история пуста", R)
+        # итоговые файлы нужны следующим проверкам (оператор): запускаем профиль заново
+        j1 = run_job(pid)
+
+        # --- права: оператор без dharmashop.export.run
+        gid_rows = db("SELECT id FROM PFX_usergroups WHERE title = 'QA оператор экспорта'")
+        if not gid_rows:
+            a.submit_form("/administrator/index.php?option=com_users&task=group.add", {"jform[title]": "QA оператор экспорта", "jform[parent_id]": "6"}, task="group.save")
+            gid_rows = db("SELECT id FROM PFX_usergroups WHERE title = 'QA оператор экспорта'")
+        gid = gid_rows[0][0]
+        cfg = "/administrator/index.php?option=com_config&view=component&component=com_dharmashop_export"
+        rules = {f"jform[rules][core.manage][{gid}]": "1", f"jform[rules][dharmashop.export.run][{gid}]": "0", f"jform[rules][dharmashop.export.report][{gid}]": "0"}
+        rr = a.submit_form(cfg, rules, task="component.apply")
+        ok(any("saved" in m.lower() for m in a.messages(rr.text)), "права группы «QA оператор экспорта» сохранены (вход без запуска и истории)", R)
+        pwd = hashlib.sha256(("export-operator:" + os.environ["SCENARIO_PASS"]).encode()).hexdigest()[:20] + "aA1!"
+        uid = new_user(a, "qa_export_operator", "qa_export_operator@example.test", [gid], pwd)
+        ok(uid is not None, "пользователь qa_export_operator существует", R)
+        op = Site()
+        op.login("qa_export_operator", pwd)
+        ok(op.get(E + "&view=profiles").status_code == 200, "оператору открыт список профилей", R)
+        n1 = int(db("SELECT COUNT(*) FROM PFX_dharmashop_export_jobs")[0][0])
+        denied = {
+            "предпросмотр": op.get(E + f"&view=preview&id={pid}").status_code,
+            "история": op.get(E + "&view=jobs").status_code,
+            "чужой запуск": op.get(E + f"&view=job&id={j1}").status_code,
+            "скачивание": op.get(E + f"&task=job.download&id={j1}&{op.token(op.get(E + '&view=profiles').text)}=1").status_code,
+        }
+        ok(all(v == 403 for v in denied.values()), f"оператору без export.run закрыты предпросмотр, история, чужие запуски и файлы {denied}", R)
+        start = op.post(E, {"id": pid, "task": "job.start", op.token(op.get(E + "&view=profiles").text): "1"})
+        ok(start.status_code == 403 and int(db("SELECT COUNT(*) FROM PFX_dharmashop_export_jobs")[0][0]) == n1, f"оператор не может запустить экспорт ({start.status_code})", R)
+        n_jobs = int(db("SELECT COUNT(*) FROM PFX_dharmashop_export_jobs")[0][0])
+        op_tok = op.token(op.get(E + "&view=profiles").text)
+        d1 = op.post(E + "&view=jobs", {"cid[]": str(j1), "task": "jobs.delete", op_tok: "1", "boxchecked": "1"})
+        d2 = op.post(E + "&view=jobs", {"task": "jobs.clear", op_tok: "1"})
+        d3 = op.get(E + f"&task=profile.schedule&id={pid}&{op_tok}=1")
+        ok(d1.status_code == 403 and d2.status_code == 403 and d3.status_code == 403 and int(db("SELECT COUNT(*) FROM PFX_dharmashop_export_jobs")[0][0]) == n_jobs, f"оператору без прав закрыты удаление, очистка истории и «В планировщик» ({d1.status_code}/{d2.status_code}/{d3.status_code})", R)
+        title_before = db(f"SELECT title FROM PFX_dharmashop_export_profiles WHERE id = {pid}")[0][0]
+        op.submit_form(E + f"&task=profile.edit&id={pid}", {"jform[title]": title_before + " x"}, task="profile.saveandrun")
+        ok(db(f"SELECT title FROM PFX_dharmashop_export_profiles WHERE id = {pid}")[0][0] == title_before and int(db("SELECT COUNT(*) FROM PFX_dharmashop_export_jobs")[0][0]) == n1, "«Сохранить и запустить» без права запуска ничего не сохраняет и не запускает", R)
+        op.get(E + f"&task=profile.cancel&id={pid}")
+        g.problems.extend(op.problems)
+    finally:
+        # удаляем ровно созданный тестовый товар по id (через корзину и удаление, как в интерфейсе)
+        if formula_id is not None:
+            sku_now = db(f"SELECT v.sku FROM PFX_dharmashop_variants v WHERE v.product_id = {formula_id}")
+            if sku_now and sku_now[0][0] == sku_formula:
+                tok = token()
+                lst = "/administrator/index.php?option=com_dharmashop&view=products"
+                a.post(lst, {"cid[]": str(formula_id), "task": "products.trash", tok: "1", "boxchecked": "1"})
+                a.post(lst, {"cid[]": str(formula_id), "task": "products.delete", tok: "1", "boxchecked": "1"})
+            gone = db(f"SELECT COUNT(*) FROM PFX_dharmashop_products WHERE id = {formula_id}")[0][0] == "0"
+            ok(gone and int(db("SELECT COUNT(*) FROM PFX_dharmashop_products")[0][0]) == before_count, f"тестовый товар id {formula_id} удалён, число товаров прежнее ({before_count})", R)
+    g.problems.extend(a.problems)
+
+
 def perf(g: Site) -> None:
     print("\n== скорость (холодный и тёплый ответы, мс)")
     for path in ["/index.php/katalog", "/index.php/katalog/elektronika", "/index.php/katalog/elektronika/smartfony", "/index.php/katalog/elektronika?filter[brand][]=pixel&filter[price][min]=3000",
@@ -728,7 +1044,7 @@ def main() -> None:
     sections = sys.argv[1:] or ["all"]
     g = Site()  # гость
     run = lambda name, fn: (name in sections or "all" in sections) and fn(g)  # noqa: E731
-    for name, fn in [("browse", browse), ("product", product), ("modules", modules_css), ("favorites", favorites), ("cart", cart), ("checkout", checkout), ("landing", landing), ("admin", admin), ("users", users), ("perf", perf)]:
+    for name, fn in [("browse", browse), ("product", product), ("modules", modules_css), ("favorites", favorites), ("cart", cart), ("checkout", checkout), ("landing", landing), ("admin", admin), ("users", users), ("export", export), ("perf", perf)]:
         run(name, fn)
     print(f"\nИтог: {sum(1 for o, _ in R if o)} из {len(R)}")
     for o, n in R:

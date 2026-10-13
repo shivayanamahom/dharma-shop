@@ -1,0 +1,20 @@
+{
+  "$schema": "https://developer.joomla.org/schemas/json-schema/web_assets.json",
+  "name": "com_dharmashop_export",
+  "version": "0.1.0",
+  "assets": [
+    {
+      "name": "com_dharmashop_export.profile",
+      "type": "script",
+      "uri": "com_dharmashop_export/profile.js",
+      "version": "auto",
+      "dependencies": [
+        "core",
+        "showon"
+      ],
+      "attributes": {
+        "defer": true
+      }
+    }
+  ]
+}

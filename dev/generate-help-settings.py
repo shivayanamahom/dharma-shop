@@ -15,7 +15,9 @@ def translations(path: Path) -> dict[str, str]:
     # a fallback so the same XML resolves in either context.
     component_ini = ROOT / "com_dharmashop/admin/language/ru-RU/com_dharmashop.ini"
     plugin_languages = tuple(sorted(ROOT.glob("plg_*/language/ru-RU/*.ini")))
-    files = (path, path.with_name(path.stem + ".sys.ini"), component_ini, *plugin_languages)
+    # Формы плагинов экспорта используют строки компонента экспорта.
+    export_ini = ROOT / "com_dharmashop_export/admin/language/ru-RU/com_dharmashop_export.ini"
+    files = (path, path.with_name(path.stem + ".sys.ini"), component_ini, export_ini, *plugin_languages)
     for language_file in files:
         if not language_file.exists():
             continue

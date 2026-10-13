@@ -21,7 +21,7 @@
 		},
 		{
 			"name": "com_dharmashop.admin-batch-progress",
-			"version": "6c812fe929d5",
+			"version": "38b616d88120",
 			"type": "script",
 			"uri": "com_dharmashop/admin-batch-progress.js",
 			"attributes": {

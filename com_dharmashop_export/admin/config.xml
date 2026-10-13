@@ -1,0 +1,1 @@
+<config><fieldset name="permissions" label="JCONFIG_PERMISSIONS_LABEL"><field name="rules" type="rules" label="JCONFIG_PERMISSIONS_LABEL" component="com_dharmashop_export" section="component" validate="rules" filter="rules"/></fieldset></config>

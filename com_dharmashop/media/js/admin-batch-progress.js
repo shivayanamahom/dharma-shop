@@ -185,6 +185,61 @@
     } while (!payload.done);
   };
 
+  // Запуск экспорта из списка профилей (com_dharmashop_export): те же шаги, что у команд, но состояние хранится в самом запуске.
+  const runExport = async (trigger) => {
+    const form = document.querySelector('#adminForm');
+    const panel = makePanel();
+    const unit = text('COM_DHARMASHOP_PROGRESS_RECORDS', 'записей');
+    const token = Array.from(form.querySelectorAll('input[type="hidden"]')).find((input) => input.value === '1' && /^[0-9a-f]{32}$/.test(input.name));
+    const call = (task, id) => {
+      const data = new FormData();
+      data.set(token.name, '1');
+      data.set('id', String(id));
+      return post({ action: `index.php?option=com_dharmashop_export&task=${task}&format=json` }, data);
+    };
+    const summary = (payload) => `${text('COM_DHARMASHOP_EXPORT_PROGRESS_WRITTEN', 'Записано')}: ${payload.written}; ${text('COM_DHARMASHOP_EXPORT_PROGRESS_SKIPPED', 'пропущено')}: ${payload.skipped}`;
+    update(panel, trigger.dataset.exportTitle || text('COM_DHARMASHOP_PROGRESS_COMMAND', 'Выполнение команды'), 0, 0, unit, false);
+    let payload = await call('job.start', trigger.dataset.dharmashopExportRun);
+    while (payload.state === 'running') {
+      update(panel, payload.title, payload.processed, payload.total, unit, false, summary(payload));
+      await new Promise((resolve) => window.setTimeout(resolve, 60));
+      payload = await call('job.step', payload.id);
+    }
+    const detail = panel.querySelector('[data-progress-detail]');
+    if (payload.state !== 'done') {
+      update(panel, payload.title, payload.processed, payload.total, unit, false, summary(payload));
+      setStatus(panel, 'error');
+      detail.textContent = payload.error || text('COM_DHARMASHOP_PROGRESS_FAILED', 'Не удалось выполнить операцию.');
+      return;
+    }
+    update(panel, payload.title, payload.processed, payload.total, unit, true, summary(payload));
+    panel.querySelector('[data-progress-help]').textContent = text('COM_DHARMASHOP_EXPORT_PROGRESS_DONE_HELP', 'Выгрузка завершена.');
+    payload.issues.forEach((line) => {
+      const warning = document.createElement('div');
+      warning.className = 'alert alert-warning mt-2 mb-0';
+      warning.textContent = line;
+      detail.append(warning);
+    });
+    const actions = document.createElement('div');
+    actions.className = 'd-flex flex-wrap align-items-center gap-2 mt-3';
+    if (payload.download) {
+      const link = document.createElement('a');
+      link.className = 'btn btn-success';
+      link.href = payload.download;
+      link.textContent = text('COM_DHARMASHOP_EXPORT_PROGRESS_DOWNLOAD', 'Скачать файл');
+      actions.append(link);
+    }
+    if (payload.public) {
+      const feed = document.createElement('a');
+      feed.href = payload.public;
+      feed.target = '_blank';
+      feed.rel = 'noopener';
+      feed.textContent = `${text('COM_DHARMASHOP_EXPORT_PROGRESS_FEED', 'Ссылка для площадки')}: ${payload.public}`;
+      actions.append(feed);
+    }
+    detail.append(actions);
+  };
+
   const runImageCommand = async (initialTask) => {
     const form = document.querySelector('#adminForm');
     const panel = makePanel();
@@ -211,6 +266,7 @@
     const isElement = (node) => node?.nodeType === 1 && typeof node.matches === 'function';
     const batchTrigger = path.find((node) => isElement(node) && node.matches('[data-dharmashop-batch-task]'));
     const commandTrigger = path.find((node) => isElement(node) && node.localName === 'joomla-toolbar-button' && /^(products\.cmd|imagecommands\.(start|proceed|confirm))/.test(node.getAttribute('task') || ''));
+    const exportTrigger = path.find((node) => isElement(node) && node.matches('[data-dharmashop-export-run]'));
     const reloadButton = path.find((node) => isElement(node) && node.matches('[data-progress-reload]'));
     const dismissButton = path.find((node) => isElement(node) && node.matches('[data-progress-dismiss]'));
     if (reloadButton) { event.preventDefault(); window.location.reload(); return; }
@@ -219,7 +275,7 @@
       window.bootstrap?.Modal.getOrCreateInstance(progressModal()).hide();
       return;
     }
-    if (!batchTrigger && !commandTrigger) return;
+    if (!batchTrigger && !commandTrigger && !exportTrigger) return;
 
     event.preventDefault();
     event.stopImmediatePropagation();
@@ -227,6 +283,7 @@
     busy = true;
     try {
       if (batchTrigger) await runBatch(batchTrigger);
+      else if (exportTrigger) await runExport(exportTrigger);
       else if ((commandTrigger.getAttribute('task') || '').startsWith('imagecommands.')) await runImageCommand(commandTrigger.getAttribute('task'));
       else await runCommand(commandTrigger.getAttribute('task'));
     } catch (error) {

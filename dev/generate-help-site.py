@@ -27,6 +27,7 @@ GROUPS = [
             "ADMIN_FAVORITES",
             "ADMIN_ACCESS",
             "ADMIN_LANDING",
+            "ADMIN_EXPORT",
             "ADMIN_SEO",
             "ADMIN_ORDERS",
             "ADMIN_PROMOTIONS",

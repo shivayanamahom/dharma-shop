@@ -102,6 +102,10 @@ com_dharmashop/
 plg_system_dharmashop/            слияние корзины при входе, хуки жизненного цикла
 plg_system_dharmashopmenu/        раздел «Dharma Shop» в боковом меню админки после «Компонентов» (onPreprocessMenuItems), без записей в БД
 plg_task_dharmashop/              задачи планировщика Joomla (реализовано): «скидки по датам» (`SaleScheduler::run`) и «сверка счётчиков фильтра» (`FacetIndexer::verify` + пересборка); очистка корзин — план
+com_dharmashop_export/            экспорт (C91): admin (профили, запуски, Export/*, представления), layouts/export/subform, media/js/profile.js, sql
+plg_dharmashopexport_xlsx/        формат XLSX (потоковая запись, ZipArchive)
+plg_dharmashopexport_yml/         формат Яндекс YML (фид площадок)
+plg_task_dharmashopexport/        задача планировщика «экспорт по профилю»
 plg_dharmashop_imageresize/       C79: размеры по контекстам, производные Joomla Image/GD, кеш с двумя уровнями хеша
 plg_dharmashopshipping_standard/  доставка (обычная): цена, бесплатно от суммы, конструктор полей покупателя (C80)
 plg_dharmashopshipping_courier/   курьер: доставка до двери, поля адреса, цена и «бесплатно от суммы» (C80)
@@ -536,6 +540,18 @@ C71/C73: checkout — отдельный вид и тип меню; части d
 - **Цены витрины:** `MoneyFormatter::format()` — число с валютой (админка, заказы), `price()` / `range()` — для витрины: при включённой настройке `price_zero_replace` нулевая цена заменяется текстом `price_zero_text` (по умолчанию «Цена по запросу»); применяется в карточках, на странице товара, в подстановках, корзине и значке модуля. Покупка нулевого товара разрешена. Пустая цена в форме товара при сохранении записывается как 0 (покупать можно). Нулевая цена показывается текстом «Цена по запросу» (замена включена) либо «Бесплатно», если у товара или его категории включено «Цена 0 — бесплатно» (`OrderRules::priceIsFree`, наследование как у остальных правил; `MoneyFormatter::price/range($free)`); признак сохраняется в `order_items.params.zero_free`, чтобы заказ и письма оставались прежними при смене правила. Итог корзины со строками без цены: «сумма + текст».
 - **Пункт меню «Товар»:** `tmpl/product/default.xml`, поле `modal_product` (`Field\Modal\ProductField`, окно `products&layout=modal`). Страница товара при собственном пункте меню берёт SEO из пункта и не дописывает крошки.
 
+### 5.23 Экспорт (C91, этапы E1, E5–E7)
+
+```
+#__dharmashop_export_profiles  id, title, state, entity (products|categories|brands|badges|groups|fields|fieldgroups), format, params mediumtext (JSON: отбор, колонки, имя файла,
+                               доступ private|public, site_url, ЧПУ, разделители, настройки формата), checked_out, checked_out_time
+#__dharmashop_export_jobs      id, profile_id, active_profile NULL UNIQUE (один незавершённый запуск профиля), state (running|failed|done|cancelled), snapshot mediumtext (профиль на момент
+                               запуска + хранилище + расширение), cursor (последний id), ceiling (максимальный id на старте), segments, total, processed, written, skipped,
+                               lease, lease_until (аренда шага), created, updated, finished, created_by (0 — планировщик), bytes, sha256, issues JSON, artifact, error
+```
+
+Выборка идёт по ключу `id` (`id > cursor AND id <= ceiling`), порции — файлы-части с номером; готовый файл и части лежат в `private/<запуск>/` как PHP-контейнеры. Сущности магазина компонент только читает. Подробности — `DEVELOPER_GUIDE.md` («Экспорт данных»), контракт форматов — `TRIGGERS.md`.
+
 ## 6. События
 
 Уточнение C77/C79: HtmlTemplate встраивает локальные изображения письма через PHPMailer addEmbeddedImage (MIME inline/CID), включая SHOP_LOGO. Сначала ImageUrl получает производные email.product/email.logo (JPEG/PNG); вложения ограничены 256 КиБ на файл и 2 МиБ суммарно. Тяжёлый резервный оригинал не прикрепляется. Проверяются host/port, базовый путь и realpath внутри JPATH_ROOT. Внешние URL не скачиваются.
@@ -613,6 +629,7 @@ C71/C73: checkout — отдельный вид и тип меню; части d
 | `onDharmaShopMetadataReady` | C28/C29: после базового SEO, до рендера HTML. Joomla Event: `page` (readonly `Site\Seo\PageMetadata`), `document` (`HtmlDocument`), `settings` (`Registry`), `content` (readonly `Site\Seo\CollectionMetadata`, `Site\Seo\ProductMetadata` или `null`). Контекст списка: `name`, `items` (`name`, абсолютный `url`) в порядке карточек, `itemType` (`CollectionPage` для разделов, `Product` для товаров). Группа плагинов `dharmashop`; `plg_dharmashop_social` добавляет Open Graph/Twitter Cards; `plg_dharmashop_structureddata` — JSON-LD. Запросов каталога в плагинах нет. |
 | `onDharmaShopSettingsPrepareForm` | вкладки настроек от плагинов |
 | `onDharmaShopAdminToolsCollect` | ссылки расширений на панели инструментов |
+| `onDharmaShopExportFormatsCollect` | формат выгрузки: `formats` (`label`, `writer`, `fieldset`, `form`, `tabular`), группа `dharmashopexport`; контракт — `TRIGGERS.md` |
 
 События этапов 2+ проектируются по мере реализации; имена из списка резервируются сейчас. Статусы, подстановки `{область.имя}` и шорткоды — в `docs/SHORTCODES.md`.
 
@@ -639,6 +656,8 @@ C71/C73: checkout — отдельный вид и тип меню; части d
 Полный реестр слотов, папок и стадий готовности поддерживается в [`LAYOUTS.md`](LAYOUTS.md). `Field\LayoutField` сканирует `.php`-файлы установленного сайта в соответствующей папке и выводит имя файла в нативный select; сохраняется имя без суффикса `.php` в `params.product_layout`, `params.category_layout`, `params.product_card_layout` или параметрах компонента. Персональные значения хранятся в существующем JSON `params`; схема БД не меняется. Для списка категорий уже реализованы выбор и применение файлов `categories_layout` / `category_card_layout`; остальные виды остаются заглушками. Новые пункты появляются автоматически при установке нового PHP-файла в слот. Имена административных файлов из `administrator/components/.../tmpl` не используются.
 
 ### 7.2 Права
+
+Экспорт (`com_dharmashop_export`): собственный `access.xml` с `core.*`, `dharmashop.export.run` (запуск, продолжение, отмена, скачивание своих файлов) и `dharmashop.export.report` (общая история, чужие файлы, удаление и очистка истории вместе с `core.delete`); контроллеры защищены трейтом `RequiresActionTrait`.
 
 `access.xml` (C90): штатные `core.*`; отдельные действия — `dharmashop.orders.manage` (просмотр заказов), `dharmashop.orders.status` (перевод заказа в другой статус), `dharmashop.statuses.manage` (сами статусы), `dharmashop.fields.manage` (поля и группы полей), `dharmashop.groups.manage` (группы товаров), `dharmashop.customers.view`, `dharmashop.favorites.view`, `dharmashop.warehouses.manage`, `dharmashop.shipping.manage`, `dharmashop.payment.manage`. Секции `product` и `category`: у каждого товара и каждой категории (бренд, бейдж) своя запись прав с наследованием **компонент → категория → товар** (штатные ресурсы Joomla `com_dharmashop.product.<id>`, `<extension>.category.<id>`; вкладка «Права доступа» в формах). Контроллеры структуры каталога (`Field*`, `Fieldgroup*`, `Productgroup*`) защищены трейтом `Controller\RequiresActionTrait` (проверка на входе `execute`), представления и модальные окна проверяют то же действие; выбор готовой группы в карточке товара (модальный вид) доступен с `core.edit`. Боковое меню (`plg_system_dharmashopmenu`) показывает пункт, только если у пользователя есть его действие. При обновлении `Installer\AclMigration` переносит группы прежних общих прав в новые отдельные (один раз). Проверки — `dev/acl-checks.php`.
 

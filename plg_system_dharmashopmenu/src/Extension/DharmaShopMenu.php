@@ -41,6 +41,7 @@ final class DharmaShopMenu extends CMSPlugin implements SubscriberInterface
             ['COM_DHARMASHOP_MENU_BADGES', 'index.php?option=com_dharmashop&view=categories&extension=com_dharmashop.badge', null, 'core.manage'],
         ],
         [
+            ['COM_DHARMASHOP_EXPORT', 'index.php?option=com_dharmashop_export&view=profiles', 'com_dharmashop_export', 'core.manage'],
             ['COM_DHARMASHOP_LANDING_MENU', 'index.php?option=com_dharmashop_landing&view=pages', 'com_dharmashop_landing', 'core.manage'],
         ],
         [
@@ -95,6 +96,16 @@ final class DharmaShopMenu extends CMSPlugin implements SubscriberInterface
         $parent = $container->getParent();
         $hidden = (array) ($container->getParams()->get('hideitems') ?: []);
         $hidden[] = self::ELEMENT;
+
+        // Отдельные компоненты магазина (экспорт, посадочные) живут в ветке «Dharma Shop», в «Компонентах» их дубль не нужен.
+        foreach (self::GROUPS as $group) {
+            foreach ($group as $item) {
+                if ($item[2] !== null) {
+                    $hidden[] = $item[2];
+                }
+            }
+        }
+
         $container->getParams()->set('hideitems', array_values(array_unique($hidden)));
 
         $this->getApplication()->getLanguage()->load(self::ELEMENT . '.sys', JPATH_ADMINISTRATOR);

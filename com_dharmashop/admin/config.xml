@@ -428,4 +428,11 @@
 	<fieldset name="permissions" label="JCONFIG_PERMISSIONS_LABEL" description="JCONFIG_PERMISSIONS_DESC">
 		<field name="rules" type="rules" label="JCONFIG_PERMISSIONS_LABEL" validate="rules" filter="rules" component="com_dharmashop" section="component" />
 	</fieldset>
+
+ <fieldset name="exchange" label="COM_DHARMASHOP_CONFIG_EXCHANGE">
+  <field name="export_folder" type="Exportfolder" label="COM_DHARMASHOP_CONFIG_EXPORT_FOLDER" description="COM_DHARMASHOP_CONFIG_EXPORT_FOLDER_DESC" default="files/export" layout="joomla.form.field.list-fancy-select"/>
+  <field name="export_keep" type="number" label="COM_DHARMASHOP_CONFIG_EXPORT_KEEP" description="COM_DHARMASHOP_CONFIG_EXPORT_KEEP_DESC" default="10" min="1" max="200" filter="integer"/>
+  <field name="export_batch" type="number" label="COM_DHARMASHOP_CONFIG_EXPORT_BATCH" default="200" min="10" max="2000" filter="integer"/>
+  <field name="export_budget" type="number" label="COM_DHARMASHOP_CONFIG_EXPORT_BUDGET" default="5" min="1" max="30" filter="integer"/>
+ </fieldset>
 </config>

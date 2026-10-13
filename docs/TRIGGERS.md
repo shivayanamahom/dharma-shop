@@ -38,6 +38,7 @@
 |---|---|---|
 | `onDharmaShopLandingAfterSave` | **есть (C85, L6)** | Группа `dharmashop`; после сохранения посадочной страницы: `id`, `is_new`, `source` (`filter` или `manual`). Для карты сайта, внешних кэшей и т. п. |
 | `onDharmaShopLandingAfterDelete` | **есть (C85, L6)** | После удаления страниц: `ids` (массив). |
+| `onDharmaShopExportFormatsCollect` (группа `dharmashopexport`) | **есть (C91, E5)** | Joomla Event с аргументом `formats` (массив `id => описание`). Плагин добавляет формат выгрузки: `label`, `writer` (`Export\FormatInterface`), `fieldset` (имя набора настроек в `form`), `form` (путь к XML-форме настроек, которая подгружается в форму профиля, или `null`), `tabular` (`true` — колонки выбираются в профиле, `false` — формат сам определяет набор полей через `required()`). Контракт — «Форматы экспорта» ниже. |
 | `onDharmaShopLandingChecked` | **есть (C85, L6)** | После проверки страниц (кнопка или задача планировщика), только если что-то изменилось: `newly_broken`, `recovered` (массивы номеров). |
 | `onDharmaShopMetadataReady` | **есть (C28/C29)** | Группа `dharmashop`; Joomla Event с `page` (readonly `Site\Seo\PageMetadata`), `document` (`HtmlDocument`), `settings` (`Registry` настроек магазина), `content` (readonly `Site\Seo\CollectionMetadata`, `Site\Seo\ProductMetadata` или `null`). После базовых тегов, до рендера HTML; только сайт. Социальный плагин использует `page`, Schema.org — `page` и готовый `content`; сами плагины не запрашивают каталог. |
 | `onDharmaShopCategoryBeforeTitle` | **есть (C31)** | До заголовка видов `categories`, `category`, `brands`, `brand`, `badges`, `badge`; различайте их по `view`. |
@@ -64,6 +65,26 @@
 | `onDharmaShopOrderRulesResolve` | **предложено** | итоговые правила оформления (количество, единица, учёт остатков) для товара: плагин может переопределить результат `Order\OrderRules` (C14), например, для оптовых групп |
 | `onDharmaShopSeoPlaceholders` | **предложено** | плагин добавляет свои подстановки в `Placeholder\Renderer` (значения по области и имени) |
 | `onDharmaShopImageStored` | **предложено** | после загрузки изображения (`ImageUploader::store`): плагин конвертирует в WebP, нарезает размеры (F10) |
+
+### Форматы экспорта (C91, этап E5)
+
+Компонент `com_dharmashop_export` собирает форматы событием `onDharmaShopExportFormatsCollect`; CSV встроен, XLSX и YML — плагины группы `dharmashopexport`. Идентификатор формата — `[a-z][a-z0-9_]{0,31}`, расширение файла — `[a-z0-9]{1,8}`; неверное описание отклоняется. Формат отвечает только за запись строк; отбор записей, порции, прогресс, хранение и права принадлежат компоненту.
+
+`Export\FormatInterface`:
+
+| Метод | Назначение |
+|---|---|
+| `extension(): string` | Расширение файла |
+| `supports(string $entity): bool` | Подходит ли формат типу записей (`products`, `categories`, `brands`, `badges`, `groups`, `fields`, `fieldgroups`) |
+| `required(array $settings): array` | Ключи колонок, которые формату нужны независимо от выбора пользователя (для нетабличных форматов вроде YML) |
+| `head($stream, array $context)` | Один раз в начале файла |
+| `rows($stream, array $rows, array $context): int` | Для каждой порции независимо; возвращает число записанных строк (разница с числом строк — пропущенные). В `context['issue']` передаётся колбэк `($reason, $rowId)` для журнала причин |
+| `tail($stream, array $context)` | Один раз в конце файла |
+| `seal(string $source, string $destination, array $context)` | Получает временный файл с головой, порциями и хвостом; результат — в `$destination` (CSV и YML переименовывают, XLSX упаковывает в ZIP). Не должен загружать каталог в память |
+
+Контекст (`$context`): `settings` (параметры профиля), `columns` (`key`, `header`, `mode`), `schema` (ключ → `label`, `type`), `entity`, `site_url`, `currency`, `shop_name`, `profile_id`, `started` (UTC), `processed` (сколько записей обработано до текущего вызова; в `tail` и `seal` — всего), для YML — `categories`. Запись в поток — через `Cells::put()`, текст ячейки — через `Cells::text()`, защита от формул — `Cells::safe()`, XML — `Cells::xml()`.
+
+Порции записываются в отдельные файлы-части с номером; повтор порции после обрыва перезаписывает её же, поэтому дублей строк нет. Если `rows()` выбрасывает исключение, запуск переходит в состояние `failed`, курсор остаётся прежним.
 
 ### Контракт точек вывода C31
 

@@ -86,4 +86,6 @@ if [ -d "$M" ]; then
   $R "$M/media/" "$T/media/mod_dharmashop_products/"
   for l in ru-RU en-GB; do cp "$M/language/$l/"*.ini "$T/language/$l/"; done
 fi
+# Экспорт и плагин меню: отдельный скрипт (его же можно запускать на чистом сайте без языковых папок).
+bash "$S/dev/sync-export.sh"
 echo synced
