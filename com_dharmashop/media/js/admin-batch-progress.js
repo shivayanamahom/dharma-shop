@@ -14,7 +14,7 @@
     if (!panel) {
       panel = document.createElement('div');
       panel.dataset.dharmashopProgress = '';
-      panel.className = 'alert alert-info mb-0';
+      panel.className = 'alert alert-info mx-3 mb-3';
       panel.hidden = true;
       panel.innerHTML = '<div class="d-flex justify-content-between align-items-center gap-3"><span class="badge" data-progress-status></span><span data-progress-count></span></div><div class="progress mt-3" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="progress-bar" data-progress-bar style="width:0%"></div></div><div class="mt-3" data-progress-detail></div><p class="mt-2 mb-0" data-progress-help></p>';
       panel.querySelector('.progress').setAttribute('aria-label', text('COM_DHARMASHOP_PROGRESS_BAR', 'Ход обработки'));
