@@ -18,7 +18,15 @@ final class Records
     private array $options = [];
     private array $taxonomy = [];
 
-    public function __construct(private DatabaseInterface $db) {}
+    private static bool $mediaTable = false;
+    public function __construct(private DatabaseInterface $db)
+    {
+        // Таблица памяти о скачанных файлах появилась позже остальных: на сайтах, где компонент уже стоял, создаётся при первом использовании.
+        if (!self::$mediaTable) {
+            $db->setQuery('CREATE TABLE IF NOT EXISTS #__dharmashop_import_media (source varchar(64) NOT NULL, entity varchar(24) NOT NULL, target_id int unsigned NOT NULL, url_hash char(64) NOT NULL, path varchar(500) NOT NULL, created datetime NOT NULL, PRIMARY KEY (source,entity,target_id,url_hash)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci')->execute();
+            self::$mediaTable = true;
+        }
+    }
 
     /**
      * Приводит значение к виду, пригодному для сравнения «файл против карточки»: числа по значению (0.000 = 0), булевы как 0/1,
