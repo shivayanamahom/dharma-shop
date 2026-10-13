@@ -65,7 +65,9 @@ class PageModel extends AdminModel
             return $item;
         }
 
-        $item->listing_mode = (string) (new \Joomla\Registry\Registry((string) ($item->params ?? '')))->get('listing_mode', '');
+        // AdminModel::getItem уже превращает столбец `params` в массив; из таблицы он может прийти и строкой JSON.
+        $own = new \Joomla\Registry\Registry(is_array($item->params ?? null) || is_object($item->params ?? null) ? (array) $item->params : (string) ($item->params ?? ''));
+        $item->listing_mode = (string) $own->get('listing_mode', '');
         $this->conditionsToForm($item, (array) (json_decode((string) ($item->conditions ?? ''), true) ?: []));
         $item->products = [];
 
