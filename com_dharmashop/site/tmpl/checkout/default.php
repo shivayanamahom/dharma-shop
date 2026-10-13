@@ -14,6 +14,8 @@ use Joomla\CMS\Language\Text;
             <?php echo $this->loadTemplate('success'); ?>
         <?php elseif ($this->loginRequired) : ?>
             <div class="card shadow-sm"><div class="card-body p-4"><p><?php echo Text::_('COM_DHARMASHOP_CHECKOUT_LOGIN_REQUIRED'); ?></p><a class="btn btn-primary bg-primary text-white" href="<?php echo $this->escape($this->loginUrl); ?>"><?php echo Text::_('COM_DHARMASHOP_CHECKOUT_LOGIN'); ?></a></div></div>
+        <?php elseif (!$this->lines) : ?>
+            <div class="card shadow-sm"><div class="card-body p-4"><p class="mb-3"><?php echo Text::_('COM_DHARMASHOP_CART_EMPTY'); ?></p><a class="btn btn-primary bg-primary text-white" href="<?php echo $this->escape($this->cartUrl); ?>"><?php echo Text::_('COM_DHARMASHOP_CHECKOUT_BACK_TO_CART'); ?></a></div></div>
         <?php else : ?>
             <?php echo $this->loadTemplate('form'); ?>
             <form id="dharma-cart-fix" action="<?php echo $this->escape(\Joomla\CMS\Router\Route::_('index.php?option=com_dharmashop&task=cart.removeUnavailable', false)); ?>" method="post" hidden>

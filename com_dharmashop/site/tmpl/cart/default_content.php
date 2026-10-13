@@ -102,6 +102,7 @@ $qtyText = static fn (float $qty): string => rtrim(rtrim(number_format($qty, 3, 
                                 <button type="submit" class="btn btn-outline-primary" form="dharmaPromotionForm"><?php echo Text::_('COM_DHARMASHOP_PROMOTION_APPLY'); ?></button>
                             </div>
                             <?php if (!empty($this->totals['promotion_error'])) : ?><div class="alert alert-warning small mt-2 mb-2" role="alert"><?php echo $this->escape(Text::_($this->totals['promotion_error'])); ?></div><?php endif; ?>
+                            <?php if (!empty($this->totals['promotion_inactive']) && empty($this->totals['promotion_error'])) : ?><div class="form-text"><?php echo Text::_('COM_DHARMASHOP_PROMOTION_INACTIVE_NOTE'); ?></div><?php endif; ?>
                             <?php if (!empty($this->totals['promotion_pending_identity'])) : ?><div class="form-text"><?php echo Text::_('COM_DHARMASHOP_PROMOTION_IDENTITY_PENDING'); ?></div><?php endif; ?>
                             <?php if (!empty($this->totals['applied_description'])) : ?><div class="form-text"><?php echo $this->escape($this->totals['applied_description']); ?></div><?php endif; ?>
                             <?php if (!empty($this->totals['applied_code'])) : ?><button type="submit" class="btn btn-sm btn-link px-0" form="dharmaPromotionForm" formaction="<?php echo $this->escape($removePromotion); ?>"><?php echo Text::_('COM_DHARMASHOP_PROMOTION_REMOVE'); ?></button><?php endif; ?>

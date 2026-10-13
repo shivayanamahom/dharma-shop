@@ -99,6 +99,7 @@ final class PromotionService
         $description = '';
         $promotionError = '';
         $pendingIdentity = false;
+        $inactive = false;
         $buyer = $this->buyer($cart, $email);
         $skip = array_fill_keys(array_map('intval',$skipPromotionIds),true);
         foreach ($rows as $row) {
@@ -119,7 +120,7 @@ final class PromotionService
                 $pendingIdentity = true;
             }
             $result=$type->apply($row,new Context($cart,$lines,$subtotal));
-            if (!$result) { if ((string)$row->applied_code!=='') $description=(string)($row->params['description']??''); continue; }
+            if (!$result) { if ((string)$row->applied_code!=='') { $description=(string)($row->params['description']??''); $inactive = true; } continue; }
             if ((string)$row->applied_code!=='' && isset($result->snapshot['description'])) $description=(string)$result->snapshot['description'];
             foreach ($result->adjustments as $adjustment) {
                 $amount=(float)($adjustment['amount']??0);
@@ -131,7 +132,7 @@ final class PromotionService
                 $uses[$id]['amount']=round($uses[$id]['amount']+abs($amount),2);
             }
         }
-        return ['adjustments'=>$adjustments,'promotion_uses'=>array_values($uses),'applied_code'=>$appliedCode,'applied_description'=>$description,'promotion_error'=>$promotionError,'promotion_pending_identity'=>$pendingIdentity];
+        return ['adjustments'=>$adjustments,'promotion_uses'=>array_values($uses),'applied_code'=>$appliedCode,'applied_description'=>$description,'promotion_error'=>$promotionError,'promotion_pending_identity'=>$pendingIdentity,'promotion_inactive'=>$inactive];
     }
 
     /** Блокирует акции и повторно проверяет лимиты внутри транзакции заказа. */

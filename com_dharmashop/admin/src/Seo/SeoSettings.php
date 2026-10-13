@@ -51,7 +51,8 @@ final class SeoSettings
 
         return match ($part) {
             'title' => $token . ' | {global.sitename}',
-            'description' => $token . ' — {global.sitename}',
+            // Описание страницы с собственным кратким текстом начинается с него (пустой текст вырезается вместе с тире).
+            'description' => in_array($type, ['product', 'category', 'landing'], true) ? $token . ' — {' . $type . '.introtext}' : $token . ' — {global.sitename}',
             default => $token,
         };
     }

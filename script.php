@@ -217,6 +217,8 @@ return new class () implements ServiceProviderInterface {
 
                     if ($type === 'install') {
                         $this->ensureDefaultBadges();
+                        require_once JPATH_ADMINISTRATOR . '/components/com_dharmashop/src/Installer/DefaultSettings.php';
+                        \Dharma\Component\DharmaShop\Administrator\Installer\DefaultSettings::apply($this->db);
                         $this->app->enqueueMessage(Text::_('PKG_DHARMASHOP_INSTALLED'), 'info');
                     }
 

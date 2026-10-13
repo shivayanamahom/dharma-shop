@@ -321,7 +321,7 @@
 		<field name="seo_default_image" type="imageupload" filter="Dharma\Component\DharmaShop\Administrator\Image\ImageUploader::filterPath" folder="seo" label="COM_DHARMASHOP_CONFIG_SEO_DEFAULT_IMAGE" description="COM_DHARMASHOP_CONFIG_SEO_DEFAULT_IMAGE_DESC" />
 		<field name="seo_category_spacer" type="spacer" label="COM_DHARMASHOP_CONFIG_SEO_CATEGORY" class="fw-bold" />
 		<field name="seo_category_title" type="text" label="COM_DHARMASHOP_SEO_TITLE_LABEL" default="{category.title} | {global.sitename}" filter="string" />
-		<field name="seo_category_description" type="textarea" label="COM_DHARMASHOP_SEO_DESCRIPTION_LABEL" default="{category.title} — {global.sitename}" rows="2" filter="string" />
+		<field name="seo_category_description" type="textarea" label="COM_DHARMASHOP_SEO_DESCRIPTION_LABEL" default="{category.title} — {category.introtext}" rows="2" filter="string" />
 		<field name="seo_category_h1" type="text" label="COM_DHARMASHOP_SEO_H1_LABEL" default="{category.title}" filter="string" />
 		<field name="seo_category_breadcrumb" type="text" label="COM_DHARMASHOP_SEO_BREADCRUMB_LABEL" default="{category.title}" filter="string" />
 		<field name="seo_brand_spacer" type="spacer" label="COM_DHARMASHOP_CONFIG_SEO_BRAND" class="fw-bold" />
@@ -336,7 +336,7 @@
 		<field name="seo_badge_breadcrumb" type="text" label="COM_DHARMASHOP_SEO_BREADCRUMB_LABEL" default="{badge.title}" filter="string" />
 		<field name="seo_landing_spacer" type="spacer" label="COM_DHARMASHOP_CONFIG_SEO_LANDING" class="fw-bold" />
 		<field name="seo_landing_title" type="text" label="COM_DHARMASHOP_SEO_TITLE_LABEL" default="{landing.title} | {global.sitename}" filter="string" />
-		<field name="seo_landing_description" type="textarea" label="COM_DHARMASHOP_SEO_DESCRIPTION_LABEL" default="{landing.title} — {global.sitename}" rows="2" filter="string" />
+		<field name="seo_landing_description" type="textarea" label="COM_DHARMASHOP_SEO_DESCRIPTION_LABEL" default="{landing.title} — {landing.introtext}" rows="2" filter="string" />
 		<field name="seo_landing_h1" type="text" label="COM_DHARMASHOP_SEO_H1_LABEL" default="{landing.title}" filter="string" />
 		<field name="seo_landing_breadcrumb" type="text" label="COM_DHARMASHOP_SEO_BREADCRUMB_LABEL" default="{landing.title}" filter="string" />
 		<field name="seo_favorites_spacer" type="spacer" label="COM_DHARMASHOP_CONFIG_SEO_FAVORITES" class="fw-bold" />
@@ -345,7 +345,7 @@
 		<field name="seo_favorites_h1" type="text" label="COM_DHARMASHOP_SEO_H1_LABEL" default="{favorites.title}" filter="string" />
 		<field name="seo_product_spacer" type="spacer" label="COM_DHARMASHOP_CONFIG_SEO_PRODUCT" class="fw-bold" />
 		<field name="seo_product_title" type="text" label="COM_DHARMASHOP_SEO_TITLE_LABEL" default="{product.title} | {global.sitename}" filter="string" />
-		<field name="seo_product_description" type="textarea" label="COM_DHARMASHOP_SEO_DESCRIPTION_LABEL" default="{product.title} — {global.sitename}" rows="2" filter="string" />
+		<field name="seo_product_description" type="textarea" label="COM_DHARMASHOP_SEO_DESCRIPTION_LABEL" default="{product.title} — {product.introtext}" rows="2" filter="string" />
 		<field name="seo_product_h1" type="text" label="COM_DHARMASHOP_SEO_H1_LABEL" default="{product.title}" filter="string" />
 		<field name="seo_product_breadcrumb" type="text" label="COM_DHARMASHOP_SEO_BREADCRUMB_LABEL" default="{product.title}" filter="string" />
 	</fieldset>

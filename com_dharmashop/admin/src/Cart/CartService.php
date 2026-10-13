@@ -322,6 +322,7 @@ final class CartService
             'applied_description' => $promotion['applied_description'],
             'promotion_error' => $promotion['promotion_error'],
             'promotion_pending_identity' => $promotion['promotion_pending_identity'],
+            'promotion_inactive' => !empty($promotion['promotion_inactive']),
             'promotion_input_available' => $promotionService->hasAvailableCode(),
             'total' => max(0.0, $total),
         ];

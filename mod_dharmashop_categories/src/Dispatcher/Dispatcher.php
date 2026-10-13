@@ -71,6 +71,9 @@ class Dispatcher extends AbstractModuleDispatcher
             $app->getDocument()->getWebAssetManager()->useScript('bootstrap.collapse');
         }
         $wa = $app->getDocument()->getWebAssetManager();
+        if ($data['display'] === 'grid' && $wa->getRegistry()->exists('style', 'mod_dharmashop_categories.grid')) {
+            $wa->useStyle('mod_dharmashop_categories.grid');
+        }
         $data['slider'] = false;
         if ($data['display'] === 'slider' && $wa->getRegistry()->exists('preset', 'dharmashop.swiper')) {
             $wa->getRegistry()->addExtensionRegistryFile('mod_dharmashop_categories');

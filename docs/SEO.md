@@ -65,6 +65,10 @@
 
 Источники: [Google: Product](https://developers.google.com/search/docs/appearance/structured-data/product), [Schema.org: CollectionPage](https://schema.org/CollectionPage), [Schema.org: ItemList](https://schema.org/ItemList).
 
+## Описание страницы по умолчанию (2026-10-13)
+
+Встроенный шаблон description для товара, категории и посадочной страницы — `{тип.title} — {тип.introtext}` вместо прежнего «название — сайт», который повторял заголовок. Пустое краткое описание вырезается вместе с тире (правила `Renderer`), остаётся название. Для бренда, бейджа и избранного шаблон прежний. Меняются значения по умолчанию в `config.xml` и `SeoSettings::builtin()`; сохранённые владельцем шаблоны не трогаются.
+
 ## Доработка товара и списков — 2026-10-08
 
 - Причина буквального `{product.price}`: справочник формы предлагал его, но ProductValues не передавал значение. Подключены price/sku/category/brand/price_old/discount; предпросмотр использует тот же ProductValues. Product price_min/max убраны из справочников, алиасы сохранены для старых шаблонов. Цены категории min/max остаются. Неизвестные опечатанные коды по-прежнему видимы, не скрываются автоматически.

@@ -1,0 +1,12 @@
+/* Карточки категорий в узкой колонке (боковая панель): ширину считаем по самому модулю, а не по окну браузера. */
+.dharmaCategoriesModule {
+  container-type: inline-size;
+}
+
+@container (max-width: 30rem) {
+  .dharmaCategoriesModule .row > .col {
+    flex: 0 0 100%;
+    width: 100%;
+    max-width: 100%;
+  }
+}

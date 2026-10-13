@@ -4,6 +4,12 @@
     "version": "0.1.0",
     "assets": [
         {
+            "name": "mod_dharmashop_categories.grid",
+            "type": "style",
+            "uri": "mod_dharmashop_categories/grid.css",
+            "version": "bee1e63d59d0"
+        },
+        {
             "name": "mod_dharmashop_categories.slider",
             "type": "script",
             "uri": "mod_dharmashop_categories/slider.js",
