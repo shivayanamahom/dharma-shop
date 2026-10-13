@@ -43,7 +43,7 @@ $link = static function (object $image, string $content) use ($escape, $lightbox
                 <?php foreach ($images as $n => $image) : ?>
                     <div class="swiper-slide">
                         <div class="ratio ratio-1x1 bg-body-tertiary">
-                            <?php echo $link($image, '<img class="w-100 h-100 object-fit-contain" src="' . $escape(ImageUrl::resolve($image->url, 'product.main')) . '" alt="' . $escape($image->alt) . '"' . ($n === 0 ? ' fetchpriority="high"' : ' loading="lazy"') . ' decoding="async">'); ?>
+                            <?php echo $link($image, '<img class="w-100 h-100 object-fit-contain" src="' . $escape(ImageUrl::resolve($image->url, 'product.main')) . '"' . ImageUrl::attrs($image->url, 'product.main') . ' alt="' . $escape($image->alt) . '"' . ($n === 0 ? ' fetchpriority="high"' : ' loading="lazy"') . ' decoding="async">'); ?>
                         </div>
                     </div>
                 <?php endforeach; ?>
@@ -60,7 +60,7 @@ $link = static function (object $image, string $content) use ($escape, $lightbox
                 <div class="swiper-wrapper">
                     <?php foreach ($images as $image) : ?>
                         <div class="swiper-slide rounded overflow-hidden border">
-                            <div class="ratio ratio-1x1 bg-body-tertiary"><img class="w-100 h-100 object-fit-cover" src="<?php echo $escape(ImageUrl::resolve($image->url, 'product.thumb')); ?>" alt="" loading="lazy" decoding="async"></div>
+                            <div class="ratio ratio-1x1 bg-body-tertiary"><img class="w-100 h-100 object-fit-cover" src="<?php echo $escape(ImageUrl::resolve($image->url, 'product.thumb')); ?>"<?php echo ImageUrl::attrs($image->url, 'product.thumb'); ?> alt="" loading="lazy" decoding="async"></div>
                         </div>
                     <?php endforeach; ?>
                 </div>
@@ -83,7 +83,7 @@ $link = static function (object $image, string $content) use ($escape, $lightbox
                 <?php foreach ($images as $n => $image) : ?>
                     <div class="carousel-item<?php echo $n === 0 ? ' active' : ''; ?>">
                         <div class="ratio ratio-1x1 bg-body-tertiary">
-                            <?php echo $link($image, '<img class="w-100 h-100 object-fit-contain" src="' . $escape(ImageUrl::resolve($image->url, 'product.main')) . '" alt="' . $escape($image->alt) . '"' . ($n === 0 ? ' fetchpriority="high"' : ' loading="lazy"') . ' decoding="async">'); ?>
+                            <?php echo $link($image, '<img class="w-100 h-100 object-fit-contain" src="' . $escape(ImageUrl::resolve($image->url, 'product.main')) . '"' . ImageUrl::attrs($image->url, 'product.main') . ' alt="' . $escape($image->alt) . '"' . ($n === 0 ? ' fetchpriority="high"' : ' loading="lazy"') . ' decoding="async">'); ?>
                         </div>
                     </div>
                 <?php endforeach; ?>

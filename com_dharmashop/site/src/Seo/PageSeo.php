@@ -47,8 +47,10 @@ final class PageSeo
             return '';
         };
         $image = '';
+        $imageWidth = $imageHeight = 0;
         foreach ($prepareImage ? [$params->get('meta_image', ''), $item->cover ?? '', $params->get('image', ''), $defaults->defaultImage()] : [] as $candidate) {
             if ($image = ImageUrl::resolve((string) $candidate, 'seo.social')) {
+                [$imageWidth, $imageHeight] = ImageUrl::size((string) $candidate, 'seo.social');
                 break;
             }
         }
@@ -68,7 +70,7 @@ final class PageSeo
             $url,
             $text((string) $app->get('sitename')),
             str_replace('-', '_', $app->getLanguage()->getTag()),
-            imageAlt: $text((string) ($item->title ?? '')),
+            imageAlt: $text((string) ($item->title ?? '')), imageWidth: $imageWidth, imageHeight: $imageHeight,
         );
     }
 

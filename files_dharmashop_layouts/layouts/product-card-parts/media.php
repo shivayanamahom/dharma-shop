@@ -37,7 +37,7 @@ $ratio = preg_replace('/[^0-9x]/', '', (string) ($displayData['mediaRatio'] ?? '
                         <div class="swiper-slide">
                             <a class="d-block text-reset" href="<?php echo $escape($productUrl); ?>" aria-label="<?php echo $escape($item->title); ?>">
                                 <div class="ratio ratio-<?php echo $ratio; ?> bg-body-tertiary">
-                                    <img class="w-100 h-100 object-fit-cover" src="<?php echo $escape(ImageUrl::resolve($image->url, $imageContext)); ?>" alt="<?php echo $escape($image->alt); ?>"<?php echo $n === 0 ? '' : ' loading="lazy"'; ?> decoding="async">
+                                    <img class="w-100 h-100 object-fit-cover" src="<?php echo $escape(ImageUrl::resolve($image->url, $imageContext)); ?>"<?php echo ImageUrl::attrs($image->url, $imageContext); ?> alt="<?php echo $escape($image->alt); ?>"<?php echo $n === 0 ? '' : ' loading="lazy"'; ?> decoding="async">
                                 </div>
                             </a>
                         </div>
@@ -61,7 +61,7 @@ $ratio = preg_replace('/[^0-9x]/', '', (string) ($displayData['mediaRatio'] ?? '
                         <div class="carousel-item<?php echo $n === 0 ? ' active' : ''; ?>">
                             <a class="d-block text-reset" href="<?php echo $escape($productUrl); ?>" aria-label="<?php echo $escape($item->title); ?>">
                                 <div class="ratio ratio-<?php echo $ratio; ?> bg-body-tertiary">
-                                    <img class="w-100 h-100 object-fit-cover" src="<?php echo $escape(ImageUrl::resolve($image->url, $imageContext)); ?>" alt="<?php echo $escape($image->alt); ?>"<?php echo $n === 0 ? '' : ' loading="lazy"'; ?> decoding="async">
+                                    <img class="w-100 h-100 object-fit-cover" src="<?php echo $escape(ImageUrl::resolve($image->url, $imageContext)); ?>"<?php echo ImageUrl::attrs($image->url, $imageContext); ?> alt="<?php echo $escape($image->alt); ?>"<?php echo $n === 0 ? '' : ' loading="lazy"'; ?> decoding="async">
                                 </div>
                             </a>
                         </div>
@@ -78,7 +78,7 @@ $ratio = preg_replace('/[^0-9x]/', '', (string) ($displayData['mediaRatio'] ?? '
             <div class="ratio ratio-<?php echo $ratio; ?> overflow-hidden <?php echo $rounded; ?> bg-body-tertiary">
                 <?php if ($images) : ?>
                     <a class="d-block w-100 h-100 text-reset" href="<?php echo $escape($productUrl); ?>" aria-label="<?php echo $escape($item->title); ?>">
-                        <img class="w-100 h-100 object-fit-cover" src="<?php echo $escape(ImageUrl::resolve($images[0]->url, $imageContext)); ?>" alt="<?php echo $escape($images[0]->alt); ?>" loading="lazy" decoding="async">
+                        <img class="w-100 h-100 object-fit-cover" src="<?php echo $escape(ImageUrl::resolve($images[0]->url, $imageContext)); ?>"<?php echo ImageUrl::attrs($images[0]->url, $imageContext); ?> alt="<?php echo $escape($images[0]->alt); ?>" loading="lazy" decoding="async">
                     </a>
                 <?php else : ?>
                     <a class="d-block w-100 h-100 text-reset" href="<?php echo $escape($productUrl); ?>" aria-label="<?php echo $escape($item->title); ?>">

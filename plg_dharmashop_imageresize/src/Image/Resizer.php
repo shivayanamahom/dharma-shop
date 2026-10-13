@@ -105,6 +105,21 @@ final class Resizer
         }
     }
 
+    /** Размеры локального растрового файла по адресу сайта: [ширина, высота] или [0, 0] (чужой адрес, не растр, нет файла). Только заголовок файла. */
+    public function dimensions(string $url): array
+    {
+        $root = parse_url(Uri::root()); $source = parse_url($url);
+        if (!$root || !$source || strtolower($root['host'] ?? '') !== strtolower($source['host'] ?? '') || ($root['port'] ?? null) !== ($source['port'] ?? null)) return [0, 0];
+        $prefix = rtrim(rawurldecode($root['path'] ?? ''), '/') . '/';
+        $path = rawurldecode($source['path'] ?? '');
+        if (!str_starts_with($path, $prefix) || str_contains($path, "\0")) return [0, 0];
+        $site = realpath(JPATH_ROOT);
+        $file = realpath(JPATH_ROOT . '/' . substr($path, strlen($prefix)));
+        if (!$site || !$file || !str_starts_with($file, $site . DIRECTORY_SEPARATOR) || !is_file($file) || !is_readable($file)) return [0, 0];
+        $info = @getimagesize($file);
+        return $info && (int) $info[0] > 0 && (int) $info[1] > 0 ? [(int) $info[0], (int) $info[1]] : [0, 0];
+    }
+
     /** Validate each existing ancestor before creating children; never follow a symlink outside the site. */
     private function folder(string $site,string $relative): ?string
     {

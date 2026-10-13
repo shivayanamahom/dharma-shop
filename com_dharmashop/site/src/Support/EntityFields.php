@@ -129,7 +129,7 @@ final class EntityFields
                     if ($path === '') { continue; }
                     $imageContext = $context === 'card' ? 'field.gallery.card' : 'field.gallery.page';
                     $values[(int) $row->entity_id][(int) $row->field_id][] = (object) [
-                        'text'=>(string) ($row->alt ?: $row->title ?: ''), 'image'=>ImageUrl::resolve($path, $imageContext),
+                        'text'=>(string) ($row->alt ?: $row->title ?: ''), 'image'=>ImageUrl::resolve($path, $imageContext), 'image_attrs'=>ImageUrl::attrs($path, $imageContext),
                         'url'=>ImageUrl::resolve($path, 'field.gallery.lightbox'), 'html'=>false,
                     ];
                 } elseif ($field->type === 'video') {
@@ -152,6 +152,7 @@ final class EntityFields
                     $values[(int) $row->entity_id][(int) $row->field_id][] = (object) [
                         'text'=>(string) ($row->title ?: $field->title),
                         'image'=>$poster !== '' ? ImageUrl::resolve($poster, 'field.video.poster') : '',
+                        'image_attrs'=>$poster !== '' ? ImageUrl::attrs($poster, 'field.video.poster') : '',
                         'url'=>$url, 'embed'=>$url, 'provider'=>$video['provider'], 'player_type'=>$type,
                         'poster'=>$poster !== '' ? ImageUrl::resolve($poster, 'field.video.poster') : '',
                         'mime'=>$mime, 'filename'=>(string) ($row->filename ?? ''), 'bytes'=>(int) ($row->bytes ?? 0), 'html'=>false,

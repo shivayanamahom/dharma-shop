@@ -14,7 +14,7 @@ $placeholder = (new FileLayout('components.dharmashop.media.placeholder', null, 
     <div class="<?php echo $list ? 'row g-0 h-100' : ''; ?>">
         <div class="position-relative<?php echo $list ? ' col-12 col-md-4 col-xl-3' : ''; ?>">
         <a class="d-block text-decoration-none" href="<?php echo $escape($url); ?>">
-            <?php if ($image !== '') : ?><div class="ratio <?php echo $list ? 'ratio-4x3' : 'ratio-1x1'; ?> bg-body-tertiary"><img class="w-100 h-100 object-fit-contain" src="<?php echo $escape(ImageUrl::resolve($image, (string) $displayData['imageContext'])); ?>" alt="<?php echo $escape($item->cover_alt ?: $item->title); ?>" loading="lazy" decoding="async"></div>
+            <?php if ($image !== '') : ?><div class="ratio <?php echo $list ? 'ratio-4x3' : 'ratio-1x1'; ?> bg-body-tertiary"><img class="w-100 h-100 object-fit-contain" src="<?php echo $escape(ImageUrl::resolve($image, (string) $displayData['imageContext'])); ?>"<?php echo ImageUrl::attrs($image, (string) $displayData['imageContext']); ?> alt="<?php echo $escape($item->cover_alt ?: $item->title); ?>" loading="lazy" decoding="async"></div>
             <?php else : ?><div class="ratio <?php echo $list ? 'ratio-4x3' : 'ratio-1x1'; ?> bg-body-tertiary"><?php echo $placeholder; ?></div><?php endif; ?>
         </a>
         <?php echo (new FileLayout('components.dharmashop.product-card-parts.favorite', null, ['component' => 'none', 'client' => 0]))->render($displayData); ?>

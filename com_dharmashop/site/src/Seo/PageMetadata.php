@@ -20,6 +20,8 @@ final readonly class PageMetadata
         public string $locale,
         public string $type = 'website',
         public string $imageAlt = '',
+        public int $imageWidth = 0,
+        public int $imageHeight = 0,
     ) {
     }
 }

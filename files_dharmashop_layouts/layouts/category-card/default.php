@@ -18,7 +18,7 @@ $intro = trim(strip_tags((string) $item->params->get('introtext', '')));
 <article class="card h-100">
     <?php if ($image !== '') : ?>
         <a class="ratio ratio-4x3 overflow-hidden rounded-top" href="<?php echo $escape($displayData['url']); ?>" tabindex="-1" aria-hidden="true">
-            <img class="w-100 h-100 object-fit-cover" src="<?php echo $escape(ImageUrl::resolve($image, $displayData['imageContext'] ?? 'category.card')); ?>" alt="<?php echo $escape($item->params->get('image_alt') ?: $item->title); ?>" loading="lazy" decoding="async">
+            <img class="w-100 h-100 object-fit-cover" src="<?php echo $escape(ImageUrl::resolve($image, $displayData['imageContext'] ?? 'category.card')); ?>"<?php echo ImageUrl::attrs($image, $displayData['imageContext'] ?? 'category.card'); ?> alt="<?php echo $escape($item->params->get('image_alt') ?: $item->title); ?>" loading="lazy" decoding="async">
         </a>
     <?php endif; ?>
     <div class="card-body">

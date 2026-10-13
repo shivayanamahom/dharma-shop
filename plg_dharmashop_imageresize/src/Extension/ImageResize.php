@@ -18,7 +18,9 @@ final class ImageResize extends CMSPlugin implements SubscriberInterface
         if (!$request instanceof ImageRequest || !(int)$settings->get('image_resize_enabled',1)) return;
         $this->presets ??= ImageContexts::presets($settings);
         $preset = $this->presets[$request->context] ?? null;
-        if ($preset === null) return;
-        $request->url = (new Resizer())->resolve($request->source, $request->context, $preset, (string)$settings->get('image_resize_cache','images/dharmashop/cache/resized'));
+        $resizer = new Resizer();
+        if ($preset === null) { [$request->width, $request->height] = $resizer->dimensions($request->url); return; }
+        $request->url = $resizer->resolve($request->source, $request->context, $preset, (string)$settings->get('image_resize_cache','images/dharmashop/cache/resized'));
+        [$request->width, $request->height] = $resizer->dimensions($request->url);
     }
 }

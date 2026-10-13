@@ -37,6 +37,8 @@ final class Social extends CMSPlugin implements SubscriberInterface
                 'og:url' => $page->url, 'og:site_name' => $page->siteName, 'og:locale' => $page->locale,
                 'og:image' => $page->image,
                 'og:image:alt' => $page->image !== '' ? $page->imageAlt : '',
+                'og:image:width' => $page->image !== '' && $page->imageWidth > 0 ? (string) $page->imageWidth : '',
+                'og:image:height' => $page->image !== '' && $page->imageHeight > 0 ? (string) $page->imageHeight : '',
                 'og:image:secure_url' => str_starts_with($page->image, 'https://') ? $page->image : ''];
             foreach ($tags as $name => $value) {
                 if ($value !== '') {

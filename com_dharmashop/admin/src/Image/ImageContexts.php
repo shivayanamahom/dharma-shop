@@ -83,7 +83,7 @@ final class ImageContexts
         return $rows;
     }
 
-    /** Newly introduced category-module and color contexts also work with older saved presets. Explicit rows, including 0 × 0, win. */
+    /** Contexts introduced after the settings were saved (landing, related products, social image…) work with older saved presets: a missing row means the default size. Explicit rows, including 0 × 0 (original), win. */
     public static function categoryModuleDefaults(mixed $rows): array
     {
         if (is_string($rows)) { $rows = json_decode($rows, true) ?: []; }
@@ -91,7 +91,7 @@ final class ImageContexts
         $configured = [];
         foreach ($rows as $row) { $configured[(string) (((array) $row)['context'] ?? '')] = true; }
         foreach (self::defaults() as $row) {
-            if ((str_starts_with($row['context'], 'module.categories.') || str_starts_with($row['context'], 'module.products.') || str_starts_with($row['context'], 'favorites.item.') || str_starts_with($row['context'], 'field.color.') || $row['context'] === 'field.option.filter' || $row['context'] === 'group.choice' || $row['context'] === 'admin.group' || $row['context'] === 'favorites.item' || str_starts_with($row['context'], 'group.teaser.') || str_starts_with($row['context'], 'admin.picker.') || str_starts_with($row['context'], 'landing.')) && !isset($configured[$row['context']])) {
+            if (!isset($configured[$row['context']])) {
                 $rows[] = $row;
             }
         }

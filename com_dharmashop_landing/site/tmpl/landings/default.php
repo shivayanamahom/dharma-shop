@@ -24,7 +24,7 @@ use Joomla\CMS\Router\Route;
                         <?php if ($this->showImage && $image !== '') : ?>
                             <a class="d-block" href="<?php echo $this->escape($url); ?>" tabindex="-1" aria-hidden="true">
                                 <div class="ratio ratio-3x2 bg-body-tertiary overflow-hidden rounded-top">
-                                    <img class="w-100 h-100 object-fit-cover" src="<?php echo $this->escape(ImageUrl::resolve($image, 'landing.card')); ?>" alt="<?php echo $this->escape((string) ($item->image_alt ?: $item->title)); ?>" loading="lazy" decoding="async">
+                                    <img class="w-100 h-100 object-fit-cover" src="<?php echo $this->escape(ImageUrl::resolve($image, 'landing.card')); ?>"<?php echo ImageUrl::attrs($image, 'landing.card'); ?> alt="<?php echo $this->escape((string) ($item->image_alt ?: $item->title)); ?>" loading="lazy" decoding="async">
                                 </div>
                             </a>
                         <?php endif; ?>

@@ -19,7 +19,7 @@ if (!empty($displayData['ajax']) && $displayData['mode'] !== 'table') {
 <div class="position-relative">
 <a class="d-block ratio ratio-1x1 overflow-hidden rounded-top dharmaGroupImage" href="<?php echo $escape($displayData['url']); ?>" tabindex="-1" aria-hidden="true">
     <?php if ($displayData['image'] !== '') : ?>
-        <img class="w-100 h-100 object-fit-cover" src="<?php echo $escape(ImageUrl::resolve($displayData['image'], $displayData['imageContext'])); ?>" alt="" loading="lazy" decoding="async">
+        <img class="w-100 h-100 object-fit-cover" src="<?php echo $escape(ImageUrl::resolve($displayData['image'], $displayData['imageContext'])); ?>"<?php echo ImageUrl::attrs($displayData['image'], $displayData['imageContext']); ?> alt="" loading="lazy" decoding="async">
     <?php else : ?><?php echo (new FileLayout('components.dharmashop.media.placeholder', null, ['component' => 'none', 'client' => 0]))->render([]); ?><?php endif; ?>
 </a>
 <?php echo (new FileLayout('components.dharmashop.product-card-parts.favorite', null, ['component' => 'none', 'client' => 0]))->render($displayData); ?>

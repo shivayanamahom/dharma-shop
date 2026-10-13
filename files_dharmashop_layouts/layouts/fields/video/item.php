@@ -20,7 +20,7 @@ $play = '<span class="d-flex align-items-center justify-content-center" aria-hid
 <?php if ($gallery['lightbox']) : ?>
     <a class="card h-100 overflow-hidden text-decoration-none" href="<?php echo $escape($video->url); ?>" data-fancybox="<?php echo $escape($gallery['id']); ?>" data-type="<?php echo $local ? 'html5video' : 'iframe'; ?>" data-width="1280" data-height="720" data-caption="<?php echo $escape($caption); ?>"<?php echo $local ? ' data-html5video-format="' . $escape($mediaType) . '"' : ''; ?> aria-label="<?php echo $escape($title); ?>">
         <span class="ratio ratio-16x9 bg-body-tertiary d-flex align-items-center justify-content-center overflow-hidden">
-            <?php if (!empty($video->image)) : ?><img class="w-100 h-100 object-fit-cover" src="<?php echo $escape($video->image); ?>" alt="<?php echo $escape($title); ?>" loading="lazy" decoding="async"><?php endif; ?>
+            <?php if (!empty($video->image)) : ?><img class="w-100 h-100 object-fit-cover" src="<?php echo $escape($video->image); ?>"<?php echo (string) ($video->image_attrs ?? ''); ?> alt="<?php echo $escape($title); ?>" loading="lazy" decoding="async"><?php endif; ?>
             <?php echo $play; ?>
         </span>
         <?php if ($gallery['caption']) : ?><span class="card-body py-2"><span class="card-text small"><?php echo $escape($title); ?></span></span><?php endif; ?>
@@ -29,7 +29,7 @@ $play = '<span class="d-flex align-items-center justify-content-center" aria-hid
     <details class="card h-100 overflow-hidden">
         <summary class="list-unstyled">
             <span class="ratio ratio-16x9 bg-body-tertiary d-flex align-items-center justify-content-center overflow-hidden">
-                <?php if (!empty($video->image)) : ?><img class="w-100 h-100 object-fit-cover" src="<?php echo $escape($video->image); ?>" alt="<?php echo $escape($title); ?>" loading="lazy" decoding="async"><?php endif; ?>
+                <?php if (!empty($video->image)) : ?><img class="w-100 h-100 object-fit-cover" src="<?php echo $escape($video->image); ?>"<?php echo (string) ($video->image_attrs ?? ''); ?> alt="<?php echo $escape($title); ?>" loading="lazy" decoding="async"><?php endif; ?>
                 <?php echo $play; ?>
             </span>
             <?php if ($gallery['caption']) : ?><span class="card-body py-2 d-block"><span class="card-text small"><?php echo $escape($title); ?></span></span><?php endif; ?>

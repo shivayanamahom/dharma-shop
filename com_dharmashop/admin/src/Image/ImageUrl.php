@@ -13,6 +13,7 @@ use Joomla\Event\Event;
 final class ImageUrl
 {
     private static array $resolved = [];
+    private static array $sizes = [];
     public static function absolute(string $path): string
     {
         $path = trim(explode('#', $path, 2)[0]);
@@ -35,6 +36,23 @@ final class ImageUrl
         } catch (\Throwable $error) {
             Log::add('Image context ' . $context . ': ' . get_class($error), Log::WARNING, 'com_dharmashop');
         }
+        self::$sizes[$key] = [max(0, $request->width), max(0, $request->height)];
         return self::$resolved[$key] = self::absolute($request->url) ?: $source;
+    }
+
+    /** Размеры изображения для контекста: [ширина, высота] или [0, 0], если неизвестны (SVG, внешний адрес, плагин нарезки выключен). */
+    public static function size(string $source, string $context): array
+    {
+        self::resolve($source, $context);
+
+        return self::$sizes[$context . "\0" . self::absolute($source)] ?? [0, 0];
+    }
+
+    /** Атрибуты ` width="…" height="…"` для тега `img` (резерв места под изображение, меньше сдвигов макета); пусто, если размеры неизвестны. */
+    public static function attrs(string $source, string $context): string
+    {
+        [$width, $height] = self::size($source, $context);
+
+        return $width > 0 && $height > 0 ? ' width="' . $width . '" height="' . $height . '"' : '';
     }
 }

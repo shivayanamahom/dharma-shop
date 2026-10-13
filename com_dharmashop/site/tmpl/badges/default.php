@@ -17,7 +17,7 @@ $hooks = new LayoutHooks('category', 'badges', $this->parent, $this->params, $th
     <?php echo $hooks->render('afterTitle'); ?>
     <?php echo $hooks->render('beforeContent'); ?>
     <?php if ($this->image !== '') : ?>
-        <img class="img-fluid rounded mb-4" src="<?php echo $this->escape(ImageUrl::resolve($this->image, 'badge.header')); ?>" alt="<?php echo $this->escape((string) ($this->parent->params->get('image_alt') ?: $this->parent->title)); ?>" decoding="async">
+        <img class="img-fluid rounded mb-4" src="<?php echo $this->escape(ImageUrl::resolve($this->image, 'badge.header')); ?>"<?php echo ImageUrl::attrs($this->image, 'badge.header'); ?> alt="<?php echo $this->escape((string) ($this->parent->params->get('image_alt') ?: $this->parent->title)); ?>" decoding="async">
     <?php endif; ?>
     <?php if (trim((string) $this->parent->params->get('introtext', '')) !== '') : ?>
         <div class="mb-4"><?php echo $this->text((string) $this->parent->params->get('introtext')); ?></div>
