@@ -29,7 +29,7 @@ final class Structureddata extends CMSPlugin implements SubscriberInterface
         $page = $event->getArgument('page');
         $settings = $event->getArgument('settings');
         $content = $event->getArgument('content');
-        if (!$app->isClient('site') || $app->getInput()->getCmd('option') !== 'com_dharmashop'
+        if (!$app->isClient('site') || !in_array($app->getInput()->getCmd('option'), ['com_dharmashop', 'com_dharmashop_landing'], true)
             || !$document instanceof HtmlDocument || !$page instanceof PageMetadata
             || !$settings instanceof Registry || !($content instanceof CollectionMetadata || $content instanceof ProductMetadata)
             || (int) $settings->get('seo_structureddata', 1) !== 1) {

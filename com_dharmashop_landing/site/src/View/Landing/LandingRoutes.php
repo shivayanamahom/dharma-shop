@@ -19,6 +19,11 @@ use Joomla\CMS\Router\Route;
 /** Адреса форм и ссылок страницы ведут на саму страницу (у неё нет подкатегорий и предков); общий для вида и AJAX-фрагмента. */
 trait LandingRoutes
 {
+    /** Сама страница — и есть «подборка по условиям»: редиректа на посадочную страницу здесь нет. */
+    protected function redirectToMatchingLanding(\Dharma\Component\DharmaShop\Site\Model\CategoryModel $model): void
+    {
+    }
+
     public function categoryRoute(int $id): string
     {
         $page = $this->getModel()->getPage();

@@ -35,6 +35,18 @@ final class PlaceholderCatalog
             ];
         }
 
+        // Посадочная страница и избранное: свои подстановки (без цен категории), общие — глобальные.
+        if (in_array($area, ['landing', 'favorites'], true) && !$root) {
+            $items = $area === 'landing'
+                ? ['landing.title', 'landing.category', 'landing.count', 'landing.introtext']
+                : ['favorites.title', 'favorites.count'];
+
+            return [
+                ['label' => 'COM_DHARMASHOP_PH_GROUP_' . strtoupper($area), 'items' => $items],
+                ['label' => 'COM_DHARMASHOP_PH_GROUP_GLOBAL', 'items' => ['global.sitename', 'global.currency', 'global.url']],
+            ];
+        }
+
         if ($root) {
             return [
                 ['label' => 'COM_DHARMASHOP_PH_GROUP_' . strtoupper($area), 'items' => $own],

@@ -185,7 +185,7 @@ class PageModel extends AdminModel
         unset($data['listing_mode']);
         $data['params'] = json_encode(in_array($mode, ['products', 'groups_products'], true) ? ['listing_mode' => $mode] : new \stdClass());
         $data['image'] = explode('#', (string) ($data['image'] ?? ''), 2)[0];
-        $data['catid'] = max(0, (int) ($data['catid'] ?? 0));
+        $data['catid'] = (int) ($data['catid'] ?? 0) > 1 ? (int) $data['catid'] : 0;
         $data['conditions'] = '';
         $data['conditions_hash'] = '';
 

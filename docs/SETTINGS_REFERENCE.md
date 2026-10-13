@@ -168,6 +168,13 @@
 | SEO | &lt;meta name="description"&gt; | `seo_badge_description` | {badge.title} — {global.sitename}; тип `textarea` | — |
 | SEO | &lt;h1&gt; | `seo_badge_h1` | {badge.title}; тип `text` | — |
 | SEO | Хлебные крошки | `seo_badge_breadcrumb` | {badge.title}; тип `text` | — |
+| SEO | &lt;title&gt; | `seo_landing_title` | {landing.title} \| {global.sitename}; тип `text` | — |
+| SEO | &lt;meta name="description"&gt; | `seo_landing_description` | {landing.title} — {global.sitename}; тип `textarea` | — |
+| SEO | &lt;h1&gt; | `seo_landing_h1` | {landing.title}; тип `text` | — |
+| SEO | Хлебные крошки | `seo_landing_breadcrumb` | {landing.title}; тип `text` | — |
+| SEO | &lt;title&gt; | `seo_favorites_title` | {favorites.title} \| {global.sitename}; тип `text` | — |
+| SEO | &lt;meta name="description"&gt; | `seo_favorites_description` | {favorites.title} — {global.sitename}; тип `textarea` | — |
+| SEO | &lt;h1&gt; | `seo_favorites_h1` | {favorites.title}; тип `text` | — |
 | SEO | &lt;title&gt; | `seo_product_title` | {product.title} \| {global.sitename}; тип `text` | — |
 | SEO | &lt;meta name="description"&gt; | `seo_product_description` | {product.title} — {global.sitename}; тип `textarea` | — |
 | SEO | &lt;h1&gt; | `seo_product_h1` | {product.title}; тип `text` | — |

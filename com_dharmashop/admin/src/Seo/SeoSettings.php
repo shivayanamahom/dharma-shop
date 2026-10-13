@@ -15,12 +15,12 @@ use Joomla\Registry\Registry;
 /**
  * Шаблоны SEO из настроек магазина (вкладка «SEO»). Пустое поле записи = «из компонента», то есть шаблон типа страницы.
  * Подстановки: {global.sitename}; категория — {category.title}, {category.parent}, {category.price_min}, {category.price_max}; бренд — {brand.title};
- * бейдж — {badge.title}; товар — {product.title}, {product.sku}, {product.category}, {product.brand}.
+ * бейдж — {badge.title}; посадочная страница — {landing.title}, {landing.category}, {landing.count}, {landing.introtext}; избранное — {favorites.title}, {favorites.count}; товар — {product.title}, {product.sku}, {product.category}, {product.brand}.
  * Пока настройки не сохранялись, действуют встроенные шаблоны (те же, что значения по умолчанию в config.xml).
  */
 final class SeoSettings
 {
-    public const TYPES = ['category', 'brand', 'badge', 'product'];
+    public const TYPES = ['category', 'brand', 'badge', 'landing', 'favorites', 'product'];
 
     public const PARTS = ['title', 'description', 'h1', 'breadcrumb'];
 

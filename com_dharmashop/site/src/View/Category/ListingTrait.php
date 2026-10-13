@@ -147,6 +147,7 @@ trait ListingTrait
         $this->searchQuery = $model->getQueryText();
         $this->defaultOrdering = $this->searchQuery !== '' ? 'relevance' : (string) $this->params->get('list_ordering', 'order');
         $this->redirectToCanonicalFilter($model);
+        $this->redirectToMatchingLanding($model);
         // С поисковым запросом по умолчанию — по релевантности.
         $this->ordering = $this->searchQuery !== '' && !$app->getInput()->exists('sort') ? 'relevance'
             : (in_array($ordering, CategoryModel::SORTS, true) ? $ordering : 'order');
@@ -196,6 +197,37 @@ trait ListingTrait
 
         // Строка собирается вручную: `Uri::toString()` пересобирает запрос и снова расставляет индексы.
         $app->redirect($uri->toString(['path']) . ($query !== '' ? '?' . $query : ''), 301);
+    }
+
+    /**
+     * Выбор в фильтре категории совпадает с условиями опубликованной посадочной страницы (та же категория и те же условия) —
+     * постоянный редирект на страницу: один адрес на одну подборку, сигналы ранжирования не делятся. Только чистый адрес:
+     * сортировка, вид, поиск и навигация (варианты страницы) остаются на категории и закрыты от индексации. Если компонент
+     * посадочных страниц не установлен, ничего не происходит.
+     */
+    protected function redirectToMatchingLanding(CategoryModel $model): void
+    {
+        $lookup = '\\Dharma\\Component\\DharmaShopLanding\\Site\\Service\\LandingLookup';
+        $app = Factory::getApplication();
+        $input = $app->getInput();
+
+        if ($this->taxonomy()->area !== 'category' || $input->getMethod() !== 'GET' || $input->getCmd('format') === 'raw'
+            || $this->searchQuery !== '' || $input->get->exists('sort') || $input->get->exists('product_view') || $input->getInt('start') > 0
+            || $input->getInt('limitstart') > 0 || !class_exists($lookup)) {
+            return;
+        }
+
+        $state = $model->getVisitorFilterState();
+
+        if ($state->isEmpty()) {
+            return;
+        }
+
+        $url = $lookup::urlFor(Factory::getContainer()->get(\Joomla\Database\DatabaseInterface::class), (int) $this->item->id, $state->toArray($model->getFilterDefinition()), $this->getCurrentUser()->getAuthorisedViewLevels());
+
+        if ($url !== null) {
+            $app->redirect($url, 301);
+        }
     }
 
     /** @param array<mixed> $filter */

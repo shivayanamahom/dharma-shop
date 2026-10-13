@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Dharma\Component\DharmaShop\Site\View\Category;
 
 use Dharma\Component\DharmaShop\Site\Seo\PageMetadata;
+use Dharma\Component\DharmaShop\Site\Model\CategoriesModel;
 use Dharma\Component\DharmaShop\Site\Seo\CollectionMetadata;
 use Joomla\CMS\Router\Route;
 use Dharma\Component\DharmaShop\Site\Placeholder\CategoryValues;
@@ -84,7 +85,7 @@ class HtmlView extends BaseHtmlView
         $seo = new PageSeo($settings);
         $menuCategory = max(0, (int) ($active->query['id'] ?? 0));
         $ownMenu = ($menuCategory <= 1 ? 0 : $menuCategory) === (int) $this->item->id ? $menu : new Registry();
-        $this->textValues = CategoryValues::build($taxonomy->area, $this->item, $ancestors, $model, $this->money);
+        $this->textValues = $this->seoValues($ancestors, $model);
         // Сортировка и вид в запросе (форма без JavaScript): страница-дубль, канонический адрес — без параметров, индексировать не нужно.
         $query = $app->getInput()->get;
         $variant = $query->exists('sort') || $query->exists('product_view') || $this->searchQuery !== '' || !$model->getVisitorFilterState()->isEmpty();
@@ -98,7 +99,7 @@ class HtmlView extends BaseHtmlView
         }
         $robots = $variant ? 'noindex, follow' : null;
         if ($filtered && (int)$settings->get('filter_noindex',1) !== 1 && $this->searchQuery === '') { $robots=null; }
-        $this->seo = $seo->resolve($taxonomy->area, $this->item, $this->textValues, $ownMenu, $canonical,
+        $this->seo = $seo->resolve($this->seoArea(), $this->item, $this->textValues, $ownMenu, $canonical,
             $robots, $this->pagination ? (int) $this->pagination->pagesCurrent : 1);
         $content = null;
         if ((int) $settings->get('seo_structureddata', 1) === 1) {
@@ -113,7 +114,7 @@ class HtmlView extends BaseHtmlView
         $seo->apply($this->seo, $this->getDocument(), $content);
         $pastMenu = $menuCategory <= 1;
         $chain = [];
-        foreach (array_merge($ancestors, $this->item->id ? [$this->item] : []) as $ancestor) {
+        foreach ($this->pathwayItems($ancestors) as $ancestor) {
             if ((int) $ancestor->id === $menuCategory) {
                 $pastMenu = true;
             } elseif ($pastMenu) {
@@ -212,5 +213,23 @@ class HtmlView extends BaseHtmlView
         $route = $this->categoryRoute($id);
         return preg_match('~^https?://~i', $route) ? $route
             : rtrim(Uri::root(), '/') . '/' . ltrim(substr($route, strlen(Uri::root(true))), '/');
+    }
+
+    /** Область SEO-шаблонов настроек (`seo_<область>_title` и др.); посадочная страница переопределяет. */
+    protected function seoArea(): string
+    {
+        return $this->taxonomy()->area;
+    }
+
+    /** Значения подстановок страницы (реестр — docs/SHORTCODES.md). @return array<string, string|callable> */
+    protected function seoValues(array $ancestors, CategoriesModel $model): array
+    {
+        return CategoryValues::build($this->taxonomy()->area, $this->item, $ancestors, $model, $this->money);
+    }
+
+    /** Записи цепочки «хлебных крошек» после пункта меню: предки и сама категория; посадочная страница переопределяет. @return object[] */
+    protected function pathwayItems(array $ancestors): array
+    {
+        return array_merge($ancestors, $this->item->id ? [$this->item] : []);
     }
 }

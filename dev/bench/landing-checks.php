@@ -157,6 +157,21 @@ try {
     $app->getInput()->set('filter', []);
     $check('у страницы без условий фиксированных условий нет', $landingModel($plain, 'products')->getFixedFilterState()->isEmpty());
 
+    // Редирект со страницы фильтра: поиск страницы по категории и каноническому набору условий.
+    $lookup = '\\Dharma\\Component\\DharmaShopLanding\\Site\\Service\\LandingLookup';
+    $levels = [1];
+    $hashOf = static fn (int $scope, array $conditions): string => sha1($scope . '|' . json_encode($conditions, JSON_UNESCAPED_UNICODE));
+    $bench->setQuery("UPDATE #__dharmashop_landing_pages SET conditions_hash = '" . $hashOf($catid, ['brand' => ['apple']]) . "' WHERE id = $brand")->execute();
+    $bench->setQuery("UPDATE #__dharmashop_landing_pages SET conditions_hash = '" . $hashOf(0, ['f' => ['fdemo-color' => ['chernyj']]]) . "' WHERE id = $color")->execute();
+    $check('страница находится по категории и условиям', $lookup::urlFor($bench, $catid, ['brand' => ['apple']], $levels) !== null
+        && $lookup::urlFor($bench, 1, ['f' => ['fdemo-color' => ['chernyj']]], $levels) !== null);
+    $check('другие условия или другая категория страницу не находят', $lookup::urlFor($bench, $catid, ['brand' => ['samsung']], $levels) === null
+        && $lookup::urlFor($bench, 0, ['brand' => ['apple']], $levels) === null && $lookup::urlFor($bench, $catid, [], $levels) === null);
+    $check('закрытая страница и закрытый уровень доступа не находятся', $lookup::urlFor($bench, $catid, ['brand' => ['apple']], [2]) === null);
+    $bench->setQuery("UPDATE #__dharmashop_landing_pages SET state = 0 WHERE id = $brand")->execute();
+    $check('снятая с публикации страница не находится', $lookup::urlFor($bench, $catid, ['brand' => ['apple']], $levels) === null);
+    $bench->setQuery("UPDATE #__dharmashop_landing_pages SET state = 1 WHERE id = $brand")->execute();
+
     // Виртуальная категория.
     $parent = $landingModel($brand, 'products')->getParent();
     $check('виртуальная категория: область запроса — категория-источник, тексты и SEO — страницы', (int) $parent->id === $catid && (int) $parent->landing_id === $brand && $parent->title === 'QA brand');

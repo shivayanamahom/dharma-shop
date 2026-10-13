@@ -330,6 +330,15 @@
 		<field name="seo_badge_description" type="textarea" label="COM_DHARMASHOP_SEO_DESCRIPTION_LABEL" default="{badge.title} — {global.sitename}" rows="2" filter="string" />
 		<field name="seo_badge_h1" type="text" label="COM_DHARMASHOP_SEO_H1_LABEL" default="{badge.title}" filter="string" />
 		<field name="seo_badge_breadcrumb" type="text" label="COM_DHARMASHOP_SEO_BREADCRUMB_LABEL" default="{badge.title}" filter="string" />
+		<field name="seo_landing_spacer" type="spacer" label="COM_DHARMASHOP_CONFIG_SEO_LANDING" class="fw-bold" />
+		<field name="seo_landing_title" type="text" label="COM_DHARMASHOP_SEO_TITLE_LABEL" default="{landing.title} | {global.sitename}" filter="string" />
+		<field name="seo_landing_description" type="textarea" label="COM_DHARMASHOP_SEO_DESCRIPTION_LABEL" default="{landing.title} — {global.sitename}" rows="2" filter="string" />
+		<field name="seo_landing_h1" type="text" label="COM_DHARMASHOP_SEO_H1_LABEL" default="{landing.title}" filter="string" />
+		<field name="seo_landing_breadcrumb" type="text" label="COM_DHARMASHOP_SEO_BREADCRUMB_LABEL" default="{landing.title}" filter="string" />
+		<field name="seo_favorites_spacer" type="spacer" label="COM_DHARMASHOP_CONFIG_SEO_FAVORITES" class="fw-bold" />
+		<field name="seo_favorites_title" type="text" label="COM_DHARMASHOP_SEO_TITLE_LABEL" default="{favorites.title} | {global.sitename}" filter="string" />
+		<field name="seo_favorites_description" type="textarea" label="COM_DHARMASHOP_SEO_DESCRIPTION_LABEL" default="{favorites.title} — {global.sitename}" rows="2" filter="string" />
+		<field name="seo_favorites_h1" type="text" label="COM_DHARMASHOP_SEO_H1_LABEL" default="{favorites.title}" filter="string" />
 		<field name="seo_product_spacer" type="spacer" label="COM_DHARMASHOP_CONFIG_SEO_PRODUCT" class="fw-bold" />
 		<field name="seo_product_title" type="text" label="COM_DHARMASHOP_SEO_TITLE_LABEL" default="{product.title} | {global.sitename}" filter="string" />
 		<field name="seo_product_description" type="textarea" label="COM_DHARMASHOP_SEO_DESCRIPTION_LABEL" default="{product.title} — {global.sitename}" rows="2" filter="string" />

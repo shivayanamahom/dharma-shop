@@ -28,7 +28,7 @@ class ShortcodesField extends FormField
         $groups = [];
         $seen = [];
 
-        foreach (['category', 'brand', 'badge', 'product'] as $area) {
+        foreach (['category', 'brand', 'badge', 'landing', 'favorites', 'product'] as $area) {
             foreach (PlaceholderCatalog::describe($area, []) as $group) {
                 // Общие коды есть в каждой области; показываем их один раз.
                 $key = $group['items'][0]['code'];

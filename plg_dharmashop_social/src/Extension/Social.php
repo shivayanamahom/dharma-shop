@@ -24,7 +24,7 @@ final class Social extends CMSPlugin implements SubscriberInterface
     {
         $app = $this->getApplication();
         $document = $event->getArgument('document');
-        if (!$app->isClient('site') || $app->getInput()->getCmd('option') !== 'com_dharmashop' || !$document instanceof HtmlDocument) {
+        if (!$app->isClient('site') || !in_array($app->getInput()->getCmd('option'), ['com_dharmashop', 'com_dharmashop_landing'], true) || !$document instanceof HtmlDocument) {
             return;
         }
         $page = $event->getArgument('page');

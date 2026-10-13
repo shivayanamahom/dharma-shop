@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Dharma\Component\DharmaShop\Site\View\Favorites;
 
+use Dharma\Component\DharmaShop\Site\Seo\PageSeo;
 use Dharma\Component\DharmaShop\Site\Support\FavoritesSession;
 use Dharma\Component\DharmaShop\Site\Support\FavoritesSettings;
 use Dharma\Component\DharmaShop\Site\Support\ProductCardRenderer;
@@ -102,8 +103,17 @@ class HtmlView extends BaseHtmlView
             $cardParams = clone $settings;
             $cardParams->set('product_card_intro', 0);
             $this->cardRenderer = new ProductCardRenderer($cardParams);
-            $document->setTitle($this->pageHeading);
-            $document->setMetaData('robots', 'noindex, nofollow');
+            // SEO избранного — как у остальных страниц: шаблоны настроек (вкладка «SEO»), пункт меню; страница закрыта от индексации.
+            $seoMenu = clone $menuParams;
+            $seoMenu->set('page_heading', $heading);
+            $item = (object) ['title' => $this->pageHeading, 'params' => new Registry(), 'metadesc' => '', 'metadata' => new Registry(), 'cover' => ''];
+            $count = $this->count;
+            $values = ['favorites.title' => $this->pageHeading, 'favorites.count' => static fn (): string => (string) $count];
+            $url = Route::_('index.php?option=com_dharmashop&view=favorites', true, Route::TLS_IGNORE, true);
+            $seo = new PageSeo($settings);
+            $page = $seo->resolve('favorites', $item, $values, $seoMenu, $url, 'noindex, nofollow', 1, false);
+            $this->pageHeading = $page->h1 !== '' ? $page->h1 : $this->pageHeading;
+            $seo->apply($page, $document);
         }
         parent::display($tpl);
     }
