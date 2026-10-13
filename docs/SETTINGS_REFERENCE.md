@@ -158,7 +158,7 @@
 | SEO | Микроразметка Schema.org | `seo_structureddata` | 1; `0` — Нет; `1` — Да | Выводить JSON-LD плагином «Dharma Shop — Микроразметка Schema.org». Поддерживаются списки разделов, списки товаров и страницы товаров. Хлебные крошки штатного модуля Joomla управляются отдельно. |
 | SEO | Изображение по умолчанию | `seo_default_image` | тип `imageupload` | Используется в превью ссылки, если у страницы нет своей картинки (например, логотип магазина). |
 | SEO | &lt;title&gt; | `seo_category_title` | {category.title} \| {global.sitename}; тип `text` | — |
-| SEO | &lt;meta name="description"&gt; | `seo_category_description` | {category.title} — {global.sitename}; тип `textarea` | — |
+| SEO | &lt;meta name="description"&gt; | `seo_category_description` | {category.title} — {category.introtext}; тип `textarea` | — |
 | SEO | &lt;h1&gt; | `seo_category_h1` | {category.title}; тип `text` | — |
 | SEO | Хлебные крошки | `seo_category_breadcrumb` | {category.title}; тип `text` | — |
 | SEO | &lt;title&gt; | `seo_brand_title` | {brand.title} \| {global.sitename}; тип `text` | — |
@@ -170,14 +170,14 @@
 | SEO | &lt;h1&gt; | `seo_badge_h1` | {badge.title}; тип `text` | — |
 | SEO | Хлебные крошки | `seo_badge_breadcrumb` | {badge.title}; тип `text` | — |
 | SEO | &lt;title&gt; | `seo_landing_title` | {landing.title} \| {global.sitename}; тип `text` | — |
-| SEO | &lt;meta name="description"&gt; | `seo_landing_description` | {landing.title} — {global.sitename}; тип `textarea` | — |
+| SEO | &lt;meta name="description"&gt; | `seo_landing_description` | {landing.title} — {landing.introtext}; тип `textarea` | — |
 | SEO | &lt;h1&gt; | `seo_landing_h1` | {landing.title}; тип `text` | — |
 | SEO | Хлебные крошки | `seo_landing_breadcrumb` | {landing.title}; тип `text` | — |
 | SEO | &lt;title&gt; | `seo_favorites_title` | {favorites.title} \| {global.sitename}; тип `text` | — |
 | SEO | &lt;meta name="description"&gt; | `seo_favorites_description` | {favorites.title} — {global.sitename}; тип `textarea` | — |
 | SEO | &lt;h1&gt; | `seo_favorites_h1` | {favorites.title}; тип `text` | — |
 | SEO | &lt;title&gt; | `seo_product_title` | {product.title} \| {global.sitename}; тип `text` | — |
-| SEO | &lt;meta name="description"&gt; | `seo_product_description` | {product.title} — {global.sitename}; тип `textarea` | — |
+| SEO | &lt;meta name="description"&gt; | `seo_product_description` | {product.title} — {product.introtext}; тип `textarea` | — |
 | SEO | &lt;h1&gt; | `seo_product_h1` | {product.title}; тип `text` | — |
 | SEO | Хлебные крошки | `seo_product_breadcrumb` | {product.title}; тип `text` | — |
 | Оформление заказа / Доступ к оформлению | Заказов с одного адреса в час | `checkout_rate_ip` | 10; тип `number` | Защита от потока заказов ботами: превысивший лимит получает просьбу повторить позже. 0 — без ограничения. Адрес берётся из REMOTE_ADDR (за прокси настройте передачу реального адреса на веб-сервере). |
