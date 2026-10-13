@@ -16,6 +16,7 @@
 		<file type="component" id="com_dharmashop_export">com_dharmashop_export.zip</file>
 		<file type="plugin" id="xlsx" group="dharmashopexport">plg_dharmashopexport_xlsx.zip</file>
 		<file type="plugin" id="yml" group="dharmashopexport">plg_dharmashopexport_yml.zip</file>
+		<file type="plugin" id="dharmashopexport" group="console">plg_console_dharmashopexport.zip</file>
 		<file type="plugin" id="dharmashopexport" group="task">plg_task_dharmashopexport.zip</file>
 		<file type="plugin" id="basic" group="dharmashopfield">plg_dharmashopfield_basic.zip</file>
 		<file type="plugin" id="email" group="dharmashopnotify">plg_dharmashopnotify_email.zip</file>

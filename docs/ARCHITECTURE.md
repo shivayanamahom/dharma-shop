@@ -106,6 +106,7 @@ com_dharmashop_export/            экспорт (C91): admin (профили, �
 plg_dharmashopexport_xlsx/        формат XLSX (потоковая запись, ZipArchive)
 plg_dharmashopexport_yml/         формат Яндекс YML (фид площадок)
 plg_task_dharmashopexport/        задача планировщика «экспорт по профилю»
+plg_console_dharmashopexport/     Joomla CLI-команда экспорта профиля
 plg_dharmashop_imageresize/       C79: размеры по контекстам, производные Joomla Image/GD, кеш с двумя уровнями хеша
 plg_dharmashopshipping_standard/  доставка (обычная): цена, бесплатно от суммы, конструктор полей покупателя (C80)
 plg_dharmashopshipping_courier/   курьер: доставка до двери, поля адреса, цена и «бесплатно от суммы» (C80)
@@ -551,6 +552,8 @@ C71/C73: checkout — отдельный вид и тип меню; части d
 ```
 
 Выборка идёт по ключу `id` (`id > cursor AND id <= ceiling`), порции — файлы-части с номером; готовый файл и части лежат в `private/<запуск>/` как PHP-контейнеры. Сущности магазина компонент только читает. Подробности — `DEVELOPER_GUIDE.md` («Экспорт данных»), контракт форматов — `TRIGGERS.md`.
+
+Команду `dharmashop:export <profile-id>` регистрирует `plg_console_dharmashopexport` на событии Joomla Console `application.before_execute`; она вызывает тот же `Workflow`, что админка и Scheduler. `--output=<абсолютный-путь>` копирует полезное содержимое защищённого артефакта в обычный файл по запросу оператора CLI.
 
 ## 6. События
 
