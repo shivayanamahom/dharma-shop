@@ -101,7 +101,7 @@ foreach (['order', 'price_asc', 'new'] as $oname) {
     }, $sql);
 }
 
-// 2b. Страница на середине каталога (смещение N/2, кратно 24) — для сравнения с RadicalMart.
+// 2b. Страница на середине каталога (смещение N/2, кратно 24).
 $mid = (int) (floor($n / 2 / 24) * 24);
 foreach (['order', 'price_asc'] as $oname) {
     $sql = listingIdsSql(1, $orders[$oname], 24, $mid);
@@ -111,7 +111,7 @@ foreach (['order', 'price_asc'] as $oname) {
     }, $sql);
 }
 
-// 2c. Одно поле фильтра (материал) в корне — для сравнения с RadicalMart, где проверялся один фильтр.
+// 2c. Одно поле фильтра (материал) в корне.
 $one = 'AND EXISTS (SELECT 1 FROM bn_field_values v WHERE v.product_id = pc.product_id AND v.field_id = 2 AND v.option_id IN (33))';
 foreach (['order', 'price_asc'] as $oname) {
     $sql = listingIdsSql(1, $orders[$oname], 24, 0, $one);
