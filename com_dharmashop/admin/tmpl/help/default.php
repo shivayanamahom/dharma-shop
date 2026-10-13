@@ -14,6 +14,10 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 
 /** @var \Dharma\Component\DharmaShop\Administrator\View\Help\HtmlView $this */
+$articleCount = 0;
+foreach ($this->helpGroups as $group) {
+    $articleCount += count($group['items'] ?? []);
+}
 ?>
 <div class="container-fluid px-0">
     <?php if (!$this->helpGroups) : ?>
@@ -23,6 +27,7 @@ use Joomla\CMS\Router\Route;
     <?php else : ?>
         <p class="text-muted"><?php echo Text::_('COM_DHARMASHOP_HELP_LIBRARY_INTRO'); ?></p>
         <div class="row g-4">
+            <?php if ($articleCount > 1) : ?>
             <aside class="col-12 col-xl-3" aria-label="<?php echo Text::_('COM_DHARMASHOP_HELP_TOC_LABEL', true); ?>">
                 <div class="card">
                     <div class="card-body p-0">
@@ -49,8 +54,9 @@ use Joomla\CMS\Router\Route;
                     </div>
                 </div>
             </aside>
+            <?php endif; ?>
 
-            <main class="col-12 col-xl-9">
+            <main class="col-12<?php echo $articleCount > 1 ? ' col-xl-9' : ''; ?>">
                 <article class="card">
                     <div class="card-body p-4">
                         <?php if ($this->articleTitle !== '' && $this->articleHtml !== '') : ?>

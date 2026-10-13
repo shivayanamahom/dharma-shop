@@ -18,48 +18,48 @@ GROUPS = [
     (
         "COM_DHARMASHOP_HELP_GROUP_USER",
         [
-            "HELP",
-            "SETTINGS_REFERENCE",
-            "DISPLAY_SETTINGS",
-            "FIELDS",
-            "FILES_FIELD",
-            "VARIANTS",
-            "BATCH_PROCESSING",
-            "FILTER",
-            "SEARCH",
-            "LAYOUTS",
-            "MODULE_CATEGORIES",
+            "ADMIN_GUIDE",
+            "ADMIN_PRODUCTS",
+            "ADMIN_CATEGORIES",
+            "ADMIN_CATALOG",
+            "ADMIN_MODULES",
             "MODULE_PRODUCTS",
-            "CHECKOUT",
-            "SHIPPING",
-            "PAYMENTS",
-            "ORDERS",
-            "CUSTOMER_IDENTITY",
-            "NOTIFICATIONS",
-            "WAREHOUSES",
-            "IMAGE_RESIZE",
-            "SEO",
-            "RELATED_PRODUCTS",
-            "LANDING",
-            "SECURITY",
-            "SETTINGS_SEARCH",
+            "ADMIN_FAVORITES",
+            "ADMIN_ORDERS",
+            "ADMIN_SETTINGS",
+            "ADMIN_TROUBLESHOOTING",
+            "BATCH_PROCESSING",
+            "FILES_FIELD",
+            "SETTINGS_REFERENCE",
         ],
     ),
     (
         "COM_DHARMASHOP_HELP_GROUP_DEVELOPER",
         [
             "DEVELOPER_GUIDE",
+            "DEVELOPMENT",
             "ARCHITECTURE",
+            "LAYOUTS",
             "TRIGGERS",
             "SHORTCODES",
-            "DEVELOPMENT",
-            "DECISIONS",
-            "ROADMAP",
+            "IMAGE_RESIZE",
             "FILTER_IMPLEMENTATION",
-            "BENCHMARKS_NOTES",
+            "SECURITY",
         ],
     ),
 ]
+
+TITLES = {
+    "FILES_FIELD": "Поле «Файлы»",
+    "DEVELOPMENT": "Рабочая среда, сборка и проверки",
+    "ARCHITECTURE": "Архитектура компонента",
+    "LAYOUTS": "Макеты и переопределения",
+    "TRIGGERS": "События компонента",
+    "SHORTCODES": "Подстановки и шорткоды",
+    "IMAGE_RESIZE": "Размеры изображений",
+    "FILTER_IMPLEMENTATION": "Фильтр: устройство и проверки",
+    "SECURITY": "Проверки безопасности",
+}
 
 
 def slugify_heading(value: str) -> str:
@@ -209,7 +209,8 @@ def main() -> None:
                 raise SystemExit(f"Missing help source: {path}")
             source = path.read_text(encoding="utf-8")
             title_match = re.search(r"^#\s+(.+?)\s*$", source, re.M)
-            articles[slug] = {"title": title_match.group(1) if title_match else slug, "source": source, "group": group_key}
+            title = title_match.group(1) if title_match else slug
+            articles[slug] = {"title": TITLES.get(slug, title), "source": source, "group": group_key}
 
     available = set(articles)
     if args.output.exists():
@@ -222,8 +223,10 @@ def main() -> None:
         group_items = []
         for slug in slugs:
             article = articles[slug]
+            # The Joomla view renders the article title above the HTML body.
+            body = re.sub(r"^#\s+.+?\n+", "", article["source"], count=1)
             (article_dir / f"{slug}.html").write_text(
-                render_markdown(article["source"], f"{slug}.md", available), encoding="utf-8"
+                render_markdown(body, f"{slug}.md", available), encoding="utf-8"
             )
             group_items.append({"slug": slug, "title": article["title"]})
         groups_json.append({"titleKey": group_key, "items": group_items})
