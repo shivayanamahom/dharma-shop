@@ -25,11 +25,14 @@ class LandingsModel extends BaseDatabaseModel
     {
         $db = $this->getDatabase();
         $levels = array_map('intval', $this->getCurrentUser()->getAuthorisedViewLevels()) ?: [0];
-        // Страница, чья категория-источник закрыта, в список не попадает (как на её собственном адресе — 404).
-        $where = 'a.state = 1 AND a.broken = 0 AND a.access IN (' . implode(',', $levels) . ') AND (a.catid < 2 OR EXISTS (SELECT 1 FROM ' . $db->quoteName('#__categories', 'c')
-            . ' WHERE c.id = a.catid AND c.published = 1 AND c.access IN (' . implode(',', $levels) . ')))';
+        // Страница, чья категория-источник (или её предок) закрыта, в список не попадает (на её адресе — 404).
+        $where = 'a.state = 1 AND a.broken = 0 AND a.access IN (' . implode(',', $levels) . ') AND ' . \Dharma\Component\DharmaShopLanding\Site\Service\CategoryAccess::sql($db, 'a.catid', $levels);
         $order = $ordering === 'title' ? 'a.title ASC' : 'a.ordering ASC, a.id ASC';
         $total = (int) $db->setQuery('SELECT COUNT(*) FROM ' . $db->quoteName('#__dharmashop_landing_pages', 'a') . ' WHERE ' . $where)->loadResult();
+        if ($start > 0 && $start >= $total) {
+            throw new \RuntimeException(\Joomla\CMS\Language\Text::_('JERROR_PAGE_NOT_FOUND'), 404);
+        }
+
         $items = $total ? $db->setQuery(
             'SELECT a.id, a.title, a.alias, a.image, a.image_alt, a.introtext FROM ' . $db->quoteName('#__dharmashop_landing_pages', 'a') . ' WHERE ' . $where . ' ORDER BY ' . $order,
             $start,

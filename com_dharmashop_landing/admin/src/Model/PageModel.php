@@ -261,6 +261,13 @@ class PageModel extends AdminModel
 
         if ($result && $ids) {
             $db = $this->getDatabase();
+            // Только реально удалённые: родитель мог пропустить записи без прав.
+            $left = array_map('intval', $db->setQuery('SELECT id FROM ' . $db->quoteName('#__dharmashop_landing_pages') . ' WHERE id IN (' . implode(',', $ids) . ')')->loadColumn());
+            $ids = array_values(array_diff($ids, $left));
+        }
+
+        if ($result && $ids) {
+            $db = $this->getDatabase();
             $db->setQuery('DELETE FROM ' . $db->quoteName('#__dharmashop_landing_products') . ' WHERE landing_id IN (' . implode(',', $ids) . ')')->execute();
             PluginHelper::importPlugin('dharmashop');
             Factory::getApplication()->getDispatcher()->dispatch('onDharmaShopLandingAfterDelete', new Event('onDharmaShopLandingAfterDelete', ['ids' => $ids]));

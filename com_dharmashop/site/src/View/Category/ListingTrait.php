@@ -16,6 +16,7 @@ use Dharma\Component\DharmaShop\Site\Support\ProductCardRenderer;
 use Dharma\Component\DharmaShop\Site\Support\Taxonomy;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
+use Joomla\CMS\Language\Text;
 use Joomla\CMS\Layout\FileLayout;
 use Joomla\CMS\Pagination\Pagination;
 use Joomla\CMS\Router\Route;
@@ -207,27 +208,44 @@ trait ListingTrait
      */
     protected function redirectToMatchingLanding(CategoryModel $model): void
     {
-        $lookup = '\\Dharma\\Component\\DharmaShopLanding\\Site\\Service\\LandingLookup';
         $app = Factory::getApplication();
         $input = $app->getInput();
 
-        if ($this->taxonomy()->area !== 'category' || $input->getMethod() !== 'GET' || $input->getCmd('format') === 'raw'
-            || $this->searchQuery !== '' || $input->get->exists('sort') || $input->get->exists('product_view') || $input->getInt('start') > 0
-            || $input->getInt('limitstart') > 0 || !class_exists($lookup)) {
+        if ($input->getMethod() !== 'GET' || $input->getCmd('format') === 'raw' || $this->searchQuery !== '' || $input->get->exists('sort')
+            || $input->get->exists('product_view') || $input->getInt('start') > 0 || $input->getInt('limitstart') > 0) {
             return;
+        }
+
+        if (($url = $this->matchingLandingUrl($model)) !== null) {
+            $app->redirect($url, 301);
+        }
+    }
+
+    private ?string $landingUrl = null;
+    private bool $landingLooked = false;
+
+    /** Адрес посадочной страницы с теми же категорией и условиями, что выбрал посетитель, или null. Работает только для категорий. */
+    protected function matchingLandingUrl(CategoryModel $model): ?string
+    {
+        $lookup = '\\Dharma\\Component\\DharmaShopLanding\\Site\\Service\\LandingLookup';
+
+        if ($this->landingLooked) {
+            return $this->landingUrl;
+        }
+
+        $this->landingLooked = true;
+
+        if ($this->taxonomy()->area !== 'category' || !class_exists($lookup)) {
+            return null;
         }
 
         $state = $model->getVisitorFilterState();
 
         if ($state->isEmpty()) {
-            return;
+            return null;
         }
 
-        $url = $lookup::urlFor(Factory::getContainer()->get(\Joomla\Database\DatabaseInterface::class), (int) $this->item->id, $state->toArray($model->getFilterDefinition()), $this->getCurrentUser()->getAuthorisedViewLevels());
-
-        if ($url !== null) {
-            $app->redirect($url, 301);
-        }
+        return $this->landingUrl = $lookup::urlFor(Factory::getContainer()->get(\Joomla\Database\DatabaseInterface::class), (int) $this->item->id, $state->toArray($model->getFilterDefinition()), $this->getCurrentUser()->getAuthorisedViewLevels());
     }
 
     /** @param array<mixed> $filter */
@@ -245,6 +263,10 @@ trait ListingTrait
         $limit = max(1, min(200, (int) $this->params->get('list_limit', 24)));
         $total = $model->getTotal();
         $this->total = $total;
+        // Смещение за последней страницей — нет такой страницы (раньше отдавался 200 с последним листом: дубль адреса).
+        if ($this->start > 0 && $this->start >= $total) {
+            throw new \RuntimeException(Text::_('JERROR_PAGE_NOT_FOUND'), 404);
+        }
         // Смещение кратно размеру страницы: один адрес на одну страницу.
         $pagination = new Pagination($total, intdiv($this->start, $limit) * $limit, $limit);
         $this->start = $pagination->limitstart;

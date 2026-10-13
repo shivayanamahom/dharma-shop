@@ -14,7 +14,6 @@ namespace Dharma\Component\DharmaShopLanding\Site\Service;
 
 use Joomla\CMS\Router\Route;
 use Joomla\Database\DatabaseInterface;
-use Joomla\Database\ParameterType;
 
 \defined('_JEXEC') or die;
 
@@ -44,18 +43,11 @@ final class LandingLookup
             return null;
         }
 
-        // Категория-источник должна быть доступна посетителю (иначе у страницы 404).
-        if ((int) $page->catid > 1) {
-            $category = $db->setQuery(
-                $db->createQuery()->select('1')->from($db->quoteName('#__categories'))->where('id = :c')->where('published = 1')
-                    ->where('access IN (' . implode(',', array_map('intval', $levels)) . ')')->bind(':c', $page->catid, ParameterType::INTEGER)
-            )->loadResult();
-
-            if (!$category) {
-                return null;
-            }
+        // Вся ветка категории-источника должна быть доступна посетителю (иначе у страницы 404).
+        if (!CategoryAccess::isOpen($db, (int) $page->catid, $levels)) {
+            return null;
         }
 
-        return Route::_('index.php?option=com_dharmashop_landing&view=landing&id=' . (int) $page->id, false);
+        return Route::_('index.php?option=com_dharmashop_landing&view=landing&id=' . (int) $page->id, false, Route::TLS_IGNORE, true);
     }
 }

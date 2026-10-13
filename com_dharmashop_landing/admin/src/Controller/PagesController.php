@@ -31,7 +31,7 @@ class PagesController extends AdminController
     /** Проверка условий всех страниц: пометка `broken` у страниц, которые каталог больше не понимает. */
     public function check(): void
     {
-        $this->checkToken();
+        $this->checkToken('post');
 
         if (!$this->app->getIdentity()->authorise('core.edit.state', $this->option)) {
             throw new \RuntimeException(Text::_('JERROR_ALERTNOAUTHOR'), 403);

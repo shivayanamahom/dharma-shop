@@ -97,6 +97,10 @@ class HtmlView extends BaseHtmlView
             if ($this->start) { $parts['start']=$this->start; }
             $canonical .= '?' . preg_replace('/%5B\d+%5D/', '%5B%5D', http_build_query($parts,'','&',PHP_QUERY_RFC3986));
         }
+        // Условия фильтра совпали с посадочной страницей: канонический адрес вариантов (сортировка, вид, навигация) — сама страница.
+        if ($filtered && $this->searchQuery === '' && ($landingUrl = $this->matchingLandingUrl($model)) !== null) {
+            $canonical = $landingUrl;
+        }
         $robots = $variant ? 'noindex, follow' : null;
         if ($filtered && (int)$settings->get('filter_noindex',1) !== 1 && $this->searchQuery === '') { $robots=null; }
         $this->seo = $seo->resolve($this->seoArea(), $this->item, $this->textValues, $ownMenu, $canonical,

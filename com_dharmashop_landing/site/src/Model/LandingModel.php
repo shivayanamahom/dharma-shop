@@ -68,17 +68,9 @@ class LandingModel extends CategoryModel
             throw new \RuntimeException(Text::_('COM_DHARMASHOP_LANDING_NOT_FOUND'), 404);
         }
 
-        // Категория-источник должна быть доступна посетителю: иначе страница вывела бы товары закрытой ветки.
-        if ((int) $page->catid > 1) {
-            $category = $db->setQuery(
-                $db->createQuery()->select('published, access')->from($db->quoteName('#__categories'))
-                    ->where($db->quoteName('id') . ' = :c')->where($db->quoteName('extension') . ' = ' . $db->quote('com_dharmashop'))
-                    ->bind(':c', $page->catid, ParameterType::INTEGER)
-            )->loadObject();
-
-            if (!$category || (int) $category->published !== 1 || !in_array((int) $category->access, $this->getCurrentUser()->getAuthorisedViewLevels(), true)) {
-                throw new \RuntimeException(Text::_('COM_DHARMASHOP_LANDING_NOT_FOUND'), 404);
-            }
+        // Вся ветка категории-источника должна быть открыта посетителю: иначе страница вывела бы товары закрытой ветки.
+        if (!\Dharma\Component\DharmaShopLanding\Site\Service\CategoryAccess::isOpen($db, (int) $page->catid, $this->getCurrentUser()->getAuthorisedViewLevels())) {
+            throw new \RuntimeException(Text::_('COM_DHARMASHOP_LANDING_NOT_FOUND'), 404);
         }
 
         return $this->page = $page;

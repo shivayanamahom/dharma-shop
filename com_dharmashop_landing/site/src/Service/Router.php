@@ -43,10 +43,11 @@ class Router extends RouterView
     {
         $alias = (string) $this->db->setQuery(
             $this->db->createQuery()->select($this->db->quoteName('alias'))->from($this->db->quoteName('#__dharmashop_landing_pages'))
-                ->where($this->db->quoteName('id') . ' = :id')->bind(':id', $id, ParameterType::INTEGER)
+                ->where($this->db->quoteName('id') . ' = :id')->where($this->db->quoteName('state') . ' = 1')->where($this->db->quoteName('broken') . ' = 0')->bind(':id', $id, ParameterType::INTEGER)
         )->loadResult();
 
-        return $alias === '' ? [] : [(int) $id => $alias];
+        // Страницы нет или она закрыта: алиас не раскрываем, сегмент — номер (при разборе будет 404, а не пустой адрес).
+        return [(int) $id => $alias !== '' ? $alias : (string) (int) $id];
     }
 
     public function getLandingId($segment, $query): int

@@ -12,13 +12,15 @@ declare(strict_types=1);
 
 namespace Dharma\Component\DharmaShopLanding\Site\View\Landings;
 
+use Dharma\Component\DharmaShop\Site\Seo\CollectionMetadata;
+use Dharma\Component\DharmaShop\Site\Seo\PageSeo;
 use Dharma\Component\DharmaShop\Site\Support\Grid;
+use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\MVC\View\HtmlView as BaseHtmlView;
 use Joomla\CMS\Pagination\Pagination;
 use Joomla\CMS\Router\Route;
-use Joomla\CMS\Uri\Uri;
 use Joomla\Registry\Registry;
 
 \defined('_JEXEC') or die;
@@ -35,6 +37,7 @@ class HtmlView extends BaseHtmlView
     public bool $showImage = true;
     public bool $showIntro = true;
     private int $limit = 12;
+    private int $total = 0;
 
     public function display($tpl = null): void
     {
@@ -53,26 +56,31 @@ class HtmlView extends BaseHtmlView
         $start = max(0, $app->getInput()->getInt('start'));
         $ordering = (string) $menu->get('landings_ordering', 'order');
         [$this->items, $total] = $this->getModel()->getPage(intdiv($start, $limit) * $limit, $limit, $ordering);
+        $this->total = $total;
         $this->pagination = $total > $limit ? new Pagination($total, intdiv($start, $limit) * $limit, $limit) : null;
         $this->setSeo($menu, $start ? intdiv($start, $limit) + 1 : 1);
         parent::display($tpl);
     }
 
-    /** Страница списка индексируется; адрес страницы навигации — свой, канонический — тоже свой. */
+    /** SEO списка — как у остальных страниц магазина (`PageSeo`: шаблоны настроек, пункт меню, OG, JSON-LD); адрес листа свой, индексируется. */
     private function setSeo(Registry $menu, int $page): void
     {
-        $document = $this->getDocument();
-        $suffix = $page > 1 ? ' — ' . Text::sprintf('COM_DHARMASHOP_LANDING_PAGE_N', $page) : '';
-        $title = trim((string) $menu->get('page_title', '')) ?: $this->heading;
-        $document->setTitle($title . $suffix);
+        $settings = ComponentHelper::getParams('com_dharmashop');
+        $seo = new PageSeo($settings);
+        $heading = $this->heading;
+        $total = $this->total;
+        $item = (object) ['title' => $heading, 'params' => new Registry(), 'metadesc' => '', 'metadata' => new Registry(), 'cover' => ''];
+        $values = ['landing.title' => $heading, 'landing.category' => '', 'landing.count' => static fn (): string => (string) $total, 'landing.introtext' => ''];
+        $base = Route::_('index.php?option=com_dharmashop_landing&view=landings', false, Route::TLS_IGNORE, true);
+        $url = $base . ($page > 1 ? (str_contains($base, '?') ? '&' : '?') . 'start=' . (($page - 1) * $this->limit) : '');
+        $meta = $seo->resolve('landing', $item, $values, $menu, $url, trim((string) $menu->get('robots', '')) ?: 'index, follow', $page, false);
+        $entries = [];
 
-        if (($description = trim((string) $menu->get('menu-meta_description', ''))) !== '' && $page === 1) {
-            $document->setDescription($description);
+        foreach ($this->items as $row) {
+            $entries[] = ['name' => (string) $row->title, 'url' => Route::_('index.php?option=com_dharmashop_landing&view=landing&id=' . (int) $row->id, false, Route::TLS_IGNORE, true)];
         }
 
-        $document->setMetaData('robots', trim((string) $menu->get('robots', '')) ?: 'index, follow');
-        $base = Route::_('index.php?option=com_dharmashop_landing&view=landings', false);
-        $url = preg_match('~^https?://~i', $base) ? $base : rtrim(Uri::root(), '/') . '/' . ltrim($base, '/');
-        $document->addHeadLink($url . ($page > 1 ? '?start=' . (($page - 1) * $this->limit) : ''), 'canonical');
+        $content = (int) $settings->get('seo_structureddata', 1) === 1 ? new CollectionMetadata($heading, $entries, 'WebPage') : null;
+        $seo->apply($meta, $this->getDocument(), $content);
     }
 }
