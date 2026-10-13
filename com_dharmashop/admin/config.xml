@@ -421,6 +421,7 @@
 	</fieldset>
 
 	<fieldset name="extensions" label="COM_DHARMASHOP_CONFIG_EXTENSIONS" description="COM_DHARMASHOP_CONFIG_EXTENSIONS_DESC" addfieldprefix="Dharma\Component\DharmaShop\Administrator\Field">
+		<field name="addons" type="addons" filter="unset" />
 		<field name="libraries" type="libraries" filter="unset" />
 	</fieldset>
 

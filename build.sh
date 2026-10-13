@@ -15,10 +15,12 @@ mkdir -p dist
 rm -f "$out"
 
 # Список расширений пакета (папка = имя zip). Добавляйте сюда новые плагины и модули.
-EXTENSIONS=(plg_system_dharmashoppositions plg_system_dharmashoprelated plg_dharmashop_imageresize files_dharmashop_layouts com_dharmashop com_dharmashop_landing plg_dharmashopfield_basic plg_dharmashopnotify_email plg_dharmashopnotify_telegram plg_dharmashopshipping_standard plg_dharmashopshipping_courier plg_dharmashopshipping_pickup plg_dharmashoppayment_standard plg_dharmashoppayment_sandbox plg_dharmashop_social plg_dharmashop_structureddata plg_system_dharmashopswiper plg_system_dharmashopfancybox plg_system_dharmashopmenu plg_task_dharmashop mod_dharmashop_cart mod_dharmashop_favorites mod_dharmashop_search mod_dharmashop_filter mod_dharmashop_categories mod_dharmashop_products)
+EXTENSIONS=(plg_system_dharmashoppositions plg_system_dharmashoprelated plg_dharmashop_imageresize files_dharmashop_layouts com_dharmashop com_dharmashop_landing plg_dharmashopfield_basic plg_dharmashopnotify_email plg_dharmashopnotify_telegram plg_dharmashopshipping_standard plg_dharmashopshipping_courier plg_dharmashopshipping_pickup plg_dharmashoppayment_standard plg_dharmashoppayment_sandbox plg_dharmashop_social plg_dharmashop_structureddata plg_radicalsitemap_dharmashop plg_system_dharmashopswiper plg_system_dharmashopfancybox plg_system_dharmashopmenu plg_task_dharmashop mod_dharmashop_cart mod_dharmashop_favorites mod_dharmashop_search mod_dharmashop_filter mod_dharmashop_categories mod_dharmashop_products)
 
 for ext in "${EXTENSIONS[@]}"; do
-  if [[ "$ext" == "com_dharmashop" ]]; then
+  if [[ "$ext" == "plg_radicalsitemap_dharmashop" ]]; then
+    (cd "integrations/$ext" && zip -r -q "$stage/$ext.zip" dharmashop.xml services src language -x '*.DS_Store')
+  elif [[ "$ext" == "com_dharmashop" ]]; then
     cp -R "$ext" "$stage/$ext"
     python3 dev/generate-help-site.py "$stage/$ext/admin/help"
     (cd "$stage/$ext" && zip -r -q "$stage/$ext.zip" . -x '*.DS_Store')

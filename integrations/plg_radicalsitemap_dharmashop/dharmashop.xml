@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="plugin" group="radicalsitemap" method="upgrade">
+	<name>PLG_RADICALSITEMAP_DHARMASHOP</name>
+	<author>Dharma</author>
+	<creationDate>October 2026</creationDate>
+	<copyright>(C) 2026 Dharma</copyright>
+	<license>GNU General Public License version 2 or later</license>
+	<version>0.1.0</version>
+	<description>PLG_RADICALSITEMAP_DHARMASHOP_DESCRIPTION</description>
+	<namespace path="src">Dharma\Plugin\RadicalSitemap\DharmaShop</namespace>
+	<languages folder="language">
+		<language tag="en-GB">en-GB/plg_radicalsitemap_dharmashop.ini</language>
+		<language tag="en-GB">en-GB/plg_radicalsitemap_dharmashop.sys.ini</language>
+		<language tag="ru-RU">ru-RU/plg_radicalsitemap_dharmashop.ini</language>
+		<language tag="ru-RU">ru-RU/plg_radicalsitemap_dharmashop.sys.ini</language>
+	</languages>
+	<files>
+		<folder>services</folder>
+		<folder plugin="dharmashop">src</folder>
+	</files>
+</extension>

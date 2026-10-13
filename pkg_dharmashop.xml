@@ -24,6 +24,7 @@
 		<file type="plugin" id="imageresize" group="dharmashop">plg_dharmashop_imageresize.zip</file>
 		<file type="plugin" id="social" group="dharmashop">plg_dharmashop_social.zip</file>
 		<file type="plugin" id="structureddata" group="dharmashop">plg_dharmashop_structureddata.zip</file>
+		<file type="plugin" id="dharmashop" group="radicalsitemap">plg_radicalsitemap_dharmashop.zip</file>
 		<file type="plugin" id="dharmashopswiper" group="system">plg_system_dharmashopswiper.zip</file>
 		<file type="plugin" id="dharmashopfancybox" group="system">plg_system_dharmashopfancybox.zip</file>
 		<file type="plugin" id="dharmashoppositions" group="system">plg_system_dharmashoppositions.zip</file>

@@ -42,6 +42,16 @@ class DisplayController extends BaseController
             return $this;
         }
 
+        $addons = $this->input->getCmd('addons_action');
+
+        if (in_array($addons, ['enable', 'disable'], true)) {
+            $controller = $this->factory->createController('Addons', 'Administrator', [], $this->app, $this->input);
+            $controller->execute($addons);
+            $controller->redirect();
+
+            return $this;
+        }
+
         $view = $this->input->getCmd('view');
         if (in_array($view, ['fieldgroup', 'field', 'status'], true) && $this->input->getCmd('layout') === 'edit') {
             $id = $this->input->getInt('id');
