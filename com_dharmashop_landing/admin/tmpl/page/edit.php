@@ -29,7 +29,7 @@ $this->getDocument()->getWebAssetManager()->useScript('keepalive')->useScript('f
                 </fieldset>
                 <fieldset class="options-form">
                     <legend><?php echo Text::_('COM_DHARMASHOP_LANDING_DISPLAY'); ?></legend>
-                    <?php foreach (['sort', 'product_view'] as $name) { echo $this->form->renderField($name); } ?>
+                    <?php foreach (['listing_mode', 'sort', 'product_view'] as $name) { echo $this->form->renderField($name); } ?>
                 </fieldset>
                 <?php echo HTMLHelper::_('uitab.endTab'); ?>
                 <?php echo HTMLHelper::_('uitab.addTab', 'pageTab', 'description', Text::_('COM_DHARMASHOP_LANDING_TAB_DESCRIPTION')); ?>

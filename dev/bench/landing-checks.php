@@ -153,6 +153,14 @@ try {
     $parent = $landingModel($brand, 'products')->getParent();
     $check('виртуальная категория: область запроса — категория-источник, тексты и SEO — страницы', (int) $parent->id === $catid && (int) $parent->landing_id === $brand && $parent->title === 'QA brand');
 
+    // Вывод страницы: сортировка, вид и режим страницы идут в общие настройки отображения; пустые значения не передаются.
+    $shown = $insert(['title' => 'QA display', 'alias' => 'qa-display', 'catid' => $catid, 'source' => 'filter', 'conditions' => '', 'sort' => 'price_desc', 'product_view' => 'list', 'params' => json_encode(['listing_mode' => 'products'])]);
+    $displayParams = $landingModel($shown, 'groups_products')->getParent()->params;
+    $plainParams = $landingModel($plain, 'groups_products')->getParent()->params;
+    $check('страница передаёт свои сортировку, вид и режим вывода в настройки отображения', $displayParams->get('list_ordering') === 'price_desc'
+        && $displayParams->get('category_default_view') === 'list' && $displayParams->get('category_listing_mode') === 'products');
+    $check('пустые настройки вывода страницы не переопределяют настройки магазина', $plainParams->get('list_ordering') === null && $plainParams->get('category_listing_mode') === null);
+
     // Доступ.
     foreach ([['снятая с публикации', $draft], ['с закрытым уровнем доступа', $restricted], ['несуществующая', 99999]] as [$label, $pageId]) {
         try {

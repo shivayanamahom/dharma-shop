@@ -17,6 +17,11 @@
             <option value="new">COM_DHARMASHOP_CAT_ORDERING_NEW</option>
             <option value="title">COM_DHARMASHOP_CAT_ORDERING_TITLE</option>
         </field>
+        <field name="listing_mode" type="list" label="COM_DHARMASHOP_LANDING_LISTING_MODE" description="COM_DHARMASHOP_LANDING_LISTING_MODE_DESC" default="" validate="options">
+            <option value="">COM_DHARMASHOP_LANDING_DEFAULT</option>
+            <option value="products">COM_DHARMASHOP_CATEGORY_LISTING_PRODUCTS</option>
+            <option value="groups_products">COM_DHARMASHOP_CATEGORY_LISTING_GROUPS_PRODUCTS</option>
+        </field>
         <field name="product_view" type="list" label="COM_DHARMASHOP_LANDING_VIEW" default="" validate="options">
             <option value="">COM_DHARMASHOP_LANDING_DEFAULT</option>
             <option value="grid">COM_DHARMASHOP_DISPLAY_VIEW_GRID</option>

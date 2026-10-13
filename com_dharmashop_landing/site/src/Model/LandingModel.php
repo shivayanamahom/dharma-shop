@@ -92,10 +92,15 @@ class LandingModel extends CategoryModel
         }
 
         $page = $this->getPage();
-        $params = new Registry([
+        $own = new Registry((string) $page->params);
+        // Вывод страницы: сортировка, вид и режим (товары / группы и товары) — как у категории, через общие настройки отображения;
+        // пустое значение — наследуется от настроек магазина, пункт меню переопределяет страницу.
+        $params = new Registry(array_filter([
             'introtext' => (string) $page->introtext, 'image' => (string) $page->image, 'image_alt' => (string) $page->image_alt,
             'meta_title' => (string) $page->meta_title,
-        ]);
+            'list_ordering' => (string) $page->sort, 'category_default_view' => (string) $page->product_view,
+            'category_listing_mode' => (string) $own->get('listing_mode', ''),
+        ], static fn (string $value): bool => $value !== ''));
         $metadata = new Registry(['robots' => (string) $page->robots]);
 
         return $this->virtual = (object) [
@@ -122,14 +127,6 @@ class LandingModel extends CategoryModel
     public function getItems(): array
     {
         return [];
-    }
-
-    /** Сортировка и вид по умолчанию страницы (если задана): подмешивается в настройки отображения. */
-    public function defaults(): array
-    {
-        $page = $this->getPage();
-
-        return array_filter(['list_ordering' => (string) $page->sort, 'category_default_view' => (string) $page->product_view], static fn (string $value): bool => $value !== '');
     }
 
     /**

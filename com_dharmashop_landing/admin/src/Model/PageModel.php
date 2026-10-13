@@ -63,6 +63,7 @@ class PageModel extends AdminModel
             return $item;
         }
 
+        $item->listing_mode = (string) (new \Joomla\Registry\Registry((string) ($item->params ?? '')))->get('listing_mode', '');
         $this->conditionsToForm($item, (array) (json_decode((string) ($item->conditions ?? ''), true) ?: []));
         $item->products = [];
 
@@ -168,7 +169,7 @@ class PageModel extends AdminModel
     {
         $data = array_intersect_key((array) $data, array_flip([
             'id', 'title', 'alias', 'catid', 'source', 'sort', 'product_view', 'cond_brands', 'cond_badges', 'cond_values', 'cond_ranges', 'cond_price_min',
-            'cond_price_max', 'cond_stock', 'cond_sale', 'products', 'image', 'image_alt', 'introtext',
+            'cond_price_max', 'cond_stock', 'cond_sale', 'listing_mode', 'products', 'image', 'image_alt', 'introtext',
             'fulltext', 'meta_title', 'meta_description', 'robots', 'state', 'access', 'ordering',
         ]));
 
@@ -180,6 +181,9 @@ class PageModel extends AdminModel
         $products = (array) ($data['products'] ?? []);
         unset($data['cond_brands'], $data['cond_badges'], $data['cond_values'], $data['cond_ranges'], $data['cond_price_min'], $data['cond_price_max'], $data['cond_stock'], $data['cond_sale'], $data['products']);
 
+        $mode = (string) ($data['listing_mode'] ?? '');
+        unset($data['listing_mode']);
+        $data['params'] = json_encode(in_array($mode, ['products', 'groups_products'], true) ? ['listing_mode' => $mode] : new \stdClass());
         $data['image'] = explode('#', (string) ($data['image'] ?? ''), 2)[0];
         $data['catid'] = max(0, (int) ($data['catid'] ?? 0));
         $data['conditions'] = '';
