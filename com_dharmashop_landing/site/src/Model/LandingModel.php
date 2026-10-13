@@ -146,6 +146,15 @@ class LandingModel extends CategoryModel
         return $this->landingState = $service->state(self::merge($base, $this->visitorInput()), $this->getFilterDefinition());
     }
 
+    /** Только сохранённые условия страницы: эти поля в форме фильтра не показываются (посетитель их не меняет). */
+    public function getFixedFilterState(): FilterState
+    {
+        $page = $this->getPage();
+        $base = (string) $page->source === 'manual' ? [] : (array) (json_decode((string) $page->conditions, true) ?: []);
+
+        return (new FilterService($this->getDatabase()))->state($base, $this->getFilterDefinition());
+    }
+
     /** Только выбор посетителя (без сохранённых условий страницы): адреса форм и страниц, `noindex`, канонический адрес. */
     public function getVisitorFilterState(): FilterState
     {

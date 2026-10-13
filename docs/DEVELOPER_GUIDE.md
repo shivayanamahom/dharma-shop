@@ -104,7 +104,7 @@ Iframe появляется лениво при показе модалки, п�
 
 Админка `com_dharmashop_landing` (`admin/src`): `PageTable` (без assets, `state` как `published`, уникальный алиас), `PageModel` (условия из полей формы ↔ канонический массив по алиасам, ручной список, `conditions_hash`), `PagesModel`, поля `Fieldvalues`/`Rangefields` (копия полей модуля «Товары»), контроллеры `Display/Page/Pages`, формы `forms/page.xml`, `filter_pages.xml`. Права — `access.xml` самого компонента. Записи бокового меню Dharma Shop, зависящие от расширения, добавляются в `GROUPS` плагина `plg_system_dharmashopmenu` третьим элементом (имя компонента).
 
-Сайт `com_dharmashop_landing/site`: `LandingModel` (страница как виртуальная категория), `LandingsModel` + `View\Landings` + `tmpl/landings` (список страниц, меню `default.xml`), `Router` с видами `landings` → `landing` (адрес `<пункт>/<алиас>`). Контексты изображений `landing.header` и `landing.card` — в `Administrator\Image\ImageContexts` ядра.
+Сайт `com_dharmashop_landing/site`: `LandingModel` (страница как виртуальная категория), `LandingsModel` + `View\Landings` + `tmpl/landings` (список страниц, меню `default.xml`), `Router` с видами `landings` → `landing` (адрес `<пункт>/<алиас>`). Фильтр на странице: `FilterHelper` (модуль) выбирает `LandingModel` по `option=com_dharmashop_landing`, скрывает разделы по `LandingModel::getFixedFilterState()`; обновление каскада — `Controller\FilterController` (наследник `Site\Controller\FilterController` ядра с `listingViews()`), AJAX-список — `View\Landing\RawView`. Контексты изображений `landing.header` и `landing.card` — в `Administrator\Image\ImageContexts` ядра.
 
 ## Сборка и завершение
 

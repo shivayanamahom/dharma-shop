@@ -149,6 +149,14 @@ try {
     $check('адреса и noindex строятся по выбору посетителя без сохранённых условий', $visitor->getVisitorFilterState()->activeCount() === 1 && $visitor->getFilterState()->activeCount() === 2);
     $app->getInput()->set('filter', []);
 
+    // Фиксированные условия страницы (для формы фильтра на странице): только сохранённые, без выбора посетителя.
+    $app->getInput()->set('filter', ['f' => ['fdemo-memory' => ['128-gb']]]);
+    $fixedModel = $landingModel($brand, 'products');
+    $check('условия страницы отдельно от выбора посетителя: фиксированных 1 (бренд), выбранных посетителем 1, вместе 2',
+        $fixedModel->getFixedFilterState()->activeCount() === 1 && $fixedModel->getFixedFilterState()->brands !== [] && $fixedModel->getVisitorFilterState()->activeCount() === 1 && $fixedModel->getFilterState()->activeCount() === 2);
+    $app->getInput()->set('filter', []);
+    $check('у страницы без условий фиксированных условий нет', $landingModel($plain, 'products')->getFixedFilterState()->isEmpty());
+
     // Виртуальная категория.
     $parent = $landingModel($brand, 'products')->getParent();
     $check('виртуальная категория: область запроса — категория-источник, тексты и SEO — страницы', (int) $parent->id === $catid && (int) $parent->landing_id === $brand && $parent->title === 'QA brand');

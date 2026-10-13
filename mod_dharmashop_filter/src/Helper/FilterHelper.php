@@ -45,12 +45,19 @@ final class FilterHelper
         $input = $this->app->getInput();
         $settings = ComponentHelper::getParams('com_dharmashop');
 
-        if ($input->getCmd('option') !== 'com_dharmashop' || !isset(self::MODELS[$input->getCmd('view')]) || (int) $settings->get('filter_enabled', 1) !== 1) {
+        // Посадочная страница (com_dharmashop_landing): модель страницы наследует модель категории; сохранённые условия страницы
+        // в форме не показываются, выбор посетителя дополняет их.
+        $landing = $input->getCmd('option') === 'com_dharmashop_landing' && $input->getCmd('view') === 'landing' && is_dir(JPATH_SITE . '/components/com_dharmashop');
+
+        if (!$landing && ($input->getCmd('option') !== 'com_dharmashop' || !isset(self::MODELS[$input->getCmd('view')])) || (int) $settings->get('filter_enabled', 1) !== 1) {
             return null;
         }
 
         /** @var CategoryModel $model */
-        $model = $this->app->bootComponent('com_dharmashop')->getMVCFactory()->createModel(self::MODELS[$input->getCmd('view')], 'Site', ['ignore_request' => true]);
+        $model = $landing
+            ? $this->app->bootComponent('com_dharmashop_landing')->getMVCFactory()->createModel('Landing', 'Site', ['ignore_request' => true])
+            : $this->app->bootComponent('com_dharmashop')->getMVCFactory()->createModel(self::MODELS[$input->getCmd('view')], 'Site', ['ignore_request' => true]);
+        $fixed = $landing ? $model->getFixedFilterState() : null;
 
         // Страница категории: текущая, весь каталог или выбранная в настройках модуля.
         $mode = (string) $this->params->get('category_mode', 'current');
@@ -66,7 +73,7 @@ final class FilterHelper
         $initiator = \Dharma\Component\DharmaShop\Site\Support\FilterRequest::params();
         $model->setFilterModule(count($initiator->toArray()) ? $initiator : $this->params);
         $definition = $model->getFilterDefinition();
-        $state = $model->getFilterState();
+        $state = $landing ? $model->getVisitorFilterState() : $model->getFilterState();
         $counts = (string) $this->params->get('counts', 'inherit');
         $counts = in_array($counts, ['off', 'base', 'live'], true) ? $counts : (string) $settings->get('filter_counts', 'base');
         $counts = in_array($counts, ['off', 'base', 'live'], true) ? $counts : 'base';
@@ -79,7 +86,7 @@ final class FilterHelper
         $catid = (int) $model->getParent()->id;
         $services = $this->app->bootComponent('com_dharmashop')->getServices();
         [$action, $hidden] = $this->target($input);
-        $sections = $this->sections($definition, $state, $facets, $counts, $catid, $services, $action, $hidden);
+        $sections = $this->sections($definition, $state, $facets, $counts, $catid, $services, $action, $hidden, $fixed);
         $total = $model->getTotal();
 
         return [
@@ -106,7 +113,7 @@ final class FilterHelper
      *
      * @return  array<int, array<string, mixed>>
      */
-    private function sections(FilterDefinition $definition, FilterState $state, array $facets, string $counts, int $catid, object $services, string $action, array $hidden): array
+    private function sections(FilterDefinition $definition, FilterState $state, array $facets, string $counts, int $catid, object $services, string $action, array $hidden, ?FilterState $fixed = null): array
     {
         $config = [];
 
@@ -146,6 +153,10 @@ final class FilterHelper
             $control = (string) ($row['control'] ?? 'auto');
             $expanded = (int) ($row['expanded'] ?? ($definition->fieldByAlias($key)?->settings['expanded'] ?? 1)) === 1;
             $section = null;
+
+            if ($fixed !== null && $this->isFixed($fixed, $key, $definition)) {
+                continue;
+            }
 
             if ($key === '@price') {
                 $section = $this->price($state, $definition, $facets['price'] ?? null, $action, $hidden);
@@ -303,6 +314,20 @@ final class FilterHelper
         }
 
         return $options;
+    }
+
+    /** Раздел задан сохранёнными условиями посадочной страницы: посетителю его не показываем. */
+    private function isFixed(FilterState $fixed, string $key, FilterDefinition $definition): bool
+    {
+        return match ($key) {
+            '@price' => $fixed->price !== null,
+            '@stock' => $fixed->inStock,
+            '@sale' => $fixed->onSale,
+            '@brand' => (bool) $fixed->brands,
+            '@badge' => (bool) $fixed->badges,
+            '@cat' => (bool) $fixed->categories,
+            default => ($field = $definition->fieldByAlias($key)) !== null && (isset($fixed->options[$field->id]) || isset($fixed->ranges[$field->id])),
+        };
     }
 
     /** Сколько значений показывать сразу (0 — все); остальные — за «Ещё». */

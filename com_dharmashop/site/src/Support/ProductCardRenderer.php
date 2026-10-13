@@ -86,7 +86,8 @@ final class ProductCardRenderer
         }
         $catalog = (int) $this->params->get('catalog_mode', 0) === 1;
         $cartMode = $this->cartMode();
-        if ($loadAssets && !$catalog) {
+        // AJAX-фрагмент списка (`format=raw`) отдаёт только разметку: скрипты и опции страницы в нём не нужны (страница их уже подключила).
+        if ($loadAssets && !$catalog && Factory::getApplication()->getDocument() instanceof HtmlDocument) {
             CartAssets::use(Factory::getApplication()->getDocument());
             if ($cartMode === 'qty') { $wa->useScript('com_dharmashop.qty'); }
         }
