@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 namespace Dharma\Plugin\System\DharmaShopMenu\Extension;
 
+use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Event\Menu\PreprocessMenuItemsEvent;
 use Joomla\CMS\Menu\AdministratorMenuItem;
 use Joomla\CMS\Plugin\CMSPlugin;
@@ -21,7 +22,7 @@ final class DharmaShopMenu extends CMSPlugin implements SubscriberInterface
 
     private const ELEMENT = 'com_dharmashop';
 
-    /** Группы пунктов: [заголовок, ссылка]; между группами — разделитель. */
+    /** Группы пунктов: [заголовок, ссылка, необязательно — расширение, без которого пункта нет]; между группами — разделитель. */
     private const GROUPS = [
         [
             ['COM_DHARMASHOP_MENU_ORDERS', 'index.php?option=com_dharmashop&view=orders'],
@@ -35,6 +36,9 @@ final class DharmaShopMenu extends CMSPlugin implements SubscriberInterface
             ['COM_DHARMASHOP_MENU_CATEGORIES', 'index.php?option=com_dharmashop&view=categories&extension=com_dharmashop'],
             ['COM_DHARMASHOP_MENU_BRANDS', 'index.php?option=com_dharmashop&view=categories&extension=com_dharmashop.brand'],
             ['COM_DHARMASHOP_MENU_BADGES', 'index.php?option=com_dharmashop&view=categories&extension=com_dharmashop.badge'],
+        ],
+        [
+            ['COM_DHARMASHOP_LANDING_MENU', 'index.php?option=com_dharmashop_landing&view=pages', 'com_dharmashop_landing'],
         ],
         [
             ['COM_DHARMASHOP_MENU_FIELDS', 'index.php?option=com_dharmashop&view=fields'],
@@ -96,13 +100,27 @@ final class DharmaShopMenu extends CMSPlugin implements SubscriberInterface
             'element' => self::ELEMENT, 'scope' => 'default',
         ]);
 
-        foreach (self::GROUPS as $number => $group) {
-            if ($number > 0) {
+        $language = $this->getApplication()->getLanguage();
+        $number = 0;
+
+        foreach (self::GROUPS as $group) {
+            // Пункт с третьим элементом показывается, только если это расширение установлено и включено.
+            $group = array_values(array_filter($group, static fn (array $item): bool => !isset($item[2]) || ComponentHelper::isEnabled($item[2])));
+
+            if (!$group) {
+                continue;
+            }
+
+            if ($number++ > 0) {
                 $root->addChild(new AdministratorMenuItem(['title' => '', 'type' => 'separator', 'link' => '', 'scope' => 'default']));
             }
 
-            foreach ($group as [$title, $link]) {
-                $root->addChild(new AdministratorMenuItem(['title' => $title, 'type' => 'component', 'link' => $link, 'scope' => 'default']));
+            foreach ($group as $item) {
+                if (isset($item[2])) {
+                    $language->load($item[2] . '.sys', JPATH_ADMINISTRATOR);
+                }
+
+                $root->addChild(new AdministratorMenuItem(['title' => $item[0], 'type' => 'component', 'link' => $item[1], 'scope' => 'default']));
             }
         }
 

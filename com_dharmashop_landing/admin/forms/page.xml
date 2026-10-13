@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form addfieldprefix="Dharma\Component\DharmaShop\Administrator\Field">
+    <fieldset name="details">
+        <field name="id" type="hidden" filter="integer" />
+        <field name="title" type="text" label="JGLOBAL_TITLE" required="true" maxlength="255" filter="string" class="input-large-text" />
+        <field name="alias" type="text" label="JFIELD_ALIAS_LABEL" description="COM_DHARMASHOP_LANDING_ALIAS_DESC" maxlength="190" filter="string" />
+        <field name="catid" type="categoryedit" label="COM_DHARMASHOP_LANDING_CATID" description="COM_DHARMASHOP_LANDING_CATID_DESC" extension="com_dharmashop" show_root="true" addfieldprefix="Joomla\Component\Categories\Administrator\Field" default="0" filter="integer" />
+        <field name="source" type="list" label="COM_DHARMASHOP_LANDING_SOURCE" description="COM_DHARMASHOP_LANDING_SOURCE_DESC" default="filter" validate="options">
+            <option value="filter">COM_DHARMASHOP_LANDING_SOURCE_FILTER</option>
+            <option value="manual">COM_DHARMASHOP_LANDING_SOURCE_MANUAL</option>
+        </field>
+        <field name="sort" type="list" label="COM_DHARMASHOP_LANDING_SORT" default="" validate="options">
+            <option value="">COM_DHARMASHOP_LANDING_DEFAULT</option>
+            <option value="order">COM_DHARMASHOP_CAT_ORDERING_ORDER</option>
+            <option value="price_asc">COM_DHARMASHOP_CAT_ORDERING_PRICE_ASC</option>
+            <option value="price_desc">COM_DHARMASHOP_CAT_ORDERING_PRICE_DESC</option>
+            <option value="new">COM_DHARMASHOP_CAT_ORDERING_NEW</option>
+            <option value="title">COM_DHARMASHOP_CAT_ORDERING_TITLE</option>
+        </field>
+        <field name="product_view" type="list" label="COM_DHARMASHOP_LANDING_VIEW" default="" validate="options">
+            <option value="">COM_DHARMASHOP_LANDING_DEFAULT</option>
+            <option value="grid">COM_DHARMASHOP_DISPLAY_VIEW_GRID</option>
+            <option value="list">COM_DHARMASHOP_DISPLAY_VIEW_LIST</option>
+            <option value="table">COM_DHARMASHOP_DISPLAY_VIEW_TABLE</option>
+        </field>
+    </fieldset>
+    <fieldset name="conditions" addfieldprefix="Dharma\Component\DharmaShopLanding\Administrator\Field">
+        <field name="cond_brands" type="category" extension="com_dharmashop.brand" multiple="true" layout="joomla.form.field.list-fancy-select" filter="intarray" label="COM_DHARMASHOP_LANDING_COND_BRANDS" showon="source:filter" />
+        <field name="cond_badges" type="category" extension="com_dharmashop.badge" multiple="true" layout="joomla.form.field.list-fancy-select" filter="intarray" label="COM_DHARMASHOP_LANDING_COND_BADGES" showon="source:filter" />
+        <field name="cond_values" type="fieldvalues" multiple="true" layout="joomla.form.field.list-fancy-select" filter="raw" label="COM_DHARMASHOP_LANDING_COND_VALUES" description="COM_DHARMASHOP_LANDING_COND_VALUES_DESC" showon="source:filter" />
+        <field name="cond_ranges" type="subform" multiple="true" min="0" max="12" buttons="add,remove,move" layout="joomla.form.field.subform.repeatable-table" label="COM_DHARMASHOP_LANDING_COND_RANGES" description="COM_DHARMASHOP_LANDING_COND_RANGES_DESC" showon="source:filter">
+            <form>
+                <field name="field" type="rangefields" filter="string" required="true" label="COM_DHARMASHOP_LANDING_COND_FIELD" />
+                <field name="min" type="text" inputmode="decimal" filter="string" label="COM_DHARMASHOP_LANDING_COND_MIN" />
+                <field name="max" type="text" inputmode="decimal" filter="string" label="COM_DHARMASHOP_LANDING_COND_MAX" />
+            </form>
+        </field>
+        <field name="cond_price_min" type="text" inputmode="decimal" filter="string" label="COM_DHARMASHOP_LANDING_COND_PRICE_MIN" showon="source:filter" />
+        <field name="cond_price_max" type="text" inputmode="decimal" filter="string" label="COM_DHARMASHOP_LANDING_COND_PRICE_MAX" showon="source:filter" />
+        <field name="cond_stock" type="radio" default="0" filter="integer" layout="joomla.form.field.radio.switcher" label="COM_DHARMASHOP_LANDING_COND_STOCK" showon="source:filter"><option value="0">JNO</option><option value="1">JYES</option></field>
+        <field name="cond_sale" type="radio" default="0" filter="integer" layout="joomla.form.field.radio.switcher" label="COM_DHARMASHOP_LANDING_COND_SALE" showon="source:filter"><option value="0">JNO</option><option value="1">JYES</option></field>
+    </fieldset>
+    <fieldset name="products">
+        <field name="products" type="subform" label="COM_DHARMASHOP_LANDING_PRODUCTS" description="COM_DHARMASHOP_LANDING_PRODUCTS_DESC" multiple="true" max="500" layout="joomla.form.field.subform.repeatable-table" showon="source:manual" filter="array">
+            <form>
+                <field name="product_id" type="modal_product" label="COM_DHARMASHOP_SELECT_A_PRODUCT" required="true" filter="integer" select="true" clear="true" unique="true" />
+            </form>
+        </field>
+    </fieldset>
+    <fieldset name="description">
+        <field name="image" type="media" label="COM_DHARMASHOP_LANDING_IMAGE" preview="true" types="images" filter="string" />
+        <field name="image_alt" type="text" label="COM_DHARMASHOP_LANDING_IMAGE_ALT" maxlength="255" filter="string" />
+        <field name="introtext" type="editor" label="COM_DHARMASHOP_LANDING_INTROTEXT" description="COM_DHARMASHOP_LANDING_INTROTEXT_DESC" buttons="true" filter="\Joomla\CMS\Component\ComponentHelper::filterText" />
+        <field name="fulltext" type="editor" label="COM_DHARMASHOP_LANDING_FULLTEXT" description="COM_DHARMASHOP_LANDING_FULLTEXT_DESC" buttons="true" filter="\Joomla\CMS\Component\ComponentHelper::filterText" />
+    </fieldset>
+    <fieldset name="seo">
+        <field name="meta_title" type="text" label="COM_DHARMASHOP_LANDING_META_TITLE" maxlength="255" filter="string" />
+        <field name="meta_description" type="textarea" label="COM_DHARMASHOP_LANDING_META_DESCRIPTION" rows="3" maxlength="500" filter="string" />
+        <field name="robots" type="list" label="COM_DHARMASHOP_SEO_ROBOTS_LABEL" default="" validate="options">
+            <option value="">COM_DHARMASHOP_SEO_ROBOTS_DEFAULT</option>
+            <option value="index, follow">index, follow</option>
+            <option value="noindex, follow">noindex, follow</option>
+            <option value="index, nofollow">index, nofollow</option>
+            <option value="noindex, nofollow">noindex, nofollow</option>
+        </field>
+    </fieldset>
+    <fieldset name="publishing">
+        <field name="state" type="list" label="JSTATUS" default="1" filter="integer" validate="options">
+            <option value="1">JPUBLISHED</option>
+            <option value="0">JUNPUBLISHED</option>
+        </field>
+        <field name="access" type="accesslevel" label="JFIELD_ACCESS_LABEL" default="1" filter="uint" />
+        <field name="ordering" type="number" label="JFIELD_ORDERING_LABEL" default="0" min="0" filter="integer" />
+    </fieldset>
+</form>

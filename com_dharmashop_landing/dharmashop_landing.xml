@@ -31,12 +31,15 @@
 	</languages>
 
 	<administration>
+		<menu link="option=com_dharmashop_landing&amp;view=pages">COM_DHARMASHOP_LANDING_MENU</menu>
 		<files folder="admin">
 			<filename>access.xml</filename>
+			<folder>forms</folder>
 			<folder>language</folder>
 			<folder>services</folder>
 			<folder>sql</folder>
 			<folder>src</folder>
+			<folder>tmpl</folder>
 		</files>
 		<languages folder="admin">
 			<language tag="en-GB">language/en-GB/com_dharmashop_landing.ini</language>
