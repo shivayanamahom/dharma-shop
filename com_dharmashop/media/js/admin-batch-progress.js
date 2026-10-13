@@ -292,8 +292,12 @@
         update(panel, payload.title, Number(payload.total), Number(payload.total), unit, true, line(payload.summary, false));
         setStatus(panel, 'review');
         panel.querySelector('[data-progress-help]').textContent = payload.errors
-          ? text('COM_DHARMASHOP_IMPORT_REVIEW_ERRORS', 'Есть строки с ошибками: исправьте файл или разрешите пропуск ошибочных строк в профиле.')
+          ? (payload.canApply
+            ? text('COM_DHARMASHOP_IMPORT_REVIEW_SKIP', 'Строки с ошибками (%d) будут пропущены, остальные записаны.').replace('%d', String(payload.errors))
+            : text('COM_DHARMASHOP_IMPORT_REVIEW_ERRORS', 'Есть строки с ошибками: исправьте файл или разрешите пропуск ошибочных строк в профиле.'))
           : text('COM_DHARMASHOP_IMPORT_REVIEW_HELP', 'Проверьте сводку: каталог пока не изменён.');
+        const toReview = progressModal()?.querySelector('[data-progress-reload]');
+        if (toReview) toReview.hidden = true; // решение принимается здесь, перезагрузка страницы не нужна
         const apply = payload.canApply ? addButton(box, text('COM_DHARMASHOP_IMPORT_APPLY', 'Применить'), 'btn btn-success') : null;
         if (payload.errorsUrl) addLink(box, text('COM_DHARMASHOP_IMPORT_ERRORS_CSV', 'Скачать ошибки (CSV)'), payload.errorsUrl, 'btn btn-outline-danger');
         addLink(box, text('COM_DHARMASHOP_IMPORT_RESULT', 'Отчёт'), payload.url, 'btn btn-outline-secondary');
