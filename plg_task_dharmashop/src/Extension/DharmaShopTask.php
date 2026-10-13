@@ -42,6 +42,10 @@ final class DharmaShopTask extends CMSPlugin implements SubscriberInterface
             'langConstPrefix' => 'PLG_TASK_DHARMASHOP_SALES',
             'method' => 'runSales',
         ],
+        'plg_task_dharmashop_landing' => [
+            'langConstPrefix' => 'PLG_TASK_DHARMASHOP_LANDING',
+            'method' => 'checkLandings',
+        ],
         'plg_task_dharmashop_facets' => [
             'langConstPrefix' => 'PLG_TASK_DHARMASHOP_FACETS',
             'method' => 'verifyFacets',
@@ -63,6 +67,22 @@ final class DharmaShopTask extends CMSPlugin implements SubscriberInterface
         $this->logTask('Dharma Shop: пересчёт скидок по датам');
         $count = Factory::getApplication()->bootComponent('com_dharmashop')->getServices()->sales()->run();
         $this->logTask('Dharma Shop: обработано товаров ' . $count);
+
+        return TaskStatus::OK;
+    }
+
+    protected function checkLandings(ExecuteTaskEvent $event): int
+    {
+        $checker = '\\Dharma\\Component\\DharmaShopLanding\\Administrator\\Maintenance\\LandingChecker';
+
+        if (!class_exists($checker)) {
+            $this->logTask('Dharma Shop: компонент посадочных страниц не установлен');
+
+            return TaskStatus::OK;
+        }
+
+        $result = (new $checker(Factory::getContainer()->get(DatabaseInterface::class)))->run();
+        $this->logTask('Dharma Shop: проверено посадочных страниц ' . $result['checked'] . ', с устаревшими условиями ' . $result['broken'] . ' (новых ' . count($result['newly_broken']) . ', восстановлено ' . count($result['recovered']) . ')');
 
         return TaskStatus::OK;
     }

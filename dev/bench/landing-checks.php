@@ -172,6 +172,37 @@ try {
     $check('снятая с публикации страница не находится', $lookup::urlFor($bench, $catid, ['brand' => ['apple']], $levels) === null);
     $bench->setQuery("UPDATE #__dharmashop_landing_pages SET state = 1 WHERE id = $brand")->execute();
 
+    // Сопровождение: пометка `broken`, 404 и исключение из списка и редиректа.
+    $badBrand = $insert(['title' => 'QA broken brand', 'alias' => 'qa-broken-brand', 'catid' => $catid, 'source' => 'filter', 'conditions' => json_encode(['brand' => ['no-such-brand']])]);
+    $emptyManual = $insert(['title' => 'QA broken manual', 'alias' => 'qa-broken-manual', 'catid' => 0, 'source' => 'manual', 'conditions' => '']);
+    $checker = new \Dharma\Component\DharmaShopLanding\Administrator\Maintenance\LandingChecker($bench);
+    $result = $checker->run();
+    $flag = static fn (int $id): int => (int) $bench->setQuery("SELECT broken FROM #__dharmashop_landing_pages WHERE id = $id")->loadResult();
+    $check('проверка: страницы с неизвестным брендом и пустым ручным списком помечены', $flag($badBrand) === 1 && $flag($emptyManual) === 1);
+    $check('проверка: исправные страницы не помечены', $flag($brand) === 0 && $flag($color) === 0 && $flag($plain) === 0 && $flag($manual) === 0);
+    $check('проверка: счётчики и список новых', $result['broken'] >= 2 && in_array($badBrand, $result['newly_broken'], true));
+    $check('повторная проверка ничего не меняет', $checker->run()['newly_broken'] === []);
+    foreach ([['страница с устаревшим условием', $badBrand], ['страница с пустым ручным списком', $emptyManual]] as [$label, $pageId]) {
+        try {
+            $landingModel($pageId, 'products')->getParent();
+            $check("$label даёт 404", false);
+        } catch (RuntimeException $error) {
+            $check("$label даёт 404", (int) $error->getCode() === 404);
+        }
+    }
+    // Условия не совпадают с каталогом, хотя флаг ещё не выставлен: сайт всё равно не показывает всю категорию.
+    $bench->setQuery("UPDATE #__dharmashop_landing_pages SET broken = 0 WHERE id = $badBrand")->execute();
+    try {
+        $landingModel($badBrand, 'products')->getTotal();
+        $check('устаревшие условия без флага: 404 при показе', false);
+    } catch (RuntimeException $error) {
+        $check('устаревшие условия без флага: 404 при показе', (int) $error->getCode() === 404);
+    }
+    $bench->setQuery("INSERT INTO #__dharmashop_landing_products (landing_id, product_id, ordering) VALUES ($emptyManual, 296, 0)")->execute();
+    $checker->run($emptyManual);
+    $check('после добавления товара страница снова исправна', $flag($emptyManual) === 0);
+    $bench->setQuery("DELETE FROM #__dharmashop_landing_pages WHERE id IN ($badBrand, $emptyManual)")->execute();
+
     // Виртуальная категория.
     $parent = $landingModel($brand, 'products')->getParent();
     $check('виртуальная категория: область запроса — категория-источник, тексты и SEO — страницы', (int) $parent->id === $catid && (int) $parent->landing_id === $brand && $parent->title === 'QA brand');

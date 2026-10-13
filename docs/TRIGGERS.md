@@ -35,6 +35,9 @@
 
 | Событие | Статус | Примечание |
 |---|---|---|
+| `onDharmaShopLandingAfterSave` | **есть (C85, L6)** | Группа `dharmashop`; после сохранения посадочной страницы: `id`, `is_new`, `source` (`filter` или `manual`). Для карты сайта, внешних кэшей и т. п. |
+| `onDharmaShopLandingAfterDelete` | **есть (C85, L6)** | После удаления страниц: `ids` (массив). |
+| `onDharmaShopLandingChecked` | **есть (C85, L6)** | После проверки страниц (кнопка или задача планировщика), только если что-то изменилось: `newly_broken`, `recovered` (массивы номеров). |
 | `onDharmaShopMetadataReady` | **есть (C28/C29)** | Группа `dharmashop`; Joomla Event с `page` (readonly `Site\Seo\PageMetadata`), `document` (`HtmlDocument`), `settings` (`Registry` настроек магазина), `content` (readonly `Site\Seo\CollectionMetadata`, `Site\Seo\ProductMetadata` или `null`). После базовых тегов, до рендера HTML; только сайт. Социальный плагин использует `page`, Schema.org — `page` и готовый `content`; сами плагины не запрашивают каталог. |
 | `onDharmaShopCategoryBeforeTitle` | **есть (C31)** | До заголовка видов `categories`, `category`, `brands`, `brand`, `badges`, `badge`; различайте их по `view`. |
 | `onDharmaShopCategoryAfterTitle` | **есть (C31)** | После заголовка этих шести видов. |

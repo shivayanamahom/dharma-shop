@@ -26,7 +26,7 @@ class LandingsModel extends BaseDatabaseModel
         $db = $this->getDatabase();
         $levels = array_map('intval', $this->getCurrentUser()->getAuthorisedViewLevels()) ?: [0];
         // Страница, чья категория-источник закрыта, в список не попадает (как на её собственном адресе — 404).
-        $where = 'a.state = 1 AND a.access IN (' . implode(',', $levels) . ') AND (a.catid < 2 OR EXISTS (SELECT 1 FROM ' . $db->quoteName('#__categories', 'c')
+        $where = 'a.state = 1 AND a.broken = 0 AND a.access IN (' . implode(',', $levels) . ') AND (a.catid < 2 OR EXISTS (SELECT 1 FROM ' . $db->quoteName('#__categories', 'c')
             . ' WHERE c.id = a.catid AND c.published = 1 AND c.access IN (' . implode(',', $levels) . ')))';
         $order = $ordering === 'title' ? 'a.title ASC' : 'a.ordering ASC, a.id ASC';
         $total = (int) $db->setQuery('SELECT COUNT(*) FROM ' . $db->quoteName('#__dharmashop_landing_pages', 'a') . ' WHERE ' . $where)->loadResult();

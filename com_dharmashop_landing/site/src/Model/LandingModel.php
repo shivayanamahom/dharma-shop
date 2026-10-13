@@ -64,7 +64,7 @@ class LandingModel extends CategoryModel
             $db->createQuery()->select('*')->from($db->quoteName('#__dharmashop_landing_pages'))->where($db->quoteName('id') . ' = :id')->bind(':id', $id, ParameterType::INTEGER)
         )->loadObject() : null;
 
-        if (!$page || (int) $page->state !== 1 || !in_array((int) $page->access, $this->getCurrentUser()->getAuthorisedViewLevels(), true)) {
+        if (!$page || (int) $page->state !== 1 || (int) $page->broken === 1 || !in_array((int) $page->access, $this->getCurrentUser()->getAuthorisedViewLevels(), true)) {
             throw new \RuntimeException(Text::_('COM_DHARMASHOP_LANDING_NOT_FOUND'), 404);
         }
 
@@ -142,6 +142,11 @@ class LandingModel extends CategoryModel
         $page = $this->getPage();
         $base = (string) $page->source === 'manual' ? [] : (array) (json_decode((string) $page->conditions, true) ?: []);
         $service = new FilterService($this->getDatabase());
+
+        // Бренд, бейдж, поле или значение из условий удалены или сняты: без них страница показала бы всю категорию — вместо этого 404.
+        if ($base && \Dharma\Component\DharmaShopLanding\Administrator\Maintenance\LandingChecker::conditionsChanged($service, (int) $page->catid, $base)) {
+            throw new \RuntimeException(Text::_('COM_DHARMASHOP_LANDING_NOT_FOUND'), 404);
+        }
 
         return $this->landingState = $service->state(self::merge($base, $this->visitorInput()), $this->getFilterDefinition());
     }

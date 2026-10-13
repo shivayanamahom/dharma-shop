@@ -16,6 +16,8 @@ use Dharma\Component\DharmaShop\Administrator\Filter\FilterService;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Form\Form;
 use Joomla\CMS\Language\Text;
+use Joomla\CMS\Plugin\PluginHelper;
+use Joomla\Event\Event;
 use Joomla\CMS\MVC\Model\AdminModel;
 use Joomla\CMS\Table\Table;
 
@@ -188,6 +190,7 @@ class PageModel extends AdminModel
         $data['catid'] = (int) ($data['catid'] ?? 0) > 1 ? (int) $data['catid'] : 0;
         $data['conditions'] = '';
         $data['conditions_hash'] = '';
+        $data['broken'] = 0;
 
         if (($data['source'] ?? 'filter') === 'filter') {
             if ($raw) {
@@ -245,6 +248,9 @@ class PageModel extends AdminModel
             $db->insertObject('#__dharmashop_landing_products', $row);
         }
 
+        PluginHelper::importPlugin('dharmashop');
+        Factory::getApplication()->getDispatcher()->dispatch('onDharmaShopLandingAfterSave', new Event('onDharmaShopLandingAfterSave', ['id' => $id, 'is_new' => empty($data['id']), 'source' => (string) ($data['source'] ?? 'filter')]));
+
         return true;
     }
 
@@ -256,6 +262,8 @@ class PageModel extends AdminModel
         if ($result && $ids) {
             $db = $this->getDatabase();
             $db->setQuery('DELETE FROM ' . $db->quoteName('#__dharmashop_landing_products') . ' WHERE landing_id IN (' . implode(',', $ids) . ')')->execute();
+            PluginHelper::importPlugin('dharmashop');
+            Factory::getApplication()->getDispatcher()->dispatch('onDharmaShopLandingAfterDelete', new Event('onDharmaShopLandingAfterDelete', ['ids' => $ids]));
         }
 
         return $result;

@@ -28,6 +28,20 @@ class PagesController extends AdminController
         return parent::getModel($name, $prefix, $config);
     }
 
+    /** Проверка условий всех страниц: пометка `broken` у страниц, которые каталог больше не понимает. */
+    public function check(): void
+    {
+        $this->checkToken();
+
+        if (!$this->app->getIdentity()->authorise('core.edit.state', $this->option)) {
+            throw new \RuntimeException(Text::_('JERROR_ALERTNOAUTHOR'), 403);
+        }
+
+        $result = (new \Dharma\Component\DharmaShopLanding\Administrator\Maintenance\LandingChecker(\Joomla\CMS\Factory::getContainer()->get(\Joomla\Database\DatabaseInterface::class)))->run();
+        $this->setMessage(Text::sprintf('COM_DHARMASHOP_LANDING_CHECK_DONE', $result['checked'], $result['broken']), $result['broken'] ? 'warning' : 'message');
+        $this->setRedirect(\Joomla\CMS\Router\Route::_('index.php?option=com_dharmashop_landing&view=pages', false));
+    }
+
     public function execute($task)
     {
         if (!$this->app->getIdentity()->authorise('core.manage', $this->option)) {

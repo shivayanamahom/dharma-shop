@@ -36,7 +36,7 @@ final class LandingLookup
         $scope = $catid > 1 ? $catid : 0;
         $hash = sha1($scope . '|' . json_encode($conditions, JSON_UNESCAPED_UNICODE));
         $query = $db->createQuery()->select(['a.id', 'a.catid'])->from($db->quoteName('#__dharmashop_landing_pages', 'a'))
-            ->where('a.conditions_hash = :hash')->where('a.state = 1')->where('a.source = ' . $db->quote('filter'))
+            ->where('a.conditions_hash = :hash')->where('a.state = 1')->where('a.broken = 0')->where('a.source = ' . $db->quote('filter'))
             ->where('a.access IN (' . implode(',', array_map('intval', $levels)) . ')')->order('a.id ASC')->bind(':hash', $hash);
         $page = $db->setQuery($query, 0, 1)->loadObject();
 

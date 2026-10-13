@@ -193,7 +193,7 @@ try {
   // счётчики по сводным таблицам = подсчёт по кандидатам
   $norm=function(array $f){ unset($f['counts'],$f['approximate'],$f['unavailable']); ksort($f); foreach(['options','ranges','directories'] as $k){ if(isset($f[$k])){ ksort($f[$k]); foreach($f[$k] as &$v){ if(is_array($v)) ksort($v);} unset($v);} } return $f; };
   $fd=0;
-  foreach($scopes as $scope){ $r=[]; foreach([true,false] as $on){ $L::$enabled=$on; FilterCache::forget(); $m=$mk([],'groups',$scope); $r[$on]=$norm($m->getFacets('base')); } if($r[true]!==$r[false])++$fd; }
+  foreach($scopes as $scope){ $r=[]; foreach([true,false] as $on){ $L::$enabled=$on; FilterCache::forget(); $m=$mk([],'groups',$scope); $r[$on]=$norm($m->getFacets('base')); } if($r[true]!==$r[false]){ ++$fd; foreach(array_unique(array_merge(array_keys($r[true]),array_keys($r[false]))) as $k){ if(($r[true][$k]??null)!==($r[false][$k]??null)){ $x=$r[true][$k]??[]; $y=$r[false][$k]??[]; $keys=is_array($x)&&is_array($y)?array_keys(array_filter(array_unique(array_merge(array_keys($x),array_keys($y))),fn($i)=>($x[$i]??null)!==($y[$i]??null))):[]; echo "  расхождение: область $scope, раздел $k, ключи ".implode(',',array_slice($keys,0,8))."\n"; } } } }
   $L::$enabled=true;
   $check('счётчики фильтра групп по сводным таблицам = подсчёт по участникам',$fd===0);
   // verify() ловит устаревшие ключи значений и границы (изменение значений мимо GroupService), rebuild() исправляет
@@ -221,6 +221,37 @@ try {
     if($r[true]!==$r[false])++$fdiff; }}}
   $L::$enabled=true; $Cat::$rankCap=5000; $app->getInput()->set('filter',[]);
   $check('выдача групп с фильтром: индекс групп = коррелированные проверки (3 фильтра, 2 области, 2 смещения)',$fdiff===0);
+  // Посадочные страницы на каталоге этого размера: состав, порядок и итог = категория с теми же условиями; время холодных вызовов.
+  if(class_exists('Dharma\Component\DharmaShopLanding\Site\Model\LandingModel')){
+   $make('dharmashop_landing_pages'); $make('dharmashop_landing_products');
+   $landingComponent=$app->bootComponent('com_dharmashop_landing');
+   $brandAlias=(string)(array_values($definition->brands)[0]['alias']??''); $colorAlias=(string)$colorOptions[0]->alias; $memoryAlias=(string)$memoryOptions[0]->alias;
+   $addPage=function(array $row)use($bench):int{ $o=(object)($row+['state'=>1,'access'=>1,'created'=>gmdate('Y-m-d H:i:s'),'conditions_hash'=>sha1((string)$row['alias'])]); $bench->insertObject('#__dharmashop_landing_pages',$o); return (int)$bench->insertid(); };
+   $pageBrand=$addPage(['title'=>'bench brand','alias'=>'bench-brand','catid'=>$catid,'source'=>'filter','conditions'=>json_encode(['brand'=>[$brandAlias]])]);
+   $pageColor=$addPage(['title'=>'bench color','alias'=>'bench-color','catid'=>0,'source'=>'filter','conditions'=>json_encode(['f'=>['fdemo-color'=>[$colorAlias]]])]);
+   $pageAll=$addPage(['title'=>'bench all','alias'=>'bench-all','catid'=>$catid,'source'=>'filter','conditions'=>'']);
+   $pageManual=$addPage(['title'=>'bench manual','alias'=>'bench-manual','catid'=>0,'source'=>'manual','conditions'=>'']);
+   foreach($bench->setQuery('SELECT id FROM #__dharmashop_products WHERE state=1 ORDER BY id LIMIT 12')->loadColumn() as $position=>$productId){ $row=(object)['landing_id'=>$pageManual,'product_id'=>(int)$productId,'ordering'=>$position]; $bench->insertObject('#__dharmashop_landing_products',$row); }
+   $landingModel=function(int $id,string $mode)use($landingComponent,$bench,$cp):object{ $cp->set('category_listing_mode',$mode); $m=$landingComponent->getMVCFactory()->createModel('Landing','Site',['ignore_request'=>true]); $m->setDatabase($bench); $m->forLanding($id); $m->setListingMode($mode); return $m; };
+   $cases=[[$pageBrand,$catid,['brand'=>[$brandAlias]]],[$pageColor,0,['f'=>['fdemo-color'=>[$colorAlias]]]],[$pageAll,$catid,[]]];
+   foreach(['products','groups_products'] as $mode){
+    $diff=0;
+    foreach($cases as [$pageId,$scope,$flt]){ foreach(['order','new','price_asc'] as $sort){ foreach([0,24] as $start){
+     FilterCache::forget(); $app->getInput()->set('filter',[]); $a=$landingModel($pageId,$mode);
+     $left=[$a->getTotal(),array_map(fn($i)=>(string)$i->id,$a->getProducts($sort,24,$start))];
+     $app->getInput()->set('filter',$flt); $cp->set('category_listing_mode',$mode); $b=$model($flt,$mode==='products'?'products':'groups',$scope); $b->setListingMode($mode);
+     $right=[$b->getTotal(),array_map(fn($i)=>(string)$i->id,$b->getProducts($sort,24,$start))];
+     if($left!==$right)++$diff; }}}
+    $app->getInput()->set('filter',[]);
+    $check("посадочные страницы на $n товарах: состав, порядок и итог = категория с теми же условиями (режим $mode)",$diff===0);
+    foreach([['бренд',$pageBrand],['цвет, весь каталог',$pageColor],['вся категория',$pageAll]] as [$label,$pageId]){
+     $t=$measure(function()use($landingModel,$pageId,$mode){ FilterCache::forget(); $m=$landingModel($pageId,$mode); $m->getTotal(); $m->getProducts('order',24,0); },3);
+     $f=$measure(function()use($landingModel,$pageId,$mode){ FilterCache::forget(); $m=$landingModel($pageId,$mode); $m->getFacets('live'); },3);
+     echo sprintf("  время, %s, %s: страница p50 %.0f мс (p95 %.0f), счётчики фильтра p50 %.0f мс (p95 %.0f)\n",$mode,$label,$t['p50_ms'],$t['p95_ms'],$f['p50_ms'],$f['p95_ms']);
+    }
+   }
+   FilterCache::forget(); $m=$landingModel($pageManual,'products'); $check('ручной список: 12 товаров',$m->getTotal()===12 && count($m->getProducts('order',24,0))===12);
+  }
   echo "$pass проверок пройдено, $fail не пройдено\n";
   if($fail)exit(1);
  }

@@ -60,6 +60,7 @@ class HtmlView extends BaseHtmlView
             $toolbar->publish('pages.publish')->listCheck(true);
             $toolbar->unpublish('pages.unpublish')->listCheck(true);
             $toolbar->checkin('pages.checkin');
+            $toolbar->standardButton('check', 'COM_DHARMASHOP_LANDING_CHECK', 'pages.check')->icon('icon-check-circle');
         }
 
         if ($user->authorise('core.delete', $this->option)) {
