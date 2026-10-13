@@ -224,6 +224,7 @@ def last_order(email: str):
 
 def product(g: Site) -> None:
     print("\n== страницы товаров и микроразметка")
+    restock()
     base = "/index.php/katalog/elektronika/"
     r = g.get(base + "nausniki/nausniki-aurora-sound")
     h = r.text
@@ -234,9 +235,9 @@ def product(g: Site) -> None:
     imgs = [i for i in re.findall(r"<img[^>]*>", h) if "/images/dharmashop/" in i]
     ok(imgs and all("width=" in i and "height=" in i and "alt=" in i for i in imgs), f"картинки товара ({len(imgs)}): width, height, alt", R)
     ok(meta(h, "og:image:width") != "" and meta(h, "og:image").startswith("https://"), "og:image с размерами", R)
-    ok(meta(h, "description") not in ("", ), f"meta description есть: «{meta(h, 'description')[:60]}»", R)
-    if meta(h, "description").startswith("Наушники Aurora Sound — "):
-        FINDINGS.append("SEO: описание товара по умолчанию — «Название — сайт» (повторяет заголовок), введённое описание товара не используется")
+    set_config(seo_product_description="{product.title} — {product.introtext}")  # значение по умолчанию из поставки
+    h = g.get(base + "nausniki/nausniki-aurora-sound").text
+    ok(meta(h, "description") == "Наушники Aurora Sound — Беспроводные наушники с шумоподавлением.", f"meta description = название + краткое описание: «{meta(h, 'description')[:70]}»", R)
     # скидка
     r = g.get(base + "nausniki/nausniki-nordic-air")
     p = [p for d in ld(r.text) for p in walk(d, "Product")][0]
@@ -272,6 +273,14 @@ def product(g: Site) -> None:
     ok(r.status_code == 404, "товар по чужому пути категории: 404", R)
 
 
+def modules_css(g: Site) -> None:
+    print("\n== модуль категорий в узкой колонке")
+    h = g.get("/index.php/katalog/elektronika/smartfony").text
+    ok("mod_dharmashop_categories/css/grid" in h or "mod_dharmashop_categories/grid" in h, "стиль сетки категорий подключён", R)
+    css = g.get(re.search(r'href="([^"]*mod_dharmashop_categories/css/grid[^"]*)"', h).group(1)).text if re.search(r'href="([^"]*mod_dharmashop_categories/css/grid[^"]*)"', h) else ""
+    ok("@container" in css and "container-type" in css, "в стиле есть контейнерный запрос для узкой колонки", R)
+
+
 def favorites(g: Site) -> None:
     print("\n== избранное")
     f = Site()
@@ -304,6 +313,7 @@ def favorites(g: Site) -> None:
 
 def cart(g: Site) -> None:
     print("\n== корзина")
+    restock()
     c = Shopper()
     aur, nor, buds, mug_dark, gift, mug = pid("AUR-SND-1"), pid("NRD-AIR-1"), pid("PXL-BUD-1"), pid("MUG-DARK"), pid("GIFT-1"), pid("MUG-MORN")
     j = c.add(aur, 2)
@@ -359,15 +369,25 @@ def cart(g: Site) -> None:
     ok("MINUS500" not in t, "купон снимается", R)
     small = Shopper()
     small.add(mug, 1)
-    small.promo("MINUS500")
+    j = small.promo("MINUS500")
     t = text_of(small.get("/index.php/oformlenie").text)
     ok("Coupon discount" not in t, "MINUS500 при сумме 590 ₽ (минимум 3000): код прикреплён, скидки пока нет", R)
+    ok("not active yet" in str(j.get("message")) and "starts only when" in t, f"покупателю объяснено, что скидка пока не действует: «{str(j.get('message'))[:60]}»", R)
     small.add(mug, 5)
     t = text_of(small.get("/index.php/oformlenie").text)
     ok("Coupon discount MINUS500 -500" in t, "MINUS500 при 3 540 ₽: скидка −500 ₽ появилась", R)
-    FINDINGS.append("UX: код с минимальной суммой при недостаточной сумме отвечает «Coupon applied», но скидки нет — стоит сообщить «действует от 3000 ₽»")
     j = Shopper().promo("WELCOME10")
     ok(j["success"] is False, "купон в пустой корзине отклонён", R)
+
+
+def restock() -> None:
+    """Возвращает остатки как в наполнении: сценарии заказов их списывают, а повторный запуск должен начинаться с тех же данных."""
+    a = Site()
+    a.login()
+    for sku, qty in (("AUR-SND-1", 25), ("NRD-AIR-1", 8), ("MUG-MORN", 120)):
+        i = pid(sku)
+        a.submit_form(f"/administrator/index.php?option=com_dharmashop&task=product.edit&id={i}", {"jform[stock_qty]": str(qty)}, task="product.save")
+        # закрыть запись (проверка включена на время редактирования)
 
 
 def set_config(**kv) -> None:
@@ -380,6 +400,7 @@ def set_config(**kv) -> None:
 def checkout(g: Site) -> None:
     print("\n== оформление заказов")
     set_config(checkout_rate_ip=1000)
+    restock()
     aur, mug, nor = pid("AUR-SND-1"), pid("MUG-MORN"), pid("NRD-AIR-1")
     stock0 = float(db(f"SELECT stock_total FROM PFX_dharmashop_variants WHERE product_id = {aur}")[0][0])
     # 1. самовывоз + оплата при получении, скидка 5%
@@ -461,8 +482,7 @@ def checkout(g: Site) -> None:
     page = c.get("/index.php/oformlenie")
     t = text_of(page.text)
     ok(page.status_code == 200 and "Your cart is empty" in t, "оформление с пустой корзиной сообщает, что корзина пуста", R)
-    if "checkout.submit" in page.text:
-        FINDINGS.append("UX: страница оформления при пустой корзине всё равно выводит форму (контакты, доставка, оплата) вместе с «Your cart is empty» — лучше скрывать форму")
+    ok("checkout.submit" not in page.text and "recipient[name]" not in page.text, "при пустой корзине формы оформления нет", R)
     r2 = c.post("/index.php/oformlenie", {"task": "checkout.submit", "shipping_method": 1, "recipient[name]": "x"})
     ok(db("SELECT COUNT(*) FROM PFX_dharmashop_orders WHERE contact_name = 'x'")[0][0] == "0", "отправка формы без корзины/токена заказ не создаёт", R)
     # лимит заказов на один e-mail
@@ -618,6 +638,9 @@ def users(g: Site) -> None:
     cfg = "/administrator/index.php?option=com_config&view=component&component=com_dharmashop"
     rules = {f"jform[rules][{k}][{gid}]": "1" for k in ("core.manage", "dharmashop.orders.manage", "dharmashop.orders.status")}
     rules.update({f"jform[rules][{k}][{gid}]": "0" for k in ("core.create", "core.edit", "core.delete")})
+    # остальные действия магазина — «наследовать»: прежние запуски и миграции не должны оставлять группе лишних прав
+    rules.update({f"jform[rules][{k}][{gid}]": "" for k in ("dharmashop.fields.manage", "dharmashop.groups.manage", "dharmashop.statuses.manage", "dharmashop.warehouses.manage", "dharmashop.payment.manage",
+                                                            "dharmashop.shipping.manage", "dharmashop.promotions.manage", "dharmashop.customers.view", "dharmashop.favorites.view")})
     r = a.submit_form(cfg, rules, task="component.apply")
     ok(any("saved" in m.lower() for m in a.messages(r.text)), "права группы сохранены (вход, заказы, смена статуса)", R)
     pwd = secrets.token_urlsafe(12) + "aA1!"
@@ -705,7 +728,7 @@ def main() -> None:
     sections = sys.argv[1:] or ["all"]
     g = Site()  # гость
     run = lambda name, fn: (name in sections or "all" in sections) and fn(g)  # noqa: E731
-    for name, fn in [("browse", browse), ("product", product), ("favorites", favorites), ("cart", cart), ("checkout", checkout), ("landing", landing), ("admin", admin), ("users", users), ("perf", perf)]:
+    for name, fn in [("browse", browse), ("product", product), ("modules", modules_css), ("favorites", favorites), ("cart", cart), ("checkout", checkout), ("landing", landing), ("admin", admin), ("users", users), ("perf", perf)]:
         run(name, fn)
     print(f"\nИтог: {sum(1 for o, _ in R if o)} из {len(R)}")
     for o, n in R:

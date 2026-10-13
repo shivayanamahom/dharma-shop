@@ -211,9 +211,7 @@ return new class () implements ServiceProviderInterface {
                     $ddl = file_get_contents(JPATH_ADMINISTRATOR . '/components/com_dharmashop/sql/notifications.mysql.utf8.sql');
                     $this->db->setQuery($ddl)->execute();
 
-                    if ($type === 'update') {
-                        $this->migrateAcl();
-                    }
+                    $this->ensureAclVersion();
 
                     if ($type === 'install') {
                         $this->ensureDefaultBadges();
@@ -225,23 +223,25 @@ return new class () implements ServiceProviderInterface {
                     return true;
                 }
 
-                /** Новые отдельные права (поля, группы товаров, статусы) наследуют группы прежних общих прав — менеджеры не теряют доступ. */
-                private function migrateAcl(): void
+                /**
+                 * Версия модели прав (`acl_version` в параметрах компонента). Все сборки с отдельными правами уже перенесли права при выходе C90,
+                 * поэтому отсутствие версии — не повод переносить права заново: иначе после каждого обновления группы, у которых владелец
+                 * отозвал право, получали бы его снова (признак «действие есть в правилах» теряется при любом сохранении прав в настройках).
+                 * Следующий перенос прав привязывается к повышению версии (`AclMigration::VERSION`), а не к содержимому правил.
+                 */
+                private function ensureAclVersion(): void
                 {
-                    require_once JPATH_ADMINISTRATOR . '/components/com_dharmashop/src/Installer/AclMigration.php';
-                    $row = $this->db->setQuery($this->db->getQuery(true)->select(['id', 'rules'])->from($this->db->quoteName('#__assets'))
-                        ->where($this->db->quoteName('name') . ' = ' . $this->db->quote('com_dharmashop')))->loadObject();
+                    $where = [$this->db->quoteName('type') . ' = ' . $this->db->quote('component'), $this->db->quoteName('element') . ' = ' . $this->db->quote('com_dharmashop')];
+                    $params = json_decode((string) $this->db->setQuery($this->db->getQuery(true)->select($this->db->quoteName('params'))->from($this->db->quoteName('#__extensions'))->where($where))->loadResult(), true);
+                    $params = is_array($params) ? $params : [];
 
-                    if (!$row) {
+                    if (isset($params['acl_version'])) {
                         return;
                     }
 
-                    $rules = \Dharma\Component\DharmaShop\Administrator\Installer\AclMigration::migrate((string) $row->rules);
-
-                    if ($rules !== (string) $row->rules) {
-                        $this->db->setQuery($this->db->getQuery(true)->update($this->db->quoteName('#__assets'))
-                            ->set($this->db->quoteName('rules') . ' = ' . $this->db->quote($rules))->where($this->db->quoteName('id') . ' = ' . (int) $row->id))->execute();
-                    }
+                    $params['acl_version'] = 1;
+                    $this->db->setQuery($this->db->getQuery(true)->update($this->db->quoteName('#__extensions'))
+                        ->set($this->db->quoteName('params') . ' = ' . $this->db->quote(json_encode($params, JSON_UNESCAPED_UNICODE)))->where($where))->execute();
                 }
 
                 /** C73: только пустой справочник, не меняем уже настроенные статусы магазина. */
