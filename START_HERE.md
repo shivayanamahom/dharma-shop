@@ -13,12 +13,12 @@
 5. Перенос данных из других систем — отдельными компонентами экспорта и импорта. Совместимость по данным, не по коду.
 6. **Рабочий тестовый сайт проекта: https://test.test (`/Volumes/Work/Server/www/test`).** Это чистый Joomla 6.1.4 с шаблоном `dharma_starter`. Другие сайты (spargo.test, dharmatest.test, argo и др.) не менять без прямой просьбы; dharmatest.test используем только для чтения.
 7. GitHub-репозиторий создавать только после вопроса пользователю (приватный).
-8. Документация для других ИИ: README, docs/ARCHITECTURE.md, docs/DEVELOPMENT.md, как в проектах `dharma_rm_export`, `dharma_rm_import`, `dharma_calc`.
+8. Документация для других ИИ: README, docs/ARCHITECTURE.md, docs/DEVELOPMENT.md, как в проекте `dharma_calc`.
 
 ## Окружение
 - Joomla 6.1.4, PHP 8.4/8.5 (в Kettle у `test.test` версия PHP «active»), локальный сервер Kettle (Apache + MySQL). **Проектный сайт: https://test.test**, файлы `/Volumes/Work/Server/www/test` (чистая установка, виртуальный хост уже есть). Справочный сайт: https://dharmatest.test (`/Volumes/Work/Server/www/dharmatest`, база `dharmatest`, копия spargo.test, на нём также наши пакеты экспорта/импорта и модуль калькулятора) — только читать.
 - Скрипты для разработки (консольный запуск Joomla на тестовом сайте, установка zip, вход в админку по HTTP, доступ к базе) лежат в `dev/` репозитория (boot.php, install.php, db.sh, web-login.sh, sync.sh). Путь к сайту задаётся переменной `DHARMA_SITE` (для проекта: `/Volumes/Work/Server/www/test`; по умолчанию в старых скриптах стоит dharmatest, поменяй), логин/пароль тестового пользователя — переменными окружения, секреты в репозиторий не кладём. В `configuration.php` напрямую не лезь за паролями: консольный запуск Joomla читает их сам.
-- Уже готовые наши расширения (можно брать идеи и архитектуру, это наш код): `dharma_rm_export`, `dharma_rm_import` (пакеты экспорт/импорт, CSV/XLSX/YML, планировщик Joomla), `dharma_calc` (модуль калькулятора), все под `/Volumes/Work/Joomla/`. Уроки по Joomla 6 записаны в их docs.
+- Уже готовые наши расширения (можно брать идеи и архитектуру, это наш код): `dharma_calc` (модуль калькулятора), все под `/Volumes/Work/Joomla/`. Уроки по Joomla 6 записаны в их docs.
 - Подводные камни: Joomla выводит `$option` из пространства имён (задавай `protected $option`); у HtmlView 6.1 нет `getApplication()`; в CLI `live_site` попадает в маршруты; пакет должен быть из вложенных zip, иначе тип не определится; пустые папки в манифесте ломают установку; Apache (Kettle) надо перезапускать после нового виртуального хоста.
 
 ## Набор разделов админки

@@ -273,7 +273,7 @@
     const line = (s, applied) => {
       const key = applied ? 'RES' : 'SUM';
       return [[`COM_DHARMASHOP_IMPORT_${key}_CREATE`, s.create], [`COM_DHARMASHOP_IMPORT_${key}_UPDATE`, s.update], [`COM_DHARMASHOP_IMPORT_${key}_UNCHANGED`, s.unchanged], ['COM_DHARMASHOP_IMPORT_SUM_ERRORS', s.errors]]
-        .map(([k, n]) => `${text(k, k)}: ${n}`).join(' · ');
+        .map(([k, n]) => `${text(k, k)}: ${n}`).concat(s.skipped_files ? [`${text('COM_DHARMASHOP_IMPORT_SUM_SKIPPED', 'Файлов пропущено')}: ${s.skipped_files}`] : []).join(' · ');
     };
     update(panel, trigger.dataset.importTitle || text('COM_DHARMASHOP_IMPORT_RESULT', 'Импорт'), 0, 0, unit, false);
     let payload = trigger.dataset.dharmashopImportStart

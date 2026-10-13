@@ -71,6 +71,11 @@ def main() -> int:
     leftover, _ = cleanup(a, None)
     if leftover:
         print(f"  удалены товары прошлого запуска: {leftover}")
+    existing = int(db("SELECT COUNT(*) FROM PFX_dharmashop_variants WHERE sku IN ('1466','1467','1468')")[0][0])
+    if existing:
+        print("На сайте уже есть товары с артикулами из файла (импорт Benarmo уже выполнен): сценарий пропущен, чтобы не создавать дубли артикулов.")
+        cleanup(a, None)
+        return 3
     categories_before = {r[0] for r in db("SELECT id FROM PFX_categories WHERE extension = 'com_dharmashop'")}
     root = db("SELECT id FROM PFX_categories WHERE extension = 'com_dharmashop' AND published = 1 ORDER BY id LIMIT 1")[0][0]
     with open(path, newline="", encoding="utf-8-sig") as fh:
@@ -92,6 +97,8 @@ def main() -> int:
         first = im.run(pid)
         s = first["summary"]
         print(f"  первый запуск: {s}")
+        if s["errors"] != expected_errors:
+            print("  первые ошибки:", im.errors(first["job"], 5))
         ok(first["state"] == "done" and s["errors"] == expected_errors, f"первый импорт завершён; ошибки только у строк с противоречивыми дублями ключа: {s['errors']} из {expected_errors} ожидаемых", R)
         ok(s["created"] == len(keys), f"создано товаров: {s['created']} (ключей без конфликта в файле {len(keys)})", R)
         ids = created_products()

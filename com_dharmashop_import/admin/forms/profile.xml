@@ -117,6 +117,12 @@
         <option value="1">JYES</option>
         <option value="0">JNO</option>
       </field>
+      <field name="skip_media_errors" type="radio" layout="joomla.form.field.radio.switcher" label="COM_DHARMASHOP_IMPORT_SKIP_MEDIA_ERRORS" description="COM_DHARMASHOP_IMPORT_SKIP_MEDIA_ERRORS_DESC" default="0">
+        <option value="1">JYES</option>
+        <option value="0">JNO</option>
+      </field>
+      <field name="media_max_files" type="number" label="COM_DHARMASHOP_IMPORT_MEDIA_MAX_FILES" description="COM_DHARMASHOP_IMPORT_MEDIA_MAX_DESC" default="0" min="0" max="200000" filter="integer" />
+      <field name="media_max_mb" type="number" label="COM_DHARMASHOP_IMPORT_MEDIA_MAX_MB" description="COM_DHARMASHOP_IMPORT_MEDIA_MAX_DESC" default="0" min="0" max="102400" filter="integer" />
       <field name="allow_http" type="radio" layout="joomla.form.field.radio.switcher" label="COM_DHARMASHOP_IMPORT_ALLOW_HTTP" default="0">
         <option value="1">JYES</option>
         <option value="0">JNO</option>

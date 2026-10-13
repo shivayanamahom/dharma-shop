@@ -9,7 +9,7 @@ use Joomla\CMS\Layout\LayoutHelper;
 Factory::getApplication()->getLanguage()->load('com_dharmashop', JPATH_ADMINISTRATOR);
 foreach (['COM_DHARMASHOP_PROGRESS_BAR', 'COM_DHARMASHOP_PROGRESS_RUNNING', 'COM_DHARMASHOP_PROGRESS_DONE', 'COM_DHARMASHOP_PROGRESS_ERROR', 'COM_DHARMASHOP_PROGRESS_DISMISS', 'COM_DHARMASHOP_PROGRESS_RELOAD',
     'COM_DHARMASHOP_PROGRESS_RESPONSE_ERROR', 'COM_DHARMASHOP_PROGRESS_FAILED', 'COM_DHARMASHOP_PROGRESS_RUNNING_HELP', 'COM_DHARMASHOP_PROGRESS_CONFIRM','COM_DHARMASHOP_PROGRESS_DONE_HELP','COM_DHARMASHOP_PROGRESS_RECORDS', 'COM_DHARMASHOP_PROGRESS_REVIEW',
-    'COM_DHARMASHOP_IMPORT_RESULT', 'COM_DHARMASHOP_IMPORT_ERRORS', 'COM_DHARMASHOP_IMPORT_APPLY', 'COM_DHARMASHOP_IMPORT_CONTINUE', 'COM_DHARMASHOP_IMPORT_REVIEW_HELP', 'COM_DHARMASHOP_IMPORT_REVIEW_SKIP','COM_DHARMASHOP_IMPORT_REVIEW_ERRORS',
+    'COM_DHARMASHOP_IMPORT_RESULT', 'COM_DHARMASHOP_IMPORT_ERRORS', 'COM_DHARMASHOP_IMPORT_APPLY', 'COM_DHARMASHOP_IMPORT_CONTINUE', 'COM_DHARMASHOP_IMPORT_REVIEW_HELP', 'COM_DHARMASHOP_IMPORT_SUM_SKIPPED','COM_DHARMASHOP_IMPORT_REVIEW_SKIP','COM_DHARMASHOP_IMPORT_REVIEW_ERRORS',
     'COM_DHARMASHOP_IMPORT_ERRORS_CSV', 'COM_DHARMASHOP_IMPORT_SUM_CREATE', 'COM_DHARMASHOP_IMPORT_SUM_UPDATE', 'COM_DHARMASHOP_IMPORT_SUM_UNCHANGED', 'COM_DHARMASHOP_IMPORT_SUM_ERRORS',
     'COM_DHARMASHOP_IMPORT_RES_CREATE', 'COM_DHARMASHOP_IMPORT_RES_UPDATE', 'COM_DHARMASHOP_IMPORT_RES_UNCHANGED'] as $key) {
     Text::script($key);
@@ -19,6 +19,8 @@ $wa->getRegistry()->addExtensionRegistryFile('com_dharmashop');
 $wa->useScript('multiselect')->useScript('com_dharmashop.admin-batch-progress');
 $user = $this->getCurrentUser();
 $canCheck = $user->authorise('dharmashop.import.check', 'com_dharmashop_import');
+$canSchedule = $user->authorise('core.create', 'com_scheduler') && \Joomla\CMS\Plugin\PluginHelper::isEnabled('task', 'dharmashopimport');
+$token = \Joomla\CMS\Session\Session::getFormToken();
 $canApply = $user->authorise('dharmashop.import.apply', 'com_dharmashop_import');
 $running = ['reading', 'checking', 'media', 'finalizing', 'applying'];
 ?>
@@ -31,6 +33,7 @@ $running = ['reading', 'checking', 'media', 'finalizing', 'applying'];
 <th><?php echo Text::_('JSTATUS'); ?></th>
 <?php if ($canCheck || $canApply) : ?><th><?php echo Text::_('COM_DHARMASHOP_IMPORT_LIST_RUN'); ?></th><?php endif; ?>
 <th><?php echo Text::_('COM_DHARMASHOP_IMPORT_RESULT'); ?></th>
+<?php if ($canSchedule) : ?><th><?php echo Text::_('COM_DHARMASHOP_IMPORT_LIST_SCHEDULE'); ?></th><?php endif; ?>
 <th class="w-1">ID</th></tr></thead><tbody>
 <?php foreach ($this->items as $i => $item) :
     $last = $item->last;
@@ -43,7 +46,9 @@ $running = ['reading', 'checking', 'media', 'finalizing', 'applying'];
 <td><?php echo Text::_('COM_DHARMASHOP_IMPORT_' . strtoupper($item->entity)); ?></td>
 <td><?php echo Text::_($item->state ? 'JENABLED' : 'JDISABLED'); ?></td>
 <?php if ($canCheck || $canApply) : ?><td>
-<?php if ($item->state && $last && (in_array($state, $running, true) || $state === 'failed') && $canCheck) : ?>
+<?php if (!$item->ready && !($last && in_array($state, $running, true))) : ?>
+<a class="btn btn-sm btn-outline-secondary" href="index.php?option=com_dharmashop_import&amp;task=profile.edit&amp;id=<?php echo (int) $item->id; ?>"><span class="icon-cog" aria-hidden="true"></span> <?php echo Text::_('COM_DHARMASHOP_IMPORT_CONFIGURE'); ?></a>
+<?php elseif ($item->state && $last && (in_array($state, $running, true) || $state === 'failed') && $canCheck) : ?>
 <button type="button" class="btn btn-sm btn-primary" data-dharmashop-import-run="<?php echo (int) $last['id']; ?>" data-import-title="<?php echo $title; ?>"><span class="icon-play" aria-hidden="true"></span> <?php echo Text::_('COM_DHARMASHOP_IMPORT_CONTINUE'); ?></button>
 <?php elseif ($item->state && $last && $state === 'checked' && $canCheck) : ?>
 <button type="button" class="btn btn-sm btn-success" data-dharmashop-import-run="<?php echo (int) $last['id']; ?>" data-import-title="<?php echo $title; ?>"><span class="icon-check" aria-hidden="true"></span> <?php echo Text::_('COM_DHARMASHOP_IMPORT_REVIEW'); ?></button>
@@ -61,6 +66,7 @@ $running = ['reading', 'checking', 'media', 'finalizing', 'applying'];
 <?php endif; ?>
 <?php else : ?><span class="text-muted"><?php echo Text::_('COM_DHARMASHOP_IMPORT_NEVER'); ?></span><?php endif; ?>
 </td>
+<?php if ($canSchedule) : ?><td><?php if ($item->state && $item->ready) : ?><a class="btn btn-sm btn-outline-secondary" target="_blank" rel="noopener" href="index.php?option=com_dharmashop_import&amp;task=profile.schedule&amp;id=<?php echo (int) $item->id; ?>&amp;<?php echo $token; ?>=1" title="<?php echo Text::_('COM_DHARMASHOP_IMPORT_ADD_SCHEDULE_DESC'); ?>"><?php echo Text::_('COM_DHARMASHOP_IMPORT_ADD_SCHEDULE'); ?></a><?php endif; ?></td><?php endif; ?>
 <td><?php echo (int) $item->id; ?></td></tr>
 <?php endforeach; ?></tbody></table>
 <?php if (!$this->items) : ?><p class="alert alert-info"><?php echo Text::_('JGLOBAL_NO_MATCHING_RESULTS'); ?></p><?php endif; ?>

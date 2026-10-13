@@ -226,6 +226,7 @@ final class Records
         }
         if(isset($patch['category_path'])){$chain=$deps->categories($patch['category_path'],$profile);$last=end($chain);if($last['id']){$patch['catid']=$last['id'];}else{$patch['__category_chain']=$chain;}unset($patch['category_path']);}
         $id=$this->find($profile,$key,$patch);$before=$this->item($profile['entity'],$id);
+        $this->settleMedia($patch,$before,$id,$profile,$job,$assets);
         $action=$id?'update':'create';if(($id&&!$p['update_existing'])||(!$id&&!$p['create_new'])){$action='skip';}
         if($action==='skip'){return ['key'=>$key,'target'=>$id,'action'=>'skip','patch'=>[],'before'=>[],'assets'=>[]];}
         if(!$id&&$p['key']==='id'){throw new \RuntimeException('COM_DHARMASHOP_IMPORT_NOT_FOUND');}
@@ -250,18 +251,7 @@ final class Records
         $this->validate($profile,array_replace($before,$patch,['id'=>$id]));
         $expected=[];if(isset($patch['__new_fields'])){$expected['custom_fields']=$before['custom_fields']??[];$expected['custom_fields_present']=null;}if(isset($patch['__category_chain'])){$expected['catid']=$before['catid']??null;}foreach($patch as $k=>$v){if(!str_starts_with($k,'__')){$expected[$k]=$before[$k]??null;}}
         if($id&&!$assets&&!isset($patch['__parent_key'])&&!isset($patch['__new_fields'])&&!isset($patch['__category_chain'])){
-            $same=true;
-            foreach($patch as $k=>$v){
-                if(str_starts_with($k,'__')||$k==='custom_fields_present'){continue;}
-                $current=$before[$k]??null;
-                // Значения полей: сравниваются только поля, которые есть в файле; остальные значения карточки не затрагиваются.
-                if($k==='custom_fields'){
-                    $current=array_intersect_key((array)$current,(array)$v);
-                    // Очистка поля, в котором и так пусто, ничего не меняет.
-                    $v=array_filter((array)$v,fn($val,$name)=>isset($current[$name])||!$this->emptyValue($val),ARRAY_FILTER_USE_BOTH);
-                }
-                if(!$this->same($v,$current)){$same=false;break;}
-            }
+            $same=$this->isUnchanged($before,$patch);
             if($same){$action='unchanged';}
         }
         return ['key'=>$key,'target'=>$id,'action'=>$action,'patch'=>$patch,'before'=>$expected,'assets'=>array_values(array_unique($assets))];
@@ -289,9 +279,9 @@ final class Records
             if(preg_match('~^https?://~i',$url)){
                 if(empty($p[$kind==='image'?'download_images':'download_files'])){throw new \RuntimeException('COM_DHARMASHOP_IMPORT_MEDIA_DISABLED');}
                 Remote::validateUrl($url,$p['media_hosts'],!empty($p['allow_http']));
-                $hash=hash('sha256',$kind.'|'.$url);$id=(int)$this->db->setQuery('SELECT id FROM #__dharmashop_import_files WHERE job_id='.$job.' AND url_hash='.$this->db->quote($hash))->loadResult();
-                if(!$id){$max=max(1,min(50000,(int)ComponentHelper::getParams('com_dharmashop')->get('import_media_max_files',5000)));if((int)$this->db->setQuery('SELECT COUNT(*) FROM #__dharmashop_import_files WHERE job_id='.$job)->loadResult()>=$max){throw new \RuntimeException('COM_DHARMASHOP_IMPORT_QUOTA');}$file=(object)['job_id'=>$job,'created_by'=>(int)Factory::getApplication()->getIdentity()->id,'kind'=>$kind,'state'=>'pending','name'=>'download','url'=>$url,'url_hash'=>$hash,'created'=>gmdate('Y-m-d H:i:s')];$this->db->insertObject('#__dharmashop_import_files',$file,'id');$id=(int)$file->id;}
-                $assets[]=$id;$result[]=['asset'=>$id,'alt'=>mb_substr(strip_tags((string)($entry['alt']??'')),0,255),'title'=>mb_substr(strip_tags((string)($entry['title']??'')),0,255)];
+                // Файл ставится в очередь скачивания позже (settleMedia): если эта ссылка уже скачана для этой записи, повторно файл не качается.
+                $hash=hash('sha256',$kind.'|'.$url);if(in_array($hash,array_column($result,'hash'),true)){continue;} // одна и та же ссылка в списке дважды — один файл
+                $result[]=['__download'=>true,'url'=>$url,'kind'=>$kind,'hash'=>$hash,'alt'=>mb_substr(strip_tags((string)($entry['alt']??'')),0,255),'title'=>mb_substr(strip_tags((string)($entry['title']??'')),0,255)];
             }else{
                 $local=FileStorage::path(ltrim($url,'/'));$root=realpath(JPATH_ROOT.'/images');$path=$local!==''?realpath(JPATH_ROOT.'/'.$local):false;
                 if(!$root||!$path||!str_starts_with($path,$root.'/')||!is_file($path)||is_link(JPATH_ROOT.'/'.$local)){throw new \RuntimeException('COM_DHARMASHOP_IMPORT_PATH');}
@@ -299,6 +289,86 @@ final class Records
                 $result[]=['path'=>$local,'alt'=>mb_substr(strip_tags((string)($entry['alt']??'')),0,255),'title'=>mb_substr(strip_tags((string)($entry['title']??'')),0,255)];
             }
         }return $result;
+    }
+    /**
+     * Ссылки на файлы из ячеек становятся элементами плана: если эта ссылка уже скачана для этой записи и файл по-прежнему в её карточке, берётся он
+     * (повторный импорт ничего не меняет и не качает заново), иначе файл ставится в очередь скачивания.
+     */
+    private function settleMedia(array &$patch, array $before, int $target, array $profile, int $job, array &$assets): void
+    {
+        $paths=[];$collect=function(mixed $node)use(&$collect,&$paths):void{if(!is_array($node)){return;}if(isset($node['path'])&&is_string($node['path'])){$paths[$node['path']]=true;}foreach($node as $v){if(is_array($v)){$collect($v);}}};
+        $collect($before);
+        $settle=function(mixed $node)use(&$settle,$paths,$target,$profile,$job,&$assets):mixed{
+            if(!is_array($node)){return $node;}
+            if(!empty($node['__download'])){
+                $meta=array_intersect_key($node,array_flip(['alt','title']));
+                $known=$target?(string)$this->db->setQuery('SELECT path FROM #__dharmashop_import_media WHERE source='.$this->db->quote($profile['params']['source_code']).' AND entity='.$this->db->quote($profile['entity']).' AND target_id='.$target.' AND url_hash='.$this->db->quote($node['hash']))->loadResult():'';
+                if($known!==''&&isset($paths[$known])){return ['path'=>$known]+$meta;}
+                $id=$this->queueDownload($node['url'],$node['kind'],$node['hash'],$profile,$job);$assets[]=$id;
+                return ['asset'=>$id]+$meta;
+            }
+            foreach($node as $k=>$v){if(is_array($v)){$node[$k]=$settle($v);}}
+            return $node;
+        };
+        $patch=$settle($patch);
+    }
+    /** Ставит скачивание файла в очередь запуска (один файл на ссылку в пределах запуска; лимит числа файлов из профиля или общих настроек). */
+    private function queueDownload(string $url, string $kind, string $hash, array $profile, int $job): int
+    {
+        $id=(int)$this->db->setQuery('SELECT id FROM #__dharmashop_import_files WHERE job_id='.$job.' AND url_hash='.$this->db->quote($hash))->loadResult();
+        if($id){return $id;}
+        [$max]=Profile::mediaLimits($profile['params']);
+        if((int)$this->db->setQuery('SELECT COUNT(*) FROM #__dharmashop_import_files WHERE job_id='.$job)->loadResult()>=$max){throw new \RuntimeException('COM_DHARMASHOP_IMPORT_QUOTA');}
+        $file=(object)['job_id'=>$job,'created_by'=>(int)Factory::getApplication()->getIdentity()->id,'kind'=>$kind,'state'=>'pending','name'=>'download','url'=>$url,'url_hash'=>$hash,'created'=>gmdate('Y-m-d H:i:s')];
+        $this->db->insertObject('#__dharmashop_import_files',$file,'id');
+        return (int)$file->id;
+    }
+    /** После записи карточки: запоминает, какой ссылке соответствует каждый сохранённый файл записи (для повторного импорта без повторного скачивания). */
+    public function rememberMedia(array $profile, int $target, array $plan): void
+    {
+        if($target<1){return;}
+        $walk=function(mixed $node)use(&$walk,$profile,$target):void{
+            if(!is_array($node)){return;}
+            if(isset($node['_src'],$node['path'])&&is_string($node['_src'])&&is_string($node['path'])&&$node['path']!==''){
+                $this->db->setQuery('REPLACE INTO #__dharmashop_import_media (source,entity,target_id,url_hash,path,created) VALUES ('.$this->db->quote($profile['params']['source_code']).','.$this->db->quote($profile['entity']).','.$target.','.$this->db->quote($node['_src']).','.$this->db->quote(mb_substr($node['path'],0,500)).','.$this->db->quote(gmdate('Y-m-d H:i:s')).')')->execute();
+            }
+            foreach($node as $v){if(is_array($v)){$walk($v);}}
+        };
+        $walk($plan['patch']??[]);
+    }
+    /** Все значения плана совпадают с текущей карточкой (по смыслу): записывать нечего. Сравниваются только ключи, заявленные в плане. */
+    public function isUnchanged(array $before, array $patch): bool
+    {
+        $same=true;
+        foreach($patch as $k=>$v){
+            if(str_starts_with($k,'__')||$k==='custom_fields_present'){continue;}
+            $current=$before[$k]??null;
+            // Значения полей: сравниваются только поля, которые есть в файле; остальные значения карточки не затрагиваются.
+            if($k==='custom_fields'){
+                $current=array_intersect_key((array)$current,(array)$v);
+                // Очистка поля, в котором и так пусто, ничего не меняет.
+                $v=array_filter((array)$v,fn($val,$name)=>isset($current[$name])||!$this->emptyValue($val),ARRAY_FILTER_USE_BOTH);
+            }
+            if(!$this->same($v,$current)){$same=false;break;}
+        }
+        return $same;
+    }
+    /** Убирает из плана файлы, которые не удалось скачать (вместе с их элементами в галереях и полях). Возвращает true, если что-то убрано. */
+    public function withoutFailedAssets(array &$plan): bool
+    {
+        $assets=array_values(array_filter(array_map('intval',(array)($plan['assets']??[]))));if(!$assets){return false;}
+        $failed=array_map('intval',$this->db->setQuery("SELECT id FROM #__dharmashop_import_files WHERE state='failed' AND id IN (".implode(',',$assets).')')->loadColumn());
+        if(!$failed){return false;}
+        $strip=function(mixed $node) use (&$strip,$failed):mixed{
+            if(!is_array($node)){return $node;}
+            $out=[];foreach($node as $key=>$value){
+                if(is_array($value)&&isset($value['asset'])&&in_array((int)$value['asset'],$failed,true)){continue;}
+                $out[$key]=$strip($value);
+            }
+            return array_is_list($node)?array_values($out):$out;
+        };
+        $plan['patch']=$strip($plan['patch']??[]);$plan['assets']=array_values(array_diff($assets,$failed));
+        return true;
     }
     public function validateAssets(array $plan): void
     {
@@ -318,13 +388,15 @@ final class Records
             }
         }
     }
+    /** Имя изображения с расширением по реальному содержимому: сайты отдают, например, JPEG под именем .png, а загрузчик сверяет тип и расширение. */
     private static function imageName(string $name, string $path): string
     {
-        if(!pathinfo($name,PATHINFO_EXTENSION)){
-            $ext=['image/jpeg'=>'jpg','image/png'=>'png','image/webp'=>'webp','image/gif'=>'gif','image/avif'=>'avif','image/svg+xml'=>'svg'][(new \finfo(FILEINFO_MIME_TYPE))->file($path)]??'';
-            $name.='.'.$ext;
-        }
-        return $name;
+        $mime=(string)(new \finfo(FILEINFO_MIME_TYPE))->file($path);
+        $ext=['image/jpeg'=>'jpg','image/png'=>'png','image/webp'=>'webp','image/gif'=>'gif','image/avif'=>'avif','image/svg+xml'=>'svg'][$mime]??'';
+        if($ext===''){return $name;}
+        $current=strtolower(pathinfo($name,PATHINFO_EXTENSION));
+        if($current===$ext||($ext==='jpg'&&$current==='jpeg')){return $name;}
+        return ($current!==''?pathinfo($name,PATHINFO_FILENAME):$name).'.'.$ext;
     }
     /**
      * Алиас, образованный из названия, делается уникальным в своей категории (товар) или у родителя (категория): сначала обычный слаг, затем -2, -3…,
@@ -362,11 +434,14 @@ final class Records
     public function promote(array $profile, array $plan): array
     {
         $walk=function(array $items, ?array $field=null)use($profile,$plan):array{
-            foreach($items as &$item){if(!isset($item['asset'])){continue;}$file=$this->db->setQuery('SELECT token,folder,name,kind FROM #__dharmashop_import_files WHERE id='.(int)$item['asset'])->loadAssoc();$temp=(new Storage($file['folder']))->temporary($file['token']);
+            foreach($items as &$item){if(!isset($item['asset'])){continue;}$file=$this->db->setQuery('SELECT token,folder,name,kind,url_hash FROM #__dharmashop_import_files WHERE id='.(int)$item['asset'])->loadAssoc();$temp=(new Storage($file['folder']))->temporary($file['token']);
                 try{
                     if($field&&$field['type']==='files'){$settings=FileStorage::settings(json_decode($field['params'],true)?:[]);$data=(new FileStorage(JPATH_ROOT,(int)$field['id'],$settings))->storePrepared($temp,$file['name'],['target'=>$profile['entity']==='products'?'product':'category','id'=>$plan['target'],'alias'=>$plan['patch']['alias']??'import','field_alias'=>$field['alias']]);}
-                    else{$u=new ImageUploader(ComponentHelper::getParams('com_media'),JPATH_ROOT,ComponentHelper::getParams('com_dharmashop'));$name=self::imageName($file['name'],$temp);$data=$u->store(['tmp_name'=>$temp,'name'=>$name,'size'=>filesize($temp),'error'=>UPLOAD_ERR_OK],$profile['entity']==='products'?'products':'categories',null,false);}
-                    $item=$data+array_intersect_key($item,array_flip(['alt','title']));
+                    else{$u=new ImageUploader(ComponentHelper::getParams('com_media'),JPATH_ROOT,ComponentHelper::getParams('com_dharmashop'));$name=self::imageName($file['name'],$temp);$folder=$profile['entity']==='products'?'products':'categories';$scope=null;
+                        // Галерея пользовательского поля хранится в личной папке поля, как при ручной загрузке: field-galleries/<ID поля>/<папка из настроек поля>.
+                        if($field&&$field['type']==='gallery'){$settings=json_decode($field['params'],true)?:[];$gallery=TypeRegistry::current()->get('gallery')->normalizeSettings($settings);$folder='field-galleries';$scope=(int)$field['id'].'/'.$gallery['gallery_folder'];}
+                        $data=$u->store(['tmp_name'=>$temp,'name'=>$name,'size'=>filesize($temp),'error'=>UPLOAD_ERR_OK],$folder,$scope,false);}
+                    $item=$data+array_intersect_key($item,array_flip(['alt','title']))+['_src'=>(string)$file['url_hash']];
                 }finally{unlink($temp);}
             }unset($item);return $items;
         };
@@ -420,6 +495,9 @@ final class Records
     }
     public function apply(array $profile, array $plan): int
     {
+        // Служебная метка источника файла нужна только для памяти о скачанном (rememberMedia) и в карточку не попадает.
+        $strip=function(mixed $node)use(&$strip):mixed{if(!is_array($node)){return $node;}unset($node['_src']);foreach($node as $k=>$v){if(is_array($v)){$node[$k]=$strip($v);}}return $node;};
+        $plan['patch']=$strip($plan['patch']??[]);
         $lock=$profile['entity']==='products'?'dharma.product.'.(int)$plan['target']:'dharma.categories';
         if(!(int)$this->db->setQuery('SELECT GET_LOCK('.$this->db->quote($lock).',10)')->loadResult()){throw new \RuntimeException('COM_DHARMASHOP_IMPORT_BUSY');}
         try{return $this->applyLocked($profile,$plan);}

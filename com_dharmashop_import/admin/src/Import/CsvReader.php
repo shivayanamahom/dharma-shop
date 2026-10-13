@@ -36,13 +36,16 @@ final class CsvReader
             $bom=fread($stream,3); if($bom!=="\xEF\xBB\xBF"){fseek($stream,strlen(Storage::GUARD));}
             // Шапка файла над таблицей (название, дата): пропускаем заданное число строк до заголовка.
             for($i=0,$skip=max(0,min(1000,(int)($this->settings['skip_rows']??0)));$i<$skip;$i++){if(fgets($stream)===false){break;}}
+            // Пустые строки перед заголовком (в XLSX они сохраняют нумерацию листа) пропускаются.
             $begin=(int)ftell($stream);
-            $sep=$this->separator($stream); $first=$this->row($stream,$sep);
+            while(($line=fgets($stream))!==false&&trim($line)===''){$begin=(int)ftell($stream);}
+            fseek($stream,$begin);
+            $sep=$this->separator($stream);$first=$this->row($stream,$sep);
             if(!$first){throw new \RuntimeException('COM_DHARMASHOP_IMPORT_EMPTY');}
             $header=!isset($this->settings['header']) || !empty($this->settings['header']);
             $headers=$header?$first:array_map(static fn($i)=>'Column '.$i,range(1,count($first)));
             $cursor=$header?ftell($stream):$begin;
-            $example=$header?($this->row($stream,$sep)?:[]):$first;
+            $example=[];if($header){do{$example=$this->row($stream,$sep);}while($example!==false&&!array_filter($example,static fn($c)=>$c!==''));$example=$example?:[];}else{$example=$first;}
             return ['headers'=>$headers,'example'=>$example,'separator'=>$sep,'cursor'=>$cursor];
         } finally {fclose($stream);}
     }

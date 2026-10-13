@@ -54,7 +54,7 @@ final class Workflow
     {
         if(($profile['format']??'csv')==='csv'){return (new CsvReader($profile['params']+['storage_folder'=>$source['folder']]))->sample($source['token']);}
         $path=(new Storage($source['folder']))->temporary($source['token']);
-        try{return ReaderRegistry::get((string)$profile['format'])->sample($path,(string)($profile['params']['xlsx_sheet']??''),!empty($profile['params']['header']));}
+        try{return ReaderRegistry::get((string)$profile['format'])->sample($path,(string)($profile['params']['xlsx_sheet']??''),!empty($profile['params']['header']),max(0,min(1000,(int)($profile['params']['skip_rows']??0))));}
         finally{@unlink($path);}
     }
     private function readerSource(array $profile, array $source): array
@@ -92,6 +92,7 @@ final class Workflow
             if($existing['state']!=='checked'){return $active;}
             $this->cancel($active);
         }
+        if(($profile['params']['source_type']??'upload')==='upload'&&(int)($profile['params']['source_id']??0)<=0){throw new \RuntimeException('COM_DHARMASHOP_IMPORT_NO_SOURCE');}
         $source=$this->receive($profile);$readerSource=$this->readerSource($profile,$source);$readerParams=$profile['params'];if($profile['format']==='xlsx'){$readerParams['separator']='auto';$readerParams['encoding']='UTF-8';}$sample=(new CsvReader($readerParams+['storage_folder'=>$readerSource['folder']]))->sample($readerSource['token']);
         if(($profile['params']['headers']??null)!==$sample['headers']){throw new \RuntimeException('COM_DHARMASHOP_IMPORT_HEADERS_CHANGED');}
         $targets=array_column($profile['params']['mapping'],'target');if(!in_array($profile['params']['key'],$targets,true)){throw new \RuntimeException('COM_DHARMASHOP_IMPORT_KEY_ERROR');}
@@ -137,6 +138,7 @@ final class Workflow
     public function summary(int $job): array
     {
         $s = ['create' => 0, 'update' => 0, 'unchanged' => 0, 'errors' => 0, 'rows' => 0];
+        $s['skipped_files'] = (int) $this->db->setQuery("SELECT COUNT(*) FROM #__dharmashop_import_files WHERE job_id=" . $job . " AND state='failed'")->loadResult();
         foreach ($this->db->setQuery('SELECT state,COALESCE(action,\'\') AS action,COUNT(*) AS c FROM #__dharmashop_import_rows WHERE job_id=' . $job . ' GROUP BY state,action')->loadAssocList() as $r) {
             $c = (int) $r['c'];
             $s['rows'] += $c;
@@ -306,6 +308,8 @@ final class Workflow
                 if (!array_filter($raw, static fn ($cell) => $cell !== '')) {
                     continue; // пустая строка или строка из одних разделителей
                 }
+                // Экспорт защищает значения, начинающиеся с = + - @, апострофом (защита от формул в Excel); при импорте апостроф снимается.
+                $raw = array_map(static fn ($cell) => preg_replace('/^\'([\x00-\x20]*[=+@-])/', '$1', $cell) ?? $cell, $raw);
                 $state = 'raw';
                 $error = null;
                 if (count($raw) > $width) {
@@ -328,7 +332,7 @@ final class Workflow
     private function media(array $job, array $profile, float $deadline): void
     {
         $id = (int) $job['id'];
-        $limit = max(16, min(10240, (int) ComponentHelper::getParams('com_dharmashop')->get('import_media_max_mb', 512))) * 1048576;
+        [, $limit] = Profile::mediaLimits($profile['params']);
         $perFile = max(1, min(64, (int) ComponentHelper::getParams('com_dharmashop')->get('import_media_file_mb', 16))) * 1048576;
         $finished = false;
         // Следующий файл начинаем, пока есть запас времени: одно скачивание занимает до 25 с.
@@ -388,6 +392,14 @@ final class Workflow
                         $this->plan($id, $profile, $records, $row);
                     } else {
                         $plan = json_decode($row['payload'], true, 64, JSON_THROW_ON_ERROR);
+                        if (!empty($profile['params']['skip_media_errors']) && $records->withoutFailedAssets($plan)) {
+                            // Недоступные файлы выброшены из плана: запись импортируется без них, число пропущенных видно в сводке.
+                            // Если после этого записывать нечего, строка считается «без изменений».
+                            if ($plan['action'] === 'update' && !$plan['assets'] && !array_filter(array_keys($plan['patch']), static fn ($k) => str_starts_with((string) $k, '__')) && $records->isUnchanged($plan['before'], $plan['patch'])) {
+                                $plan['action'] = 'unchanged';
+                            }
+                            $this->save('#__dharmashop_import_rows', (int) $row['id'], ['action' => $plan['action'], 'payload' => json_encode($plan, JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE | JSON_THROW_ON_ERROR)]);
+                        }
                         $records->validateAssets($plan);
                         $this->parents($id, $profile, $plan);
                         $this->save('#__dharmashop_import_rows', (int) $row['id'], ['state' => 'ready']);
@@ -553,6 +565,7 @@ final class Workflow
                 }
                 $target = $records->apply($profile, $plan);
             }
+            $records->rememberMedia($profile, $target, $plan);
             if ($profile['params']['key'] === 'external_id') {
                 $existing = $records->find($profile, $plan['key']);
                 if ($existing && $existing !== $target) {

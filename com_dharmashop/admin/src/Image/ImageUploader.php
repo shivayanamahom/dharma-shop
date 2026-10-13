@@ -183,7 +183,7 @@ final class ImageUploader
             }
         }
 
-        return compact('original', 'extension', 'width', 'height', 'svgClean');
+        return compact('original', 'extension', 'mime', 'width', 'height', 'svgClean');
     }
 
     public function store(array $file, string $folder, ?string $fieldScope = null, bool $uploaded = true): array
@@ -198,7 +198,7 @@ final class ImageUploader
             throw new \RuntimeException('COM_DHARMASHOP_UPLOAD_ERROR_NO_FILE');
         }
 
-        ['original'=>$original,'extension'=>$extension,'width'=>$width,'height'=>$height,'svgClean'=>$svgClean]
+        ['original'=>$original,'extension'=>$extension,'mime'=>$mime,'width'=>$width,'height'=>$height,'svgClean'=>$svgClean]
             = $this->inspectPrepared($file['tmp_name'], (string) ($file['name'] ?? ''));
 
         if (in_array($folder, ['field-galleries', 'field-video-posters'], true) && $fieldScope !== null
