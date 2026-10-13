@@ -22,6 +22,7 @@ class OrderController extends BaseController
     public function changeStatus(): void
     {
         $this->allowed();
+        if (!$this->app->getIdentity()->authorise('dharmashop.orders.status', $this->option)) throw new \RuntimeException(Text::_('JERROR_ALERTNOAUTHOR'), 403);
         $id = $this->input->post->getInt('id');
         $url = Route::_('index.php?option=com_dharmashop&view=order&id=' . $id, false);
         try {

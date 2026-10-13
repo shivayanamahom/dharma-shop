@@ -25,6 +25,7 @@ GROUPS = [
             "ADMIN_MODULES",
             "MODULE_PRODUCTS",
             "ADMIN_FAVORITES",
+            "ADMIN_ACCESS",
             "ADMIN_LANDING",
             "ADMIN_SEO",
             "ADMIN_ORDERS",

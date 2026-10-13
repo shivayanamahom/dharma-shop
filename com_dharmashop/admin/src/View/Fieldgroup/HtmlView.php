@@ -30,6 +30,10 @@ class HtmlView extends BaseHtmlView
 
     public function display($tpl = null): void
     {
+        if (!$this->getCurrentUser()->authorise('dharmashop.fields.manage', 'com_dharmashop')) {
+            throw new \RuntimeException(\Joomla\CMS\Language\Text::_('JERROR_ALERTNOAUTHOR'), 403);
+        }
+
         $model = $this->getModel();
         $this->item = $model->getItem();
 

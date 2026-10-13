@@ -38,6 +38,10 @@ class HtmlView extends BaseHtmlView
 
     public function display($tpl = null): void
     {
+        if (!$this->getCurrentUser()->authorise('dharmashop.groups.manage', 'com_dharmashop')) {
+            throw new \RuntimeException(\Joomla\CMS\Language\Text::_('JERROR_ALERTNOAUTHOR'), 403);
+        }
+
         $app = Factory::getApplication();
         $this->quickCreate = $app->getUserState('com_dharmashop.quick_create');
         $app->setUserState('com_dharmashop.quick_create', null);

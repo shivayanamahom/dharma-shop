@@ -15,7 +15,7 @@ class HtmlView extends BaseHtmlView
     public function display($tpl = null): void
     {
         $user = $this->getCurrentUser();
-        if (!$user->authorise('dharmashop.orders.status',$this->option)) throw new \RuntimeException(Text::_('JERROR_ALERTNOAUTHOR'),403);
+        if (!$user->authorise('dharmashop.statuses.manage',$this->option)) throw new \RuntimeException(Text::_('JERROR_ALERTNOAUTHOR'),403);
         $model = $this->getModel(); $this->item = $model->getItem();
         if (!$this->item) throw new \RuntimeException(Text::_('JERROR_LAYOUT_PAGE_NOT_FOUND'),404);
         if (!$user->authorise($this->item->id ? 'core.edit' : 'core.create',$this->option)) throw new \RuntimeException(Text::_('JERROR_ALERTNOAUTHOR'),403);

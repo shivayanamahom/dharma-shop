@@ -160,12 +160,35 @@ return new class () implements ServiceProviderInterface {
                     $ddl = file_get_contents(JPATH_ADMINISTRATOR . '/components/com_dharmashop/sql/notifications.mysql.utf8.sql');
                     $this->db->setQuery($ddl)->execute();
 
+                    if ($type === 'update') {
+                        $this->migrateAcl();
+                    }
+
                     if ($type === 'install') {
                         $this->ensureDefaultBadges();
                         $this->app->enqueueMessage(Text::_('PKG_DHARMASHOP_INSTALLED'), 'info');
                     }
 
                     return true;
+                }
+
+                /** Новые отдельные права (поля, группы товаров, статусы) наследуют группы прежних общих прав — менеджеры не теряют доступ. */
+                private function migrateAcl(): void
+                {
+                    require_once JPATH_ADMINISTRATOR . '/components/com_dharmashop/src/Installer/AclMigration.php';
+                    $row = $this->db->setQuery($this->db->getQuery(true)->select(['id', 'rules'])->from($this->db->quoteName('#__assets'))
+                        ->where($this->db->quoteName('name') . ' = ' . $this->db->quote('com_dharmashop')))->loadObject();
+
+                    if (!$row) {
+                        return;
+                    }
+
+                    $rules = \Dharma\Component\DharmaShop\Administrator\Installer\AclMigration::migrate((string) $row->rules);
+
+                    if ($rules !== (string) $row->rules) {
+                        $this->db->setQuery($this->db->getQuery(true)->update($this->db->quoteName('#__assets'))
+                            ->set($this->db->quoteName('rules') . ' = ' . $this->db->quote($rules))->where($this->db->quoteName('id') . ' = ' . (int) $row->id))->execute();
+                    }
                 }
 
                 /** C73: только пустой справочник, не меняем уже настроенные статусы магазина. */

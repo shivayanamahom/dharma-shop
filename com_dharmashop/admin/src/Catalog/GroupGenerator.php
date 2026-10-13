@@ -111,7 +111,7 @@ final class GroupGenerator
         $catid = (int) ($data['generation_catid'] ?? 0) ?: $taxonomy['catid'];
         $user = \Joomla\CMS\Factory::getApplication()->getIdentity();
         if (!$user->authorise('core.create', 'com_dharmashop.category.' . $catid)
-            || !$user->authorise('core.edit', 'com_dharmashop')) { throw new \RuntimeException('JLIB_APPLICATION_ERROR_ACCESS_FORBIDDEN'); }
+            || !$user->authorise('core.edit', 'com_dharmashop') || !$user->authorise('dharmashop.groups.manage', 'com_dharmashop')) { throw new \RuntimeException('JLIB_APPLICATION_ERROR_ACCESS_FORBIDDEN'); }
         if (!$this->db->setQuery("SELECT id FROM #__categories WHERE id=" . $catid . " AND extension='com_dharmashop'")->loadResult()) {
             throw new \RuntimeException('JLIB_DATABASE_ERROR_CATEGORY_REQUIRED');
         }

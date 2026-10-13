@@ -35,6 +35,11 @@ class HtmlView extends BaseHtmlView
 
     public function display($tpl = null): void
     {
+        // Модальный выбор группы в карточке товара — для всех, кто правит товары; управление группами — отдельное право.
+        if (!$this->getCurrentUser()->authorise($this->getLayout() === 'modal' ? 'core.edit' : 'dharmashop.groups.manage', 'com_dharmashop')) {
+            throw new \RuntimeException(\Joomla\CMS\Language\Text::_('JERROR_ALERTNOAUTHOR'), 403);
+        }
+
         $model = $this->getModel();
         $this->items = $model->getItems();
         $this->pagination = $model->getPagination();

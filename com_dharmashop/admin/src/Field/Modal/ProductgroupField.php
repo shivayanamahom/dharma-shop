@@ -38,7 +38,7 @@ class ProductgroupField extends ModalSelectField
         $app->getDocument()->getWebAssetManager()->useScript('modal-content-select-field')->useScript('webcomponent.toolbar-button');
         $data = $this->collectLayoutData();
         $data['valueTitle'] = $this->getValueTitle();
-        $data['canCreate'] = (string) $this->element['create_group'] === 'true' && $app->getIdentity()->authorise('core.create', 'com_dharmashop');
+        $data['canCreate'] = (string) $this->element['create_group'] === 'true' && $app->getIdentity()->authorise('core.create', 'com_dharmashop') && $app->getIdentity()->authorise('dharmashop.groups.manage', 'com_dharmashop');
         return (new FileLayout('field.group-picker', JPATH_ADMINISTRATOR . '/components/com_dharmashop/layouts', ['component' => 'com_dharmashop', 'client' => 1]))->render($data);
     }
 }

@@ -38,7 +38,7 @@ trait QuickCreateTrait
     {
         $user = $this->app->getIdentity();
 
-        if (!$user->authorise('core.create', 'com_dharmashop')) {
+        if (!$user->authorise('core.create', 'com_dharmashop') || !$user->authorise('dharmashop.fields.manage', 'com_dharmashop')) {
             throw new \RuntimeException(Text::_('JLIB_APPLICATION_ERROR_CREATE_RECORD_NOT_PERMITTED'), 403);
         }
 

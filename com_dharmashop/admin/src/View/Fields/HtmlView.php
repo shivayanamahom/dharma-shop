@@ -33,6 +33,10 @@ class HtmlView extends BaseHtmlView
 
     public function display($tpl = null): void
     {
+        if (!$this->getCurrentUser()->authorise('dharmashop.fields.manage', 'com_dharmashop')) {
+            throw new \RuntimeException(\Joomla\CMS\Language\Text::_('JERROR_ALERTNOAUTHOR'), 403);
+        }
+
         // Import enabled providers and their language files, as in the type selector.
         foreach (TypeRegistry::current()->all() as $id => $type) {
             $this->typeLabels[$id] = Text::_($type->label());

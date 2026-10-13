@@ -35,7 +35,7 @@ final class HtmlView extends BaseHtmlView
         if (!$user->authorise('core.edit', 'com_dharmashop')) {
             throw new \RuntimeException(Text::_('JLIB_APPLICATION_ERROR_CREATE_RECORD_NOT_PERMITTED'), 403);
         }
-        $this->canCreate = $user->authorise('core.create', 'com_dharmashop');
+        $this->canCreate = $user->authorise('core.create', 'com_dharmashop') && $user->authorise('dharmashop.fields.manage', 'com_dharmashop');
 
         foreach (TypeRegistry::current()->all() as $id => $type) {
             $this->typeLabels[$id] = Text::_($type->label());

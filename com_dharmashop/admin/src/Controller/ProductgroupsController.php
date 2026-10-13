@@ -20,7 +20,14 @@ use Dharma\Component\DharmaShop\Administrator\Support\BatchProgressResponse;
 /** Публикация, корзина, check-in и порядок групп через штатный AdminController. */
 class ProductgroupsController extends AdminController
 {
+    use RequiresActionTrait;
+
     protected $option = 'com_dharmashop';
+
+    protected function requiredAction(): string
+    {
+        return 'dharmashop.groups.manage';
+    }
     protected $text_prefix = 'COM_DHARMASHOP';
 
     public function getModel($name = 'Productgroup', $prefix = 'Administrator', $config = ['ignore_request' => true])

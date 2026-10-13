@@ -12,6 +12,7 @@
 - [Разместить модуль товаров или категорий](ADMIN_MODULES.md)
 - [Обработать заказ](ADMIN_ORDERS.md)
 - [Настроить избранное](ADMIN_FAVORITES.md)
+- [Настроить права доступа и роли сотрудников](ADMIN_ACCESS.md)
 - [Создать посадочную страницу](ADMIN_LANDING.md)
 - [Настроить SEO и микроразметку](ADMIN_SEO.md)
 - [Подготовить сайт к запуску](PRODUCTION_CHECKLIST.md)

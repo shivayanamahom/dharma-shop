@@ -47,6 +47,7 @@ $qty = static fn ($value): string => rtrim(rtrim(number_format((float) $value,3,
         </ul></div></section>
     </div>
     <div class="col-lg-4">
+        <?php if ($this->getCurrentUser()->authorise('dharmashop.orders.status', 'com_dharmashop')) : ?>
         <section class="card mb-4"><div class="card-header"><h2 class="fs-6 mb-0"><?php echo Text::_('COM_DHARMASHOP_ORDER_CHANGE_STATUS'); ?></h2></div><div class="card-body">
             <form action="<?php echo Route::_('index.php?option=com_dharmashop&task=order.changeStatus'); ?>" method="post">
                 <?php echo $this->statusForm->renderField('status_id'); ?>
@@ -56,6 +57,7 @@ $qty = static fn ($value): string => rtrim(rtrim(number_format((float) $value,3,
                 <?php echo HTMLHelper::_('form.token'); ?>
             </form>
         </div></section>
+        <?php endif; ?>
         <section class="card"><div class="card-header"><h2 class="fs-6 mb-0"><?php echo Text::sprintf('COM_DHARMASHOP_ORDER_TITLE',$this->escape($order->number)); ?></h2></div><div class="card-body"><dl class="row">
         <dt class="col-5"><?php echo Text::_('JSTATUS'); ?></dt><dd class="col-7"><?php echo $this->escape($order->status_title); ?></dd><dt class="col-5"><?php echo Text::_('JDATE'); ?></dt><dd class="col-7"><?php echo HTMLHelper::_('date',$order->created,Text::_('DATE_FORMAT_LC6')); ?></dd>
         <dt class="col-5"><?php echo Text::_('COM_DHARMASHOP_CUSTOMER_TITLE'); ?></dt><dd class="col-7"><?php if ($order->customer_id && $this->getCurrentUser()->authorise('dharmashop.customers.view','com_dharmashop')) : ?><a href="<?php echo Route::_('index.php?option=com_dharmashop&' . ($this->getCurrentUser()->authorise('core.edit','com_dharmashop') ? 'task=customer.edit' : 'view=customer&layout=edit') . '&id=' . (int) $order->customer_id); ?>">#<?php echo (int) $order->customer_id; ?></a><?php else : ?>#<?php echo (int) $order->customer_id; ?><?php endif; ?></dd>

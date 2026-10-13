@@ -17,7 +17,14 @@ use Joomla\CMS\MVC\Controller\AdminController;
 /** Публикация, корзина, check-in и порядок групп через штатный AdminController. */
 class FieldgroupsController extends AdminController
 {
+    use RequiresActionTrait;
+
     protected $option = 'com_dharmashop';
+
+    protected function requiredAction(): string
+    {
+        return 'dharmashop.fields.manage';
+    }
     protected $text_prefix = 'COM_DHARMASHOP';
 
     public function getModel($name = 'Fieldgroup', $prefix = 'Administrator', $config = ['ignore_request' => true])

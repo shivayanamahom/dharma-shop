@@ -629,7 +629,7 @@ C71/C73: checkout — отдельный вид и тип меню; части d
 
 ### 7.2 Права
 
-`access.xml`: штатные `core.*` + `dharmashop.orders.manage`, `dharmashop.orders.status`, `dharmashop.customers.view`, `dharmashop.settings`.
+`access.xml` (C90): штатные `core.*`; отдельные действия — `dharmashop.orders.manage` (просмотр заказов), `dharmashop.orders.status` (перевод заказа в другой статус), `dharmashop.statuses.manage` (сами статусы), `dharmashop.fields.manage` (поля и группы полей), `dharmashop.groups.manage` (группы товаров), `dharmashop.customers.view`, `dharmashop.favorites.view`, `dharmashop.warehouses.manage`, `dharmashop.shipping.manage`, `dharmashop.payment.manage`. Секции `product` и `category`: у каждого товара и каждой категории (бренд, бейдж) своя запись прав с наследованием **компонент → категория → товар** (штатные ресурсы Joomla `com_dharmashop.product.<id>`, `<extension>.category.<id>`; вкладка «Права доступа» в формах). Контроллеры структуры каталога (`Field*`, `Fieldgroup*`, `Productgroup*`) защищены трейтом `Controller\RequiresActionTrait` (проверка на входе `execute`), представления и модальные окна проверяют то же действие; выбор готовой группы в карточке товара (модальный вид) доступен с `core.edit`. Боковое меню (`plg_system_dharmashopmenu`) показывает пункт, только если у пользователя есть его действие. При обновлении `Installer\AclMigration` переносит группы прежних общих прав в новые отдельные (один раз). Проверки — `dev/acl-checks.php`.
 
 ### 7.3 Сайт
 
