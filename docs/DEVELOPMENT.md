@@ -45,13 +45,7 @@ HTTP делает 20 замеров после прогрева для кажд�
 | `security-upload.sh` | проверка защиты загрузчика изображений (токен, права, подмена типа, обход путей, SVG); см. `docs/SECURITY.md` |
 | `bench/bench.php` | генератор тестового каталога и замеры (`generate`/`run`/`all`/`drop`), см. `docs/BENCHMARKS_NOTES.md` |
 | `bench/report.php` | собирает `docs/BENCHMARKS.md` из `dev/bench/results/*.json` |
-| `bench/rm/clone.php` | размножает товары RadicalMart на тестовом сайте (`<N>` / `clean`); `DHARMA_SITE` = сайт с RM |
-| `bench/rm/run-scale.sh <N>` | клонирование + штатный пересчёт индекса RM + замеры → `dev/bench/rm/results/<N>.json` |
-| `bench/rm/measure.php` | замеры страниц RM по HTTP + журнал запросов MySQL (включает его глобально на время замера и возвращает) |
-| `bench/rm/report.php` | собирает `docs/BENCHMARKS_RM.md` |
-| `bench/rm/dump.sh` | дамп/восстановление базы сайта перед массовыми данными |
 
-Не запускайте два пересчёта индекса RM параллельно (дубль ключа в индексе списков). Перед клонированием снимайте дамп и после замеров возвращайте сайт в исходное состояние.
 
 ## Адресное обновление переводов
 
