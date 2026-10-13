@@ -20,6 +20,8 @@ final class ImageContexts
         'category.header' => [1200, 600],
         'brand.card' => [600, 400],
         'brand.header' => [1200, 600],
+        'landing.header' => [1200, 600],
+        'landing.card' => [600, 400],
         'badge.card' => [600, 400],
         'badge.header' => [1200, 600],
         'shipping.option' => [96, 96],
@@ -89,7 +91,7 @@ final class ImageContexts
         $configured = [];
         foreach ($rows as $row) { $configured[(string) (((array) $row)['context'] ?? '')] = true; }
         foreach (self::defaults() as $row) {
-            if ((str_starts_with($row['context'], 'module.categories.') || str_starts_with($row['context'], 'module.products.') || str_starts_with($row['context'], 'favorites.item.') || str_starts_with($row['context'], 'field.color.') || $row['context'] === 'field.option.filter' || $row['context'] === 'group.choice' || $row['context'] === 'admin.group' || $row['context'] === 'favorites.item' || str_starts_with($row['context'], 'group.teaser.') || str_starts_with($row['context'], 'admin.picker.')) && !isset($configured[$row['context']])) {
+            if ((str_starts_with($row['context'], 'module.categories.') || str_starts_with($row['context'], 'module.products.') || str_starts_with($row['context'], 'favorites.item.') || str_starts_with($row['context'], 'field.color.') || $row['context'] === 'field.option.filter' || $row['context'] === 'group.choice' || $row['context'] === 'admin.group' || $row['context'] === 'favorites.item' || str_starts_with($row['context'], 'group.teaser.') || str_starts_with($row['context'], 'admin.picker.') || str_starts_with($row['context'], 'landing.')) && !isset($configured[$row['context']])) {
                 $rows[] = $row;
             }
         }

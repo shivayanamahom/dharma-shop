@@ -28,7 +28,7 @@ $icons = [
     <?php echo $hooks->render('beforeContent'); ?>
     <?php $landingImage = trim((string) $this->item->params->get('image', '')); ?>
     <?php if ($landingImage !== '') : ?>
-        <img class="img-fluid rounded mb-4" src="<?php echo $this->escape(ImageUrl::resolve($landingImage, 'category.header')); ?>" alt="<?php echo $this->escape((string) ($this->item->params->get('image_alt', '') ?: $this->item->title)); ?>">
+        <img class="img-fluid rounded mb-4" src="<?php echo $this->escape(ImageUrl::resolve($landingImage, 'landing.header')); ?>" alt="<?php echo $this->escape((string) ($this->item->params->get('image_alt', '') ?: $this->item->title)); ?>">
     <?php endif; ?>
     <?php // Полное описание — только на первой странице списка: на остальных оно дублирует её содержимое (SEO); интро остаётся. ?>
     <?php if (trim((string) $this->item->params->get('introtext', '')) !== '') : ?>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+	<layout title="COM_DHARMASHOP_LANDING_VIEW_LANDINGS_TITLE" option="COM_DHARMASHOP_LANDING_VIEW_LANDINGS_OPTION">
+		<message><![CDATA[COM_DHARMASHOP_LANDING_VIEW_LANDINGS_DESC]]></message>
+	</layout>
+	<fields name="params">
+		<fieldset name="basic" label="COM_DHARMASHOP_LANDING_LIST_OPTIONS">
+			<field name="landings_ordering" type="list" label="COM_DHARMASHOP_LANDING_LIST_ORDERING" default="order" validate="options">
+				<option value="order">COM_DHARMASHOP_LANDING_LIST_ORDERING_ORDER</option>
+				<option value="title">COM_DHARMASHOP_LANDING_LIST_ORDERING_TITLE</option>
+			</field>
+			<field name="landings_limit" type="number" label="COM_DHARMASHOP_LANDING_LIST_LIMIT" default="12" min="1" max="100" filter="integer" />
+			<field name="landings_columns" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS" default="3" validate="options"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
+			<field name="landings_show_image" type="radio" label="COM_DHARMASHOP_LANDING_LIST_SHOW_IMAGE" default="1" filter="integer" layout="joomla.form.field.radio.switcher"><option value="0">JNO</option><option value="1">JYES</option></field>
+			<field name="landings_show_intro" type="radio" label="COM_DHARMASHOP_LANDING_LIST_SHOW_INTRO" default="1" filter="integer" layout="joomla.form.field.radio.switcher"><option value="0">JNO</option><option value="1">JYES</option></field>
+			<field name="robots" type="list" label="COM_DHARMASHOP_SEO_ROBOTS_LABEL" default="" validate="options">
+				<option value="">COM_DHARMASHOP_SEO_ROBOTS_DEFAULT</option>
+				<option value="index, follow">index, follow</option>
+				<option value="noindex, follow">noindex, follow</option>
+			</field>
+		</fieldset>
+	</fields>
+</metadata>
