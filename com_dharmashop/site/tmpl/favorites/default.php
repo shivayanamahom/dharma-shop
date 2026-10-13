@@ -8,7 +8,7 @@ use Joomla\CMS\Router\Route;
 /** @var \Dharma\Component\DharmaShop\Site\View\Favorites\HtmlView $this */
 $escape = static fn ($value): string => htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 $renderCard = function (object $item): string {
-    $data = $this->cardRenderer->data($item, $this->cardLayout, 'favorites.item', 'favorites', true, [
+    $data = $this->cardRenderer->data($item, $this->cardLayout, 'product.category', 'favorites', true, [
         'cardLayoutSource' => $this->cardLayoutSource,
         'favoritesPage' => true,
         'fieldColumns' => [],

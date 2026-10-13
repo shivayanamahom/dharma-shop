@@ -82,7 +82,9 @@ class HtmlView extends BaseHtmlView
             if ($this->items) {
                 $component = $app->bootComponent('com_dharmashop');
                 $model = $component->getMVCFactory()->createModel('Category', 'Site', ['ignore_request' => true]);
-                $model->attachCardData($this->items, 1);
+                // Сколько фото в карточке — та же настройка, что у каталога («Фото в карточке»): при нескольких фото выводится слайдер.
+                $images = (string) $settings->get('product_card_images', '1');
+                $model->attachCardData($this->items, in_array($images, ['0', '1', '2', '3', '4', '5'], true) ? (int) $images : 1);
             }
         }
         $this->clearUrl = Route::_('index.php?option=com_dharmashop&task=favorites.clear&format=json', false);

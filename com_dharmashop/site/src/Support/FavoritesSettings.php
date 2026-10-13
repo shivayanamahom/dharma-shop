@@ -50,7 +50,7 @@ final class FavoritesSettings
             }
         }
 
-        return Grid::classes($params, 'favorites', 'g-3');
+        return Grid::classes($params, 'favorites');
     }
 
     public static function renderIcon(int $size = 20): string
