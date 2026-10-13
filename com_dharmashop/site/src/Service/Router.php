@@ -35,6 +35,8 @@ class Router extends RouterView
             if ((int) ($item->id ?? 0) > 1 && isset($item->parent_id, $item->alias)) {
                 $this->categoryCache[self::CATEGORY . '/' . (int) $item->id] = (object) [
                     'id' => (int) $item->id, 'parent_id' => (int) $item->parent_id, 'alias' => (string) $item->alias,
+                    // Модули подгружают только опубликованные категории; если признак есть в строке — берём его.
+                    'published' => (int) ($item->published ?? 1),
                 ];
             }
         }
