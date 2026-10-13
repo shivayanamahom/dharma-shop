@@ -32,6 +32,26 @@ class CheckoutController extends BaseController
         }
         $identity = $this->app->getIdentity();
         $userId = $identity && !$identity->guest ? (int) $identity->id : 0;
+        // Применение промокода — отдельное действие той же защищённой формой; оно не требует повторно валидировать адрес/контакты.
+        $promotionAction = $this->input->post->getCmd('promotion_action');
+        if (in_array($promotionAction,['apply','remove'],true)) {
+            $shop = $this->app->bootComponent($this->option)->getServices();
+            $session = new CartSession($shop->cart(),$this->app); $cart = $session->current();
+            try {
+                if (!$cart) throw new \DomainException('COM_DHARMASHOP_CART_EMPTY');
+                if ($promotionAction==='apply' && !RateLimiter::allow('promotion-code',RateLimiter::clientAddress(),30,3600)) throw new \DomainException('COM_DHARMASHOP_PROMOTION_RATE_LIMIT');
+                $contacts = CheckoutFields::validate($settings,$this->input->post->get('recipient',[],'array'),[]);
+                $this->app->setUserState('com_dharmashop.checkout.values',$contacts['values']);
+                $this->rememberPromotionBuyer($cart,$userId,$contacts);
+                if ($promotionAction==='apply') $shop->promotions()->applyCode($cart,$this->input->post->getString('promotion_code'),(string)($contacts['profile']['email']??''));
+                else $shop->promotions()->removeCode($cart);
+                $totals = $shop->cart()->totals($cart,$shop->cart()->lines($cart));
+                $message = $promotionAction === 'remove' ? 'COM_DHARMASHOP_PROMOTION_REMOVED'
+                    : (!empty($totals['promotion_pending_identity']) ? 'COM_DHARMASHOP_PROMOTION_APPLIED_PENDING' : 'COM_DHARMASHOP_PROMOTION_APPLIED');
+                $this->setRedirect($url,Text::_($message));
+            } catch (\DomainException $error) { $this->setRedirect($url,Text::_($error->getMessage()),'warning'); }
+            return;
+        }
         if ($userId === 0 && (int) $settings->get('checkout_guest',1) !== 1) {
             $this->setRedirect($url,Text::_('COM_DHARMASHOP_CHECKOUT_LOGIN_REQUIRED'),'warning'); return;
         }
@@ -59,10 +79,17 @@ class CheckoutController extends BaseController
         $payment = ['method'=>$this->input->post->getInt('payment_method'),'input'=>$this->input->post->get('payment',[],'array')];
         $this->app->setUserState('com_dharmashop.checkout.payment',['method'=>$payment['method'],'input'=>$payment['input'],'errors'=>[]]);
         $validated = CheckoutFields::validate($settings,$this->input->post->get('recipient',[],'array'),$this->input->post->get('consents',[],'array'));
+        $this->rememberPromotionBuyer($cart,$userId,$validated);
         if ($validated['errors']) {
             $this->app->setUserState('com_dharmashop.checkout.values',$validated['values']);
             $this->app->setUserState('com_dharmashop.checkout.errors',$validated['errors']);
             $this->setRedirect($url,Text::_('COM_DHARMASHOP_ORDER_FIELDS_ERROR'),'warning'); return;
+        }
+        // Отказ по известному лимиту промокода происходит до попытки создания и расхода лимита заказов.
+        $preview = $shop->cart()->totals($cart,$shop->cart()->lines($cart),[],(string)($validated['profile']['email']??''));
+        if (!empty($preview['promotion_error'])) {
+            $this->app->setUserState('com_dharmashop.checkout.values',$validated['values']);
+            $this->setRedirect($url,Text::_($preview['promotion_error']),'warning'); return;
         }
         // Счётчики растут только на проверенных заказах: ошибки заполнения формы лимит не расходуют.
         if (!RateLimiter::allow('order-ip', RateLimiter::clientAddress(), $limitIp, 3600) || !RateLimiter::allow('order-email', (string) ($validated['profile']['email'] ?? ''), $limitEmail, 3600)) {
@@ -90,6 +117,7 @@ class CheckoutController extends BaseController
         }
         $this->app->setUserState('com_dharmashop.checkout.values',null);
         $this->app->setUserState('com_dharmashop.checkout.errors',null);
+        $this->app->setUserState('com_dharmashop.checkout.promotion_buyer',null);
         $this->app->setUserState('com_dharmashop.checkout.shipping',null);
         $this->app->setUserState('com_dharmashop.checkout.payment',null);
         $this->app->setUserState('com_dharmashop.checkout.receipt',$result + ['user_id'=>$userId,'time'=>time()]);
@@ -105,5 +133,12 @@ class CheckoutController extends BaseController
             $this->setRedirect($initiation->url); return;
         }
         $this->setRedirect(Route::_('index.php?option=com_dharmashop&view=checkoutcomplete',false));
+    }
+
+    private function rememberPromotionBuyer(object $cart, int $userId, array $validated): void
+    {
+        $this->app->setUserState('com_dharmashop.checkout.promotion_buyer',[
+            'cart_id'=>(int)$cart->id,'user_id'=>$userId,'email'=>(string)($validated['profile']['email']??''),
+        ]);
     }
 }

@@ -13,6 +13,7 @@ declare(strict_types=1);
 namespace Dharma\Component\DharmaShop\Administrator\Cart;
 
 use Dharma\Component\DharmaShop\Administrator\Order\OrderRules;
+use Dharma\Component\DharmaShop\Administrator\Promotion\PromotionService;
 use Dharma\Component\DharmaShop\Administrator\Support\Sql;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
@@ -296,14 +297,18 @@ final class CartService
      *
      * @param   object[]  $lines  результат lines()
      *
-     * @return  array{count: int, qty: float, subtotal: float, adjustments: array<int, array{title: string, amount: float}>, total: float}
+     * @return  array{count: int, qty: float, subtotal: float, adjustments: array<int, array{title: string, amount: float}>, promotion_progress: array, total: float}
      */
-    public function totals(object $cart, array $lines): array
+    public function totals(object $cart, array $lines, array $skipPromotionIds = [], ?string $buyerEmail = null): array
     {
         $valid = array_filter($lines, static fn (object $line): bool => $line->error === '');
         $subtotal = round(array_sum(array_map(static fn (object $line): float => $line->total, $valid)), 2);
-        $event = $this->dispatch('onDharmaShopCartTotals', ['cart' => $cart, 'lines' => $lines, 'subtotal' => $subtotal, 'adjustments' => []]);
+        PluginHelper::importPlugin('dharmashoppromotion');
+        $event = $this->dispatch('onDharmaShopCartTotals', ['cart' => $cart, 'lines' => $lines, 'subtotal' => $subtotal, 'adjustments' => [], 'promotion_progress' => []]);
         $adjustments = array_values(array_filter((array) $event->getArgument('adjustments'), static fn ($row): bool => is_array($row) && isset($row['title'], $row['amount'])));
+        $promotionService = new PromotionService($this->db);
+        $promotion = $promotionService->calculate($cart, $lines, $subtotal, $skipPromotionIds, $buyerEmail);
+        $adjustments = array_merge($adjustments, $promotion['adjustments']);
         $total = round($subtotal + array_sum(array_map(static fn (array $row): float => (float) $row['amount'], $adjustments)), 2);
 
         return [
@@ -311,6 +316,13 @@ final class CartService
             'qty' => (float) array_sum(array_map(static fn (object $line): float => $line->qty, $valid)),
             'subtotal' => $subtotal,
             'adjustments' => $adjustments,
+            'promotion_progress' => (array) $event->getArgument('promotion_progress'),
+            'promotion_uses' => $promotion['promotion_uses'],
+            'applied_code' => $promotion['applied_code'],
+            'applied_description' => $promotion['applied_description'],
+            'promotion_error' => $promotion['promotion_error'],
+            'promotion_pending_identity' => $promotion['promotion_pending_identity'],
+            'promotion_input_available' => $promotionService->hasAvailableCode(),
             'total' => max(0.0, $total),
         ];
     }
@@ -405,6 +417,10 @@ final class CartService
                 [':c' => [(int) $to->id, ParameterType::INTEGER], ':v' => [(int) $row->variant_id, ParameterType::INTEGER], ':q' => [(string) $row->qty], ':h' => [(string) $row->line_hash], ':p' => [$row->params, $row->params === null ? ParameterType::NULL : ParameterType::STRING]]
             );
         }
+
+        // При входе переносим промокод гостевой корзины, только если у постоянной корзины ещё нет своего.
+        $this->execute('INSERT IGNORE INTO #__dharmashop_cart_promotions (cart_id,promotion_id,promotion_code_id,code,applied) SELECT :to,promotion_id,promotion_code_id,code,applied FROM #__dharmashop_cart_promotions WHERE cart_id=:from',
+            [':to'=>[(int)$to->id,ParameterType::INTEGER],':from'=>[(int)$from->id,ParameterType::INTEGER]]);
 
         $this->execute('DELETE FROM #__dharmashop_cart_items WHERE cart_id = :c', [':c' => [(int) $from->id, ParameterType::INTEGER]]);
         $this->execute('DELETE FROM #__dharmashop_carts WHERE id = :c', [':c' => [(int) $from->id, ParameterType::INTEGER]]);

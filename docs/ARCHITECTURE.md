@@ -352,7 +352,9 @@ CREATE TABLE `#__dharmashop_field_values` (
                           params text (JSON: срок аренды и т. п.), UNIQUE (cart_id, line_hash), KEY (variant_id)
 ```
 
-Цена в корзине не хранится: пересчитывается при каждом чтении (`PriceResolver`), в заказ уходит снимок. Итоги собираются событием; плагины добавляют строки «скидка», «налог», «сбор», «доставка».
+Цена в корзине не хранится: пересчитывается при каждом чтении (`PriceResolver`), в заказ уходит снимок. Итоги собираются событием; плагины добавляют строки «скидка», «налог», «сбор», «доставка». Служба `Administrator\Promotion\PromotionService` пересчитывает сохранённый промокод по действующим ценам и добавляет проверенную скидку в тот же список корректировок.
+
+Акции (C92/C93): `#__dharmashop_promotions` хранит кампании с общими названием, публикацией и доступом; у общих автоматических правил период остаётся у кампании. `#__dharmashop_promotion_codes` хранит нормализованный код и JSON его условий, включая индивидуальный период, категории и применение к дочерним категориям. Пустой список категорий — весь каталог; предки категорий сопоставляются через материализованный `product_categories`. Минимум считается по подходящим строкам, разрешённая скидка — только по ним. `#__dharmashop_cart_promotions` хранит один выбранный код корзины; `#__dharmashop_promotion_uses` — снимок успешного применения. Служба блокирует строки применяемых правил в транзакции создания заказа, повторно проверяет состояние, срок и лимиты, сохраняет применения до commit. Скидка записывается в `order_adjustments`, поэтому письмо и просмотр заказа читают неизменяемый снимок. Новые типы подключаются тем же событием. Подробнее — `PROMOTIONS.md`.
 
 ### 5.7а Избранное (C88)
 
@@ -394,6 +396,10 @@ C71/C73: checkout — отдельный вид и тип меню; части d
 | `#__dharmashop_orders` | `id`, `number` (`UNIQUE`), `secret` char(32), `kind` (1 заказ, 2 заявка), `customer_id`, `user_id`, `status_id` (`KEY`), `currency`, `subtotal`, `adjustments_total`, `total` decimal(15,2), `contact_name`, `contact_email`, `contact_phone` (`KEY`), `contacts` (JSON: прочие поля оформления), `note`, `shipping_method_id`, `shipping_title`, `shipping_data`, `payment_method_id`, `payment_title`, `payment_data`, `cart_id`, `created` (`KEY`), `created_by`, `modified`, `modified_by`, `checked_out*` |
 | `#__dharmashop_order_items` | `id`, `order_id` (`KEY`), `variant_id` NULL, `product_id` NULL, `sku`, `title`, `unit`, `qty`, `price`, `total`, `params`, `ordering` — снимок на момент заказа |
 | `#__dharmashop_order_adjustments` | `id`, `order_id`, `type` (shipping/discount/tax/fee), `code`, `title`, `amount` (может быть < 0), `params`, `ordering` |
+| `#__dharmashop_promotions` | `id`, `title`, `plugin`, nullable `code` UNIQUE, `state`, `access`, `ordering`, `starts`, `ends`, `params` |
+| `#__dharmashop_promotion_codes` | `id`, `promotion_id` FK CASCADE, `code` UNIQUE, `params` JSON (индивидуальные скидка, категории, даты и лимиты), `ordering` |
+| `#__dharmashop_cart_promotions` | `cart_id` PK/FK CASCADE, `promotion_id`, `promotion_code_id`, `code`, `applied` (максимум один код на корзину) |
+| `#__dharmashop_promotion_uses` | `id`, `promotion_id`, `promotion_code_id`, `order_id`, `customer_id`, `customer_hash`, `code`, `amount`, `created`; UNIQUE(`order_id`,`promotion_id`) |
 | `#__dharmashop_order_history` | `id`, `order_id`, `status_id`, `user_id` NULL, `comment`, `notified`, `created`; `KEY (order_id, created)` |
 | `#__dharmashop_payments` | `id`, `order_id`, `method_id`, `amount`, `currency`, `state` (pending/paid/failed/refunded), `external_id` (`UNIQUE` вместе с `method_id`: защита от повторных callback), `data`, `created`, `modified` |
 | `#__dharmashop_statuses` | `id`, `title`, `alias` (`UNIQUE`), `color` (класс Bootstrap), `is_default`, `is_final`, `stock_effect` (0 нет / 1 резерв / 2 списание / 3 снять резерв), `notify_customer`, `notify_admin`, `customer_message`, `ordering`, `state` |
@@ -414,6 +420,8 @@ C71/C73: checkout — отдельный вид и тип меню; части d
 Один плагин может обслуживать несколько записей.
 
 Реализация доставки (C80): `Administrator\Shipping\*` (контракт `TypeInterface`, реестр, `ShippingService`), раздел админки `shippings`, типы — плагины `plg_dharmashopshipping_standard` и `plg_dharmashopshipping_pickup`; снимок выбора — `orders.shipping_data` (JSON: `type`, `title`, `price`, `free`, `term`, `rows`, `data`), цена — строка `order_adjustments` типа `shipping`. Правила для плагинов — `docs/SHIPPING.md`; оплата повторяет схему.
+
+Акции (C92/C93) используют `Administrator\Promotion\PromotionTypeInterface`, `TypeRegistry`, `PromotionService`, событие `onDharmaShopPromotionTypesCollect`, группу `dharmashoppromotion` и раздел `promotions`. Первый тип — `coupon`; каждый код кампании хранит собственные скидку, срок, категории и ограничения. Подробно: `docs/PROMOTIONS.md`.
 
 ### 5.10а Склады (C81)
 
@@ -538,6 +546,7 @@ C71/C73: checkout — отдельный вид и тип меню; части d
 
 | Событие | Когда | Что можно менять |
 |---|---|---|
+| `onDharmaShopPromotionTypesCollect` | C92: построение реестра типов акции | `registry: Administrator\Promotion\TypeRegistry`; плагины группы `dharmashoppromotion` добавляют `PromotionTypeInterface`; список закрывается после dispatch. |
 | `onDharmaShopImagePrepare` | C79: перед выводом изображения через `Administrator\Image\ImageUrl::resolve`; сайт/админка/email | Joomla Event, `request: ImageRequest` (source/context readonly, url изменяемый), `settings: Registry` (копия). Плагин dharmashop/imageresize создаёт производную без SQL каталога; нет обработчика — исходный URL. |
 | `onDharmaShopProductBeforeSave` / `AfterSave` | сохранение товара вместе с вариантами и полями (форма и CLI) | данные; отмена с ошибкой |
 | `onDharmaShopProductBeforeDelete` / `AfterDelete` | удаление | отмена |
@@ -581,7 +590,7 @@ C71/C73: checkout — отдельный вид и тип меню; части d
 |---|---|
 | `onDharmaShopCartBeforeAdd` / `AfterAdd` | отклонить позицию, дополнить `params` |
 | `onDharmaShopCartItemValidate` | ошибки количества, наличия, кратности |
-| `onDharmaShopCartTotals` | добавить строки итогов |
+| `onDharmaShopCartTotals` | добавить строки итогов и данные виджета следующей скидки (`promotion_progress`) |
 | `onDharmaShopCheckoutPrepareForm` | поля оформления (поверх `onContentPrepareForm`) |
 | `onDharmaShopCheckoutValidate` | дополнительные проверки |
 | `onDharmaShopShippingMethods` / `ShippingQuote` | доступные способы доставки, цена и срок (считает плагин доставки) |

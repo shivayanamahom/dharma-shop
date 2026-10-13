@@ -29,6 +29,7 @@ GROUPS = [
             "ADMIN_LANDING",
             "ADMIN_SEO",
             "ADMIN_ORDERS",
+            "ADMIN_PROMOTIONS",
             "ADMIN_SETTINGS",
             "ADMIN_TROUBLESHOOTING",
             "BATCH_PROCESSING",

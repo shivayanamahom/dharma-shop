@@ -574,6 +574,67 @@ CREATE TABLE IF NOT EXISTS `#__dharmashop_order_adjustments` (
   KEY `idx_order` (`order_id`, `ordering`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS `#__dharmashop_promotions` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `title` varchar(255) NOT NULL,
+  `plugin` varchar(50) NOT NULL,
+  `code` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL,
+  `state` tinyint NOT NULL DEFAULT 0,
+  `access` int unsigned NOT NULL DEFAULT 1,
+  `ordering` int NOT NULL DEFAULT 0,
+  `starts` datetime NULL,
+  `ends` datetime NULL,
+  `params` text NULL,
+  `checked_out` int unsigned NULL,
+  `checked_out_time` datetime NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_code` (`code`),
+  KEY `idx_state_period` (`state`,`starts`,`ends`,`id`),
+  KEY `idx_ordering` (`ordering`,`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `#__dharmashop_promotion_codes` (
+  `id` int unsigned NOT NULL AUTO_INCREMENT,
+  `promotion_id` int unsigned NOT NULL,
+  `code` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `params` text NULL,
+  `ordering` int NOT NULL DEFAULT 0,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_code` (`code`),
+  KEY `idx_promotion_ordering` (`promotion_id`,`ordering`,`id`),
+  CONSTRAINT `fk_dhshop_promotion_code_promotion` FOREIGN KEY (`promotion_id`) REFERENCES `#__dharmashop_promotions` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `#__dharmashop_cart_promotions` (
+  `cart_id` int unsigned NOT NULL,
+  `promotion_id` int unsigned NOT NULL,
+  `promotion_code_id` int unsigned NULL,
+  `code` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL,
+  `applied` datetime NOT NULL,
+  PRIMARY KEY (`cart_id`),
+  KEY `idx_promotion` (`promotion_id`),
+  KEY `idx_promotion_code` (`promotion_code_id`),
+  CONSTRAINT `fk_dhshop_cart_promotion_cart` FOREIGN KEY (`cart_id`) REFERENCES `#__dharmashop_carts` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_dhshop_cart_promotion_rule` FOREIGN KEY (`promotion_id`) REFERENCES `#__dharmashop_promotions` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `#__dharmashop_promotion_uses` (
+  `id` bigint unsigned NOT NULL AUTO_INCREMENT,
+  `promotion_id` int unsigned NOT NULL,
+  `promotion_code_id` int unsigned NULL,
+  `order_id` int unsigned NOT NULL,
+  `customer_id` int unsigned NULL,
+  `customer_hash` char(64) CHARACTER SET ascii COLLATE ascii_bin NULL,
+  `code` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL,
+  `amount` decimal(15,2) NOT NULL,
+  `created` datetime NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_order_promotion` (`order_id`,`promotion_id`),
+  KEY `idx_promotion_created` (`promotion_id`,`created`),
+  KEY `idx_promotion_customer` (`promotion_id`,`customer_hash`),
+  KEY `idx_promotion_code_customer` (`promotion_code_id`,`customer_hash`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS `#__dharmashop_order_history` (
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `order_id` int unsigned NOT NULL,

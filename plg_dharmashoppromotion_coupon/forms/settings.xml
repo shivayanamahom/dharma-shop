@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form><fields name="params"><fieldset name="type_coupon" label="PLG_DHARMASHOPPROMOTION_COUPON_SETTINGS">
+    <field name="coupons" type="subform" label="PLG_DHARMASHOPPROMOTION_COUPON_LIST" description="PLG_DHARMASHOPPROMOTION_COUPON_LIST_DESC" multiple="true" layout="joomla.form.field.subform.repeatable" formsource="plugins/dharmashoppromotion/coupon/forms/coupon.xml" min="1" buttons="add,remove,move" validate="Subform" />
+</fieldset></fields></form>

@@ -6,6 +6,7 @@ namespace Dharma\Component\DharmaShop\Site\Controller;
 use Dharma\Component\DharmaShop\Administrator\Cart\CartService;
 use Dharma\Component\DharmaShop\Administrator\Pricing\MoneyFormatter;
 use Dharma\Component\DharmaShop\Site\Support\CartSession;
+use Dharma\Component\DharmaShop\Site\Support\RateLimiter;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Layout\FileLayout;
@@ -112,6 +113,28 @@ class CartController extends BaseController
             }
 
             return ['ok' => true, 'message' => 'COM_DHARMASHOP_CART_CLEARED'];
+        });
+    }
+
+    public function applyPromotion(): void
+    {
+        $this->run(function (CartSession $session): array {
+            $cart = $session->current();
+            if ($cart === null) return ['ok'=>false,'error'=>'COM_DHARMASHOP_CART_EMPTY'];
+            if (!RateLimiter::allow('promotion-code',RateLimiter::clientAddress(),30,3600)) return ['ok'=>false,'error'=>'COM_DHARMASHOP_PROMOTION_RATE_LIMIT'];
+            try { $this->app->bootComponent('com_dharmashop')->getServices()->promotions()->applyCode($cart,$this->input->post->getString('promotion_code')); }
+            catch (\DomainException $error) { return ['ok'=>false,'error'=>$error->getMessage()]; }
+            $totals = $session->service()->totals($cart,$session->service()->lines($cart));
+            return ['ok'=>true,'message'=>!empty($totals['promotion_pending_identity']) ? 'COM_DHARMASHOP_PROMOTION_APPLIED_PENDING' : 'COM_DHARMASHOP_PROMOTION_APPLIED'];
+        });
+    }
+
+    public function removePromotion(): void
+    {
+        $this->run(function (CartSession $session): array {
+            $cart = $session->current();
+            if ($cart !== null) $this->app->bootComponent('com_dharmashop')->getServices()->promotions()->removeCode($cart);
+            return ['ok'=>true,'message'=>'COM_DHARMASHOP_PROMOTION_REMOVED'];
         });
     }
 

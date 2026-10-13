@@ -77,6 +77,53 @@ $qtyText = static fn (float $qty): string => rtrim(rtrim(number_format($qty, 3, 
         <?php endforeach; ?>
     </ul>
     <div class="dharmaMiniCartFooter">
+        <?php if (!empty($this->totals['promotion_progress'])) :
+            $progress = $this->totals['promotion_progress'];
+            $displayTiers = array_merge([[
+                'discount_label' => '0%',
+                'threshold_label' => $this->money->format('0'),
+                'reached' => true,
+                'current' => $progress['current_discount_label'] === null,
+            ]], $progress['tiers']);
+        ?>
+            <section class="dharmaMiniCartPromotion" role="status" aria-label="<?php echo $this->escape(Text::_('PLG_DHARMASHOPPROMOTION_THRESHOLD_TITLE')); ?>">
+                <div class="dharmaMiniCartPromotionHeading">
+                    <h3 class="dharmaMiniCartPromotionTitle"><?php echo Text::_('PLG_DHARMASHOPPROMOTION_THRESHOLD_TITLE'); ?></h3>
+                    <span class="dharmaMiniCartPromotionCurrent<?php echo $progress['current_discount_label'] !== null ? ' is-reached' : ' is-pending'; ?>">
+                        <?php echo $progress['current_discount_label'] !== null
+                            ? Text::sprintf('PLG_DHARMASHOPPROMOTION_THRESHOLD_CURRENT', $this->escape((string) $progress['current_discount_label']))
+                            : Text::_('PLG_DHARMASHOPPROMOTION_THRESHOLD_NOT_REACHED'); ?>
+                    </span>
+                </div>
+                <p class="dharmaMiniCartPromotionSubtitle"><?php echo Text::_('PLG_DHARMASHOPPROMOTION_THRESHOLD_SUBTITLE'); ?></p>
+                <ul class="dharmaMiniCartPromotionTiers" aria-label="<?php echo $this->escape(Text::_('PLG_DHARMASHOPPROMOTION_THRESHOLD_TIERS_LABEL')); ?>">
+                    <?php foreach ($displayTiers as $tier) : ?>
+                        <li class="dharmaMiniCartPromotionTier<?php echo $tier['reached'] ? ' is-reached' : ''; ?><?php echo $tier['current'] ? ' is-current' : ''; ?>">
+                            <span class="dharmaMiniCartPromotionTierDiscount"><?php echo $this->escape((string) $tier['discount_label']); ?></span>
+                            <span class="dharmaMiniCartPromotionTierMarker" aria-hidden="true"></span>
+                            <span class="dharmaMiniCartPromotionTierFrom"><?php echo $tier['current']
+                                ? Text::_('PLG_DHARMASHOPPROMOTION_THRESHOLD_YOUR_LEVEL')
+                                : Text::sprintf('PLG_DHARMASHOPPROMOTION_THRESHOLD_FROM', $this->escape((string) $tier['threshold_label'])); ?></span>
+                        </li>
+                    <?php endforeach; ?>
+                </ul>
+                <div class="dharmaMiniCartPromotionProgressText">
+                    <span class="dharmaMiniCartPromotionGift" aria-hidden="true">
+                        <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" focusable="false"><path d="M5 14h22v14H5zM3 9h26v5H3zM16 9v19"/><path d="M16 9H10a4 4 0 1 1 4-4l2 4Zm0 0h6a4 4 0 1 0-4-4l-2 4Z"/></svg>
+                    </span>
+                    <div class="dharmaMiniCartPromotionRemaining">
+                        <?php if ($progress['complete']) : ?>
+                            <span class="dharmaMiniCartPromotionRemainingLabel"><?php echo Text::_('PLG_DHARMASHOPPROMOTION_THRESHOLD_MAXIMUM'); ?></span>
+                            <strong class="dharmaMiniCartPromotionRemainingAmount"><?php echo $this->escape((string) $progress['current_discount_label']); ?></strong>
+                        <?php else : ?>
+                            <span class="dharmaMiniCartPromotionRemainingLabel"><?php echo Text::sprintf('PLG_DHARMASHOPPROMOTION_THRESHOLD_REMAINING', $this->escape((string) $progress['next_discount_label'])); ?></span>
+                            <strong class="dharmaMiniCartPromotionRemainingAmount"><?php echo $this->escape($this->money->format((string) $progress['remaining'])); ?></strong>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </section>
+        <?php endif; ?>
+        <div class="dharmaMiniCartSummary">
         <?php foreach ($this->totals['adjustments'] as $adjustment) : ?>
             <div class="dharmaMiniCartSum dharmaMiniCartAdjustment"><span><?php echo $this->escape((string) $adjustment['title']); ?></span><span><?php echo $this->escape($this->money->format((string) $adjustment['amount'])); ?></span></div>
         <?php endforeach; ?>
@@ -86,6 +133,7 @@ $qtyText = static fn (float $qty): string => rtrim(rtrim(number_format($qty, 3, 
             <?php if ($this->mini['checkout']) : ?>
                 <a class="<?php echo $this->escape($this->mini['checkout_class']); ?> dharmaMiniCartCheckout" href="<?php echo $this->escape($checkoutUrl); ?>"><?php echo Text::_('COM_DHARMASHOP_CHECKOUT'); ?></a>
             <?php endif; ?>
+        </div>
         </div>
     </div>
 <?php endif; ?>

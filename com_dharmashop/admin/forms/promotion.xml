@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form addfieldprefix="Dharma\Component\DharmaShop\Administrator\Field">
+    <fieldset name="details">
+        <field name="id" type="hidden" filter="integer" />
+        <field name="title" type="text" label="JGLOBAL_TITLE" required="true" maxlength="255" filter="string" />
+        <field name="plugin" type="promotiontype" label="COM_DHARMASHOP_PROMOTION_TYPE" required="true" filter="cmd"><option value="">COM_DHARMASHOP_PROMOTION_TYPE_SELECT</option></field>
+        <field name="starts" type="calendar" label="COM_DHARMASHOP_PROMOTION_STARTS" filter="string" showon="plugin!:coupon" />
+        <field name="ends" type="calendar" label="COM_DHARMASHOP_PROMOTION_ENDS" filter="string" showon="plugin!:coupon" />
+    </fieldset>
+    <fieldset name="publishing">
+        <field name="state" type="list" label="JSTATUS" default="0" filter="integer" validate="options"><option value="1">JPUBLISHED</option><option value="0">JUNPUBLISHED</option></field>
+        <field name="access" type="accesslevel" label="JFIELD_ACCESS_LABEL" default="1" filter="uint" />
+        <field name="ordering" type="number" label="JFIELD_ORDERING_LABEL" default="0" min="0" filter="integer" />
+    </fieldset>
+</form>

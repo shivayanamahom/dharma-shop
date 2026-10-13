@@ -36,7 +36,7 @@ return new class () implements ServiceProviderInterface {
                 private const MIN_PHP = '8.3.0';
 
                 /** Плагины пакета, которые включаем сразу после установки: [группа, элемент]. */
-                private const PLUGINS = [['dharmashop', 'imageresize'], ['dharmashopnotify', 'email'], ['dharmashopnotify', 'telegram'], ['dharmashop', 'social'], ['dharmashop', 'structureddata'], ['dharmashopfield', 'basic'], ['dharmashopshipping', 'standard'], ['dharmashopshipping', 'courier'], ['dharmashopshipping', 'pickup'], ['dharmashoppayment', 'standard'], ['system', 'dharmashopswiper'], ['system', 'dharmashopfancybox'], ['system', 'dharmashopmenu'], ['system', 'dharmashoppositions'], ['system', 'dharmashoprelated'], ['task', 'dharmashop']];
+                private const PLUGINS = [['dharmashop', 'imageresize'], ['dharmashopnotify', 'email'], ['dharmashopnotify', 'telegram'], ['dharmashop', 'social'], ['dharmashop', 'structureddata'], ['dharmashopfield', 'basic'], ['dharmashopshipping', 'standard'], ['dharmashopshipping', 'courier'], ['dharmashopshipping', 'pickup'], ['dharmashoppayment', 'standard'], ['dharmashoppromotion', 'coupon'], ['system', 'dharmashopswiper'], ['system', 'dharmashopfancybox'], ['system', 'dharmashopmenu'], ['system', 'dharmashoppositions'], ['system', 'dharmashoprelated'], ['task', 'dharmashop']];
 
                 /** Обновление не должно включать плагин, отключённый владельцем сайта. */
                 private array $existingPlugins = [];
@@ -103,6 +103,7 @@ return new class () implements ServiceProviderInterface {
                         $this->upgradeFieldTargets();
                         $this->upgradeFieldGroupTabs();
                         $this->upgradeFieldValueStorage();
+                        $this->upgradePromotionStorage();
                         $this->prepareLayoutMigration();
                     } catch (\Throwable $error) {
                         $this->app->enqueueMessage('Dharma Shop: ' . $error->getMessage()
@@ -112,6 +113,56 @@ return new class () implements ServiceProviderInterface {
                     }
 
                     return true;
+                }
+
+                /** Акции добавлены после первой установки: при обновлении пакета создаём их схему до установки новых файлов. */
+                private function upgradePromotionStorage(): void
+                {
+                    $tables = $this->db->getTableList();
+                    if (!in_array($this->db->replacePrefix('#__dharmashop_carts'), $tables, true)) return;
+                    $prefix = $this->db->getPrefix();
+                    $this->db->setQuery("CREATE TABLE IF NOT EXISTS `{$prefix}dharmashop_promotions` (
+                        `id` int unsigned NOT NULL AUTO_INCREMENT, `title` varchar(255) NOT NULL, `plugin` varchar(50) NOT NULL,
+                        `code` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL, `state` tinyint NOT NULL DEFAULT 0,
+                        `access` int unsigned NOT NULL DEFAULT 1, `ordering` int NOT NULL DEFAULT 0, `starts` datetime NULL, `ends` datetime NULL,
+                        `params` text NULL, `checked_out` int unsigned NULL, `checked_out_time` datetime NULL, PRIMARY KEY (`id`),
+                        UNIQUE KEY `uq_code` (`code`), KEY `idx_state_period` (`state`,`starts`,`ends`,`id`), KEY `idx_ordering` (`ordering`,`id`)
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci")->execute();
+                    $this->db->setQuery("CREATE TABLE IF NOT EXISTS `{$prefix}dharmashop_promotion_codes` (
+                        `id` int unsigned NOT NULL AUTO_INCREMENT, `promotion_id` int unsigned NOT NULL,
+                        `code` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL, `params` text NULL,
+                        `ordering` int NOT NULL DEFAULT 0, PRIMARY KEY (`id`), UNIQUE KEY `uq_code` (`code`),
+                        KEY `idx_promotion_ordering` (`promotion_id`,`ordering`,`id`),
+                        CONSTRAINT `fk_dhshop_promotion_code_promotion` FOREIGN KEY (`promotion_id`) REFERENCES `{$prefix}dharmashop_promotions` (`id`) ON DELETE CASCADE
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci")->execute();
+                    $this->db->setQuery("CREATE TABLE IF NOT EXISTS `{$prefix}dharmashop_cart_promotions` (
+                        `cart_id` int unsigned NOT NULL, `promotion_id` int unsigned NOT NULL, `promotion_code_id` int unsigned NULL,
+                        `code` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL, `applied` datetime NOT NULL,
+                        PRIMARY KEY (`cart_id`), KEY `idx_promotion` (`promotion_id`), KEY `idx_promotion_code` (`promotion_code_id`),
+                        CONSTRAINT `fk_dhshop_cart_promotion_cart` FOREIGN KEY (`cart_id`) REFERENCES `{$prefix}dharmashop_carts` (`id`) ON DELETE CASCADE,
+                        CONSTRAINT `fk_dhshop_cart_promotion_rule` FOREIGN KEY (`promotion_id`) REFERENCES `{$prefix}dharmashop_promotions` (`id`) ON DELETE CASCADE
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci")->execute();
+                    $this->db->setQuery("CREATE TABLE IF NOT EXISTS `{$prefix}dharmashop_promotion_uses` (
+                        `id` bigint unsigned NOT NULL AUTO_INCREMENT, `promotion_id` int unsigned NOT NULL, `promotion_code_id` int unsigned NULL, `order_id` int unsigned NOT NULL,
+                        `customer_id` int unsigned NULL, `customer_hash` char(64) CHARACTER SET ascii COLLATE ascii_bin NULL,
+                        `code` varchar(64) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL, `amount` decimal(15,2) NOT NULL,
+                        `created` datetime NOT NULL, PRIMARY KEY (`id`), UNIQUE KEY `uq_order_promotion` (`order_id`,`promotion_id`),
+                        KEY `idx_promotion_created` (`promotion_id`,`created`), KEY `idx_promotion_customer` (`promotion_id`,`customer_hash`),
+                        KEY `idx_promotion_code_customer` (`promotion_code_id`,`customer_hash`)
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci")->execute();
+                    $cartColumns = $this->db->getTableColumns('#__dharmashop_cart_promotions');
+                    if (!isset($cartColumns['promotion_code_id'])) {
+                        $this->db->setQuery("ALTER TABLE `{$prefix}dharmashop_cart_promotions` ADD `promotion_code_id` int unsigned NULL AFTER `promotion_id`, ADD KEY `idx_promotion_code` (`promotion_code_id`)")->execute();
+                    }
+                    $useColumns = $this->db->getTableColumns('#__dharmashop_promotion_uses');
+                    if (!isset($useColumns['promotion_code_id'])) {
+                        $this->db->setQuery("ALTER TABLE `{$prefix}dharmashop_promotion_uses` ADD `promotion_code_id` int unsigned NULL AFTER `promotion_id`, ADD KEY `idx_promotion_code_customer` (`promotion_code_id`,`customer_hash`)")->execute();
+                    }
+                    // Переносит коды из прежней модели «одна запись на код» в повторяемые строки.
+                    $this->db->setQuery("INSERT IGNORE INTO `{$prefix}dharmashop_promotion_codes` (`promotion_id`,`code`,`params`,`ordering`) SELECT `id`,`code`,`params`,`ordering` FROM `{$prefix}dharmashop_promotions` WHERE `plugin`='coupon' AND `code` IS NOT NULL")->execute();
+                    $this->db->setQuery("UPDATE `{$prefix}dharmashop_cart_promotions` cp JOIN `{$prefix}dharmashop_promotion_codes` pc ON pc.promotion_id=cp.promotion_id AND pc.code=cp.code SET cp.promotion_code_id=pc.id WHERE cp.promotion_code_id IS NULL")->execute();
+                    $this->db->setQuery("UPDATE `{$prefix}dharmashop_promotion_uses` pu JOIN `{$prefix}dharmashop_promotion_codes` pc ON pc.promotion_id=pu.promotion_id AND pc.code=pu.code SET pu.promotion_code_id=pc.id WHERE pu.promotion_code_id IS NULL")->execute();
+                    $this->db->setQuery("UPDATE `{$prefix}dharmashop_promotions` SET `code`=NULL, `params`='{}' WHERE `plugin`='coupon' AND `code` IS NOT NULL")->execute();
                 }
 
                 public function postflight(string $type, InstallerAdapter $adapter): bool

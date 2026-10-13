@@ -17,6 +17,21 @@ $qtyText = static fn (float $qty): string => rtrim(rtrim(number_format($qty, 3, 
         <?php if (!$this->lines) : ?>
             <p class="text-body-secondary mb-0"><?php echo Text::_('COM_DHARMASHOP_CART_EMPTY'); ?></p>
         <?php else : ?>
+            <?php echo (new \Joomla\CMS\Layout\FileLayout('components.dharmashop.cart.promotion-progress', null, ['component' => 'none', 'client' => 0]))->render(['progress' => $this->totals['promotion_progress'] ?? [], 'money' => $this->money]); ?>
+            <?php if (!empty($this->totals['promotion_input_available']) || !empty($this->totals['applied_code'])) : ?>
+            <div class="border-top mt-3 pt-3 mb-3">
+                <label class="form-label" for="dharma-checkout-promotion-code"><?php echo Text::_('COM_DHARMASHOP_PROMOTION_CODE'); ?></label>
+                <div class="input-group">
+                    <input type="text" id="dharma-checkout-promotion-code" class="form-control" name="promotion_code" value="<?php echo $this->escape($this->totals['applied_code'] ?? ''); ?>" maxlength="64" autocomplete="off">
+                    <button type="submit" class="btn btn-outline-primary" name="promotion_action" value="apply" formnovalidate><?php echo Text::_('COM_DHARMASHOP_PROMOTION_APPLY'); ?></button>
+                </div>
+                <?php if (!empty($this->totals['promotion_error'])) : ?><div class="alert alert-warning small mt-2 mb-2" role="alert"><?php echo $this->escape(Text::_($this->totals['promotion_error'])); ?></div><?php endif; ?>
+                <?php if (!empty($this->totals['promotion_pending_identity'])) : ?><div class="form-text"><?php echo Text::_('COM_DHARMASHOP_PROMOTION_IDENTITY_PENDING'); ?></div><?php endif; ?>
+                <?php if (!empty($this->totals['applied_description'])) : ?><div class="form-text"><?php echo $this->escape($this->totals['applied_description']); ?></div><?php endif; ?>
+                <?php if (!empty($this->totals['applied_code'])) : ?><button type="submit" class="btn btn-sm btn-link px-0" name="promotion_action" value="remove" formnovalidate><?php echo Text::_('COM_DHARMASHOP_PROMOTION_REMOVE'); ?></button><?php endif; ?>
+                <div class="form-text"><?php echo Text::_('COM_DHARMASHOP_PROMOTION_CHECKOUT_HELP'); ?></div>
+            </div>
+            <?php endif; ?>
             <ul class="list-unstyled mb-0 d-flex flex-column gap-3">
                 <?php foreach ($this->lines as $line) : ?>
                     <li>

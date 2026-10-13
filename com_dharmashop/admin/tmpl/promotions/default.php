@@ -1,0 +1,13 @@
+<?php
+declare(strict_types=1);
+\defined('_JEXEC') or die;
+use Dharma\Component\DharmaShop\Administrator\Promotion\TypeRegistry;
+use Joomla\CMS\HTML\HTMLHelper;use Joomla\CMS\Language\Text;use Joomla\CMS\Layout\LayoutHelper;use Joomla\CMS\Router\Route;use Joomla\Registry\Registry;
+$this->getDocument()->getWebAssetManager()->useScript('table.columns')->useScript('multiselect');$user=$this->getCurrentUser();$types=TypeRegistry::current()->all();
+?>
+<form action="<?php echo Route::_('index.php?option=com_dharmashop&view=promotions'); ?>" method="post" name="adminForm" id="adminForm"><div id="j-main-container" class="j-main-container">
+<?php echo LayoutHelper::render('joomla.searchtools.default',['view'=>$this]); ?>
+<?php if(!$this->items): ?><div class="alert alert-info"><?php echo Text::_($this->activeFilters?'JGLOBAL_NO_MATCHING_RESULTS':'COM_DHARMASHOP_PROMOTIONS_EMPTY'); ?></div><?php else: ?>
+<table class="table"><caption class="visually-hidden"><?php echo Text::_('COM_DHARMASHOP_PROMOTIONS_TITLE'); ?></caption><thead><tr><td class="w-1 text-center"><?php echo HTMLHelper::_('grid.checkall'); ?></td><th scope="col"><?php echo Text::_('JGLOBAL_TITLE'); ?></th><th scope="col"><?php echo Text::_('COM_DHARMASHOP_PROMOTION_RULE_SUMMARY'); ?></th><th scope="col"><?php echo Text::_('COM_DHARMASHOP_PROMOTION_TYPE'); ?></th><th scope="col" class="w-1 text-center"><?php echo Text::_('JSTATUS'); ?></th><th scope="col" class="w-1"><?php echo Text::_('JGRID_HEADING_ID'); ?></th></tr></thead><tbody>
+<?php foreach($this->items as $i=>$item): $type=$types[$item->plugin]??null; $summary=''; if($type&&method_exists($type,'listSummary')){$summary=$type->listSummary((new Registry((string)$item->params))->toArray(),(string)$item->codes);}else{$summary=trim((string)$item->codes)?:Text::_('COM_DHARMASHOP_PROMOTION_RULE_SUMMARY_UNAVAILABLE');} ?><tr><td class="text-center"><?php echo HTMLHelper::_('grid.id',$i,$item->id); ?></td><th scope="row"><?php if($user->authorise('core.edit','com_dharmashop')): ?><a href="<?php echo Route::_('index.php?option=com_dharmashop&task=promotion.edit&id='.(int)$item->id); ?>"><?php echo $this->escape($item->title); ?></a><?php else: echo $this->escape($item->title); endif; ?></th><td><?php echo $this->escape($summary); ?></td><td><?php echo $this->escape(Text::_($type?->label()??$item->plugin)); ?></td><td class="text-center"><?php echo HTMLHelper::_('jgrid.published',$item->state,$i,'promotions.'); ?></td><td><?php echo (int)$item->id; ?></td></tr><?php endforeach; ?>
+</tbody></table><?php echo $this->pagination->getListFooter(); ?><?php endif; ?><input type="hidden" name="task" value=""><input type="hidden" name="boxchecked" value="0"><?php echo HTMLHelper::_('form.token'); ?></div></form>

@@ -22,6 +22,7 @@
         </files>
         <files folder="layouts/cart" target="layouts/components/dharmashop/cart">
             <filename>unavailable.php</filename>
+            <filename>promotion-progress.php</filename>
             <filename>toast.php</filename>
         </files>
         <files folder="layouts/favorites" target="layouts/components/dharmashop/favorites">

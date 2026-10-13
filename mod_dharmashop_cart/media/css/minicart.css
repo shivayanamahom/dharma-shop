@@ -65,7 +65,31 @@
 .dharmaMiniCartRemove svg { width: 0.625rem; height: 0.625rem; }
 .dharmaMiniCartRemove:hover, .dharmaMiniCartRemove:focus-visible { background: var(--dharma-minicart-border); }
 
-.dharmaMiniCartFooter { position: sticky; bottom: 0; padding: 1rem 1.25rem 1.25rem; background: var(--dharma-minicart-card); box-shadow: 0 -1px 0 var(--dharma-minicart-bg); }
+.dharmaMiniCartFooter { position: sticky; bottom: 0; padding: 0.5rem; background: var(--dharma-minicart-bg); box-shadow: 0 -1px 0 var(--dharma-minicart-bg); }
+/* Уровни скидки: шкала с равными интервалами, текущий уровень и сумма до следующего. */
+.dharmaMiniCartPromotion { --dharma-promotion-blue: var(--bs-blue, #0d6efd); --dharma-promotion-pale: color-mix(in srgb, var(--dharma-promotion-blue) 9%, var(--dharma-minicart-card)); margin-bottom: 0.5rem; padding: 1rem; border-radius: var(--dharma-minicart-radius); background: var(--dharma-minicart-card); color: var(--bs-body-color, #212529); box-shadow: 0 1px 3px rgb(0 0 0 / 0.08); }
+.dharmaMiniCartPromotionHeading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.dharmaMiniCartPromotionTitle { margin: 0; font-size: 1rem; font-weight: 750; line-height: 1.25; }
+.dharmaMiniCartPromotionCurrent { display: inline-flex; align-items: center; min-height: 1.5rem; padding: 0.2rem 0.75rem; border-radius: 999px; background: var(--dharma-promotion-pale); color: var(--dharma-promotion-blue); font-size: 0.75rem; font-weight: 700; line-height: 1.2; white-space: nowrap; }
+.dharmaMiniCartPromotionSubtitle { margin: 0.35rem 0 1.1rem; color: var(--dharma-minicart-muted); font-size: 0.75rem; line-height: 1.4; }
+.dharmaMiniCartPromotionTiers { display: flex; margin: 0 -0.5rem 1rem; padding: 0.1rem 0.5rem 0.3rem; overflow-x: auto; list-style: none; }
+.dharmaMiniCartPromotionTier { position: relative; flex: 1 0 4.5rem; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 0.4rem; color: var(--dharma-minicart-muted); text-align: center; }
+.dharmaMiniCartPromotionTier::before { position: absolute; z-index: 0; top: 1.8625rem; right: 50%; width: 100%; border-top: 0.2rem dashed var(--dharma-minicart-border); content: ""; }
+.dharmaMiniCartPromotionTier:first-child::before { content: none; }
+.dharmaMiniCartPromotionTier.is-reached::before { border-top-style: solid; border-top-color: var(--dharma-promotion-blue); }
+.dharmaMiniCartPromotionTierDiscount { display: block; height: 1rem; font-size: 0.75rem; font-weight: 700; line-height: 1rem; color: var(--bs-body-color, #495057); white-space: nowrap; }
+.dharmaMiniCartPromotionTierMarker { position: relative; z-index: 1; display: block; box-sizing: border-box; width: 1.125rem; height: 1.125rem; border: 0.15rem solid var(--dharma-minicart-card); border-radius: 50%; background: var(--dharma-minicart-border); box-shadow: 0 0.1rem 0.2rem rgb(0 0 0 / 0.1); }
+.dharmaMiniCartPromotionTier.is-reached .dharmaMiniCartPromotionTierMarker { border-color: color-mix(in srgb, var(--dharma-promotion-blue) 20%, var(--dharma-minicart-card)); background: var(--dharma-minicart-card); box-shadow: none; }
+.dharmaMiniCartPromotionTier.is-current .dharmaMiniCartPromotionTierMarker { border-color: color-mix(in srgb, var(--dharma-promotion-blue) 30%, var(--dharma-minicart-card)); background: var(--dharma-promotion-blue); box-shadow: 0 0 0 0.15rem color-mix(in srgb, var(--dharma-promotion-blue) 12%, transparent), 0 0.1rem 0.25rem rgb(0 0 0 / 0.12); }
+.dharmaMiniCartPromotionTier.is-current .dharmaMiniCartPromotionTierDiscount, .dharmaMiniCartPromotionTier.is-current .dharmaMiniCartPromotionTierFrom { color: var(--dharma-promotion-blue); }
+.dharmaMiniCartPromotionTierFrom { display: block; font-size: 0.625rem; line-height: 1.25; white-space: nowrap; }
+.dharmaMiniCartPromotionProgressText { display: flex; align-items: center; gap: 1rem; padding: 0.75rem 1rem; border-radius: 0.5rem; background: linear-gradient(100deg, var(--dharma-promotion-pale), color-mix(in srgb, var(--dharma-promotion-blue) 7%, var(--dharma-minicart-card))); }
+.dharmaMiniCartPromotionGift { flex: 0 0 2.5rem; display: flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; border-radius: 50%; background: color-mix(in srgb, var(--dharma-promotion-blue) 6%, transparent); color: var(--dharma-promotion-blue); }
+.dharmaMiniCartPromotionGift svg { display: block; width: 1.5rem; height: 1.5rem; }
+.dharmaMiniCartPromotionRemaining { min-width: 0; padding-left: 1rem; border-left: 1px solid color-mix(in srgb, var(--dharma-promotion-blue) 18%, transparent); }
+.dharmaMiniCartPromotionRemainingLabel { display: block; color: var(--dharma-minicart-muted); font-size: 0.75rem; line-height: 1.3; }
+.dharmaMiniCartPromotionRemainingAmount { display: block; margin-top: 0.15rem; color: var(--dharma-promotion-blue); font-size: 1.375rem; font-weight: 750; line-height: 1.15; overflow-wrap: anywhere; }
+.dharmaMiniCartSummary { padding: 1rem; border-radius: var(--dharma-minicart-radius); background: var(--dharma-minicart-card); box-shadow: 0 1px 3px rgb(0 0 0 / 0.08); }
 .dharmaMiniCartSum { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
 .dharmaMiniCartAdjustment { margin-bottom: 0.25rem; font-size: 0.75rem; color: var(--dharma-minicart-muted); }
 .dharmaMiniCartSumTotal { margin-bottom: 0.75rem; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; }

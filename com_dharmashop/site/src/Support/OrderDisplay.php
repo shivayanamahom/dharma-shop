@@ -14,6 +14,9 @@ final class OrderDisplay
     public readonly string $date;
     public readonly string $total;
     public readonly string $subtotal;
+    public readonly string $beforeDiscount;
+    public readonly string $productDiscount;
+    public readonly bool $hasProductDiscount;
 
     public function __construct(object $order, Registry $settings)
     {
@@ -24,13 +27,27 @@ final class OrderDisplay
         $this->money = new MoneyFormatter($params);
         $this->date = HTMLHelper::_('date', $order->created, 'd.m.Y H:i');
         $unknown = false;
+        $beforeDiscount = 0.0;
+        $productDiscount = 0.0;
         foreach ($order->items as $item) {
             if ($item->price === null || ($this->money->replacesZero() && (float) $item->price === 0.0 && !self::isFree($item))) {
                 $unknown = true;
             }
+
+            $itemParams = json_decode((string) ($item->params ?? ''), true) ?: [];
+            $price = $item->price === null ? 0.0 : (float) $item->price;
+            $basePrice = isset($itemParams['base_price']) && is_numeric($itemParams['base_price'])
+                ? (float) $itemParams['base_price']
+                : $price;
+            $qty = (float) $item->qty;
+            $beforeDiscount += $basePrice * $qty;
+            $productDiscount += max(0.0, $basePrice - $price) * $qty;
         }
         $this->total = $this->amount($order->total, $unknown);
         $this->subtotal = $this->amount($order->subtotal, $unknown);
+        $this->beforeDiscount = $this->amount((string) round($beforeDiscount, 2), $unknown);
+        $this->productDiscount = $this->money->format(round($productDiscount, 2));
+        $this->hasProductDiscount = round($productDiscount, 2) > 0;
     }
 
     private function amount(string $value, bool $unknown): string

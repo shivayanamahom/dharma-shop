@@ -160,6 +160,8 @@ final class Telegram extends CMSPlugin implements SubscriberInterface
             $lines[] = '';
             $lines[] = 'Состав заказа:';
             $unknownTotal = false;
+            $beforeDiscount = 0.0;
+            $productDiscount = 0.0;
 
             foreach ($message->items as $item) {
                 $variant = json_decode((string) ($item['params'] ?? ''), true) ?: [];
@@ -173,8 +175,20 @@ final class Telegram extends CMSPlugin implements SubscriberInterface
                 $free = !empty($variant['zero_free']);
                 $price = $item['price'] === null ? $money->zeroText() : $money->price($item['price'], $free);
                 $lineTotal = $item['total'] === null ? $money->zeroText() : $money->price($item['total'], $free);
-                $qty = rtrim(rtrim(number_format((float) $item['qty'], 3, ',', ' '), '0'), ',') . ' ' . trim((string) $item['unit']);
-                $lines[] = '• ' . $title . ($sku !== '' ? ' [' . $sku . ']' : '') . '\n  ' . $qty . ' × ' . $price . ' = ' . $lineTotal;
+                $quantity = (float) $item['qty'];
+                $qty = rtrim(rtrim(number_format($quantity, 3, ',', ' '), '0'), ',') . ' ' . trim((string) $item['unit']);
+                $basePrice = isset($variant['base_price']) && is_numeric($variant['base_price'])
+                    ? (float) $variant['base_price']
+                    : (is_numeric($item['price']) ? (float) $item['price'] : null);
+                if ($basePrice === null || $item['price'] === null) {
+                    $unknownTotal = true;
+                } else {
+                    $currentPrice = (float) $item['price'];
+                    $beforeDiscount += $basePrice * $quantity;
+                    $productDiscount += max(0.0, $basePrice - $currentPrice) * $quantity;
+                }
+                $lines[] = '• ' . $title . ($sku !== '' ? ' [' . $sku . ']' : '');
+                $lines[] = '  ' . $qty . ' × ' . $price . ' = ' . $lineTotal;
 
                 if ($item['price'] === null || ($money->replacesZero() && (float) $item['price'] === 0.0 && !$free)) {
                     $unknownTotal = true;
@@ -184,6 +198,17 @@ final class Telegram extends CMSPlugin implements SubscriberInterface
             $total = $unknownTotal && (float) $order['total'] > 0
                 ? $money->format($order['total']) . ' + ' . $money->zeroText()
                 : ($unknownTotal ? $money->zeroText() : $money->format($order['total']));
+            if (!$unknownTotal) {
+                $lines[] = 'До скидки: ' . $money->format(round($beforeDiscount, 2));
+                if (round($productDiscount, 2) > 0) {
+                    $lines[] = 'Скидка на товары: −' . $money->format(round($productDiscount, 2));
+                }
+            }
+            foreach ($message->adjustments as $adjustment) {
+                if ((float) ($adjustment['amount'] ?? 0) !== 0.0) {
+                    $lines[] = trim((string) ($adjustment['title'] ?? '')) . ': ' . $money->format((float) $adjustment['amount']);
+                }
+            }
             $lines[] = 'Итого: ' . $total;
         }
 

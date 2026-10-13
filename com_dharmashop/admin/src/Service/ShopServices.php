@@ -32,6 +32,7 @@ use Dharma\Component\DharmaShop\Administrator\Filter\FacetIndexer;
 use Dharma\Component\DharmaShop\Administrator\Filter\FilterService;
 use Dharma\Component\DharmaShop\Administrator\Payment\PaymentService;
 use Dharma\Component\DharmaShop\Administrator\Shipping\ShippingService;
+use Dharma\Component\DharmaShop\Administrator\Promotion\PromotionService;
 use Dharma\Component\DharmaShop\Administrator\Stock\StockService;
 use Dharma\Component\DharmaShop\Administrator\Warehouse\WarehouseService;
 use Joomla\CMS\Component\ComponentHelper;
@@ -79,6 +80,7 @@ final class ShopServices
     private ?FilterService $filter = null;
     private ?FacetIndexer $facets = null;
     private ?WarehouseService $warehouses = null;
+    private ?PromotionService $promotions = null;
 
     public function __construct(private readonly DatabaseInterface $db)
     {
@@ -107,6 +109,11 @@ final class ShopServices
     public function shipping(): ShippingService
     {
         return $this->shipping ??= new ShippingService($this->db);
+    }
+
+    public function promotions(): PromotionService
+    {
+        return $this->promotions ??= new PromotionService($this->db);
     }
 
     public function indexer(): Indexer
@@ -186,7 +193,7 @@ final class ShopServices
 
     public function orders(): OrderService
     {
-        return $this->orders ??= new OrderService($this->db, $this->cart(), $this->customers(), $this->notifications());
+        return $this->orders ??= new OrderService($this->db, $this->cart(), $this->customers(), $this->notifications(), $this->promotions());
     }
 
     public function notifications(): NotificationService

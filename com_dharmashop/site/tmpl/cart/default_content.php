@@ -14,6 +14,8 @@ use Joomla\CMS\Router\Route;
 
 $remove = Route::_('index.php?option=com_dharmashop&task=cart.remove', false);
 $clear = Route::_('index.php?option=com_dharmashop&task=cart.clear', false);
+$applyPromotion = Route::_('index.php?option=com_dharmashop&task=cart.applyPromotion', false);
+$removePromotion = Route::_('index.php?option=com_dharmashop&task=cart.removePromotion', false);
 $removeUnavailable = Route::_('index.php?option=com_dharmashop&task=cart.removeUnavailable', false);
 $hasErrors = (bool) array_filter($this->lines, static fn (object $line): bool => $line->error !== '');
 $checkoutUrl = Route::_('index.php?option=com_dharmashop&view=checkout', false);
@@ -24,6 +26,7 @@ $qtyText = static fn (float $qty): string => rtrim(rtrim(number_format($qty, 3, 
     <p class="text-body-secondary dharmaCartEmpty"><?php echo Text::_('COM_DHARMASHOP_CART_EMPTY'); ?></p>
     <a class="btn btn-sm btn-outline-primary" href="<?php echo $this->escape($this->catalogUrl); ?>"><?php echo Text::_('COM_DHARMASHOP_CART_CONTINUE'); ?></a>
 <?php else : ?>
+    <form action="<?php echo $this->escape($applyPromotion); ?>" method="post" id="dharmaPromotionForm"><?php echo HTMLHelper::_('form.token'); ?></form>
     <form action="<?php echo $this->escape($this->actionUrl); ?>" method="post" class="dharmaCartForm fs-6">
         <?php // Кнопка «Оформить заказ» с утилитами bg-primary/text-white: в шаблоне dharma_starter заливка .btn-primary не задана. Слева карточки позиций, справа панель итога (на узком экране — под списком). ?>
         <?php // Недоступные позиции: предупреждение и кнопки «Удалить недоступные» / «Уменьшить до наличия» (макет cart/unavailable, переопределяется). ?>
@@ -90,6 +93,21 @@ $qtyText = static fn (float $qty): string => rtrim(rtrim(number_format($qty, 3, 
                     </div>
                     <?php endif; ?>
                     <div class="card-footer bg-body p-3">
+                        <?php echo (new \Joomla\CMS\Layout\FileLayout('components.dharmashop.cart.promotion-progress', null, ['component' => 'none', 'client' => 0]))->render(['progress' => $this->totals['promotion_progress'] ?? [], 'money' => $this->money]); ?>
+                        <?php if (!empty($this->totals['promotion_input_available']) || !empty($this->totals['applied_code'])) : ?>
+                        <div class="border-top pt-3 mb-3">
+                            <label class="form-label small" for="dharma-cart-promotion-code"><?php echo Text::_('COM_DHARMASHOP_PROMOTION_CODE'); ?></label>
+                            <div class="input-group">
+                                <input type="text" id="dharma-cart-promotion-code" class="form-control" name="promotion_code" form="dharmaPromotionForm" value="<?php echo $this->escape($this->totals['applied_code'] ?? ''); ?>" maxlength="64" autocomplete="off">
+                                <button type="submit" class="btn btn-outline-primary" form="dharmaPromotionForm"><?php echo Text::_('COM_DHARMASHOP_PROMOTION_APPLY'); ?></button>
+                            </div>
+                            <?php if (!empty($this->totals['promotion_error'])) : ?><div class="alert alert-warning small mt-2 mb-2" role="alert"><?php echo $this->escape(Text::_($this->totals['promotion_error'])); ?></div><?php endif; ?>
+                            <?php if (!empty($this->totals['promotion_pending_identity'])) : ?><div class="form-text"><?php echo Text::_('COM_DHARMASHOP_PROMOTION_IDENTITY_PENDING'); ?></div><?php endif; ?>
+                            <?php if (!empty($this->totals['applied_description'])) : ?><div class="form-text"><?php echo $this->escape($this->totals['applied_description']); ?></div><?php endif; ?>
+                            <?php if (!empty($this->totals['applied_code'])) : ?><button type="submit" class="btn btn-sm btn-link px-0" form="dharmaPromotionForm" formaction="<?php echo $this->escape($removePromotion); ?>"><?php echo Text::_('COM_DHARMASHOP_PROMOTION_REMOVE'); ?></button><?php endif; ?>
+                            <div class="form-text"><?php echo Text::_('COM_DHARMASHOP_PROMOTION_CART_HELP'); ?></div>
+                        </div>
+                        <?php endif; ?>
                         <div class="d-flex flex-wrap justify-content-between align-items-baseline gap-2 mb-3">
                             <span class="small fw-semibold"><?php echo Text::_('COM_DHARMASHOP_CART_TOTAL'); ?></span>
                             <span class="fs-5 lh-sm fw-semibold text-end text-break"><?php echo $this->escape($this->totalText((float) $this->totals['total'])); ?></span>

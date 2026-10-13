@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form>
+    <field name="code" type="text" label="PLG_DHARMASHOPPROMOTION_COUPON_CODE" maxlength="64" filter="string" autocomplete="off" />
+    <field name="description" type="textarea" label="PLG_DHARMASHOPPROMOTION_COUPON_DESCRIPTION" description="PLG_DHARMASHOPPROMOTION_COUPON_DESCRIPTION_DESC" rows="2" maxlength="500" filter="string" />
+    <field name="discount_type" type="list" label="PLG_DHARMASHOPPROMOTION_COUPON_DISCOUNT_TYPE" default="percent" filter="cmd" validate="options">
+        <option value="percent">PLG_DHARMASHOPPROMOTION_COUPON_PERCENT</option><option value="amount">PLG_DHARMASHOPPROMOTION_COUPON_FIXED</option>
+    </field>
+    <field name="discount_value" type="number" label="PLG_DHARMASHOPPROMOTION_COUPON_DISCOUNT_VALUE" min="0.01" step="0.01" filter="float" />
+    <field name="minimum_subtotal" type="number" label="PLG_DHARMASHOPPROMOTION_COUPON_MINIMUM" description="PLG_DHARMASHOPPROMOTION_COUPON_MINIMUM_DESC" default="0" min="0" step="0.01" filter="float" />
+    <field name="maximum_discount" type="number" label="PLG_DHARMASHOPPROMOTION_COUPON_MAXIMUM" description="PLG_DHARMASHOPPROMOTION_COUPON_MAXIMUM_DESC" default="0" min="0" step="0.01" filter="float" showon="discount_type:percent" />
+    <field name="category_ids" type="category" label="PLG_DHARMASHOPPROMOTION_COUPON_CATEGORIES" description="PLG_DHARMASHOPPROMOTION_COUPON_CATEGORIES_DESC" extension="com_dharmashop" multiple="true" filter="intarray" layout="joomla.form.field.list-fancy-select" />
+    <field name="category_children" type="radio" layout="joomla.form.field.radio.switcher" label="PLG_DHARMASHOPPROMOTION_COUPON_CATEGORY_CHILDREN" description="PLG_DHARMASHOPPROMOTION_COUPON_CATEGORY_CHILDREN_DESC" default="1" filter="integer"><option value="0">JNO</option><option value="1">JYES</option></field>
+    <field name="starts" type="calendar" label="PLG_DHARMASHOPPROMOTION_COUPON_STARTS" description="PLG_DHARMASHOPPROMOTION_COUPON_DATES_DESC" filter="string" />
+    <field name="ends" type="calendar" label="PLG_DHARMASHOPPROMOTION_COUPON_ENDS" description="PLG_DHARMASHOPPROMOTION_COUPON_DATES_DESC" filter="string" />
+    <field name="apply_to_sale" type="radio" layout="joomla.form.field.radio.switcher" label="PLG_DHARMASHOPPROMOTION_COUPON_APPLY_TO_SALE" default="0" filter="integer"><option value="0">JNO</option><option value="1">JYES</option></field>
+    <field name="usage_limit" type="number" label="PLG_DHARMASHOPPROMOTION_COUPON_USAGE_LIMIT" description="PLG_DHARMASHOPPROMOTION_COUPON_LIMIT_ZERO_DESC" default="0" min="0" filter="integer" />
+    <field name="customer_limit" type="number" label="PLG_DHARMASHOPPROMOTION_COUPON_CUSTOMER_LIMIT" description="PLG_DHARMASHOPPROMOTION_COUPON_LIMIT_ZERO_DESC" default="0" min="0" filter="integer" />
+</form>

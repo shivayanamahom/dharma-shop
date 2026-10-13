@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form><fields name="params"><fieldset name="type_threshold" label="PLG_DHARMASHOPPROMOTION_THRESHOLD_SETTINGS">
+    <field name="show_progress" type="radio" label="PLG_DHARMASHOPPROMOTION_THRESHOLD_SHOW_PROGRESS" default="1" class="btn-group btn-group-yesno" layout="joomla.form.field.radio.switcher"><option value="0">JNO</option><option value="1">JYES</option></field>
+    <field name="tiers" type="subform" label="PLG_DHARMASHOPPROMOTION_THRESHOLD_TIERS" description="PLG_DHARMASHOPPROMOTION_THRESHOLD_TIERS_DESC" multiple="true" layout="joomla.form.field.subform.repeatable" formsource="plugins/dharmashoppromotion/threshold/forms/tier.xml" min="1" buttons="add,remove,move" validate="Subform" />
+</fieldset></fields></form>

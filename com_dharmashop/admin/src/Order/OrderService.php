@@ -11,6 +11,7 @@ use Dharma\Component\DharmaShop\Administrator\Shipping\ShippingService;
 use Dharma\Component\DharmaShop\Administrator\Stock\StockService;
 use Dharma\Component\DharmaShop\Administrator\Support\Sql;
 use Dharma\Component\DharmaShop\Administrator\Notification\NotificationService;
+use Dharma\Component\DharmaShop\Administrator\Promotion\PromotionService;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\Database\DatabaseInterface;
@@ -21,7 +22,7 @@ use Joomla\Registry\Registry;
 /** Базовая запись снимка заказа. Доставка/оплата и эффекты статусов подключаются последующими этапами. */
 final class OrderService
 {
-    public function __construct(private readonly DatabaseInterface $db, private readonly CartService $carts, private readonly CustomerService $customers, private readonly NotificationService $notifications) {}
+    public function __construct(private readonly DatabaseInterface $db, private readonly CartService $carts, private readonly CustomerService $customers, private readonly NotificationService $notifications, private readonly PromotionService $promotions) {}
 
     /** Начальный статус нейтральный: создаётся только если справочник ещё пуст. */
     public function ensureInitialStatus(): int
@@ -66,7 +67,9 @@ final class OrderService
             foreach ($lines as $line) {
                 if ((int) $line->stock_tracked === 1 && (int) $line->backorder !== 1 && $quantities[$line->variant_id] > (float) $line->stock_total + 1e-9) throw new \DomainException($line->title . ': ' . Text::_('COM_DHARMASHOP_CART_ERROR_STOCK'));
             }
-            $totals = $this->carts->totals($cart,$lines);
+            // Блокировка акции удерживается до записи снимка применения и коммита заказа.
+            $promotionLock = $this->promotions->lockForOrder($cart,(string)($validated['profile']['email'] ?? ''),$userId);
+            $totals = $this->carts->totals($cart,$lines,(array)($promotionLock['skip']??[]),(string)($validated['profile']['email']??''));
             if (!is_finite($totals['total'])) throw new \DomainException(Text::_('COM_DHARMASHOP_ORDER_INVALID'));
             // Доставка: способ и цену определяет сервер (плагин типа); сумма из браузера не принимается.
             $shippingService = new ShippingService($this->db);
@@ -102,6 +105,10 @@ final class OrderService
                 'payment_method_id'=>$paymentSelection?->method->id,'payment_title'=>$paymentSelection ? mb_substr($paymentSelection->method->title,0,255) : '','payment_data'=>$paymentSelection ? json_encode($paymentSelection->snapshot(),JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR) : null,'payment_status'=>PaymentService::STATUS_NONE];
             $this->db->insertObject('#__dharmashop_orders',$order);
             $id = (int) $this->db->insertid(); $number = str_pad((string) $id,6,'0',STR_PAD_LEFT);
+            foreach ($totals['promotion_uses'] as $promotionUse) {
+                $locked = $promotionLock['locked'][(int)$promotionUse['promotion_id']] ?? null;
+                if ($locked) $this->promotions->recordUse($locked,$id,$customerId,(float)$promotionUse['amount']);
+            }
             Sql::exec($this->db,'UPDATE #__dharmashop_orders SET number=:n WHERE id=:id', [':n'=>[$number],':id'=>[$id,ParameterType::INTEGER]]);
             foreach ($lines as $index=>$line) {
                 $item = (object) ['order_id'=>$id,'variant_id'=>(int) $line->variant_id,'product_id'=>(int) $line->product_id,'sku'=>(string) $line->sku,

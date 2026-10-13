@@ -1,6 +1,7 @@
 <?php
 \defined('_JEXEC') or die;
 use Joomla\CMS\Language\Text;
+$money = $this->details?->money;
 ?>
 <div id="dharma_shop" class="dharmaCheckoutComplete fs-6">
     <section class="py-4">
@@ -16,6 +17,17 @@ use Joomla\CMS\Language\Text;
                                 <h1 class="fs-4 mb-0"><?php echo Text::sprintf('COM_DHARMASHOP_CHECKOUT_SUCCESS', $this->escape($this->order->number)); ?></h1>
                             </div>
                             <p class="text-body-secondary mb-4"><?php echo Text::_('COM_DHARMASHOP_CHECKOUT_SUCCESS_TEXT'); ?></p>
+                            <?php if ($this->order->items) : ?>
+                                <div class="bg-body-tertiary rounded p-3 mb-4 small dharmaCheckoutOrderContents">
+                                    <div class="fw-semibold mb-2"><?php echo Text::_('COM_DHARMASHOP_ORDER_CONTENTS'); ?></div>
+                                    <?php foreach ($this->order->items as $line) : ?>
+                                        <div class="d-flex justify-content-between gap-3 mb-2">
+                                            <span class="text-break"><?php echo $this->escape($line->title); ?> × <?php echo $this->escape(\Dharma\Component\DharmaShop\Site\Support\OrderDisplay::quantity((string) $line->qty)); ?></span>
+                                            <span class="text-nowrap"><?php echo $this->escape($line->total === null ? $money->zeroText() : $money->price($line->total, \Dharma\Component\DharmaShop\Site\Support\OrderDisplay::isFree($line))); ?></span>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            <?php endif; ?>
                             <?php // Оплата: способ и сведения из снимка (инструкция), кнопка — если платёж ещё не завершён. ?>
                             <?php
                             $payment = (array) ($this->order->payment ?? []);
@@ -48,6 +60,24 @@ use Joomla\CMS\Language\Text;
                                         <dd class="mb-0"><?php echo $this->escape($this->order->status_title); ?></dd>
                                     </div>
                                 <?php endif; ?>
+                                <div class="border-top pt-2">
+                                    <div class="d-flex justify-content-between gap-2 mb-2">
+                                        <dt class="text-body-secondary fw-normal"><?php echo Text::_('COM_DHARMASHOP_CART_BEFORE_DISCOUNT'); ?></dt>
+                                        <dd class="mb-0 text-end"><?php echo $this->escape($this->details->beforeDiscount); ?></dd>
+                                    </div>
+                                    <?php if ($this->details->hasProductDiscount) : ?>
+                                        <div class="d-flex justify-content-between gap-2 mb-2 text-success">
+                                            <dt class="fw-normal"><?php echo Text::_('COM_DHARMASHOP_ORDER_PRODUCT_DISCOUNT'); ?></dt>
+                                            <dd class="mb-0 text-end">−<?php echo $this->escape($this->details->productDiscount); ?></dd>
+                                        </div>
+                                    <?php endif; ?>
+                                    <?php foreach ($this->order->adjustments as $adjustment) : if ((float) $adjustment->amount === 0.0) continue; ?>
+                                        <div class="d-flex justify-content-between gap-2 mb-2">
+                                            <dt class="text-body-secondary fw-normal"><?php echo $this->escape($adjustment->title); ?></dt>
+                                            <dd class="mb-0 text-end"><?php echo $this->escape($money->format($adjustment->amount)); ?></dd>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
                                 <div class="border-top pt-2">
                                     <dt class="text-body-secondary fw-normal mb-1"><?php echo Text::_('COM_DHARMASHOP_ORDER_TOTAL'); ?></dt>
                                     <dd class="fs-6 fw-semibold mb-0"><?php echo $this->escape($this->details->total); ?></dd>
