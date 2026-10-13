@@ -14,6 +14,7 @@
 - [Настроить избранное](ADMIN_FAVORITES.md)
 - [Настроить права доступа и роли сотрудников](ADMIN_ACCESS.md)
 - [Создать посадочную страницу](ADMIN_LANDING.md)
+- [Выгрузить каталог в CSV, Excel или фид для площадки](ADMIN_EXPORT.md)
 - [Настроить SEO и микроразметку](ADMIN_SEO.md)
 - [Подготовить сайт к запуску](PRODUCTION_CHECKLIST.md)
 - [Найти нужную настройку](ADMIN_SETTINGS.md)

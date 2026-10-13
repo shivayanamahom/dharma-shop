@@ -629,7 +629,7 @@ C71/C73: checkout — отдельный вид и тип меню; части d
 | `onDharmaShopMetadataReady` | C28/C29: после базового SEO, до рендера HTML. Joomla Event: `page` (readonly `Site\Seo\PageMetadata`), `document` (`HtmlDocument`), `settings` (`Registry`), `content` (readonly `Site\Seo\CollectionMetadata`, `Site\Seo\ProductMetadata` или `null`). Контекст списка: `name`, `items` (`name`, абсолютный `url`) в порядке карточек, `itemType` (`CollectionPage` для разделов, `Product` для товаров). Группа плагинов `dharmashop`; `plg_dharmashop_social` добавляет Open Graph/Twitter Cards; `plg_dharmashop_structureddata` — JSON-LD. Запросов каталога в плагинах нет. |
 | `onDharmaShopSettingsPrepareForm` | вкладки настроек от плагинов |
 | `onDharmaShopAdminToolsCollect` | ссылки расширений на панели инструментов |
-| `onDharmaShopExportFormatsCollect` | формат выгрузки: `formats` (`label`, `writer`, `fieldset`, `form`, `tabular`), группа `dharmashopexport`; контракт — `TRIGGERS.md` |
+| `onDharmaShopExportFormatsCollect` | формат выгрузки: `formats` (`label`, `writer`, `fieldset`, `form`, `tabular`, `public`), группа `dharmashopexport`; контракт — `TRIGGERS.md` |
 
 События этапов 2+ проектируются по мере реализации; имена из списка резервируются сейчас. Статусы, подстановки `{область.имя}` и шорткоды — в `docs/SHORTCODES.md`.
 

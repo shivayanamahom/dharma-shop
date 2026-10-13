@@ -816,8 +816,6 @@ def export(g: Site) -> None:
     title_formula = f"=SUM(1+1)*QA экспорт {RUN}"
     sku_formula = f"QA-EXP-{RUN}"
     before_count = int(db("SELECT COUNT(*) FROM PFX_dharmashop_products")[0][0])
-    # Товары «под заказ» (заказ без остатка): наличие в каталоге «да», а микроразметка витрины это пока не учитывает (находка, отдельная задача) — для них сверяем только цену.
-    backorder_ids = {r_[0] for r_ in db("SELECT product_id FROM PFX_dharmashop_variants WHERE backorder = 1")}
     fx = Fixture()
     formula_id = fx.product(title_formula, "Дом", None, "100", sku_formula, 3, "Проверка экранирования формул.", images=0)
     ok(formula_id is not None, f"создан тестовый товар с названием «={title_formula[1:12]}…» (id {formula_id})", R)
@@ -863,7 +861,7 @@ def export(g: Site) -> None:
                 if price is not None:
                     checked += 1
                     expected = "InStock" if row["in_stock"] == "1" else "OutOfStock"
-                    if abs(price - float(row["price"])) > 0.005 or (row["id"] not in backorder_ids and not availability.endswith(expected)):
+                    if abs(price - float(row["price"])) > 0.005 or not availability.endswith(expected):
                         bad_shop.append((row["id"], price, row["price"], availability, row["in_stock"]))
         ok(not bad_db, f"цены, базовые цены, остатки и артикулы в CSV равны данным каталога {bad_db[:3]}", R)
         ok(checked >= 10 and not bad_shop, f"цена и наличие в CSV совпадают со страницами витрины ({checked} товаров) {bad_shop[:3]}", R)
@@ -945,8 +943,6 @@ def export(g: Site) -> None:
         for off in offers:
             price, availability = storefront(off.findtext("url") or "/")
             expected = "true" if (availability.endswith("InStock")) else "false"
-            if off.get("id") in backorder_ids:
-                expected = "true"
             if price is None or abs(price - float(off.findtext("price"))) > 0.005 or off.get("available") != expected or off.findtext("categoryId") not in cats or not (off.findtext("picture") or "").startswith("http"):
                 bad.append((off.get("id"), price, off.findtext("price"), off.get("available"), availability[-8:]))
         ok(offers and not bad, f"YML: цена, наличие, категория и картинка каждого предложения совпадают с витриной {bad[:3]}", R)
