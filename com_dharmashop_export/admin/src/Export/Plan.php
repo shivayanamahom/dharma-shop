@@ -24,7 +24,7 @@ final class Plan {
   if(!((new Formats())->all()[$format]['tabular']??true)){$columns=[];foreach($writer->required($p) as $key){if(isset($schema[$key])){$columns[]=['key'=>$key,'mode'=>'','header'=>$schema[$key]['label']];}}}
   $p['columns']=$columns;
   $p['filter_state']=in_array((string)($p['filter_state']??'1'),['1','0','*'],true)?(string)($p['filter_state']??'1'):'1';
-  $p['categories']=array_values(array_unique(array_filter(array_map('intval',(array)($p['categories']??[])),fn($id)=>$id>0)));
+  foreach(['categories','brands','badges','category_branch','brand_branch'] as $filter){$p[$filter]=array_values(array_unique(array_filter(array_map('intval',(array)($p[$filter]??[])),fn($id)=>$id>0)));}
   $p['in_stock']=empty($p['in_stock'])?0:1;
   $p['sef_urls']=(int)($p['sef_urls']??1)===0?0:1;
   // Формат-фид (YML) предназначен для скачивания площадкой по ссылке, поэтому всегда публичный; для остальных — выбор профиля.

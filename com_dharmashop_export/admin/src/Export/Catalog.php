@@ -54,11 +54,18 @@ final class Catalog {
    $extension=match($e){'brands'=>'com_dharmashop.brand','badges'=>'com_dharmashop.badge',default=>'com_dharmashop'};
    $where[]='a.extension = '.$this->db->quote($extension);$where[]='a.parent_id > 0';
   }
-  $ids=array_values(array_filter(array_map('intval',(array)($f['categories']??[])),fn($v)=>$v>0));
-  if($ids && in_array($e,['products','groups'],true)) {
-   if($e==='products') { $where[]='EXISTS (SELECT 1 FROM #__dharmashop_product_categories pc WHERE pc.product_id=a.id AND pc.catid IN ('.implode(',',$ids).'))'; }
-   else { $where[]='EXISTS (SELECT 1 FROM #__dharmashop_group_categories gc JOIN #__categories c ON c.id=gc.catid JOIN #__categories parent ON c.lft>=parent.lft AND c.rgt<=parent.rgt AND c.extension=parent.extension WHERE gc.group_id=a.id AND parent.id IN ('.implode(',',$ids).'))'; }
+  $ids=static fn(string $key):array=>array_values(array_filter(array_map('intval',(array)($f[$key]??[])),fn($v)=>$v>0));
+  // Отбор по таксономии (ИЛИ внутри списка, И между списками); вложенные категории и бренды входят в выбранные.
+  if(in_array($e,['products','groups'],true)) {
+   foreach(['categories','brands','badges'] as $key) {
+    $list=$ids($key);if(!$list){continue;}
+    if($e==='products') { $where[]='EXISTS (SELECT 1 FROM #__dharmashop_product_categories pc WHERE pc.product_id=a.id AND pc.catid IN ('.implode(',',$list).'))'; }
+    else { $where[]='EXISTS (SELECT 1 FROM #__dharmashop_group_categories gc JOIN #__categories c ON c.id=gc.catid JOIN #__categories parent ON c.lft>=parent.lft AND c.rgt<=parent.rgt AND c.extension=parent.extension WHERE gc.group_id=a.id AND parent.id IN ('.implode(',',$list).'))'; }
+   }
   }
+  // Сами категории и бренды: выбранные ветки целиком (узел и все потомки).
+  $branch=match($e){'categories'=>$ids('category_branch'),'brands'=>$ids('brand_branch'),default=>[]};
+  if($branch) { $where[]='EXISTS (SELECT 1 FROM #__categories branch WHERE branch.id IN ('.implode(',',$branch).') AND branch.extension=a.extension AND a.lft>=branch.lft AND a.rgt<=branch.rgt)'; }
   if(!empty($f['in_stock']) && in_array($e,['products','groups'],true)) { $where[]='a.in_stock=1'; }
   return implode(' AND ',$where);
  }

@@ -760,12 +760,16 @@ def export(g: Site) -> None:
             f[f"jform[params][columns_products][columns_products{i}][mode]"] = ""
         return f
 
-    def ensure_profile(fmt: str, title: str, columns: list[str]) -> int:
+    def ensure_profile(fmt: str, title: str, columns: list[str], extra: dict | None = None, entity: str = "products") -> int:
         """Профиль создаётся формой админки; при повторном запуске сценария та же запись правится через форму."""
         rows = db(f"SELECT id FROM PFX_dharmashop_export_profiles WHERE title = '{q(title)}' ORDER BY id LIMIT 1")
         fields = fields_for(fmt, title, columns)
+        fields["jform[entity]"] = entity
+        if entity != "products":
+            fields = {k.replace("[columns_products]", f"[columns_{entity}]").replace("[columns_products0", f"[columns_{entity}0").replace("[columns_products1", f"[columns_{entity}1").replace("[columns_products2", f"[columns_{entity}2"): v for k, v in fields.items()}
+        fields.update(extra or {})
         if rows:
-            r = a.submit_form(E + f"&task=profile.edit&id={rows[0][0]}", fields, task="profile.save", remove_prefixes=("jform[params][columns_products]",))
+            r = a.submit_form(E + f"&task=profile.edit&id={rows[0][0]}", fields, task="profile.save", remove_prefixes=("jform[params][columns_", "jform[params][categories]", "jform[params][brands]", "jform[params][badges]", "jform[params][category_branch]", "jform[params][brand_branch]"))
         else:
             r = a.submit_form(E + "&task=profile.add", fields, task="profile.save")
         ok(any("saved" in m.lower() or "сохранен" in m.lower() for m in a.messages(r.text)), f"профиль «{title}» сохранён через форму ({'правка' if rows else 'создание'}) {a.messages(r.text)[:1]}", R)
@@ -906,6 +910,45 @@ def export(g: Site) -> None:
         saved_keys = [v for k, v in Site.parse_form(edit.text)[1] if k.startswith("jform[params][columns_products]") and k.endswith("[key]")]
         ok(saved_keys == keys, f"открытие профиля: сохранённые колонки возвращаются в таблицу колонок ({len(saved_keys)} из {len(keys)})", R)
         a.get(E + f"&task=profile.cancel&id={pid}")
+
+        # --- отбор записей: категории, бренды, бейджи и их сочетание
+        def tax(title: str, extension: str) -> str:
+            return db(f"SELECT id FROM PFX_categories WHERE title = '{title}' AND extension = '{extension}' LIMIT 1")[0][0]
+
+        def pick(extra: dict, entity: str = "products", cols: list[str] | None = None) -> list[dict]:
+            fp = ensure_profile("csv", "QA экспорт: отбор", cols or ["id", "category_ids", "brand_id", "badge_ids"], extra, entity)
+            job = run_job(fp)
+            return list(csv.DictReader(io.StringIO(download(job).content.decode("utf-8-sig")), delimiter=";"))
+
+        def ids_in(catid: str) -> set[str]:
+            return {r_[0] for r_ in db(f"SELECT DISTINCT product_id FROM PFX_dharmashop_product_categories WHERE catid = {catid}")}
+
+        cat_id, brand_id = tax("Смартфоны", "com_dharmashop"), tax("Pixel", "com_dharmashop.brand")
+        by_cat = pick({"jform[params][categories][]": [cat_id]})
+        ok({r_["id"] for r_ in by_cat} == ids_in(cat_id) and 0 < len(by_cat) < total, f"отбор по одной категории: выгружено {len(by_cat)} из {total} товаров, как в каталоге", R)
+        by_brand = pick({"jform[params][brands][]": [brand_id]})
+        ok({r_["id"] for r_ in by_brand} == ids_in(brand_id) and 0 < len(by_brand) < total and all(r_["brand_id"] == brand_id for r_ in by_brand), f"отбор по бренду Pixel: {len(by_brand)} товаров, у всех нужный бренд", R)
+        both = pick({"jform[params][categories][]": [cat_id], "jform[params][brands][]": [brand_id]})
+        ok({r_["id"] for r_ in both} == ids_in(cat_id) & ids_in(brand_id), f"категория и бренд вместе: пересечение условий ({len(both)} товаров)", R)
+        two = pick({"jform[params][categories][]": [cat_id, tax("Наушники", "com_dharmashop")]})
+        ok({r_["id"] for r_ in two} == ids_in(cat_id) | ids_in(tax("Наушники", "com_dharmashop")), f"две категории: объединение ({len(two)} товаров)", R)
+        badge = db("SELECT c.id FROM PFX_categories c JOIN PFX_dharmashop_product_categories pc ON pc.catid = c.id WHERE c.extension = 'com_dharmashop.badge' LIMIT 1")
+        if badge:
+            by_badge = pick({"jform[params][badges][]": [badge[0][0]]})
+            ok({r_["id"] for r_ in by_badge} == ids_in(badge[0][0]) and by_badge, f"отбор по бейджу: {len(by_badge)} товаров", R)
+        grp = pick({"jform[params][categories][]": [cat_id]}, "groups", ["id", "title"])
+        grp_expected = {r_[0] for r_ in db(f"SELECT DISTINCT group_id FROM PFX_dharmashop_group_categories WHERE catid = {cat_id}")}
+        ok({r_["id"] for r_ in grp} == grp_expected and grp, f"группы товаров: отбор по категории ({len(grp)} групп)", R)
+        grp_brand = pick({"jform[params][brands][]": [brand_id]}, "groups", ["id", "title"])
+        grp_brand_expected = {r_[0] for r_ in db(f"SELECT DISTINCT group_id FROM PFX_dharmashop_group_categories WHERE catid = {brand_id}")}
+        ok({r_["id"] for r_ in grp_brand} == grp_brand_expected, f"группы товаров: отбор по бренду ({len(grp_brand)} групп)", R)
+        none = pick({})
+        ok(len(none) == total, "без условий выгружается весь каталог", R)
+        branch = pick({"jform[params][category_branch][]": [tax("Электроника", "com_dharmashop")]}, "categories", ["id", "title", "path"])
+        expected_branch = db("SELECT COUNT(*) FROM PFX_categories a JOIN PFX_categories p ON p.title = 'Электроника' AND p.extension = 'com_dharmashop' WHERE a.extension = 'com_dharmashop' AND a.lft >= p.lft AND a.rgt <= p.rgt AND a.published >= 0")[0][0]
+        ok(len(branch) == int(expected_branch) and all(r_["path"].startswith("elektronika") for r_ in branch), f"ветка категорий «Электроника» с вложенными: {len(branch)} записей", R)
+        brands_branch = pick({"jform[params][brand_branch][]": [brand_id]}, "brands", ["id", "title"])
+        ok([r_["id"] for r_ in brands_branch] == [brand_id], "один бренд из списка брендов", R)
 
         # --- XLSX
         xp = ensure_profile("xlsx", "QA экспорт: товары XLSX", keys)
