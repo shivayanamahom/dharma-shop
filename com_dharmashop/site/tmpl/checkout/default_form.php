@@ -19,6 +19,7 @@ use Joomla\CMS\Router\Route;
     </div>
     <?php echo HTMLHelper::_('form.token'); ?>
     <input type="hidden" name="task" value="checkout.submit">
+    <div class="visually-hidden" aria-hidden="true" style="position:absolute;left:-10000px"><label>Website <input type="text" name="website" value="" tabindex="-1" autocomplete="off"></label></div>
     <input type="hidden" name="checkout_key" value="<?php echo $this->escape($this->submitKey); ?>">
 </form>
 <?php echo $this->loadTemplate('processing'); ?>

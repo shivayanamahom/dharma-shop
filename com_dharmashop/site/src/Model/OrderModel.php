@@ -31,7 +31,7 @@ class OrderModel extends BaseDatabaseModel
         }
         $db = $this->getDatabase();
         $query = $db->createQuery()->select([
-            'o.id', 'o.number', 'o.currency', 'o.subtotal', 'o.adjustments_total', 'o.total',
+            'o.id', 'o.user_id', 'o.number', 'o.currency', 'o.subtotal', 'o.adjustments_total', 'o.total',
             'o.contacts', 'o.shipping_title', 'o.shipping_data', 'o.payment_title', 'o.payment_data', 'o.payment_method_id', 'o.payment_status', 'o.created', 's.title AS status_title',
         ])->from($db->quoteName('#__dharmashop_orders', 'o'))
             ->join('LEFT', $db->quoteName('#__dharmashop_statuses', 's') . ' ON s.id = o.status_id')

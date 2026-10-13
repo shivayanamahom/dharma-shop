@@ -179,7 +179,7 @@ class CartController extends BaseController
         }
 
         $money = new MoneyFormatter($settings);
-        $this->app->setHeader('Content-Type', 'application/json; charset=utf-8', true);
+        $this->app->setHeader('Content-Type', 'application/json; charset=utf-8', true); $this->app->setHeader('X-Content-Type-Options', 'nosniff', true);
         $this->app->setHeader('Cache-Control', 'no-store', true);
         $this->app->sendHeaders();
         echo json_encode([

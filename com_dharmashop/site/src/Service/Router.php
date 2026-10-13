@@ -129,7 +129,8 @@ class Router extends RouterView
     {
         $product = $this->product((int) $id);
 
-        return $product ? [(int) $product->id => (string) $product->alias] : [];
+        // Алиас неопубликованного товара не раскрываем (301 с адреса `index.php?…&id=N` иначе выдал бы его): сегмент — номер, при разборе будет 404.
+        return $product && (int) $product->state === 1 ? [(int) $product->id => (string) $product->alias] : [(int) $id => (string) (int) $id];
     }
 
     /** Товар по алиасу в категории из запроса (алиас уникален внутри основной категории). */
@@ -199,7 +200,8 @@ class Router extends RouterView
         while ($id > 1 && !isset($segments[$id])) {
             $item = $this->category($id, $extension);
 
-            if (!$item) {
+            // Закрытая (неопубликованная, в корзине) категория: алиас в адрес не попадает.
+            if (!$item || (int) $item->published !== 1) {
                 break;
             }
 
@@ -246,7 +248,7 @@ class Router extends RouterView
         $key = 'id/' . $id;
 
         if (!array_key_exists($key, $this->productCache)) {
-            $query = $this->db->createQuery()->select($this->db->quoteName(['id', 'catid', 'alias']))
+            $query = $this->db->createQuery()->select($this->db->quoteName(['id', 'catid', 'alias', 'state']))
                 ->from($this->db->quoteName('#__dharmashop_products'))->where($this->db->quoteName('id') . ' = :id')
                 ->bind(':id', $id, ParameterType::INTEGER);
             $this->productCache[$key] = $this->db->setQuery($query)->loadObject() ?: null;
@@ -260,7 +262,7 @@ class Router extends RouterView
         $cacheKey = $extension . '/' . $id;
 
         if (!array_key_exists($cacheKey, $this->categoryCache)) {
-            $query = $this->db->createQuery()->select($this->db->quoteName(['id', 'parent_id', 'alias']))
+            $query = $this->db->createQuery()->select($this->db->quoteName(['id', 'parent_id', 'alias', 'published']))
                 ->from($this->db->quoteName('#__categories'))->where($this->db->quoteName('id') . ' = :id')
                 ->bind(':id', $id, ParameterType::INTEGER)
                 ->where($this->db->quoteName('extension') . ' = ' . $this->db->quote($extension));

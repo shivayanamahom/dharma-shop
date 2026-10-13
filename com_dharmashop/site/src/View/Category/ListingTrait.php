@@ -147,6 +147,7 @@ trait ListingTrait
         $ordering = $app->getInput()->getCmd('sort', (string) $this->params->get('list_ordering', 'order'));
         $this->searchQuery = $model->getQueryText();
         $this->defaultOrdering = $this->searchQuery !== '' ? 'relevance' : (string) $this->params->get('list_ordering', 'order');
+        $this->redirectFirstPage();
         $this->redirectToCanonicalFilter($model);
         $this->redirectToMatchingLanding($model);
         // С поисковым запросом по умолчанию — по релевантности.
@@ -156,6 +157,37 @@ trait ListingTrait
         $this->start = max(0, $app->getInput()->getInt('start', $app->getInput()->getInt('limitstart')));
 
         return $menu;
+    }
+
+    /** Ссылка на первый лист с `start=0` — дубль адреса без параметра: 301 на чистый адрес (остальные параметры сохраняются). */
+    protected function redirectFirstPage(): void
+    {
+        $app = Factory::getApplication();
+        $input = $app->getInput();
+
+        if ($input->getMethod() !== 'GET' || $input->getCmd('format') === 'raw') {
+            return;
+        }
+
+        $zero = [];
+
+        foreach (['start', 'limitstart'] as $name) {
+            if ($input->get->exists($name) && $input->get->getInt($name) === 0 && trim((string) $input->get->getString($name)) !== '') {
+                $zero[] = $name;
+            }
+        }
+
+        if (!$zero) {
+            return;
+        }
+
+        $uri = clone \Joomla\CMS\Uri\Uri::getInstance();
+
+        foreach ($zero as $name) {
+            $uri->delVar($name);
+        }
+
+        $app->redirect($uri->toString(), 301);
     }
 
     /**

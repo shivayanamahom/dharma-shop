@@ -35,10 +35,11 @@ class OrdersModel extends BaseDatabaseModel
     private function claimGuestOrders(): void
     {
         $app = Factory::getApplication();
-        $mode = (string) ComponentHelper::getParams('com_dharmashop')->get('orders_claim', 'verified');
+        $mode = (string) ComponentHelper::getParams('com_dharmashop')->get('orders_claim', 'link');
         $user = $app->getIdentity();
 
-        if ($mode === 'off' || !$user || $user->guest || $app->getUserState('com_dharmashop.orders.claimed') === (int) $user->id) {
+        // «link» — привязка только явным действием со страницы заказа (OrderController::claim).
+        if (in_array($mode, ['off', 'link'], true) || !$user || $user->guest || $app->getUserState('com_dharmashop.orders.claimed') === (int) $user->id) {
             return;
         }
 

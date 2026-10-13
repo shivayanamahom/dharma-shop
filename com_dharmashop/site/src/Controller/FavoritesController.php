@@ -73,7 +73,7 @@ class FavoritesController extends BaseController
             $this->setRedirect($url, $message, $ok ? 'message' : 'warning');
             return;
         }
-        $this->app->setHeader('Content-Type', 'application/json; charset=utf-8', true);
+        $this->app->setHeader('Content-Type', 'application/json; charset=utf-8', true); $this->app->setHeader('X-Content-Type-Options', 'nosniff', true);
         echo json_encode(['success' => $ok, 'message' => $message, 'count' => (int) ($result['count'] ?? 0), 'added' => $result['added'] ?? null, 'productId' => $result['productId'] ?? null], JSON_UNESCAPED_UNICODE | JSON_INVALID_UTF8_SUBSTITUTE);
         $this->app->close();
     }

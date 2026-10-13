@@ -27,9 +27,10 @@ final class FavoritesSession
         if (!$this->loaded) {
             $token = (string) $this->app->getInput()->cookie->getString(self::COOKIE, '');
             $user = $this->userId();
+            // Cookie гостю ставится только когда создаётся список (`ensure`): страницы без действий с избранным не получают Set-Cookie
+            // (иначе они не кэшируются публично).
             if ($user === 0 && !preg_match('/^[a-f0-9]{64}$/', $token)) {
                 $token = bin2hex(random_bytes(32));
-                $this->writeCookie($token);
             }
             $this->token = $token;
             $this->list = $this->service->find($token, $user);
@@ -44,6 +45,7 @@ final class FavoritesSession
         $this->list = $this->service->ensure($this->token, $this->userId());
         $this->loaded = true;
         if (!empty($this->list->newToken)) { $this->writeCookie((string) $this->list->newToken); }
+        elseif ($this->userId() === 0 && !preg_match('/^[a-f0-9]{64}$/', (string) $this->app->getInput()->cookie->getString(self::COOKIE, ''))) { $this->writeCookie($this->token); }
         return $this->list;
     }
 

@@ -18,7 +18,7 @@ final class ScopedFacets
     public function __construct(private readonly DatabaseInterface $db) {}
 
     /** $source возвращает запрос кандидатов с id, unit, price_min/max. */
-    public function build(callable $source, FilterDefinition $definition, FilterState $state, string $mode, string $cacheKey, array|\Closure|null $stored = null): array
+    public function build(callable $source, FilterDefinition $definition, FilterState $state, string $mode, string $cacheKey, array|\Closure|null $stored = null, bool $cacheable = true): array
     {
         $this->deadline = microtime(true) + max(50, min(10000, (int) ComponentHelper::getParams('com_dharmashop')->get('filter_query_ms', 1500))) / 1000;
         $base = fn(): array => FilterCache::remember('scoped:v3:' . $cacheKey, function () use ($source, $definition, $stored): array {
@@ -31,7 +31,7 @@ final class ScopedFacets
                 foreach (['brand' => $definition->brands, 'badge' => $definition->badges, 'cat' => $definition->subcategories] as $key => $directory) { $fallback['directories'][$key] = array_fill_keys(array_keys($directory), 1); }
                 return $fallback;
             }
-        });
+        }, $cacheable);
         if ($mode !== 'live' || $state->isEmpty()) { return $base() + ['counts' => $mode !== 'off']; }
         return FilterCache::remember('cascade:v3:' . $cacheKey . ':' . $state->key(), function () use ($source, $definition, $state, $base): array {
             $result = ['options' => [], 'ranges' => [], 'price' => null, 'directories' => [], 'approximate' => false, 'counts' => true];
@@ -79,7 +79,7 @@ final class ScopedFacets
                 }
             }
             return $result;
-        });
+        }, $cacheable && $state->activeCount() <= 3);
     }
 
     private function aggregate(QueryInterface $source, FilterDefinition $definition, array|\Closure|null $stored): array

@@ -241,14 +241,15 @@ final class PaymentService
         $order = $this->loadOrder($orderId);
 
         // Заказ должен быть оплачиваемым именно этим способом: чужой способ не может менять статус.
+        // Одинаковый ответ на «нет заказа», «чужой способ» и неверную подпись: по коду нельзя перебирать пары (заказ, способ).
         if ($order === null || (int) $order->payment_method_id !== $methodId) {
-            return Outcome::ignored('Not found', 404);
+            return Outcome::ignored();
         }
 
         [$method, $type] = $this->methodAndType($methodId, false);
 
         if ($method === null || $type === null) {
-            return Outcome::ignored('Not found', 404);
+            return Outcome::ignored();
         }
 
         try {
@@ -257,6 +258,13 @@ final class PaymentService
             Log::add('Payment handle ' . $method->plugin . ': ' . get_class($error), Log::ERROR, 'com_dharmashop');
 
             return Outcome::ignored('Error', 500);
+        }
+
+        // Платёж на другую сумму не засчитывается как оплата заказа (шлюз присылает сумму; ядро не доверяет типу).
+        if ($outcome->status === Outcome::PAID && $outcome->amount > 0 && abs($outcome->amount - (float) $order->total) > 0.009) {
+            Log::add('Payment amount mismatch order ' . $orderId . ': ' . $outcome->amount . ' vs ' . $order->total, Log::WARNING, 'com_dharmashop');
+
+            return Outcome::ignored();
         }
 
         if ($outcome->status !== Outcome::IGNORED) {

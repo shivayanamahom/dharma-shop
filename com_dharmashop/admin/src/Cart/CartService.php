@@ -509,9 +509,14 @@ final class CartService
         return null;
     }
 
+    /** Количество: конечное число с тремя знаками, не больше миллиона (колонка `decimal(12,3)`; `INF`, `NAN` и огромные значения из запроса дают 0 и далее ошибку «неверное количество»). */
     private function normalise(float $qty): float
     {
-        return round($qty, 3);
+        if (!is_finite($qty)) {
+            return 0.0;
+        }
+
+        return round(max(0.0, min(1000000.0, $qty)), 3);
     }
 
     private function lineHash(int $variantId, array $params): string

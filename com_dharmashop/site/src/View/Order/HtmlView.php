@@ -17,12 +17,23 @@ class HtmlView extends BaseHtmlView
     public object $item;
     public OrderDisplay $details;
     public string $catalogUrl = '';
+    /** Гостевой заказ открыт по ключу из письма: вошедший покупатель может привязать его к аккаунту (`claim`), гость — войти. */
+    public bool $claimable = false;
+    public bool $claimNeedsLogin = false;
+    public string $claimKey = '';
 
     public function display($tpl = null): void
     {
         $app = Factory::getApplication();
         $this->item = $this->getModel()->getItem();
         $this->details = new OrderDisplay($this->item, ComponentHelper::getParams($this->option));
+        $key = (string) $app->getInput()->get('key', '', 'cmd');
+        if ($this->item->user_id === null && preg_match('/^[a-f0-9]{32}$/', $key) === 1) {
+            $identity = $app->getIdentity();
+            $this->claimKey = $key;
+            $this->claimable = $identity && !$identity->guest;
+            $this->claimNeedsLogin = !$this->claimable;
+        }
         $this->catalogUrl = Route::_('index.php?option=com_dharmashop&view=categories', false);
         $title = Text::sprintf('COM_DHARMASHOP_ORDER_HEADING', $this->item->number);
         $document = $this->getDocument();

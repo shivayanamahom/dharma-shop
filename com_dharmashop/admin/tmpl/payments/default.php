@@ -26,6 +26,9 @@ if ($saveOrder) {
 ?>
 <form action="<?php echo Route::_('index.php?option=com_dharmashop&view=payments'); ?>" method="post" name="adminForm" id="adminForm">
     <div id="j-main-container" class="j-main-container">
+        <?php foreach ($this->items as $sandboxItem) : if ((string) $sandboxItem->plugin === 'sandbox' && (int) $sandboxItem->state === 1) : ?>
+            <div class="alert alert-warning" role="alert"><?php echo Text::_('COM_DHARMASHOP_PAYMENT_SANDBOX_WARNING'); ?></div>
+        <?php break; endif; endforeach; ?>
         <?php echo LayoutHelper::render('joomla.searchtools.default', ['view' => $this]); ?>
         <?php if (!$this->items) : ?>
             <div class="alert alert-info"><?php echo Text::_($this->activeFilters ? 'JGLOBAL_NO_MATCHING_RESULTS' : 'COM_DHARMASHOP_PAYMENTS_EMPTY'); ?></div>

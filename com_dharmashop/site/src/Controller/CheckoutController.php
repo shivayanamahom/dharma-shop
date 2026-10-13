@@ -13,6 +13,7 @@ use Joomla\CMS\Language\Text;
 use Joomla\CMS\Log\Log;
 use Joomla\CMS\MVC\Controller\BaseController;
 use Joomla\CMS\Router\Route;
+use Dharma\Component\DharmaShop\Site\Support\RateLimiter;
 use Joomla\CMS\Session\Session;
 \defined('_JEXEC') or die;
 
@@ -39,6 +40,12 @@ class CheckoutController extends BaseController
         if (!$key || !isset($pending['key']) || !hash_equals((string) $pending['key'],$key) || (int) ($pending['user_id'] ?? -1) !== $userId) {
             $this->setRedirect($url,Text::_('COM_DHARMASHOP_ORDER_INVALID'),'warning'); return;
         }
+        // Защита от ботов: невидимое поле-ловушка и ограничение числа заказов с одного адреса и на один e-mail за час.
+        $limitIp = (int) $settings->get('checkout_rate_ip', 10);
+        $limitEmail = (int) $settings->get('checkout_rate_email', 3);
+        if ($this->input->post->getString('website','') !== '') {
+            $this->setRedirect($url,Text::_('COM_DHARMASHOP_CHECKOUT_RATE_LIMIT'),'warning'); return;
+        }
         $shop = $this->app->bootComponent($this->option)->getServices();
         $session = new CartSession($shop->cart(),$this->app);
         $cart = $session->current();
@@ -56,6 +63,11 @@ class CheckoutController extends BaseController
             $this->app->setUserState('com_dharmashop.checkout.values',$validated['values']);
             $this->app->setUserState('com_dharmashop.checkout.errors',$validated['errors']);
             $this->setRedirect($url,Text::_('COM_DHARMASHOP_ORDER_FIELDS_ERROR'),'warning'); return;
+        }
+        // Счётчики растут только на проверенных заказах: ошибки заполнения формы лимит не расходуют.
+        if (!RateLimiter::allow('order-ip', RateLimiter::clientAddress(), $limitIp, 3600) || !RateLimiter::allow('order-email', (string) ($validated['profile']['email'] ?? ''), $limitEmail, 3600)) {
+            $this->app->setUserState('com_dharmashop.checkout.values',$validated['values']);
+            $this->setRedirect($url,Text::_('COM_DHARMASHOP_CHECKOUT_RATE_LIMIT'),'warning'); return;
         }
         try {
             $result = $shop->orders()->create($cart,$userId,$key,$validated,$settings,$shipping,$payment);

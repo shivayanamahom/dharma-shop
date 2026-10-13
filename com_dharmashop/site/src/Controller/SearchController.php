@@ -72,7 +72,7 @@ class SearchController extends BaseController
             }
         }
 
-        $this->app->setHeader('Content-Type', 'application/json; charset=utf-8', true);
+        $this->app->setHeader('Content-Type', 'application/json; charset=utf-8', true); $this->app->setHeader('X-Content-Type-Options', 'nosniff', true);
         $this->app->setHeader('Cache-Control', 'no-store', true);
         $this->app->setHeader('X-Robots-Tag', 'noindex', true);
         $this->app->sendHeaders();

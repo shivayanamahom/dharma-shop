@@ -301,6 +301,10 @@
     </fieldset>
 	<fieldset name="seo" label="COM_DHARMASHOP_CONFIG_SEO" description="COM_DHARMASHOP_CONFIG_SEO_DESC" addfieldprefix="Dharma\Component\DharmaShop\Administrator\Field">
 		<field name="_seo_shortcodes" type="shortcodes" label="COM_DHARMASHOP_PH_TITLE" filter="unset" />
+		<field name="seo_variant_canonical" type="list" label="COM_DHARMASHOP_SEO_VARIANT_CANONICAL" description="COM_DHARMASHOP_SEO_VARIANT_CANONICAL_DESC" default="self" validate="options">
+			<option value="self">COM_DHARMASHOP_SEO_VARIANT_CANONICAL_SELF</option>
+			<option value="main">COM_DHARMASHOP_SEO_VARIANT_CANONICAL_MAIN</option>
+		</field>
 		<field name="seo_robots" type="list" label="COM_DHARMASHOP_SEO_ROBOTS_LABEL" description="COM_DHARMASHOP_CONFIG_SEO_ROBOTS_DESC" default="index, follow" validate="options">
 			<option value="index, follow">index, follow</option>
 			<option value="noindex, follow">noindex, follow</option>
@@ -348,9 +352,12 @@
 
 	<fieldset name="order" label="COM_DHARMASHOP_CONFIG_ORDER" description="COM_DHARMASHOP_CONFIG_CHECKOUT_DESC" addfieldprefix="Dharma\Component\DharmaShop\Administrator\Field">
 		<fieldset name="checkout_access" label="COM_DHARMASHOP_CONFIG_CHECKOUT_ACCESS">
+			<field name="checkout_rate_ip" type="number" label="COM_DHARMASHOP_CHECKOUT_RATE_IP" description="COM_DHARMASHOP_CHECKOUT_RATE_DESC" default="10" min="0" max="1000" filter="integer" />
+			<field name="checkout_rate_email" type="number" label="COM_DHARMASHOP_CHECKOUT_RATE_EMAIL" description="COM_DHARMASHOP_CHECKOUT_RATE_DESC" default="3" min="0" max="1000" filter="integer" />
 			<field name="checkout_guest" type="radio" label="COM_DHARMASHOP_CHECKOUT_GUEST" description="COM_DHARMASHOP_CHECKOUT_GUEST_DESC" layout="joomla.form.field.radio.switcher" default="1" filter="integer" validate="options"><option value="0">JNO</option><option value="1">JYES</option></field>
-			<field name="orders_claim" type="list" default="verified" validate="options" label="COM_DHARMASHOP_CONFIG_ORDERS_CLAIM" description="COM_DHARMASHOP_CONFIG_ORDERS_CLAIM_DESC">
+			<field name="orders_claim" type="list" default="link" validate="options" label="COM_DHARMASHOP_CONFIG_ORDERS_CLAIM" description="COM_DHARMASHOP_CONFIG_ORDERS_CLAIM_DESC">
 				<option value="off">COM_DHARMASHOP_CONFIG_ORDERS_CLAIM_OFF</option>
+				<option value="link">COM_DHARMASHOP_CONFIG_ORDERS_CLAIM_LINK</option>
 				<option value="verified">COM_DHARMASHOP_CONFIG_ORDERS_CLAIM_VERIFIED</option>
 				<option value="any">COM_DHARMASHOP_CONFIG_ORDERS_CLAIM_ANY</option>
 			</field>

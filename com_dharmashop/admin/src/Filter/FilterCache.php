@@ -39,12 +39,14 @@ final class FilterCache
      * @template T
      *
      * @param   callable(): T  $compute
+     * @param   bool           $cacheable  false — вычислить без кэша: ключ зависит от произвольного ввода посетителя (текст поиска, сочетания фильтра),
+     *                                     иначе анонимные запросы создают неограниченное число записей
      *
      * @return  T
      */
-    public static function remember(string $key, callable $compute): mixed
+    public static function remember(string $key, callable $compute, bool $cacheable = true): mixed
     {
-        $cache = self::controller();
+        $cache = $cacheable ? self::controller() : null;
 
         if ($cache === null) {
             return $compute();

@@ -19,7 +19,7 @@ class ProductController extends BaseController
         if ($resolve || (!$id && $this->input->getInt('product_choice_ajax')===1)) {
             $app->allowCache(false);
             if (!$id) { $app->setHeader('status','409',true); }
-            $app->setHeader('Content-Type','application/json; charset=utf-8',true);
+            $app->setHeader('Content-Type','application/json; charset=utf-8',true); $app->setHeader('X-Content-Type-Options', 'nosniff', true);
             $app->setHeader('Cache-Control','no-store',true);
             $app->setHeader('X-Robots-Tag','noindex',true);
             $app->sendHeaders();

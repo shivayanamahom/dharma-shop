@@ -107,9 +107,16 @@ class HtmlView extends BaseHtmlView
         }
 
 
+        // Варианты группы: при настройке «главный вариант» канонический адрес и og:url — первый вариант группы (по номеру); группа нужна и разметке.
+        $variantGroup = \Dharma\Component\DharmaShop\Site\Support\ProductVariants::forItem(Factory::getContainer()->get(\Joomla\Database\DatabaseInterface::class), $this->item);
+        $canonicalUrl = $url;
+        if ($variantGroup !== null && (string) $this->params->get('seo_variant_canonical', 'self') === 'main' && !empty($variantGroup['variants'][0]['url'])) {
+            $canonicalUrl = (string) $variantGroup['variants'][0]['url'];
+        }
+
         // Пункт меню этого товара: его заголовок и метаданные важнее общих правил, а цепочка крошек — сам пункт меню.
         $seo = new PageSeo($this->params);
-        $this->seo = $seo->resolve('product', $this->item, ProductValues::build($this->item, new MoneyFormatter($this->params)), $this->menuOwnsPage ? $active->getParams() : new Registry(), $url);
+        $this->seo = $seo->resolve('product', $this->item, ProductValues::build($this->item, new MoneyFormatter($this->params)), $this->menuOwnsPage ? $active->getParams() : new Registry(), $canonicalUrl);
         $content = null;
         if ((int) $this->params->get('seo_structureddata', 1) === 1) {
             $min = $this->item->price_min;
@@ -118,11 +125,39 @@ class HtmlView extends BaseHtmlView
             $offerPrice = $min !== null && $min !== '' && (float) $min >= 0
                 && ($max === null || (float) $min === (float) $max)
                 && !($money->replacesZero() && (float) $min === 0.0 && empty($this->item->price_free)) ? (string) $min : null;
+            $images = [];
+            foreach (array_slice((array) ($this->item->gallery ?? []), 0, 10) as $photo) {
+                if (!empty($photo->url)) {
+                    $images[] = (string) $photo->url;
+                }
+            }
+            // Характеристики: поля, выводимые на странице товара (значения уже с единицами измерения); файлы, галереи, видео и редактор не входят.
+            $properties = [];
+            foreach ($this->item->fields ?? [] as $field) {
+                if (empty($field->values) || in_array((string) $field->type, ['files', 'gallery', 'video', 'editor'], true) || (int) ($field->in_page ?? 1) !== 1) {
+                    continue;
+                }
+                $parts = [];
+                foreach ((array) $field->values as $value) {
+                    $text = trim(html_entity_decode(strip_tags((string) ($value->text ?? '')), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+                    if ($text !== '') {
+                        $parts[] = $text;
+                    }
+                }
+                if ($parts && trim((string) $field->title) !== '') {
+                    $properties[] = [trim((string) $field->title), implode(', ', $parts)];
+                }
+            }
+            $saleEnd = !empty($this->item->sale_end_timestamp) ? gmdate('Y-m-d', (int) $this->item->sale_end_timestamp) : null;
             $content = new ProductMetadata(
                 (string) $this->item->title, (string) $this->item->sku, (string) $this->item->brand_title,
                 ProductValues::introtext($this->text((string) $this->item->introtext)),
                 ImageUrl::resolve((string) $this->item->cover, 'seo.social'), $offerPrice,
                 strtoupper(trim((string) $this->params->get('currency_code', 'RUB'))), (bool) $this->item->offer_in_stock,
+                $images, $properties,
+                $offerPrice !== null && $this->item->base_price !== null ? (string) $this->item->base_price : null, $offerPrice !== null ? $saleEnd : null,
+                (string) ($this->item->category_title ?? ''),
+                $variantGroup,
             );
         }
         $seo->apply($this->seo, $this->getDocument(), $content);

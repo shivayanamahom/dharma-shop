@@ -84,25 +84,106 @@ final class Structureddata extends CMSPlugin implements SubscriberInterface
 
     private function product(PageMetadata $page, ProductMetadata $content): array
     {
+        $currency = $content->currency;
         $product = ['@type' => 'Product', '@id' => $page->url . '#product', 'url' => $page->url,
             'name' => $this->plainText($content->name)];
-        foreach (['sku' => $content->sku, 'description' => $content->description, 'image' => $content->image] as $key => $value) {
+        foreach (['sku' => $content->sku, 'description' => $content->description] as $key => $value) {
             if ($value !== '') {
                 $product[$key] = $this->plainText($value);
             }
         }
+        // Все фото товара (основное первым); без галереи — обложка.
+        $images = array_values(array_unique(array_filter($content->images, static fn (string $url): bool => $url !== '')));
+        if (!$images && $content->image !== '') {
+            $images = [$content->image];
+        }
+        if ($images) {
+            $product['image'] = count($images) === 1 ? $images[0] : $images;
+        }
         if ($content->brand !== '') {
             $product['brand'] = ['@type' => 'Brand', 'name' => $this->plainText($content->brand)];
         }
-        if ($content->price !== null && is_numeric($content->price) && (float) $content->price >= 0
-            && preg_match('/^[A-Z]{3}$/D', $content->currency)) {
-            $product['offers'] = ['@type' => 'Offer', 'url' => $page->url,
-                'price' => $content->price, 'priceCurrency' => $content->currency,
-                'availability' => 'https://schema.org/' . ($content->inStock ? 'InStock' : 'OutOfStock')];
+        if ($content->category !== '') {
+            $product['category'] = $this->plainText($content->category);
+        }
+        // Характеристики товара: название и значение (с единицей измерения), как на странице.
+        $properties = [];
+        foreach ($content->properties as [$name, $value]) {
+            $name = $this->plainText($name);
+            $value = $this->plainText($value);
+            if ($name !== '' && $value !== '') {
+                $properties[] = ['@type' => 'PropertyValue', 'name' => $name, 'value' => $value];
+            }
+        }
+        if ($properties) {
+            $product['additionalProperty'] = $properties;
+        }
+        if ($content->price !== null && is_numeric($content->price) && (float) $content->price >= 0 && preg_match('/^[A-Z]{3}$/D', $currency)) {
+            $offer = ['@type' => 'Offer', 'url' => $page->url, 'price' => $content->price, 'priceCurrency' => $currency,
+                'availability' => 'https://schema.org/' . ($content->inStock ? 'InStock' : 'OutOfStock'),
+                'itemCondition' => 'https://schema.org/NewCondition'];
+            if ($page->siteName !== '') {
+                $offer['seller'] = ['@type' => 'Organization', 'name' => $page->siteName];
+            }
+            // Скидка: зачёркнутая цена (ListPrice) и дата окончания акции.
+            if ($content->listPrice !== null && is_numeric($content->listPrice) && (float) $content->listPrice > (float) $content->price) {
+                $offer['priceSpecification'] = ['@type' => 'UnitPriceSpecification', 'priceType' => 'https://schema.org/ListPrice',
+                    'price' => $content->listPrice, 'priceCurrency' => $currency];
+            }
+            if ($content->priceValidUntil !== null && preg_match('/^\d{4}-\d{2}-\d{2}$/D', $content->priceValidUntil)) {
+                $offer['priceValidUntil'] = $content->priceValidUntil;
+            }
+            $product['offers'] = $offer;
+        }
+        $entity = $product;
+        // Товар из группы выбора: ProductGroup со всеми доступными вариантами (текущий — полным описанием), чтобы поисковик объединил варианты.
+        if ($content->group !== null && !empty($content->group['variants'])) {
+            $variants = [];
+            foreach ((array) $content->group['variants'] as $variant) {
+                if ($variant['url'] === $page->url) {
+                    // Текущий товар — полное описание плюс значения осей выбора (они могут быть скрыты в характеристиках страницы).
+                    $known = array_column((array) ($product['additionalProperty'] ?? []), 'name');
+                    foreach ((array) $variant['options'] as $title => $value) {
+                        if (!in_array($this->plainText((string) $title), $known, true)) {
+                            $product['additionalProperty'][] = ['@type' => 'PropertyValue', 'name' => $this->plainText((string) $title), 'value' => $this->plainText((string) $value)];
+                        }
+                    }
+                    $variants[] = $product;
+                    continue;
+                }
+                $node = ['@type' => 'Product', '@id' => $variant['url'] . '#product', 'url' => $variant['url'], 'name' => $this->plainText((string) $variant['name'])];
+                if ($variant['sku'] !== '') {
+                    $node['sku'] = $variant['sku'];
+                }
+                if ($variant['image'] !== '') {
+                    $node['image'] = $variant['image'];
+                }
+                $variantProperties = [];
+                foreach ((array) $variant['options'] as $title => $value) {
+                    $variantProperties[] = ['@type' => 'PropertyValue', 'name' => $this->plainText((string) $title), 'value' => $this->plainText((string) $value)];
+                }
+                if ($variantProperties) {
+                    $node['additionalProperty'] = $variantProperties;
+                }
+                if ($variant['price'] !== null && is_numeric($variant['price']) && preg_match('/^[A-Z]{3}$/D', $currency)) {
+                    $node['offers'] = ['@type' => 'Offer', 'url' => $variant['url'], 'price' => $variant['price'], 'priceCurrency' => $currency,
+                        'availability' => 'https://schema.org/' . ($variant['in_stock'] ? 'InStock' : 'OutOfStock'), 'itemCondition' => 'https://schema.org/NewCondition'];
+                }
+                $variants[] = $node;
+            }
+            $entity = ['@type' => 'ProductGroup', '@id' => $page->url . '#productgroup', 'url' => $page->url,
+                'name' => $this->plainText((string) $content->group['name']), 'productGroupID' => (string) $content->group['id']];
+            if (!empty($content->group['varies_by'])) {
+                $entity['variesBy'] = array_values((array) $content->group['varies_by']);
+            }
+            if ($content->brand !== '') {
+                $entity['brand'] = $product['brand'];
+            }
+            $entity['hasVariant'] = $variants;
         }
         return ['@context' => 'https://schema.org', '@type' => 'WebPage', '@id' => $page->url . '#webpage',
             'url' => $page->url, 'name' => $page->title, 'description' => $page->description,
-            'inLanguage' => str_replace('_', '-', $page->locale), 'mainEntity' => $product];
+            'inLanguage' => str_replace('_', '-', $page->locale), 'mainEntity' => $entity];
     }
 
     private function plainText(string $value): string

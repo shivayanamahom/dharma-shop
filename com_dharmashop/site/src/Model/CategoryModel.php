@@ -151,7 +151,7 @@ class CategoryModel extends CategoriesModel
             $probe = $this->productsQuery(forListing: $this->groupsEnabled())->select('1');
             $bindings = array_map(static fn(object $bound): mixed => $bound->value, $probe->getBounded());
             $this->searchFuzzy = FilterCache::remember('fuzzy:v1:' . md5($db->replacePrefix((string) $probe) . json_encode($bindings)),
-                static fn(): bool => !$db->setQuery(QueryBudget::hard($probe), 0, 1)->loadResult());
+                static fn(): bool => !$db->setQuery(QueryBudget::hard($probe), 0, 1)->loadResult(), $this->cacheableRequest());
         }
 
         return $this->searchFuzzy;
@@ -216,7 +216,7 @@ class CategoryModel extends CategoriesModel
             $stored = static fn(): array => $scope->facets($definition);
         }
 
-        return (new ScopedFacets($db))->build($source, $definition, $this->getFilterState(), $mode, $cacheKey, $stored);
+        return (new ScopedFacets($db))->build($source, $definition, $this->getFilterState(), $mode, $cacheKey, $stored, $this->cacheableRequest());
     }
 
     private function baseFacetsAccessible(): bool
@@ -231,6 +231,18 @@ class CategoryModel extends CategoriesModel
     }
 
     /** Текст поискового запроса (`filter[search]`) страницы списка; пусто — без поиска. */
+    /**
+     * Результаты можно класть в общий кэш: нет текста поиска и выбор посетителя не слишком редкий. Иначе ключ кэша зависит от
+     * произвольного ввода, и анонимные запросы создали бы неограниченное число файлов (аудит безопасности 2026-10-13, С3).
+     */
+    protected function cacheableRequest(): bool
+    {
+        return $this->getQueryText() === '' && $this->getVisitorFilterState()->activeCount() <= self::CACHE_MAX_CONDITIONS;
+    }
+
+    /** Больше условий фильтра в одном запросе — считаем без кэша. */
+    private const CACHE_MAX_CONDITIONS = 3;
+
     public function getQueryText(): string
     {
         return ProductSearch::fromInput(Factory::getApplication()->getInput());
@@ -266,7 +278,7 @@ class CategoryModel extends CategoriesModel
             $bindings = array_map(static fn(object $bound): mixed => $bound->value, $query->getBounded());
             $key = 'total:v2:' . md5($db->replacePrefix((string) $query) . json_encode([$bindings, $cap]));
             try {
-                $found = FilterCache::remember($key, fn(): int => count($db->setQuery(QueryBudget::apply($query), 0, $cap + 1)->loadColumn()));
+                $found = FilterCache::remember($key, fn(): int => count($db->setQuery(QueryBudget::apply($query), 0, $cap + 1)->loadColumn()), $this->cacheableRequest());
             } catch (\Throwable $error) {
                 // Подсчёт не уложился в бюджет: страница показывается с «N+», а не ошибкой (результат не кэшируется).
                 if (!QueryBudget::isTimeout($error)) { throw $error; }
@@ -295,7 +307,7 @@ class CategoryModel extends CategoriesModel
 
         $bindings = array_map(static fn(object $bound): mixed => $bound->value, $query->getBounded());
 
-        return (int) FilterCache::remember('total:v3:' . md5($db->replacePrefix((string) $query) . json_encode($bindings)), $count);
+        return (int) FilterCache::remember('total:v3:' . md5($db->replacePrefix((string) $query) . json_encode($bindings)), $count, $this->cacheableRequest());
     }
 
     /**
@@ -446,7 +458,7 @@ class CategoryModel extends CategoriesModel
         $idQuery = (clone $ranked)->select('p.id')->order($order[0])->order($order[1]);
         $bindings = array_map(static fn(object $bound): mixed => $bound->value, $idQuery->getBounded());
         $ids = FilterCache::remember('rank:v1:' . md5($db->replacePrefix((string) $idQuery) . json_encode($bindings)),
-            static fn(): array => array_map('intval', $db->setQuery(QueryBudget::hard($idQuery), 0, self::$rankCap)->loadColumn()));
+            static fn(): array => array_map('intval', $db->setQuery(QueryBudget::hard($idQuery), 0, self::$rankCap)->loadColumn()), $this->cacheableRequest());
         $page = array_slice($ids, $start, $limit);
 
         if (!$page) {

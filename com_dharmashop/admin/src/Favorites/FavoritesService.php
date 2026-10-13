@@ -196,6 +196,16 @@ final class FavoritesService
     private function ensureSchema(): void
     {
         if ($this->schemaReady) { return; }
+        // Таблицы создаёт установка пакета (`install.mysql.utf8.sql`); DDL на каждом запросе витрины не нужен (и требует права CREATE). Создаём только
+        // если таблиц нет — сайт, обновлённый поверх старой версии.
+        try {
+            $this->db->setQuery('SELECT 1 FROM #__dharmashop_favorite_items LIMIT 0')->execute();
+            $this->db->setQuery('SELECT 1 FROM #__dharmashop_favorites LIMIT 0')->execute();
+            $this->schemaReady = true;
+            return;
+        } catch (\Throwable $error) {
+            // создаём ниже
+        }
         $this->db->setQuery('CREATE TABLE IF NOT EXISTS `#__dharmashop_favorites` (
             `id` int unsigned NOT NULL AUTO_INCREMENT,
             `token` char(64) CHARACTER SET ascii COLLATE ascii_bin NULL,

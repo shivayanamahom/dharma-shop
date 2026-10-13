@@ -49,7 +49,8 @@ class ShippingController extends BaseController
         $now = time();
         $state = array_values(array_filter($state, static fn ($time): bool => (int) $time > $now - self::WINDOW));
 
-        if (count($state) >= self::LIMIT) {
+        // Лимит по адресу клиента дополняет лимит по сессии: сессию можно сбросить сменой cookie, а геокодер и маршруты платные.
+        if (count($state) >= self::LIMIT || !\Dharma\Component\DharmaShop\Site\Support\RateLimiter::allow('shipping-ajax', \Dharma\Component\DharmaShop\Site\Support\RateLimiter::clientAddress(), self::LIMIT * 3, self::WINDOW)) {
             return ['ok' => false, 'error' => Text::_('COM_DHARMASHOP_SHIPPING_AJAX_LIMIT')];
         }
 
@@ -80,7 +81,7 @@ class ShippingController extends BaseController
     /** @param array<string, mixed> $data */
     private function respond(array $data): void
     {
-        $this->app->setHeader('Content-Type', 'application/json; charset=utf-8', true);
+        $this->app->setHeader('Content-Type', 'application/json; charset=utf-8', true); $this->app->setHeader('X-Content-Type-Options', 'nosniff', true);
         $this->app->setHeader('Cache-Control', 'no-store', true);
         $this->app->sendHeaders();
         echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);

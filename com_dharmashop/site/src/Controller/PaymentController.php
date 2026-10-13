@@ -42,7 +42,7 @@ class PaymentController extends BaseController
             $now = time();
             $state = array_values(array_filter((array) $session->get('com_dharmashop.payment.ajax', []), static fn ($time): bool => (int) $time > $now - 300));
 
-            if (count($state) >= 80) {
+            if (count($state) >= 80 || !\Dharma\Component\DharmaShop\Site\Support\RateLimiter::allow('payment-ajax', \Dharma\Component\DharmaShop\Site\Support\RateLimiter::clientAddress(), 240, 300)) {
                 $result = ['ok' => false, 'error' => Text::_('COM_DHARMASHOP_SHIPPING_AJAX_LIMIT')];
             } else {
                 $state[] = $now;
@@ -67,7 +67,7 @@ class PaymentController extends BaseController
             }
         }
 
-        $this->app->setHeader('Content-Type', 'application/json; charset=utf-8', true);
+        $this->app->setHeader('Content-Type', 'application/json; charset=utf-8', true); $this->app->setHeader('X-Content-Type-Options', 'nosniff', true);
         $this->app->setHeader('Cache-Control', 'no-store', true);
         $this->app->sendHeaders();
         echo json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
