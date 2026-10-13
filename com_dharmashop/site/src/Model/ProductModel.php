@@ -72,10 +72,10 @@ class ProductModel extends BaseDatabaseModel
         if (!$variant) { throw new \RuntimeException(Text::_('COM_DHARMASHOP_SKU_INVARIANT')); }
         if ((int)$variant->state !== 1) { $variant = null; }
         $item->sku = (string) ($variant->sku ?? '');
-        // Нулевой служебный остаток без учёта количества — доступен; учтённый ноль — отсутствует,
-        // даже если отдельное бизнес-правило корзины позволяет принять заказ без остатка.
+        // Нулевой служебный остаток без учёта количества — доступен; учтённый ноль доступен только при разрешённом
+        // заказе без остатка (backorder): витрина в этом случае показывает «В наличии» и кнопку покупки, разметка совпадает с ней.
         $item->offer_in_stock = $variant !== null
-            && ((int) $variant->stock_tracked === 0 || (float) $variant->stock_total > 0);
+            && ((int) $variant->stock_tracked === 0 || (float) $variant->stock_total > 0 || (int) $variant->backorder === 1);
         $item->params = new Registry($item->params);
         $item->metadata = new Registry($item->metadata);
         $price = $variant && (int)$variant->is_default === 1 ? $variant : null;

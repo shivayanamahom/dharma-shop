@@ -249,6 +249,12 @@ def product(g: Site) -> None:
     p = [p for d in ld(r.text) for p in walk(d, "Product")][0]
     ok(p["offers"]["availability"].endswith("OutOfStock"), "нет в наличии: OutOfStock", R)
     ok("Out of stock" in text_of(r.text), "на странице «Out of stock»", R)
+    # учёт остатков, остаток 0, но заказ без остатка разрешён: разметка совпадает с витриной (бейдж «In stock», кнопка покупки)
+    r = g.get("/index.php/katalog/dom/kruzki/kruzka-temnaa")
+    p = [p for d in ld(r.text) for p in walk(d, "Product")][0]
+    t = text_of(r.text)
+    ok(p["offers"]["availability"].endswith("/InStock") and "In stock" in t and "Out of stock" not in t and "Add to cart" in t,
+       f"остаток 0 + backorder: JSON-LD {p['offers']['availability'].rsplit('/', 1)[-1]}, на странице «In stock» и «Add to cart»", R)
     # цена по запросу
     r = g.get("/index.php/katalog/dom/podarocnyj-sertifikat")
     if r.status_code != 200:
@@ -263,6 +269,16 @@ def product(g: Site) -> None:
     ok(canonical(r.text).endswith("smartfon-pixel-p-cernyj-128-gb") or "smartfon-pixel-p" in canonical(r.text), f"canonical варианта: {canonical(r.text)[-45:]}", R)
     t = text_of(r.text)
     ok("128" in t and "256" in t, "на странице варианта предлагается выбор вариантов (128/256)", R)
+    # наличие каждого варианта группы в разметке совпадает с бейджем на странице этого варианта
+    mismatch = []
+    for x in groups[0]["hasVariant"] if groups else []:
+        if "offers" not in x:
+            continue
+        page = g.get(x["url"]).text
+        shown = "InStock" if "In stock" in text_of(page) and "Out of stock" not in text_of(page) else "OutOfStock"
+        if x["offers"]["availability"].rsplit("/", 1)[-1] != shown:
+            mismatch.append(f"{x['url'].rsplit('/', 1)[-1]}: разметка {x['offers']['availability'].rsplit('/', 1)[-1]}, витрина {shown}")
+    ok(groups and not mismatch, f"наличие вариантов группы в JSON-LD совпадает с витриной{': ' + '; '.join(mismatch) if mismatch else ''}", R)
     prices = sorted({float(x["offers"]["price"]) for x in groups[0]["hasVariant"] if "offers" in x}) if groups else []
     ok(prices == [29990.0, 34990.0], f"цены вариантов: {prices}", R)
     # крошки

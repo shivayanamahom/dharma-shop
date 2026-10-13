@@ -120,7 +120,7 @@
 
 Обновление 2026-10-08: все коды справочника товара подключены в ProductValues; price_min/max скрыты, прежние сохранённые тексты совместимы. `onDharmaShopMetadataReady.content` также принимает ProductMetadata (name/sku/brand/description/image/price/currency/inStock); числовая цена без форматирования либо null. Списки товаров передают CollectionMetadata с itemType=Product. Плагины каталог не читают.
 
-ProductMetadata.inStock (2026-10-08): фактическая доступность выбранного SKU по учёту остатков, а не общий флаг разрешения заказа. Не меняет подстановку product.stock, использующую индекс витрины. Правило и backorder — SEO.md.
+ProductMetadata.inStock (2026-10-08, изменено 2026-10-13): доступность выбранного SKU — учёт отключён, остаток >0 или разрешён заказ без остатка (backorder); совпадает с подстановкой product.stock и бейджем витрины. Правило — SEO.md.
 
 ### Потребитель событий товара: связанные товары
 

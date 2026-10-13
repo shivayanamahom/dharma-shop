@@ -16,7 +16,7 @@ final readonly class ProductMetadata
         public string $image,
         public ?string $price,
         public string $currency,
-        /** Фактический остаток выбранного варианта; при отключённом учёте — true. */
+        /** Доступность выбранного варианта: учёт отключён, остаток > 0 или разрешён заказ без остатка (как на витрине). */
         public bool $inStock,
         /** Все изображения товара (абсолютные адреса), основное первым. @var list<string> */
         public array $images = [],
