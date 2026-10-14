@@ -194,6 +194,21 @@ return new class () implements ServiceProviderInterface {
                         $this->db->setQuery($query)->execute();
                     }
 
+                    // С версии 0.1.4 у всех расширений один общий источник обновлений «Dharma Shop» (коллекция); прежние отдельные
+                    // источники «Dharma Shop: имя» (по одному на расширение) только замедляли проверку и удаляются.
+                    try {
+                        $legacy = $this->db->setQuery($this->db->getQuery(true)->select('update_site_id')->from($this->db->quoteName('#__update_sites'))
+                            ->where($this->db->quoteName('name') . ' LIKE ' . $this->db->quote('Dharma Shop: %')))->loadColumn();
+                        if ($legacy) {
+                            $list = implode(',', array_map('intval', $legacy));
+                            foreach (['#__update_sites_extensions', '#__updates', '#__update_sites'] as $table) {
+                                $this->db->setQuery('DELETE FROM ' . $this->db->quoteName($table) . ' WHERE update_site_id IN (' . $list . ')')->execute();
+                            }
+                        }
+                    } catch (\Throwable) {
+                        // Не критично: источники удалит и вкладка «Расширения» при проверке обновлений.
+                    }
+
                     require_once JPATH_ADMINISTRATOR . '/components/com_dharmashop/src/Fields/FileStorage.php';
                     \Dharma\Component\DharmaShop\Administrator\Fields\FileStorage::upgrade($this->db);
                     require_once JPATH_ADMINISTRATOR . '/components/com_dharmashop/src/Catalog/GroupStorage.php';

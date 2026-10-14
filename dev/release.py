@@ -89,8 +89,7 @@ def set_manifest(ext: dict, version: str | None) -> None:
     text = open(ext["manifest"], encoding="utf-8").read()
     if version:
         text = re.sub(r"<version>[^<]*</version>", f"<version>{version}</version>", text, count=1)
-    url = f"{FEED_BASE}{ext['name']}.xml"
-    block = f'<updateservers><server type="extension" priority="1" name="Dharma Shop: {ext["name"]}">{url}</server></updateservers>'
+    block = f'<updateservers><server type="collection" priority="1" name="Dharma Shop">{FEED_BASE}dharma-shop.xml</server></updateservers>'
     if "<updateservers>" in text:
         text = re.sub(r"<updateservers>.*?</updateservers>", block, text, flags=re.S)
     else:
@@ -159,19 +158,20 @@ def entry_xml(e: dict, version: str, url: str, digest: str, channel: str, tag: s
   </update>"""
 
 
-def write_index(exts: list[dict], out: str) -> None:
-    """updates/index.json — один маленький файл со свежими версиями всех расширений: вкладка «Расширения» проверяет обновления одним запросом, а не обходит 39 лент."""
-    import json
-    items = []
+def write_collection(exts: list[dict], out: str) -> None:
+    """updates/dharma-shop.xml — коллекция Joomla: одна запись на расширение с последней версией и ссылкой на подробную ленту.
+    Все манифесты указывают на этот один адрес, поэтому Joomla создаёт один источник обновлений и проверяет его одним запросом."""
+    rows = []
     for e in exts:
         entries = read_entries(os.path.join(out, "updates", f"{e['name']}.xml"))
         if not entries:
             continue
         best = max(entries, key=lambda x: vkey(x["version"]))
-        tag = re.search(r"<tag>([^<]+)</tag>", best["xml"])
-        items.append({"element": e["element"], "type": e["type"], "folder": e["folder"], "feed": f"{e['name']}.xml", "version": best["version"], "stability": tag.group(1) if tag else "stable"})
-    with open(os.path.join(out, "updates", "index.json"), "w", encoding="utf-8") as fh:
-        json.dump({"extensions": items}, fh, ensure_ascii=False, indent=1)
+        folder = f' folder="{e["folder"]}"' if e["folder"] else ""
+        rows.append(f'  <extension name="{escape(title(e), {chr(34): "&quot;"})}" element="{e["element"]}" type="{e["type"]}"{folder} client="{e["client"]}" version="{best["version"]}" '
+                    f'targetplatformversion="6." detailsurl="{FEED_BASE}{e["name"]}.xml"/>')
+    with open(os.path.join(out, "updates", "dharma-shop.xml"), "w", encoding="utf-8") as fh:
+        fh.write('<?xml version="1.0" encoding="utf-8"?>\n<extensionset name="Dharma Shop" description="Dharma Shop: магазин, плагины и модули">\n' + "\n".join(rows) + "\n</extensionset>\n")
 
 
 def cmd_feed(args) -> None:
@@ -205,7 +205,7 @@ def cmd_feed(args) -> None:
         items.sort(key=lambda t: vkey(t[0]), reverse=True)
         body = "\n".join(re.sub(r"^\s*", "  ", x, count=1) if x.lstrip().startswith("<update") else x for _, x in items[:KEEP_VERSIONS])
         open(feed, "w", encoding="utf-8").write(f'<?xml version="1.0" encoding="utf-8"?>\n<updates>\n{body}\n</updates>\n')
-    write_index(exts, out)
+    write_collection(exts, out)
     print(f"ленты: {len(os.listdir(os.path.join(out, 'updates')))} файлов; файлов для загрузки: {len(os.listdir(assets))} ({assets}); тег {tag}")
 
 

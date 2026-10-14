@@ -28,8 +28,8 @@ use Joomla\Registry\Registry;
  */
 final class ExtensionUpdates
 {
-	/** Источники обновлений Dharma Shop отличаются по названию (оно задано в манифестах: «Dharma Shop: имя») и не зависят от адреса ленты. */
-	private const SITE_NAME = 'Dharma Shop:%';
+	/** Источник обновлений Dharma Shop — один на все расширения (коллекция); его название задано в манифестах и не зависит от адреса. */
+	private const SITE_NAME = 'Dharma Shop';
 
 	private const ORDER = ['package' => 0, 'file' => 1, 'component' => 2, 'plugin' => 3, 'module' => 4];
 
@@ -44,7 +44,7 @@ final class ExtensionUpdates
 			->select(['e.extension_id', 'e.type', 'e.element', 'e.folder', 'e.enabled', 'e.name', 'e.manifest_cache', 's.enabled AS site_enabled', 'u.update_id', 'u.version AS available'])
 			->from($db->quoteName('#__extensions', 'e'))
 			->join('INNER', $db->quoteName('#__update_sites_extensions', 'se') . ' ON se.extension_id = e.extension_id')
-			->join('INNER', $db->quoteName('#__update_sites', 's') . ' ON s.update_site_id = se.update_site_id AND s.name LIKE ' . $db->quote(self::SITE_NAME))
+			->join('INNER', $db->quoteName('#__update_sites', 's') . ' ON s.update_site_id = se.update_site_id AND s.name = ' . $db->quote(self::SITE_NAME))
 			->join('LEFT', $db->quoteName('#__updates', 'u') . ' ON u.extension_id = e.extension_id AND u.update_site_id = s.update_site_id');
 		$rows = [];
 		$language = Factory::getApplication()->getLanguage();
@@ -126,68 +126,60 @@ final class ExtensionUpdates
 	}
 
 	/**
-	 * Поиск обновлений: один небольшой запрос к индексу версий (updates/index.json рядом с лентой пакета), затем штатный поиск Joomla
-	 * только для расширений, у которых версия в индексе новее установленной и подходит по «минимальной стабильности».
-	 * Так проверка занимает секунду и не обходит все ленты подряд (при недоступном интернете — один быстрый отказ, а не тайм-аут PHP).
+	 * Поиск обновлений штатным поиском Joomla. Источник один (коллекция всех расширений), поэтому проверка — один небольшой запрос.
+	 * Прежние отдельные источники по расширениям («Dharma Shop: имя», версии до 0.1.4) удаляются: каждый из них добавлял запрос.
 	 *
 	 * @return int число найденных обновлений
 	 */
 	public function check(): int
 	{
-		$rows = $this->rows();
-		$index = $this->index($rows);
-		$stability = $this->stability();
-		$levels = array_flip(self::CHANNELS);
-		$ids = [];
-
-		foreach ($rows as $row) {
-			$entry = $index[$row['type'] . '|' . $row['folder'] . '|' . $row['element']] ?? null;
-			if ($entry && version_compare((string) $entry['version'], $row['installed'], '>') && ($levels[$entry['stability']] ?? 4) >= $stability) {
-				$ids[] = $row['id'];
-			}
-		}
+		$this->removeLegacySites();
+		$this->probe();
+		$ids = array_column($this->rows(), 'id');
 
 		if ($ids) {
 			@set_time_limit(120);
-			$this->model()->findUpdates($ids, 0, $stability);
+			$this->model()->findUpdates($ids, 0, $this->stability());
 		}
 
 		return count(array_filter($this->rows(), static fn (array $r): bool => $r['available'] !== ''));
 	}
 
-	/** @return array<string, array<string, mixed>> записи индекса версий по ключу «тип|группа|элемент» */
-	private function index(array $rows): array
+	/** Быстрая проверка доступности источника (10 секунд): без неё штатный поиск лишь предупредил бы и ответил «обновлений нет». */
+	private function probe(): void
 	{
-		$package = array_values(array_filter($rows, static fn (array $r): bool => $r['type'] === 'package'))[0] ?? null;
 		$db = Factory::getDbo();
-		$query = $db->createQuery()->select('s.location')->from($db->quoteName('#__update_sites', 's'))
-			->join('INNER', $db->quoteName('#__update_sites_extensions', 'se') . ' ON se.update_site_id = s.update_site_id')
-			->where('se.extension_id = ' . (int) ($package['id'] ?? ($rows[0]['id'] ?? 0)));
-		$location = trim((string) $db->setQuery($query)->loadResult());
+		$location = trim((string) $db->setQuery($db->createQuery()->select('location')->from($db->quoteName('#__update_sites'))->where('name = ' . $db->quote(self::SITE_NAME)), 0, 1)->loadResult());
 
 		if ($location === '') {
 			throw new \RuntimeException('COM_DHARMASHOP_EXT_NO_SITES');
 		}
 
-		$url = substr($location, 0, (int) strrpos($location, '/') + 1) . 'index.json';
-
 		try {
-			$response = HttpFactory::getHttp(new Registry(['follow_location' => true]), ['curl', 'stream'])->get($url, [], 10);
-			$data = $response->getStatusCode() === 200 ? json_decode((string) $response->body, true) : null;
+			$status = HttpFactory::getHttp(new Registry(['follow_location' => true]), ['curl', 'stream'])->get($location, [], 10)->getStatusCode();
 		} catch (\Throwable) {
-			$data = null;
+			$status = 0;
 		}
 
-		if (!is_array($data) || !isset($data['extensions'])) {
+		if ($status !== 200) {
 			throw new \RuntimeException('COM_DHARMASHOP_EXT_FEED_UNAVAILABLE');
 		}
+	}
 
-		$result = [];
-		foreach ($data['extensions'] as $entry) {
-			$result[($entry['type'] ?? '') . '|' . ($entry['folder'] ?? '') . '|' . ($entry['element'] ?? '')] = $entry;
+	/** Удаляет источники обновлений прежнего вида (по одному на расширение). */
+	public function removeLegacySites(): void
+	{
+		$db = Factory::getDbo();
+		$ids = $db->setQuery($db->createQuery()->select('update_site_id')->from($db->quoteName('#__update_sites'))->where('name LIKE ' . $db->quote('Dharma Shop: %')))->loadColumn();
+
+		if (!$ids) {
+			return;
 		}
 
-		return $result;
+		$list = implode(',', array_map('intval', $ids));
+		$db->setQuery('DELETE FROM ' . $db->quoteName('#__update_sites_extensions') . ' WHERE update_site_id IN (' . $list . ')')->execute();
+		$db->setQuery('DELETE FROM ' . $db->quoteName('#__updates') . ' WHERE update_site_id IN (' . $list . ')')->execute();
+		$db->setQuery('DELETE FROM ' . $db->quoteName('#__update_sites') . ' WHERE update_site_id IN (' . $list . ')')->execute();
 	}
 
 	/**
