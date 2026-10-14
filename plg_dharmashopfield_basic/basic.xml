@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <extension type="plugin" group="dharmashopfield" method="upgrade">
-    <name>PLG_DHARMASHOPFIELD_BASIC</name><author>Dharma</author><version>0.1.0</version>
+    <name>PLG_DHARMASHOPFIELD_BASIC</name><author>Dharma</author><version>0.1.1</version>
     <description>PLG_DHARMASHOPFIELD_BASIC_DESC</description>
     <namespace path="src">Dharma\Plugin\DharmaShopField\Basic</namespace>
     <files><folder plugin="basic">src</folder><folder>services</folder><folder>forms</folder></files>
@@ -10,4 +10,5 @@
         <language tag="en-GB">en-GB/plg_dharmashopfield_basic.ini</language>
         <language tag="en-GB">en-GB/plg_dharmashopfield_basic.sys.ini</language>
     </languages>
+	<updateservers><server type="extension" priority="1" name="Dharma Shop: plg_dharmashopfield_basic">https://shivayanamahom.github.io/dharma-shop-updates/updates/plg_dharmashopfield_basic.xml</server></updateservers>
 </extension>

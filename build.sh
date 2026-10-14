@@ -29,6 +29,12 @@ for ext in "${EXTENSIONS[@]}"; do
   fi
 done
 
+# DHARMA_KEEP_ZIPS=<папка>: отдельные zip расширений сохраняются (для лент обновлений, dev/release.py).
+if [ -n "${DHARMA_KEEP_ZIPS:-}" ]; then
+  mkdir -p "$DHARMA_KEEP_ZIPS"
+  for ext in "${EXTENSIONS[@]}"; do cp "$stage/$ext.zip" "$DHARMA_KEEP_ZIPS/$ext.zip"; done
+fi
+
 cp pkg_dharmashop.xml script.php LICENSE.txt "$stage/"
 cp -R language "$stage/language"
 

@@ -5,7 +5,7 @@
 	<creationDate>2026-10</creationDate>
 	<copyright>(C) 2026 Dharma</copyright>
 	<license>GNU General Public License version 2 or later</license>
-	<version>0.1.0</version>
+	<version>0.1.1</version>
 	<description>MOD_DHARMASHOP_SEARCH_XML_DESCRIPTION</description>
 	<namespace path="src">Dharma\Module\DharmaShopSearch</namespace>
 	<files>
@@ -80,4 +80,5 @@
 			</fieldset>
 		</fields>
 	</config>
+	<updateservers><server type="extension" priority="1" name="Dharma Shop: mod_dharmashop_search">https://shivayanamahom.github.io/dharma-shop-updates/updates/mod_dharmashop_search.xml</server></updateservers>
 </extension>

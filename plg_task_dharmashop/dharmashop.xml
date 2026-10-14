@@ -5,7 +5,7 @@
     <creationDate>2026-10</creationDate>
     <copyright>(C) 2026 Dharma</copyright>
     <license>GNU General Public License version 2 or later</license>
-    <version>0.1.0</version>
+    <version>0.1.1</version>
     <description>PLG_TASK_DHARMASHOP_XML_DESCRIPTION</description>
     <namespace path="src">Dharma\Plugin\Task\DharmaShop</namespace>
     <files>
@@ -18,4 +18,5 @@
         <language tag="en-GB">language/en-GB/plg_task_dharmashop.ini</language>
         <language tag="en-GB">language/en-GB/plg_task_dharmashop.sys.ini</language>
     </languages>
+	<updateservers><server type="extension" priority="1" name="Dharma Shop: plg_task_dharmashop">https://shivayanamahom.github.io/dharma-shop-updates/updates/plg_task_dharmashop.xml</server></updateservers>
 </extension>

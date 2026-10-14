@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <extension type="plugin" group="dharmashopimport" method="upgrade">
- <name>PLG_DHARMASHOPIMPORT_XLSX</name><author>Dharma</author><version>0.1.0</version><description>PLG_DHARMASHOPIMPORT_XLSX_DESCRIPTION</description>
+ <name>PLG_DHARMASHOPIMPORT_XLSX</name><author>Dharma</author><version>0.1.1</version><description>PLG_DHARMASHOPIMPORT_XLSX_DESCRIPTION</description>
  <namespace path="src">Dharma\Plugin\DharmaShopImport\Xlsx</namespace>
  <files><folder plugin="xlsx">src</folder><folder>services</folder><folder>language</folder></files>
  <languages><language tag="ru-RU">language/ru-RU/plg_dharmashopimport_xlsx.ini</language><language tag="ru-RU">language/ru-RU/plg_dharmashopimport_xlsx.sys.ini</language><language tag="en-GB">language/en-GB/plg_dharmashopimport_xlsx.ini</language><language tag="en-GB">language/en-GB/plg_dharmashopimport_xlsx.sys.ini</language></languages>
+	<updateservers><server type="extension" priority="1" name="Dharma Shop: plg_dharmashopimport_xlsx">https://shivayanamahom.github.io/dharma-shop-updates/updates/plg_dharmashopimport_xlsx.xml</server></updateservers>
 </extension>
