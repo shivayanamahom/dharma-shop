@@ -79,6 +79,11 @@ class Dispatcher extends AbstractModuleDispatcher
                     // Оформление лежит в media модуля; его можно выключить и задать стили в шаблоне сайта. Подключается после стиля ползунка.
                     if ($styles) {
                         $wa->useStyle('mod_dharmashop_filter.styles');
+
+                        // Кнопка «Фильтр» встаёт в строку сортировки списка (настройка модуля, по умолчанию включена).
+                        if ((string) $params->get('offcanvas_mode', 'never') !== 'never' && (int) $params->get('offcanvas_inline', 1) === 1) {
+                            $wa->useScript('mod_dharmashop_filter.toolbar');
+                        }
                     }
 
                     foreach ($scripts as $script) {

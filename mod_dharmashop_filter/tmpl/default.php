@@ -61,9 +61,9 @@ $sticky = !$horizontal && $mode !== 'always' && (string)$params->get('sticky_mod
 ?>
 <?php if ($offcanvas) : ?>
     <button type="button" class="btn btn-outline-primary w-100<?php echo $buttonClass; ?> dharmaFilterToggle" data-bs-toggle="offcanvas" data-bs-target="#<?php echo $panelId; ?>" aria-controls="<?php echo $panelId; ?>">
-        <?php echo $escape($buttonText); ?><?php echo $filter['active'] ? ' <span class="badge text-bg-primary">' . (int) $filter['active'] . '</span>' : ''; ?>
+        <span class="dharmaFilterToggleText"><?php echo $escape($buttonText); ?></span><?php echo $filter['active'] ? ' <span class="badge text-bg-primary">' . (int) $filter['active'] . '</span>' : ''; ?>
     </button>
-    <div class="<?php echo $panelClass; ?>" tabindex="-1" id="<?php echo $panelId; ?>" aria-labelledby="<?php echo $panelId; ?>-title">
+    <div class="<?php echo $panelClass; ?> dharmaFilterPanel" tabindex="-1" id="<?php echo $panelId; ?>" aria-labelledby="<?php echo $panelId; ?>-title">
         <div class="offcanvas-header">
             <h5 class="offcanvas-title" id="<?php echo $panelId; ?>-title"><?php echo $escape($buttonText); ?></h5>
             <button type="button" class="btn-close" data-bs-dismiss="offcanvas" data-bs-target="#<?php echo $panelId; ?>" aria-label="<?php echo $escape(Text::_('JCLOSE')); ?>"></button>

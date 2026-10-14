@@ -6,7 +6,10 @@
  *   --dharma-filter-bg, --dharma-filter-radius, --dharma-filter-shadow.
  * Иконки — маски SVG: берут цвет текста, дополнительных файлов не нужно.
  */
-.dharmaFilter {
+.dharmaFilter,
+.dharmaFilterToggle,
+.dharmaFilterPanel,
+.dharmaListingBar-withFilter {
   --dharma-filter-accent: var(--bs-primary, #1a62ff);
   --dharma-filter-accent-rgb: var(--bs-primary-rgb, 26, 98, 255);
   --dharma-filter-accent-soft: rgba(var(--dharma-filter-accent-rgb), .1);
@@ -17,6 +20,8 @@
   --dharma-filter-field: var(--bs-tertiary-bg, #f8fafc);
   --dharma-filter-radius: .25rem; /* как у карточек мини-корзины (--dharma-minicart-radius) */
   --dharma-filter-shadow: none; /* тень отъедает ширину; при желании: 0 10px 30px rgba(15, 23, 42, .08) */
+  --dharma-filter-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8' fill='none' stroke='%2322262a' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M1.5 1.75 6 6.25l4.5-4.5'/%3E%3C/svg%3E");
+  --dharma-filter-funnel: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 5h18l-7 8.2V20l-4-2v-4.8z'/%3E%3C/svg%3E");
   color: var(--dharma-filter-text);
 }
 
@@ -210,6 +215,13 @@
   color: var(--dharma-filter-text);
   font-size: .875rem;
 }
+.dharmaFilter .form-select {
+  padding-right: 2rem;
+  background-image: var(--dharma-filter-chevron);
+  background-repeat: no-repeat;
+  background-size: .7rem .5rem;
+  background-position: right .8rem center;
+}
 .dharmaFilter .form-control:focus,
 .dharmaFilter .form-select:focus {
   border-color: var(--dharma-filter-accent);
@@ -282,4 +294,140 @@
 }
 @media (forced-colors: active) {
   .dharmaFilter .form-check .form-check-input:checked { forced-color-adjust: none; }
+}
+
+/* ---------- кнопка «Фильтр» на телефоне и выдвижная панель: как кнопки и панель мини-корзины ---------- */
+.dharmaFilterToggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .55rem;
+  min-height: 2.75rem;
+  padding: .25rem .75rem;
+  border: 1px solid var(--dharma-filter-accent);
+  border-radius: var(--dharma-filter-radius);
+  background: transparent;
+  color: var(--dharma-filter-accent);
+  font-size: .75rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  transition: background-color .2s ease, color .2s ease;
+}
+.dharmaFilterToggle::before {
+  content: '';
+  display: inline-block;
+  flex-shrink: 0;
+  vertical-align: -.22em;
+  margin-right: .5rem;
+  width: 1.15rem;
+  height: 1.15rem;
+  background: currentColor;
+  -webkit-mask: var(--dharma-filter-funnel) center / contain no-repeat;
+  mask: var(--dharma-filter-funnel) center / contain no-repeat;
+}
+.dharmaFilterToggle:hover,
+.dharmaFilterToggle:focus-visible { background: var(--dharma-filter-accent); color: #fff; }
+.dharmaFilterToggle:focus-visible { outline: 2px solid var(--dharma-filter-accent); outline-offset: 2px; }
+.dharmaFilterToggle .badge {
+  min-width: 1.4rem;
+  padding: .25rem .45rem;
+  border-radius: 999px;
+  background: var(--dharma-filter-accent) !important;
+  color: #fff !important;
+  font-size: .7rem;
+  letter-spacing: 0;
+}
+.dharmaFilterToggle:hover .badge,
+.dharmaFilterToggle:focus-visible .badge { background: #fff !important; color: var(--dharma-filter-accent) !important; }
+.dharmaFilterPanel { --bs-offcanvas-width: min(100vw, 26rem); --bs-offcanvas-padding-x: 1.25rem; --bs-offcanvas-padding-y: 1rem; }
+.dharmaFilterPanel .offcanvas-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--dharma-filter-line); }
+.dharmaFilterPanel .offcanvas-title {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  margin: 0;
+  font-size: .9rem;
+  font-weight: 800;
+  letter-spacing: .04em;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+.dharmaFilterPanel .offcanvas-title::before {
+  content: '';
+  width: 1.2rem;
+  height: 1.2rem;
+  background: var(--dharma-filter-accent);
+  -webkit-mask: var(--dharma-filter-funnel) center / contain no-repeat;
+  mask: var(--dharma-filter-funnel) center / contain no-repeat;
+}
+.dharmaFilterPanel .btn-close {
+  width: 2rem;
+  height: 2rem;
+  margin: 0;
+  padding: 0;
+  border-radius: 50%;
+  background-color: var(--dharma-filter-field);
+  background-size: .7rem;
+  opacity: 1;
+}
+.dharmaFilterPanel .btn-close:hover { background-color: rgba(var(--dharma-filter-accent-rgb), .12); }
+.dharmaFilterPanel .offcanvas-body { padding: 1rem 1.25rem; }
+/* «Показать N»: основная кнопка в стиле корзины */
+.dharmaFilterShow .btn,
+.dharmaFilterActions .btn {
+  font-size: .75rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  border-radius: var(--dharma-filter-radius);
+}
+.dharmaFilterShow .btn-primary { min-height: 2.75rem; background: var(--dharma-filter-accent) !important; border-color: var(--dharma-filter-accent); }
+.dharmaFilterShow .btn-primary:hover,
+.dharmaFilterShow .btn-primary:focus-visible { filter: brightness(.92); }
+
+/* ---------- кнопка «Фильтр» в строке сортировки (на телефоне): значок и число выбранных, текст — только для скринридеров ---------- */
+.btn.dharmaFilterToggle.dharmaFilterToggle-inline {
+  position: relative;
+  width: auto !important;
+  min-width: 2.9rem;
+  flex: 0 0 auto;
+  align-self: stretch;
+  padding: .25rem .8rem;
+}
+.dharmaFilterToggle.dharmaFilterToggle-inline::before { margin-right: 0; }
+.dharmaFilterToggle.dharmaFilterToggle-inline .dharmaFilterToggleText {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.dharmaFilterToggle.dharmaFilterToggle-inline .badge {
+  position: absolute;
+  top: -.45rem;
+  right: -.45rem;
+  box-shadow: 0 0 0 2px var(--dharma-filter-bg);
+}
+@media (max-width: 991.98px) {
+  .d-flex.dharmaListingBar-withFilter { flex-direction: row !important; align-items: stretch !important; flex-wrap: nowrap; gap: .5rem !important; }
+  .d-flex.dharmaListingBar-withFilter { height: 2.75rem; }
+  .d-flex.dharmaListingBar-withFilter > .dharmaFilterToggle { height: 100%; min-height: 0; margin: 0; }
+  .d-flex.dharmaListingBar-withFilter > div:nth-child(2) { display: flex; flex: 1 1 auto; min-width: 0; margin: 0; }
+  .d-flex.dharmaListingBar-withFilter > div:nth-child(2) .form-select { width: 100%; height: 100%; min-height: 0; }
+  .d-flex.dharmaListingBar-withFilter > div:nth-child(3) { display: flex; flex: 0 0 auto; flex-direction: row !important; align-items: stretch !important; gap: .5rem !important; margin: 0; }
+  .dharmaListingBar-withFilter .btn-group { height: 100%; }
+  .dharmaListingBar-withFilter .btn-group .btn { padding-top: 0; padding-bottom: 0; }
+  .dharmaListingBar-withFilter .btn-group .btn { display: inline-flex; align-items: center; padding-left: .6rem; padding-right: .6rem; }
+}
+.dharmaListingBar-withFilter .form-select {
+  padding-right: 1.9rem;
+  border-color: var(--dharma-filter-line);
+  background-color: var(--dharma-filter-bg);
+  background-image: var(--dharma-filter-chevron);
+  background-repeat: no-repeat;
+  background-size: .7rem .5rem;
+  background-position: right .7rem center;
 }
