@@ -4,7 +4,7 @@
   python3 dev/release.py status [--since ТЕГ]                        какие расширения изменились с прошлого выпуска
   python3 dev/release.py bump ВЕРСИЯ [--since ТЕГ] [--all]           версии изменившихся расширений и пакета := ВЕРСИЯ; <updateservers> в манифестах
   python3 dev/release.py feed ВЕРСИЯ --out ПАПКА --download-base URL [--channel dev|alpha|beta|rc|stable] [--tag ТЕГ]
-                                                                    собирает пакет и zip, пишет ленты ПАПКА/updates/<расширение>.xml и файлы для загрузки ПАПКА/assets/
+                                                                    собирает пакет и zip, пишет ленты ПАПКА/updates/<расширение>.xml и файлы для загрузки ПАПКА/assets/<тег>/
 
 Правило версий: расширение, изменившееся с прошлого выпуска, получает версию выпуска; неизменившиеся остаются прежними
 (их ленты не трогаются, ссылки на старые zip остаются рабочими). Пакет получает версию выпуска всегда.
@@ -170,7 +170,7 @@ def cmd_feed(args) -> None:
     pkg_version = next(e["version"] for e in exts if e["type"] == "package")
     if pkg_version != args.version:
         raise SystemExit(f"версия пакета в манифесте {pkg_version}, а выпуск {args.version}: сначала `bump`")
-    assets = os.path.join(out, "assets")
+    assets = os.path.join(out, "assets", tag)
     shutil.rmtree(assets, ignore_errors=True)
     os.makedirs(assets)
     os.makedirs(os.path.join(out, "updates"), exist_ok=True)
@@ -190,7 +190,7 @@ def cmd_feed(args) -> None:
         items.sort(key=lambda t: vkey(t[0]), reverse=True)
         body = "\n".join(re.sub(r"^\s*", "  ", x, count=1) if x.lstrip().startswith("<update") else x for _, x in items[:KEEP_VERSIONS])
         open(feed, "w", encoding="utf-8").write(f'<?xml version="1.0" encoding="utf-8"?>\n<updates>\n{body}\n</updates>\n')
-    print(f"ленты: {len(os.listdir(os.path.join(out, 'updates')))} файлов; файлов для загрузки: {len(os.listdir(assets))}; тег {tag}")
+    print(f"ленты: {len(os.listdir(os.path.join(out, 'updates')))} файлов; файлов для загрузки: {len(os.listdir(assets))} ({assets}); тег {tag}")
 
 
 def main() -> int:
