@@ -17,6 +17,8 @@ namespace Dharma\Component\DharmaShop\Administrator\Extension;
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Http\HttpFactory;
+use Joomla\CMS\Installer\Installer;
+use Joomla\CMS\Installer\InstallerHelper;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Table\Table;
 use Joomla\Registry\Registry;
@@ -227,6 +229,131 @@ final class ExtensionUpdates
 		}
 
 		return array_column($pending, 'updateId');
+	}
+
+	/** Сколько расширений Dharma Shop ждут обновления (по уже найденному в #__updates; в интернет не ходит). Для значка в меню. */
+	public static function pendingCount(): int
+	{
+		try {
+			return count(array_filter((new self())->rows(), static fn (array $r): bool => $r['available'] !== '' && $r['updateId'] > 0 && $r['siteEnabled']));
+		} catch (\Throwable) {
+			return 0;
+		}
+	}
+
+	/** Имя файла ленты расширения в репозитории обновлений (совпадает с именем папки расширения в проекте). */
+	private function feedName(array $row): string
+	{
+		return match ($row['type']) {
+			'plugin' => 'plg_' . $row['folder'] . '_' . $row['element'],
+			default => $row['element'],
+		};
+	}
+
+	/** Адрес подробной ленты расширения: рядом с общей коллекцией. */
+	private function feedUrl(array $row): string
+	{
+		$db = Factory::getDbo();
+		$location = trim((string) $db->setQuery($db->createQuery()->select('location')->from($db->quoteName('#__update_sites'))->where('name = ' . $db->quote(self::SITE_NAME)), 0, 1)->loadResult());
+
+		if ($location === '') {
+			throw new \RuntimeException('COM_DHARMASHOP_EXT_NO_SITES');
+		}
+
+		return substr($location, 0, (int) strrpos($location, '/') + 1) . $this->feedName($row) . '.xml';
+	}
+
+	/**
+	 * Предыдущая версия расширения из его ленты (в ленте хранятся несколько последних).
+	 *
+	 * @return array{version: string, url: string, sha256: string}|null
+	 */
+	public function previousVersion(array $row): ?array
+	{
+		try {
+			$response = HttpFactory::getHttp(new Registry(['follow_location' => true]), ['curl', 'stream'])->get($this->feedUrl($row), [], 10);
+			$xml = $response->getStatusCode() === 200 ? @simplexml_load_string((string) $response->body) : false;
+		} catch (\RuntimeException $e) {
+			throw $e;
+		} catch (\Throwable) {
+			$xml = false;
+		}
+
+		if (!$xml) {
+			throw new \RuntimeException('COM_DHARMASHOP_EXT_FEED_UNAVAILABLE');
+		}
+
+		$best = null;
+		foreach ($xml->update as $update) {
+			$version = (string) $update->version;
+			if (version_compare($version, (string) $row['installed'], '<') && ($best === null || version_compare($version, $best['version'], '>'))) {
+				$best = ['version' => $version, 'url' => trim((string) $update->downloads->downloadurl), 'sha256' => trim((string) $update->sha256)];
+			}
+		}
+
+		return $best;
+	}
+
+	/**
+	 * Откат расширения на предыдущую версию из ленты тем же путём, что и штатное обновление Joomla: скачивание, проверка SHA-256, установка.
+	 * Файлы возвращаются к прежней версии; изменения схемы базы данных не откатываются (они совместимы со старыми версиями).
+	 *
+	 * @return string версия, на которую выполнен откат
+	 */
+	public function rollback(int $extensionId): string
+	{
+		$row = null;
+		foreach ($this->rows() as $candidate) {
+			if ($candidate['id'] === $extensionId) {
+				$row = $candidate;
+			}
+		}
+
+		if ($row === null) {
+			throw new \RuntimeException('COM_DHARMASHOP_EXT_ROLLBACK_NONE');
+		}
+
+		$previous = $this->previousVersion($row);
+
+		if ($previous === null || $previous['sha256'] === '' || !str_starts_with($previous['url'], 'https://')) {
+			throw new \RuntimeException('COM_DHARMASHOP_EXT_ROLLBACK_NONE');
+		}
+
+		@set_time_limit(180);
+		\Joomla\CMS\Plugin\PluginHelper::importPlugin('installer');
+		$app = Factory::getApplication();
+		$file = InstallerHelper::downloadPackage($previous['url']);
+
+		if (!$file) {
+			throw new \RuntimeException('COM_DHARMASHOP_EXT_FEED_UNAVAILABLE');
+		}
+
+		$tmp = (string) $app->get('tmp_path');
+		$package = InstallerHelper::unpack($tmp . '/' . $file);
+
+		if (empty($package)) {
+			throw new \RuntimeException('COM_DHARMASHOP_EXT_ROLLBACK_FAILED');
+		}
+
+		$package['packagefile'] = is_file($package['packagefile']) ? $package['packagefile'] : $tmp . '/' . $package['packagefile'];
+
+		try {
+			// Контрольная сумма обязательна: без совпадения установка не начинается.
+			$update = new \Joomla\CMS\Updater\Update();
+			$update->set('sha256', (object) ['_data' => $previous['sha256']]); // так хранит значения разбор ленты Joomla
+
+			if (InstallerHelper::isChecksumValid($package['packagefile'], $update) !== InstallerHelper::HASH_VALIDATED) {
+				throw new \RuntimeException('COM_DHARMASHOP_EXT_ROLLBACK_CHECKSUM');
+			}
+
+			if (!Installer::getInstance()->update($package['dir'])) {
+				throw new \RuntimeException('COM_DHARMASHOP_EXT_ROLLBACK_FAILED');
+			}
+		} finally {
+			InstallerHelper::cleanupInstall($package['packagefile'], $package['extractdir']);
+		}
+
+		return $previous['version'];
 	}
 
 	/** Модель обновлений com_installer (то же, что использует штатный экран). */

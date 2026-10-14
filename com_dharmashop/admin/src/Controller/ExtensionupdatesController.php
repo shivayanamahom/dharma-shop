@@ -47,10 +47,16 @@ class ExtensionupdatesController extends BaseController
         $this->run('channel');
     }
 
+    public function rollback(): void
+    {
+        $this->run('rollback');
+    }
+
     private function run(string $action): void
     {
         $this->checkToken();
-        $url = Route::_('index.php?option=com_config&view=component&component=com_dharmashop', false);
+        // Кнопки есть и на странице «Обновления» (return=updates), и во вкладке «Расширения» настроек.
+        $url = Route::_($this->input->getCmd('return') === 'updates' ? 'index.php?option=com_dharmashop&view=updates' : 'index.php?option=com_config&view=component&component=com_dharmashop', false);
         $user = $this->app->getIdentity();
 
         if (!$user->authorise('core.admin', 'com_dharmashop') || !$user->authorise('core.manage', 'com_installer')) {
@@ -68,6 +74,10 @@ class ExtensionupdatesController extends BaseController
                 case 'check':
                     $count = $updates->check();
                     $this->setRedirect($url, Text::sprintf($count ? 'COM_DHARMASHOP_EXT_CHECKED' : 'COM_DHARMASHOP_EXT_NONE', $count));
+                    break;
+                case 'rollback':
+                    $version = $updates->rollback($this->input->getInt('extension_id'));
+                    $this->setRedirect($url, Text::sprintf('COM_DHARMASHOP_EXT_ROLLED_BACK', $version));
                     break;
                 case 'channel':
                     $updates->setStability($this->input->post->getInt('ext_channel', 4));

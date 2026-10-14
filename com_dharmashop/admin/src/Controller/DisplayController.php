@@ -44,7 +44,7 @@ class DisplayController extends BaseController
 
         $extensions = $this->input->getCmd('ext_action');
 
-        if (in_array($extensions, ['check', 'update', 'updateall', 'channel'], true)) {
+        if (in_array($extensions, ['check', 'update', 'updateall', 'channel', 'rollback'], true)) {
             $controller = $this->factory->createController('Extensionupdates', 'Administrator', [], $this->app, $this->input);
             $controller->execute($extensions);
             $controller->redirect();

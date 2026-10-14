@@ -58,6 +58,7 @@ final class DharmaShopMenu extends CMSPlugin implements SubscriberInterface
             ['COM_DHARMASHOP_MENU_SETTINGS', 'index.php?option=com_config&view=component&component=com_dharmashop', null, 'core.admin'],
         ],
         [
+            ['COM_DHARMASHOP_MENU_UPDATES', 'index.php?option=com_dharmashop&view=updates', null, 'core.admin'],
             ['COM_DHARMASHOP_MENU_HELP', 'index.php?option=com_dharmashop&view=help', null, 'core.manage'],
         ],
     ];
@@ -140,7 +141,14 @@ final class DharmaShopMenu extends CMSPlugin implements SubscriberInterface
                     $language->load($item[2] . '.sys', JPATH_ADMINISTRATOR);
                 }
 
-                $root->addChild(new AdministratorMenuItem(['title' => $item[0], 'type' => 'component', 'link' => $item[1], 'scope' => 'default']));
+                $props = ['title' => $item[0], 'type' => 'component', 'link' => $item[1], 'scope' => 'default'];
+
+                // Значок с числом найденных обновлений (по сохранённому результату проверки; без обращения в интернет).
+                if ($item[0] === 'COM_DHARMASHOP_MENU_UPDATES' && ($pending = $this->pendingUpdates()) > 0) {
+                    $props['icon'] = 'image:' . $pending;
+                }
+
+                $root->addChild(new AdministratorMenuItem($props));
             }
         }
 
@@ -159,5 +167,12 @@ final class DharmaShopMenu extends CMSPlugin implements SubscriberInterface
 
         array_splice($items, $position + 1, 0, [$root]);
         $event->updateItems($items);
+    }
+
+    /** Число расширений Dharma Shop с найденным обновлением. */
+    private function pendingUpdates(): int
+    {
+        return class_exists(\Dharma\Component\DharmaShop\Administrator\Extension\ExtensionUpdates::class)
+            ? \Dharma\Component\DharmaShop\Administrator\Extension\ExtensionUpdates::pendingCount() : 0;
     }
 }

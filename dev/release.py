@@ -98,16 +98,39 @@ def set_manifest(ext: dict, version: str | None) -> None:
     open(ext["manifest"], "w", encoding="utf-8").write(text)
 
 
+def migration_problems(exts: list[dict], since: str | None) -> list[str]:
+    """Компонент, у которого с прошлого выпуска изменился install-SQL, обязан получить новый файл миграции в sql/updates/mysql
+    (иначе сайты, обновлённые поверх прежней версии, получат другую схему БД, чем сайты с чистой установкой)."""
+    if not since:
+        return []
+    problems = []
+    for e in exts:
+        if e["type"] != "component":
+            continue
+        status = sh("git", "diff", "--name-status", since, "--", e["dir"]).splitlines()
+        install = [x for x in status if re.search(r"/sql/install[^/]*\.sql$", x.split("\t")[-1])]
+        added = [x for x in status if x.startswith("A") and "/sql/updates/" in x.split("\t")[-1]]
+        untracked = [f for f in sh("git", "ls-files", "--others", "--exclude-standard", "--", e["dir"]).splitlines() if "/sql/updates/" in f]
+        if install and not added and not untracked:
+            problems.append(f"{e['name']}: изменён install-SQL ({', '.join(x.split(chr(9))[-1] for x in install)}), но нет нового файла в sql/updates/mysql/")
+    return problems
+
+
 def cmd_status(args) -> None:
     exts = extensions()
     ch = changed(exts, args.since)
     for e in exts:
         print(f"{'*' if e['name'] in ch else ' '} {e['name']:42} {e['version']}")
     print(f"изменились: {len(ch)} из {len(exts) - 1}")
+    for line in migration_problems(exts, args.since):
+        print('ВНИМАНИЕ:', line)
 
 
 def cmd_bump(args) -> None:
     exts = extensions()
+    problems = migration_problems(exts, args.since)
+    if problems and not args.skip_migration_check:
+        raise SystemExit('Нет миграций БД:\n  ' + '\n  '.join(problems) + '\n(правило: любое изменение схемы = файл sql/updates/mysql/<версия>.sql; для осознанного пропуска — --skip-migration-check)')
     ch = changed(exts, None if args.all else args.since)
     for e in exts:
         if e["type"] == "package" or e["name"] in ch:
@@ -213,7 +236,7 @@ def main() -> int:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = p.add_subparsers(dest="cmd", required=True)
     a = sub.add_parser("status"); a.add_argument("--since")
-    b = sub.add_parser("bump"); b.add_argument("version"); b.add_argument("--since"); b.add_argument("--all", action="store_true")
+    b = sub.add_parser("bump"); b.add_argument("version"); b.add_argument("--since"); b.add_argument("--all", action="store_true"); b.add_argument("--skip-migration-check", action="store_true")
     f = sub.add_parser("feed"); f.add_argument("version"); f.add_argument("--out", required=True); f.add_argument("--download-base", required=True)
     f.add_argument("--channel", default="dev", choices=["dev", "alpha", "beta", "rc", "stable"]); f.add_argument("--tag")
     args = p.parse_args()
