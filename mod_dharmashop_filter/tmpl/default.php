@@ -99,7 +99,8 @@ $sticky = !$horizontal && $mode !== 'always' && (string)$params->get('sticky_mod
             $body = match ($section['kind']) {
                 'range', 'price' => $layout('range', ['section' => $section, 'module' => $id]),
                 'stock', 'sale' => $layout('switch', ['section' => $section, 'module' => $id]),
-                default => $layout($control, ['section' => $section, 'module' => $id]),
+                // В выпадающей группе список внутри списка не нужен: значения показываются переключателями («Любое» и значения).
+                default => $layout($dropdown && $control === 'select' ? 'radio' : $control, ['section' => $section, 'module' => $id]),
             };
             if ($dropdown && in_array($section['kind'], ['stock', 'sale'], true)) {
                 $switchItems[] = '<div class="dharmaFilterSection dharmaFilterSection-' . $escape($section['kind']) . '">' . $body . '</div>';
