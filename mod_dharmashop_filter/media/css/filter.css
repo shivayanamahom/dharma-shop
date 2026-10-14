@@ -418,7 +418,7 @@
   .d-flex.dharmaListingBar-withFilter > div:nth-child(2) { display: flex; flex: 1 1 auto; min-width: 0; margin: 0; }
   .d-flex.dharmaListingBar-withFilter > div:nth-child(2) .form-select { width: 100%; height: 100%; min-height: 0; }
   .d-flex.dharmaListingBar-withFilter > div:nth-child(3) { display: flex; flex: 0 0 auto; flex-direction: row !important; align-items: stretch !important; gap: .5rem !important; margin: 0; }
-  .dharmaListingBar-withFilter .btn-group { height: 100%; }
+  .dharmaListingBar-withFilter .btn-group { height: 100%; margin-bottom: 0; }
   .dharmaListingBar-withFilter .btn-group .btn { padding-top: 0; padding-bottom: 0; }
   .dharmaListingBar-withFilter .btn-group .btn { display: inline-flex; align-items: center; padding-left: .6rem; padding-right: .6rem; }
 }
@@ -430,4 +430,14 @@
   background-repeat: no-repeat;
   background-size: .7rem .5rem;
   background-position: right .7rem center;
+}
+
+/* ---------- строка сортировки на компьютере: поля одной высоты по одной линии ---------- */
+@media (min-width: 992px) {
+  .d-flex.dharmaListingBar-withFilter { align-items: center !important; }
+  .d-flex.dharmaListingBar-withFilter > div:nth-child(3) { align-items: center !important; }
+  .dharmaListingBar-withFilter fieldset { display: contents; }
+  .dharmaListingBar-withFilter .form-select { height: 2.75rem; }
+  .dharmaListingBar-withFilter .btn-group { height: 2.75rem; margin-bottom: 0; }
+  .dharmaListingBar-withFilter .btn-group .btn { display: inline-flex; align-items: center; padding-top: 0; padding-bottom: 0; }
 }
