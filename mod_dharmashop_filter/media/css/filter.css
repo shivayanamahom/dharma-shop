@@ -519,3 +519,42 @@
 .dharmaFilter-horizontal .dharmaFilterSwitches .form-switch .form-check-input { order: 3; margin: 0; float: none; }
 .dharmaFilter-horizontal .dharmaFilterSwitches .form-switch .form-check-label { order: 2; margin: 0; font-size: .85rem; }
 .dharmaFilter-horizontal .dharmaFilterSwitches .dharmaFilterIcon { order: 1; }
+
+/* ---------- кнопка «Свернуть» в углу горизонтального фильтра ---------- */
+.dharmaFilter-horizontal { position: relative; flex: 1 1 100%; min-width: 0; } /* offcanvas-body — flex-контейнер: свёрнутая карточка не должна сжиматься по содержимому */
+.dharmaFilterCollapse {
+  position: absolute;
+  top: .75rem;
+  right: .75rem;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid var(--dharma-filter-line);
+  border-radius: var(--dharma-filter-radius);
+  background: var(--dharma-filter-bg);
+  color: var(--dharma-filter-text);
+  cursor: pointer;
+  transition: border-color .15s, color .15s;
+}
+.dharmaFilterCollapse[hidden] { display: none; }
+.dharmaFilterCollapse::before {
+  content: '';
+  width: .8rem;
+  height: .55rem;
+  background: currentColor;
+  -webkit-mask: var(--dharma-filter-chevron) center / contain no-repeat;
+  mask: var(--dharma-filter-chevron) center / contain no-repeat;
+  transform: rotate(180deg);
+  transition: transform .2s;
+}
+.dharmaFilterCollapse[aria-expanded='false']::before { transform: none; }
+.dharmaFilterCollapse:hover,
+.dharmaFilterCollapse:focus-visible { border-color: var(--dharma-filter-accent); color: var(--dharma-filter-accent); outline: 0; }
+.dharmaFilter-horizontal .dharmaFilterChips,
+.dharmaFilter-horizontal .dharmaFilterTitle { padding-right: 2.75rem; }
+.dharmaFilter-collapsed .dharmaFilterTotal { margin-bottom: 0 !important; }
+.dharmaFilter-horizontal .dharmaFilterBody[hidden] { display: none; }

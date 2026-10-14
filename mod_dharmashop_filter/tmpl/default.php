@@ -59,6 +59,9 @@ $dropdown = $horizontal && (string) $params->get('horizontal_groups', 'dropdown'
 // Горизонтальный вид с выпадающими группами: цена и все диапазоны (ползунки) могут быть открытыми, переключатели («в наличии», «по акции») уходят в нижнюю строку справа.
 $priceOpen = $dropdown && (int) $params->get('price_open', 1) === 1;
 $switchItems = [];
+// Кнопка «Свернуть» в углу карточки горизонтального фильтра (скрипт filter-collapse.js; без скрипта кнопка скрыта, фильтр всегда развёрнут).
+$collapseBar = $horizontal && (int) $params->get('bar_collapse', 1) === 1 && (int) $params->get('module_styles', 1) === 1;
+$bodyId = 'dharmashop-filter-' . $id . '-body';
 $nofollow = (int) \Joomla\CMS\Component\ComponentHelper::getParams('com_dharmashop')->get('filter_nofollow',1) === 1 ? ' rel="nofollow"' : '';
 $sticky = !$horizontal && $mode !== 'always' && (string)$params->get('sticky_mode','off') !== 'off' ? ' data-filter-sticky="' . $escape($params->get('sticky_mode')) . '" data-sticky-offset="' . max(0,min(300,(int)$params->get('sticky_offset',16))) . '"' : '';
 ?>
@@ -77,6 +80,9 @@ $sticky = !$horizontal && $mode !== 'always' && (string)$params->get('sticky_mod
     <?php foreach ($filter['hidden'] as $name => $value) : ?>
         <input type="hidden" name="<?php echo $escape($name); ?>" value="<?php echo $escape($value); ?>">
     <?php endforeach; ?>
+    <?php if ($collapseBar) : ?>
+        <button type="button" class="dharmaFilterCollapse" hidden data-filter-collapse aria-expanded="true" aria-controls="<?php echo $bodyId; ?>" data-label-collapse="<?php echo $escape(Text::_('MOD_DHARMASHOP_FILTER_COLLAPSE')); ?>" data-label-expand="<?php echo $escape(Text::_('MOD_DHARMASHOP_FILTER_EXPAND')); ?>" title="<?php echo $escape(Text::_('MOD_DHARMASHOP_FILTER_COLLAPSE')); ?>" aria-label="<?php echo $escape(Text::_('MOD_DHARMASHOP_FILTER_COLLAPSE')); ?>"></button>
+    <?php endif; ?>
     <?php if (($heading = trim((string) $params->get('heading', ''))) !== '') : ?>
         <h2 class="dharmaFilterTitle"><?php echo $escape($heading); ?></h2>
     <?php endif; ?>
@@ -90,6 +96,7 @@ $sticky = !$horizontal && $mode !== 'always' && (string)$params->get('sticky_mod
     <?php if ((int) $params->get('show_result_count', 1) === 1) : ?>
         <div class="small text-body-secondary mb-2 dharmaFilterTotal" role="status" aria-live="polite"><?php echo Text::sprintf('MOD_DHARMASHOP_FILTER_FOUND', $totalText); ?><?php echo $filter['approximate'] ? ' <span title="' . $escape(Text::_('MOD_DHARMASHOP_FILTER_APPROXIMATE')) . '">≈</span>' : ''; ?></div>
     <?php endif; ?>
+    <?php if ($collapseBar) : ?><div class="dharmaFilterBody" id="<?php echo $bodyId; ?>"><?php endif; ?>
     <div class="<?php echo $dropdown ? 'd-flex flex-wrap gap-2 dharmaFilterGroups' : ($horizontal ? 'row row-cols-1 row-cols-md-2 row-cols-xl-4 g-3' : 'd-flex flex-column'); ?>">
         <?php foreach ($filter['sections'] as $section) :
             $control = (string) $section['control'];
@@ -148,6 +155,7 @@ $sticky = !$horizontal && $mode !== 'always' && (string)$params->get('sticky_mod
             <?php endif; ?>
         </div>
     <?php endif; ?>
+    <?php if ($collapseBar) : ?></div><?php endif; ?>
     <?php if ($offcanvas && $live) : ?>
         <div class="mt-3 dharmaFilterShow<?php echo $mode === 'always' ? '' : ' d-' . $breakpoint . '-none'; ?>">
             <button type="button" class="btn btn-primary bg-primary text-white w-100" data-bs-dismiss="offcanvas" data-bs-target="#<?php echo $panelId; ?>"><?php echo $escape($showText); ?></button>

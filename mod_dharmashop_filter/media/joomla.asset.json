@@ -60,7 +60,16 @@
       "name": "mod_dharmashop_filter.styles",
       "type": "style",
       "uri": "mod_dharmashop_filter/filter.css",
-      "version": "b1993c9f2e78"
+      "version": "946440370b3d"
+    },
+    {
+      "name": "mod_dharmashop_filter.collapse",
+      "type": "script",
+      "uri": "mod_dharmashop_filter/filter-collapse.js",
+      "version": "703ae4612ce0",
+      "attributes": {
+        "defer": true
+      }
     },
     {
       "name": "mod_dharmashop_filter.toolbar",

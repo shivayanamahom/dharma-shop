@@ -43,6 +43,8 @@ class Dispatcher extends AbstractModuleDispatcher
         if ($data['filter'] && $this->getApplication()->getInput()->getCmd('task') !== 'filter.refresh') {
             $scripts = [];
 
+            $styles = (int) $params->get('module_styles', 1) === 1;
+
             if ($data['filter']['cascade']) { $scripts[] = 'mod_dharmashop_filter.cascade'; }
 
             if ((int) $params->get('ajax', 0) === 1 || (string) $params->get('apply_mode', 'button') === 'instant') {
@@ -57,6 +59,7 @@ class Dispatcher extends AbstractModuleDispatcher
                 || ((string)$params->get('orientation','vertical') === 'horizontal' && (string)$params->get('horizontal_groups','dropdown') === 'dropdown')) { $scripts[] = 'mod_dharmashop_filter.values'; }
             if ((string)$params->get('orientation','vertical') === 'horizontal' && (string)$params->get('horizontal_groups','dropdown') === 'dropdown') { $scripts[] = 'bootstrap.dropdown'; }
             if ((string)$params->get('sticky_mode','off') !== 'off' && (string)$params->get('orientation','vertical') !== 'horizontal' && (string)$params->get('offcanvas_mode','never') !== 'always') { $scripts[] = 'mod_dharmashop_filter.sticky'; }
+            if ((string) $params->get('orientation', 'vertical') === 'horizontal' && (int) $params->get('bar_collapse', 1) === 1 && $styles) { $scripts[] = 'mod_dharmashop_filter.collapse'; }
             if ((int) $params->get('collapsible_groups', 1) === 1) {
                 $scripts[] = 'bootstrap.collapse';
             }
@@ -65,7 +68,6 @@ class Dispatcher extends AbstractModuleDispatcher
                 $scripts[] = 'bootstrap.offcanvas';
             }
 
-            $styles = (int) $params->get('module_styles', 1) === 1;
 
             if ($scripts || $styles) {
                 try {
