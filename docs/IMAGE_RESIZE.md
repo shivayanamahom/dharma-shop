@@ -131,7 +131,7 @@ $url = ImageUrl::resolve((string) $item->cover, 'module.products.grid');
 `ImageUrl::resolve($source, $context)` отправляет Joomla Event **`onDharmaShopImagePrepare`**, группа `dharmashop`. Аргументы: `request: ImageRequest` (readonly `source`/`context`, изменяемый `url`) и `settings: Registry` (копия настроек компонента). Подписчик меняет `$request->url`. Без обработчика остаётся безопасный абсолютный URL. Результаты повторных обращений к паре источник/контекст кешируются внутри запроса; отдельных SQL-запросов каталога на картинку нет.
 
 - Ядро: `com_dharmashop/admin/src/Image/{ImageUrl,ImageRequest,ImageContexts}.php`.
-- Нативная форма: `admin/forms/image_preset.xml`, `Field/{Imagesizes,Imagecontext}Field.php`, `Rule/ImagepresetsRule.php`.
+- Нативная форма: `admin/forms/image_preset.xml`, `Field/{Imagesizes,Imagecontext}Field.php`, `Rule/ImagepresetsRule.php`. Таблица размеров содержит десятки строк, поэтому список контекстов в строке не выводится целиком: `ImagecontextField` кладёт в строку только выбранное значение, остальные подставляет `media/js/image-context.js` при первом обращении к списку (значения приходят один раз через script options). Страница настроек магазина стала меньше примерно на 0.4 МБ и на несколько тысяч узлов, а экземпляры Choices.js для строк не создаются.
 - Плагин: `plg_dharmashop_imageresize/src/Extension/ImageResize.php`, `src/Image/Resizer.php`.
 - Пакет включает плагин; первая установка включает его, обновление сохраняет ручное отключение.
 

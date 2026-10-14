@@ -426,6 +426,7 @@ trait ListingTrait
             $app->allowCache(false);
         }
 
+        ProductCardRenderer::$stepperTemplateEmitted = true;
         $this->stepperTemplate = (new FileLayout('components.dharmashop.product-card-parts.stepper', null, ['component' => 'none', 'client' => 0]))->render(['qty' => 1, 'step' => 1, 'min' => 1]);
     }
 

@@ -125,10 +125,24 @@ final class ProductCardRenderer
         ]);
         return array_merge($data, $extraData);
     }
+    /**
+     * Шаблон виджета «кнопка → виджет» уже выведен на странице (представлением списка или товара, либо первой карточкой расширения).
+     * cart.js клонирует его из `template[data-dharmashop-stepper-template]`; без него в модуле товаров кнопка не превращается в виджет.
+     */
+    public static bool $stepperTemplateEmitted = false;
     public function render(array $data): string
     {
         $basePath = ($data['cardLayoutSource'] ?? 'override') === 'component' ? JPATH_ROOT . '/layouts' : null;
+        $html = (new FileLayout('components.dharmashop.product-card.default', $basePath, ['component' => 'none','client' => 0]))->render($data);
 
-        return (new FileLayout('components.dharmashop.product-card.default', $basePath, ['component' => 'none','client' => 0]))->render($data);
+        if (($data['cartMode'] ?? '') === 'stepper' && empty($data['catalogMode']) && !self::$stepperTemplateEmitted
+            && Factory::getApplication()->getDocument() instanceof HtmlDocument && Factory::getApplication()->getInput()->getCmd('format', 'html') === 'html') {
+            self::$stepperTemplateEmitted = true;
+            $html .= '<template data-dharmashop-stepper-template>'
+                . (new FileLayout('components.dharmashop.product-card-parts.stepper', null, ['component' => 'none', 'client' => 0]))->render(['qty' => 1, 'step' => 1, 'min' => 1])
+                . '</template>';
+        }
+
+        return $html;
     }
 }

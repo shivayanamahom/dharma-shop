@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <form addfieldprefix="Dharma\Component\DharmaShop\Administrator\Field">
-    <field name="context" type="imagecontext" layout="joomla.form.field.list-fancy-select" label="COM_DHARMASHOP_IMAGE_CONTEXT" required="true" filter="string" validate="options" />
+    <field name="context" type="imagecontext" label="COM_DHARMASHOP_IMAGE_CONTEXT" required="true" filter="string" validate="options" />
     <field name="width" type="number" label="COM_DHARMASHOP_IMAGE_WIDTH" description="COM_DHARMASHOP_IMAGE_DIMENSION_DESC" default="400" min="0" max="2400" filter="integer" />
     <field name="height" type="number" label="COM_DHARMASHOP_IMAGE_HEIGHT" description="COM_DHARMASHOP_IMAGE_DIMENSION_DESC" default="400" min="0" max="2400" filter="integer" />
     <field name="mode" type="list" label="COM_DHARMASHOP_IMAGE_MODE" default="contain" validate="options"><option value="contain">COM_DHARMASHOP_IMAGE_CONTAIN</option><option value="cover">COM_DHARMASHOP_IMAGE_COVER</option><option value="stretch">COM_DHARMASHOP_IMAGE_STRETCH</option></field>

@@ -97,6 +97,18 @@
 			"version": "a8aa1cc0a149"
 		},
 		{
+			"name": "com_dharmashop.image-context",
+			"version": "472a4d249109",
+			"type": "script",
+			"uri": "com_dharmashop/image-context.js",
+			"attributes": {
+				"defer": true
+			},
+			"dependencies": [
+				"core"
+			]
+		},
+		{
 			"name": "com_dharmashop.settings-search",
 			"version": "ca7d6950f28e",
 			"type": "script",
