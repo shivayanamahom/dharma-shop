@@ -159,6 +159,21 @@ def entry_xml(e: dict, version: str, url: str, digest: str, channel: str, tag: s
   </update>"""
 
 
+def write_index(exts: list[dict], out: str) -> None:
+    """updates/index.json — один маленький файл со свежими версиями всех расширений: вкладка «Расширения» проверяет обновления одним запросом, а не обходит 39 лент."""
+    import json
+    items = []
+    for e in exts:
+        entries = read_entries(os.path.join(out, "updates", f"{e['name']}.xml"))
+        if not entries:
+            continue
+        best = max(entries, key=lambda x: vkey(x["version"]))
+        tag = re.search(r"<tag>([^<]+)</tag>", best["xml"])
+        items.append({"element": e["element"], "type": e["type"], "folder": e["folder"], "feed": f"{e['name']}.xml", "version": best["version"], "stability": tag.group(1) if tag else "stable"})
+    with open(os.path.join(out, "updates", "index.json"), "w", encoding="utf-8") as fh:
+        json.dump({"extensions": items}, fh, ensure_ascii=False, indent=1)
+
+
 def cmd_feed(args) -> None:
     exts = extensions()
     out = os.path.abspath(args.out)
@@ -190,6 +205,7 @@ def cmd_feed(args) -> None:
         items.sort(key=lambda t: vkey(t[0]), reverse=True)
         body = "\n".join(re.sub(r"^\s*", "  ", x, count=1) if x.lstrip().startswith("<update") else x for _, x in items[:KEEP_VERSIONS])
         open(feed, "w", encoding="utf-8").write(f'<?xml version="1.0" encoding="utf-8"?>\n<updates>\n{body}\n</updates>\n')
+    write_index(exts, out)
     print(f"ленты: {len(os.listdir(os.path.join(out, 'updates')))} файлов; файлов для загрузки: {len(os.listdir(assets))} ({assets}); тег {tag}")
 
 

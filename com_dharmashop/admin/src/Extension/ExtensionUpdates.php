@@ -16,6 +16,7 @@ namespace Dharma\Component\DharmaShop\Administrator\Extension;
 
 use Joomla\CMS\Component\ComponentHelper;
 use Joomla\CMS\Factory;
+use Joomla\CMS\Http\HttpFactory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Table\Table;
 use Joomla\Registry\Registry;
@@ -124,15 +125,69 @@ final class ExtensionUpdates
 		Factory::getCache()->clean('_system');
 	}
 
-	/** Поиск обновлений для расширений Dharma Shop (как «Найти обновления» Joomla, но только по нашим источникам). @return int число найденных обновлений */
+	/**
+	 * Поиск обновлений: один небольшой запрос к индексу версий (updates/index.json рядом с лентой пакета), затем штатный поиск Joomla
+	 * только для расширений, у которых версия в индексе новее установленной и подходит по «минимальной стабильности».
+	 * Так проверка занимает секунду и не обходит все ленты подряд (при недоступном интернете — один быстрый отказ, а не тайм-аут PHP).
+	 *
+	 * @return int число найденных обновлений
+	 */
 	public function check(): int
 	{
-		$ids = array_column($this->rows(), 'id');
+		$rows = $this->rows();
+		$index = $this->index($rows);
+		$stability = $this->stability();
+		$levels = array_flip(self::CHANNELS);
+		$ids = [];
+
+		foreach ($rows as $row) {
+			$entry = $index[$row['type'] . '|' . $row['folder'] . '|' . $row['element']] ?? null;
+			if ($entry && version_compare((string) $entry['version'], $row['installed'], '>') && ($levels[$entry['stability']] ?? 4) >= $stability) {
+				$ids[] = $row['id'];
+			}
+		}
+
 		if ($ids) {
-			$this->model()->findUpdates($ids, 0, $this->stability());
+			@set_time_limit(120);
+			$this->model()->findUpdates($ids, 0, $stability);
 		}
 
 		return count(array_filter($this->rows(), static fn (array $r): bool => $r['available'] !== ''));
+	}
+
+	/** @return array<string, array<string, mixed>> записи индекса версий по ключу «тип|группа|элемент» */
+	private function index(array $rows): array
+	{
+		$package = array_values(array_filter($rows, static fn (array $r): bool => $r['type'] === 'package'))[0] ?? null;
+		$db = Factory::getDbo();
+		$query = $db->createQuery()->select('s.location')->from($db->quoteName('#__update_sites', 's'))
+			->join('INNER', $db->quoteName('#__update_sites_extensions', 'se') . ' ON se.update_site_id = s.update_site_id')
+			->where('se.extension_id = ' . (int) ($package['id'] ?? ($rows[0]['id'] ?? 0)));
+		$location = trim((string) $db->setQuery($query)->loadResult());
+
+		if ($location === '') {
+			throw new \RuntimeException('COM_DHARMASHOP_EXT_NO_SITES');
+		}
+
+		$url = substr($location, 0, (int) strrpos($location, '/') + 1) . 'index.json';
+
+		try {
+			$response = HttpFactory::getHttp(new Registry(['follow_location' => true]), ['curl', 'stream'])->get($url, [], 10);
+			$data = $response->getStatusCode() === 200 ? json_decode((string) $response->body, true) : null;
+		} catch (\Throwable) {
+			$data = null;
+		}
+
+		if (!is_array($data) || !isset($data['extensions'])) {
+			throw new \RuntimeException('COM_DHARMASHOP_EXT_FEED_UNAVAILABLE');
+		}
+
+		$result = [];
+		foreach ($data['extensions'] as $entry) {
+			$result[($entry['type'] ?? '') . '|' . ($entry['folder'] ?? '') . '|' . ($entry['element'] ?? '')] = $entry;
+		}
+
+		return $result;
 	}
 
 	/**
