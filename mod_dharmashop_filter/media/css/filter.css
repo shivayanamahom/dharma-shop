@@ -25,15 +25,17 @@
   color: var(--dharma-filter-text);
 }
 
-/* ---------- карточка (вертикальный фильтр) ---------- */
-.dharmaFilter-vertical {
+/* ---------- карточка (вертикальный и горизонтальный фильтр) ---------- */
+.dharmaFilter-vertical,
+.dharmaFilter-horizontal {
   background: var(--dharma-filter-bg);
   border-radius: var(--dharma-filter-radius);
   border: 1px solid var(--dharma-filter-line);
   box-shadow: var(--dharma-filter-shadow);
   padding: 1rem 1rem .75rem;
 }
-.offcanvas .dharmaFilter-vertical {
+.offcanvas .dharmaFilter-vertical,
+.offcanvas .dharmaFilter-horizontal {
   border: 0;
   box-shadow: none;
   background: transparent;
@@ -443,7 +445,6 @@
 }
 
 /* ---------- горизонтальный вид (выпадающие группы): кнопки-группы, открытая цена, нижняя строка с переключателями справа ---------- */
-.dharmaFilter-horizontal { padding: 0; }
 .dharmaFilter-horizontal .dharmaFilterGroups { align-items: flex-start; gap: .5rem .6rem !important; }
 .dharmaFilter-horizontal .dharmaFilterGroups > .dropdown > .btn {
   display: inline-flex;
@@ -490,13 +491,19 @@
   box-shadow: 0 10px 30px rgba(15, 23, 42, .12);
   font-size: .875rem;
 }
-/* открытая цена: слева, ползунок и поля сразу */
-.dharmaFilter-horizontal .dharmaFilterOpen {
-  flex: 0 0 min(100%, 21rem);
+/* открытые ползунки (цена, диапазоны): первая строка поровну по ширине, кнопки групп — второй строкой */
+.dharmaFilter-horizontal .dharmaFilterGroups > * { order: 1; }
+.dharmaFilter-horizontal .dharmaFilterGroups::before { content: ''; order: 0; flex: 0 0 100%; height: 0; }
+.dharmaFilter-horizontal .dharmaFilterGroups:not(:has(.dharmaFilterOpen))::before { display: none; }
+.dharmaFilter-horizontal .dharmaFilterGroups > .dharmaFilterOpen {
   order: -1;
-  padding: 0 1.25rem 0 0;
+  flex: 1 1 15rem;
+  max-width: 26rem;
+  padding: 0 .5rem 0 0;
 }
-.dharmaFilter-horizontal .dharmaFilterOpen .dharmaFilterHead { padding-top: 0 !important; }
+.dharmaFilter-horizontal .dharmaFilterOpen .dharmaFilterHead { padding: 0 !important; font-size: .85rem; }
+.dharmaFilter-horizontal .dharmaFilterOpen .dharmaFilterRange { --range-thumb: 1.1rem; height: 1.6rem; margin-bottom: .3rem !important; }
+.dharmaFilter-horizontal .dharmaFilterOpen .form-control { min-height: 2.1rem; font-size: .8rem; }
 /* нижняя строка: кнопки слева, переключатели справа */
 .dharmaFilter-horizontal .dharmaFilterActions { margin-top: .75rem !important; padding-top: .75rem; border-top: 1px solid var(--dharma-filter-line); }
 .dharmaFilter-horizontal .dharmaFilterActions .btn-primary { flex-grow: 0 !important; padding-left: 1.5rem; padding-right: 1.5rem; }
