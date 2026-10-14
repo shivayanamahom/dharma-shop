@@ -42,16 +42,6 @@ class DisplayController extends BaseController
             return $this;
         }
 
-        $extensions = $this->input->getCmd('ext_action');
-
-        if (in_array($extensions, ['check', 'update', 'updateall', 'channel', 'rollback'], true)) {
-            $controller = $this->factory->createController('Extensionupdates', 'Administrator', [], $this->app, $this->input);
-            $controller->execute($extensions);
-            $controller->redirect();
-
-            return $this;
-        }
-
         $addons = $this->input->getCmd('addons_action');
 
         if (in_array($addons, ['enable', 'disable'], true)) {

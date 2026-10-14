@@ -214,6 +214,34 @@ return new class () implements ServiceProviderInterface {
                         // Не критично: источники приведёт в порядок вкладка «Расширения» при проверке обновлений.
                     }
 
+                    // С версии 0.1.13 обновляется только пакет: у остальных расширений источника обновлений нет. У сайтов, где общий источник
+                    // был привязан ко всем расширениям, оставляем связь только с пакетом и убираем найденные обновления отдельных расширений.
+                    try {
+                        $packageId = (int) $this->db->setQuery($this->db->getQuery(true)->select($this->db->quoteName('extension_id'))->from($this->db->quoteName('#__extensions'))
+                            ->where($this->db->quoteName('type') . ' = ' . $this->db->quote('package'))->where($this->db->quoteName('element') . ' = ' . $this->db->quote('pkg_dharmashop')))->loadResult();
+                        $siteId = $packageId > 0 ? (int) $this->db->setQuery($this->db->getQuery(true)->select($this->db->quoteName('update_site_id'))->from($this->db->quoteName('#__update_sites_extensions'))
+                            ->where($this->db->quoteName('extension_id') . ' = ' . $packageId))->loadResult() : 0;
+                        if ($siteId > 0) {
+                            $this->db->setQuery('DELETE FROM ' . $this->db->quoteName('#__update_sites_extensions') . ' WHERE update_site_id = ' . $siteId . ' AND extension_id <> ' . $packageId)->execute();
+                            $this->db->setQuery('DELETE FROM ' . $this->db->quoteName('#__updates') . ' WHERE update_site_id = ' . $siteId . ' AND extension_id <> ' . $packageId)->execute();
+                        }
+                    } catch (\Throwable) {
+                        // Не критично: лишние записи только покажут в списке обновлений отдельные расширения.
+                    }
+
+                    // Страница «Обновления» удалена в 0.1.13; Joomla при обновлении не удаляет файлы, которых нет в новом пакете.
+                    $adminBase = JPATH_ADMINISTRATOR . '/components/com_dharmashop';
+                    foreach (['/src/Extension/ExtensionUpdates.php', '/src/Controller/ExtensionupdatesController.php', '/src/Field/ExtensionupdatesField.php', '/src/View/Updates/HtmlView.php', '/tmpl/updates/default.php'] as $obsolete) {
+                        if (is_file($adminBase . $obsolete)) {
+                            File::delete($adminBase . $obsolete);
+                        }
+                    }
+                    foreach (['/src/View/Updates', '/tmpl/updates'] as $obsolete) {
+                        if (is_dir($adminBase . $obsolete) && !(array) Folder::files($adminBase . $obsolete)) {
+                            Folder::delete($adminBase . $obsolete);
+                        }
+                    }
+
                     require_once JPATH_ADMINISTRATOR . '/components/com_dharmashop/src/Fields/FileStorage.php';
                     \Dharma\Component\DharmaShop\Administrator\Fields\FileStorage::upgrade($this->db);
                     require_once JPATH_ADMINISTRATOR . '/components/com_dharmashop/src/Catalog/GroupStorage.php';

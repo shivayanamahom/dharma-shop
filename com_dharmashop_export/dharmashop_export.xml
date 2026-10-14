@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <extension type="component" version="6.0" method="upgrade">
  <name>COM_DHARMASHOP_EXPORT</name><creationDate>2026-10</creationDate><author>Dharma</author>
- <copyright>(C) 2026 Dharma</copyright><license>GNU GPL v2 or later</license><version>0.1.4</version>
+ <copyright>(C) 2026 Dharma</copyright><license>GNU GPL v2 or later</license><version>0.1.13</version>
  <description>COM_DHARMASHOP_EXPORT_DESCRIPTION</description>
  <namespace path="src">Dharma\Component\DharmaShopExport</namespace>
  <install><sql><file driver="mysql" charset="utf8">sql/install.mysql.utf8.sql</file></sql></install>
@@ -12,5 +12,4 @@
   <files folder="admin"><filename>access.xml</filename><filename>config.xml</filename><folder>forms</folder><folder>layouts</folder><folder>services</folder><folder>sql</folder><folder>src</folder><folder>tmpl</folder></files>
   <languages folder="admin"><language tag="ru-RU">language/ru-RU/com_dharmashop_export.ini</language><language tag="ru-RU">language/ru-RU/com_dharmashop_export.sys.ini</language><language tag="en-GB">language/en-GB/com_dharmashop_export.ini</language><language tag="en-GB">language/en-GB/com_dharmashop_export.sys.ini</language></languages>
  </administration>
-	<updateservers><server type="collection" priority="1" name="Dharma Shop">https://shivayanamahom.github.io/dharma-shop-updates/updates/dharma-shop.xml</server></updateservers>
 </extension>

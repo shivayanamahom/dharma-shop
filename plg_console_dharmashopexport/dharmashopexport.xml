@@ -2,7 +2,7 @@
 <extension type="plugin" group="console" method="upgrade">
 	<name>PLG_CONSOLE_DHARMASHOPEXPORT</name>
 	<author>Dharma</author>
-	<version>0.1.4</version>
+	<version>0.1.13</version>
 	<description>PLG_CONSOLE_DHARMASHOPEXPORT_DESCRIPTION</description>
 	<namespace path="src">Dharma\Plugin\Console\DharmaShopExport</namespace>
 	<files>
@@ -16,5 +16,4 @@
 		<language tag="en-GB">language/en-GB/plg_console_dharmashopexport.ini</language>
 		<language tag="en-GB">language/en-GB/plg_console_dharmashopexport.sys.ini</language>
 	</languages>
-	<updateservers><server type="collection" priority="1" name="Dharma Shop">https://shivayanamahom.github.io/dharma-shop-updates/updates/dharma-shop.xml</server></updateservers>
 </extension>

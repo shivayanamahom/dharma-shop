@@ -5,7 +5,7 @@
     <creationDate>2026-10</creationDate>
     <copyright>(C) 2026 Dharma</copyright>
     <license>GNU General Public License version 2 or later</license>
-    <version>0.1.4</version>
+    <version>0.1.13</version>
     <description>FILES_DHARMASHOP_LAYOUTS_DESCRIPTION</description>
     <fileset>
         <files folder="layouts/media" target="layouts/components/dharmashop/media">
@@ -87,5 +87,4 @@
         <language tag="ru-RU">language/ru-RU/files_dharmashop_layouts.sys.ini</language>
         <language tag="en-GB">language/en-GB/files_dharmashop_layouts.sys.ini</language>
     </languages>
-	<updateservers><server type="collection" priority="1" name="Dharma Shop">https://shivayanamahom.github.io/dharma-shop-updates/updates/dharma-shop.xml</server></updateservers>
 </extension>

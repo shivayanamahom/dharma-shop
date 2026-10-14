@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """Выпуск версий и ленты обновлений Joomla для пакета и каждого расширения Dharma Shop.
 
-  python3 dev/release.py status [--since ТЕГ]                        какие расширения изменились с прошлого выпуска
-  python3 dev/release.py bump ВЕРСИЯ [--since ТЕГ] [--all]           версии изменившихся расширений и пакета := ВЕРСИЯ; <updateservers> в манифестах
+  python3 dev/release.py status [--since ТЕГ]                        какие расширения изменились с прошлого выпуска (справочно)
+  python3 dev/release.py bump ВЕРСИЯ [--since ТЕГ]                   версия ВЕРСИЯ у пакета и у всех расширений; <updateservers> только в манифесте пакета
   python3 dev/release.py feed ВЕРСИЯ --out ПАПКА --download-base URL [--channel dev|alpha|beta|rc|stable] [--tag ТЕГ]
-                                                                    собирает пакет и zip, пишет ленты ПАПКА/updates/<расширение>.xml и файлы для загрузки ПАПКА/assets/<тег>/
+                                                                    собирает пакет, пишет ленту ПАПКА/updates/pkg_dharmashop.xml, коллекцию dharma-shop.xml
+                                                                    и архив пакета ПАПКА/assets/<тег>/
 
-Правило версий: расширение, изменившееся с прошлого выпуска, получает версию выпуска; неизменившиеся остаются прежними
-(их ленты не трогаются, ссылки на старые zip остаются рабочими). Пакет получает версию выпуска всегда.
+Правило версий: обновляется только пакет, поэтому все расширения получают версию выпуска (в списке расширений Joomla один номер).
+Лента одна — у пакета; коллекция dharma-shop.xml (адрес, зарегистрированный у уже установленных сайтов) содержит одну запись — пакет.
 Источник списка расширений — pkg_dharmashop.xml. Вручную XML лент никто не правит.
 """
 from __future__ import annotations
@@ -90,7 +91,10 @@ def set_manifest(ext: dict, version: str | None) -> None:
     if version:
         text = re.sub(r"<version>[^<]*</version>", f"<version>{version}</version>", text, count=1)
     block = f'<updateservers><server type="collection" priority="1" name="Dharma Shop">{FEED_BASE}dharma-shop.xml</server></updateservers>'
-    if "<updateservers>" in text:
+    if ext["type"] != "package":
+        # Единственный источник обновлений — у пакета; у остальных расширений его нет.
+        text = re.sub(r"[ \t]*<updateservers>.*?</updateservers>[ \t]*\n?", "", text, flags=re.S)
+    elif "<updateservers>" in text:
         text = re.sub(r"<updateservers>.*?</updateservers>", block, text, flags=re.S)
     else:
         i = text.rindex("</extension>")
@@ -131,13 +135,9 @@ def cmd_bump(args) -> None:
     problems = migration_problems(exts, args.since)
     if problems and not args.skip_migration_check:
         raise SystemExit('Нет миграций БД:\n  ' + '\n  '.join(problems) + '\n(правило: любое изменение схемы = файл sql/updates/mysql/<версия>.sql; для осознанного пропуска — --skip-migration-check)')
-    ch = changed(exts, None if args.all else args.since)
     for e in exts:
-        if e["type"] == "package" or e["name"] in ch:
-            set_manifest(e, args.version)
-        else:
-            set_manifest(e, None)
-    print(f"версия {args.version}: изменившихся расширений {len(ch)}, остальным добавлен <updateservers>, версия не менялась")
+        set_manifest(e, args.version)
+    print(f"версия {args.version}: пакет и {len(exts) - 1} расширений; <updateservers> только у пакета")
 
 
 def sha256(path: str) -> str:
@@ -182,10 +182,12 @@ def entry_xml(e: dict, version: str, url: str, digest: str, channel: str, tag: s
 
 
 def write_collection(exts: list[dict], out: str) -> None:
-    """updates/dharma-shop.xml — коллекция Joomla: одна запись на расширение с последней версией и ссылкой на подробную ленту.
-    Все манифесты указывают на этот один адрес, поэтому Joomla создаёт один источник обновлений и проверяет его одним запросом."""
+    """updates/dharma-shop.xml — коллекция Joomla из одной записи — пакета, с последней версией и ссылкой на его ленту.
+    Адрес зарегистрирован у уже установленных сайтов (раньше в коллекции были все расширения), поэтому он сохранён."""
     rows = []
     for e in exts:
+        if e["type"] != "package":
+            continue
         entries = read_entries(os.path.join(out, "updates", f"{e['name']}.xml"))
         if not entries:
             continue
@@ -212,11 +214,14 @@ def cmd_feed(args) -> None:
     shutil.rmtree(assets, ignore_errors=True)
     os.makedirs(assets)
     os.makedirs(os.path.join(out, "updates"), exist_ok=True)
+    # Лент отдельных расширений больше нет: убираем прежние (остаётся лента пакета, коллекция и служебные файлы).
+    for name in os.listdir(os.path.join(out, "updates")):
+        if name.endswith(".xml") and name not in ("pkg_dharmashop.xml", "dharma-shop.xml"):
+            os.remove(os.path.join(out, "updates", name))
     for e in exts:
-        if e["type"] == "package":
-            src = os.path.join(ROOT, "dist", f"pkg_dharmashop-{e['version']}.zip")
-        else:
-            src = os.path.join(zips, e["zip"])
+        if e["type"] != "package":
+            continue
+        src = os.path.join(ROOT, "dist", f"pkg_dharmashop-{e['version']}.zip")
         feed = os.path.join(out, "updates", f"{e['name']}.xml")
         entries = read_entries(feed)
         if any(x["version"] == e["version"] for x in entries):

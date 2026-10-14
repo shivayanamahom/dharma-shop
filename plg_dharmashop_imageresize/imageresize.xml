@@ -2,12 +2,11 @@
 <extension type="plugin" group="dharmashop" method="upgrade">
     <name>PLG_DHARMASHOP_IMAGERESIZE</name><author>Dharma</author><creationDate>2026-10</creationDate>
     <copyright>(C) 2026 Dharma</copyright><license>GNU General Public License version 2 or later</license>
-    <version>0.1.4</version><description>PLG_DHARMASHOP_IMAGERESIZE_DESCRIPTION</description>
+    <version>0.1.13</version><description>PLG_DHARMASHOP_IMAGERESIZE_DESCRIPTION</description>
     <namespace path="src">Dharma\Plugin\DharmaShop\ImageResize</namespace>
     <files><folder plugin="imageresize">services</folder><folder>src</folder><filename>README.md</filename></files>
     <languages>
         <language tag="ru-RU">language/ru-RU/plg_dharmashop_imageresize.ini</language><language tag="ru-RU">language/ru-RU/plg_dharmashop_imageresize.sys.ini</language>
         <language tag="en-GB">language/en-GB/plg_dharmashop_imageresize.ini</language><language tag="en-GB">language/en-GB/plg_dharmashop_imageresize.sys.ini</language>
     </languages>
-	<updateservers><server type="collection" priority="1" name="Dharma Shop">https://shivayanamahom.github.io/dharma-shop-updates/updates/dharma-shop.xml</server></updateservers>
 </extension>

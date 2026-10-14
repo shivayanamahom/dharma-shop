@@ -5,7 +5,7 @@
 	<creationDate>October 2026</creationDate>
 	<copyright>(C) 2026 Dharma</copyright>
 	<license>GNU General Public License version 2 or later</license>
-	<version>0.1.4</version>
+	<version>0.1.13</version>
 	<description>PLG_RADICALSITEMAP_DHARMASHOP_DESCRIPTION</description>
 	<namespace path="src">Dharma\Plugin\RadicalSitemap\DharmaShop</namespace>
 	<languages folder="language">
@@ -18,5 +18,4 @@
 		<folder>services</folder>
 		<folder plugin="dharmashop">src</folder>
 	</files>
-	<updateservers><server type="collection" priority="1" name="Dharma Shop">https://shivayanamahom.github.io/dharma-shop-updates/updates/dharma-shop.xml</server></updateservers>
 </extension>
