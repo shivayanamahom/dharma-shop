@@ -15,7 +15,7 @@
   --dharma-filter-line: var(--bs-border-color, #e2e8f0);
   --dharma-filter-bg: var(--bs-body-bg, #fff);
   --dharma-filter-field: var(--bs-tertiary-bg, #f8fafc);
-  --dharma-filter-radius: 1.25rem;
+  --dharma-filter-radius: .25rem; /* как у карточек мини-корзины (--dharma-minicart-radius) */
   --dharma-filter-shadow: none; /* тень отъедает ширину; при желании: 0 10px 30px rgba(15, 23, 42, .08) */
   color: var(--dharma-filter-text);
 }
@@ -57,7 +57,8 @@
   font-weight: 600 !important;
   transition: background-color .15s;
 }
-.dharmaFilterChips .badge:hover { background: rgba(var(--dharma-filter-accent-rgb), .18) !important; }
+.dharmaFilterChips .badge:hover,
+.dharmaFilterChips .badge:focus-visible { background: var(--dharma-filter-accent) !important; color: #fff !important; outline: 0; }
 .dharmaFilterChips .badge span[aria-hidden='true'] { font-size: 1rem; line-height: 1; font-weight: 400; }
 .dharmaFilterTotal { margin-bottom: .6rem !important; font-size: .8rem !important; color: var(--dharma-filter-muted); }
 
@@ -126,7 +127,7 @@
   height: 1.15rem;
   margin: 0;
   border: 2px solid #cbd5e1;
-  border-radius: .35rem;
+  border-radius: .2rem;
   background-color: var(--dharma-filter-bg);
   cursor: pointer;
   transition: background-color .15s, border-color .15s;
@@ -180,7 +181,7 @@
   gap: .4rem;
   padding: .3rem .45rem;
   border: 1px solid var(--dharma-filter-line);
-  border-radius: .7rem;
+  border-radius: var(--dharma-filter-radius);
   background: var(--dharma-filter-bg);
   color: var(--dharma-filter-text);
   font-size: .8rem;
@@ -188,7 +189,7 @@
   transition: border-color .15s, background-color .15s, box-shadow .15s;
 }
 .dharmaFilter .btn-check + .btn.btn-outline-primary svg,
-.dharmaFilter .btn-check + .btn.btn-outline-primary img { width: 1.35rem; height: 1.35rem; border-radius: .4rem !important; }
+.dharmaFilter .btn-check + .btn.btn-outline-primary img { width: 1.35rem; height: 1.35rem; border-radius: .2rem !important; }
 .dharmaFilter .btn-check + .btn.btn-outline-primary > span:not(.small) { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dharmaFilter .btn-check + .btn.btn-outline-primary .small { flex-shrink: 0; white-space: nowrap; font-size: .8rem; color: var(--dharma-filter-muted); opacity: 1 !important; }
 .dharmaFilter .btn-check + .btn.btn-outline-primary:hover { border-color: rgba(var(--dharma-filter-accent-rgb), .45); background: var(--dharma-filter-bg); color: var(--dharma-filter-text); }
@@ -204,7 +205,7 @@
 .dharmaFilter .form-select {
   min-height: 2.3rem;
   border: 1px solid var(--dharma-filter-line);
-  border-radius: .65rem;
+  border-radius: var(--dharma-filter-radius);
   background-color: var(--dharma-filter-bg);
   color: var(--dharma-filter-text);
   font-size: .875rem;
@@ -240,12 +241,26 @@
 .dharmaFilterSection-price .d-flex.flex-wrap.gap-1 a {
   padding: .35rem .7rem;
   border: 0 !important;
-  border-radius: .6rem;
+  border-radius: var(--dharma-filter-radius);
   background: var(--dharma-filter-accent-soft) !important;
   color: var(--dharma-filter-accent) !important;
   font-size: .8rem;
   font-weight: 600 !important;
 }
+.dharmaFilterSection-range .d-flex.flex-wrap.gap-1 a,
+.dharmaFilterSection-price .d-flex.flex-wrap.gap-1 a { cursor: pointer; transition: background-color .15s, color .15s, box-shadow .15s; }
+/* «До 50 000» — кнопка: при наведении и фокусе заливается цветом акцента, при нажатии слегка темнеет */
+.dharmaFilterSection-range .d-flex.flex-wrap.gap-1 a:hover,
+.dharmaFilterSection-price .d-flex.flex-wrap.gap-1 a:hover,
+.dharmaFilterSection-range .d-flex.flex-wrap.gap-1 a:focus-visible,
+.dharmaFilterSection-price .d-flex.flex-wrap.gap-1 a:focus-visible {
+  background: var(--dharma-filter-accent) !important;
+  color: #fff !important;
+  box-shadow: 0 2px 8px rgba(var(--dharma-filter-accent-rgb), .35);
+  outline: 0;
+}
+.dharmaFilterSection-range .d-flex.flex-wrap.gap-1 a:active,
+.dharmaFilterSection-price .d-flex.flex-wrap.gap-1 a:active { filter: brightness(.92); box-shadow: none; }
 .dharmaFilterSection-range .d-flex.flex-wrap.gap-1,
 .dharmaFilterSection-price .d-flex.flex-wrap.gap-1 { gap: .4rem !important; margin-top: .55rem !important; }
 
@@ -253,7 +268,7 @@
 .dharmaFilterActions .btn {
   min-height: 2.4rem;
   font-size: .9rem;
-  border-radius: .7rem;
+  border-radius: var(--dharma-filter-radius);
   font-weight: 700;
 }
 .dharmaFilterActions .btn-primary { background: var(--dharma-filter-accent) !important; border-color: var(--dharma-filter-accent); }
