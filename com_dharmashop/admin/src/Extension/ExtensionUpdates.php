@@ -178,7 +178,8 @@ final class ExtensionUpdates
 			$id = (int) $site->update_site_id;
 
 			if (str_ends_with((string) $site->location, '/dharma-shop.xml')) {
-				$db->setQuery('UPDATE ' . $db->quoteName('#__update_sites') . ' SET name = ' . $db->quote(self::SITE_NAME) . ' WHERE update_site_id = ' . $id)->execute();
+				// Прежний источник расширения имел тип «extension»: для коллекции нужен тип «collection».
+				$db->setQuery('UPDATE ' . $db->quoteName('#__update_sites') . ' SET name = ' . $db->quote(self::SITE_NAME) . ', type = ' . $db->quote('collection') . ' WHERE update_site_id = ' . $id)->execute();
 				continue;
 			}
 
@@ -187,6 +188,7 @@ final class ExtensionUpdates
 			}
 		}
 
+		$db->setQuery('UPDATE ' . $db->quoteName('#__update_sites') . ' SET type = ' . $db->quote('collection') . ' WHERE name = ' . $db->quote(self::SITE_NAME) . ' AND type <> ' . $db->quote('collection'))->execute();
 		$site = (int) $db->setQuery($db->createQuery()->select('update_site_id')->from($db->quoteName('#__update_sites'))->where('name = ' . $db->quote(self::SITE_NAME)), 0, 1)->loadResult();
 
 		if ($site < 1) {

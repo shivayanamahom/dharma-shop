@@ -203,7 +203,7 @@ return new class () implements ServiceProviderInterface {
                             $id = (int) $site->update_site_id;
                             if (str_ends_with((string) $site->location, '/dharma-shop.xml')) {
                                 // Joomla сам переназначил прежний источник расширения на общий адрес: оставляем (со связями), меняем название.
-                                $this->db->setQuery('UPDATE ' . $this->db->quoteName('#__update_sites') . ' SET name = ' . $this->db->quote('Dharma Shop') . ' WHERE update_site_id = ' . $id)->execute();
+                                $this->db->setQuery('UPDATE ' . $this->db->quoteName('#__update_sites') . ' SET name = ' . $this->db->quote('Dharma Shop') . ', type = ' . $this->db->quote('collection') . ' WHERE update_site_id = ' . $id)->execute();
                                 continue;
                             }
                             foreach (['#__update_sites_extensions', '#__updates', '#__update_sites'] as $table) {
