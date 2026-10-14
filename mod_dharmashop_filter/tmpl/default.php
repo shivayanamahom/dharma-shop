@@ -56,7 +56,7 @@ $showText = trim((string) $params->get('offcanvas_show_text', '')) !== '' ? (str
 $showText = str_replace('{count}', $totalText, $showText);
 $live = $instant || (int) $params->get('ajax', 0) === 1;
 $dropdown = $horizontal && (string) $params->get('horizontal_groups', 'dropdown') === 'dropdown';
-// Горизонтальный вид с выпадающими группами: цена может быть открытой, переключатели («в наличии», «по акции») уходят в нижнюю строку справа.
+// Горизонтальный вид с выпадающими группами: цена и все диапазоны (ползунки) могут быть открытыми, переключатели («в наличии», «по акции») уходят в нижнюю строку справа.
 $priceOpen = $dropdown && (int) $params->get('price_open', 1) === 1;
 $switchItems = [];
 $nofollow = (int) \Joomla\CMS\Component\ComponentHelper::getParams('com_dharmashop')->get('filter_nofollow',1) === 1 ? ' rel="nofollow"' : '';
@@ -105,7 +105,7 @@ $sticky = !$horizontal && $mode !== 'always' && (string)$params->get('sticky_mod
                 $switchItems[] = '<div class="dharmaFilterSection dharmaFilterSection-' . $escape($section['kind']) . '">' . $body . '</div>';
                 continue;
             }
-            $isOpen = $priceOpen && $section['kind'] === 'price';
+            $isOpen = $priceOpen && in_array($section['kind'], ['price', 'range'], true);
             ?>
             <div class="<?php echo $isOpen ? 'dharmaFilterOpen' : ($dropdown ? 'dropdown' : ($horizontal ? 'col' : 'border-bottom py-2')); ?> dharmaFilterSection dharmaFilterSection-<?php echo $escape($section['kind']); ?>">
                 <?php if ($isOpen) : ?>
