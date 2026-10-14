@@ -305,6 +305,11 @@
 			<option value="self">COM_DHARMASHOP_SEO_VARIANT_CANONICAL_SELF</option>
 			<option value="main">COM_DHARMASHOP_SEO_VARIANT_CANONICAL_MAIN</option>
 		</field>
+		<field name="duplicates_protection" type="radio" layout="joomla.form.field.radio.switcher" label="COM_DHARMASHOP_SEO_DUPLICATES" description="COM_DHARMASHOP_SEO_DUPLICATES_DESC" default="0" filter="integer">
+			<option value="0">JNO</option>
+			<option value="1">JYES</option>
+		</field>
+		<field name="duplicates_protection_allowed" type="textarea" rows="9" label="COM_DHARMASHOP_SEO_DUPLICATES_ALLOWED" description="COM_DHARMASHOP_SEO_DUPLICATES_ALLOWED_DESC" default="utm_*&#10;_ym_*&#10;_openstat&#10;yclid&#10;ysclid&#10;gclid&#10;fbclid&#10;erid&#10;tmpl" filter="string" showon="duplicates_protection:1" />
 		<field name="seo_robots" type="list" label="COM_DHARMASHOP_SEO_ROBOTS_LABEL" description="COM_DHARMASHOP_CONFIG_SEO_ROBOTS_DESC" default="index, follow" validate="options">
 			<option value="index, follow">index, follow</option>
 			<option value="noindex, follow">noindex, follow</option>

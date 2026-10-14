@@ -147,6 +147,7 @@ trait ListingTrait
         $ordering = $app->getInput()->getCmd('sort', (string) $this->params->get('list_ordering', 'order'));
         $this->searchQuery = $model->getQueryText();
         $this->defaultOrdering = $this->searchQuery !== '' ? 'relevance' : (string) $this->params->get('list_ordering', 'order');
+        \Dharma\Component\DharmaShop\Site\Seo\DuplicateGuard::enforce('listing');
         $this->redirectFirstPage();
         $this->redirectToCanonicalFilter($model);
         $this->redirectToMatchingLanding($model);

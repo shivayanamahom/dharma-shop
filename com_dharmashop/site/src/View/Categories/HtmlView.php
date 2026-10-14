@@ -47,6 +47,7 @@ class HtmlView extends BaseHtmlView
 
     public function display($tpl = null): void
     {
+        \Dharma\Component\DharmaShop\Site\Seo\DuplicateGuard::enforce('list');
         $taxonomy = $this->taxonomy();
         $app = Factory::getApplication();
         $model = $this->getModel();

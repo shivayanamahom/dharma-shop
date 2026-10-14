@@ -106,6 +106,7 @@ class HtmlView extends BaseHtmlView
             $app->redirect($url, 301);
         }
 
+        \Dharma\Component\DharmaShop\Site\Seo\DuplicateGuard::enforce('product');
 
         // Варианты группы: при настройке «главный вариант» канонический адрес и og:url — первый вариант группы (по номеру); группа нужна и разметке.
         $variantGroup = \Dharma\Component\DharmaShop\Site\Support\ProductVariants::forItem(Factory::getContainer()->get(\Joomla\Database\DatabaseInterface::class), $this->item);
