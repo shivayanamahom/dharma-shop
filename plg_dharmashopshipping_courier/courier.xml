@@ -5,7 +5,7 @@
     <creationDate>2026-10</creationDate>
     <copyright>(C) 2026 Dharma</copyright>
     <license>GNU General Public License version 2 or later</license>
-    <version>0.1.1</version>
+    <version>0.1.4</version>
     <description>PLG_DHARMASHOPSHIPPING_COURIER_DESC</description>
     <namespace path="src">Dharma\Plugin\DharmaShopShipping\Courier</namespace>
     <files>
@@ -24,5 +24,5 @@
         <language tag="en-GB">en-GB/plg_dharmashopshipping_courier.ini</language>
         <language tag="en-GB">en-GB/plg_dharmashopshipping_courier.sys.ini</language>
     </languages>
-	<updateservers><server type="extension" priority="1" name="Dharma Shop: plg_dharmashopshipping_courier">https://shivayanamahom.github.io/dharma-shop-updates/updates/plg_dharmashopshipping_courier.xml</server></updateservers>
+	<updateservers><server type="collection" priority="1" name="Dharma Shop">https://shivayanamahom.github.io/dharma-shop-updates/updates/dharma-shop.xml</server></updateservers>
 </extension>

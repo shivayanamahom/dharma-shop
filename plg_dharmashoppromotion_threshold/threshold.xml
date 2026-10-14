@@ -2,7 +2,7 @@
 <extension type="plugin" group="dharmashoppromotion" method="upgrade">
     <name>PLG_DHARMASHOPPROMOTION_THRESHOLD</name>
     <author>Dharma</author><creationDate>2026-10</creationDate><copyright>(C) 2026 Dharma</copyright>
-    <license>GNU General Public License version 2 or later</license><version>0.1.1</version>
+    <license>GNU General Public License version 2 or later</license><version>0.1.4</version>
     <description>PLG_DHARMASHOPPROMOTION_THRESHOLD_DESC</description>
     <namespace path="src">Dharma\Plugin\DharmaShopPromotion\Threshold</namespace>
     <files><folder plugin="threshold">src</folder><folder>forms</folder><folder>services</folder></files>
@@ -10,5 +10,5 @@
         <language tag="ru-RU">ru-RU/plg_dharmashoppromotion_threshold.ini</language><language tag="ru-RU">ru-RU/plg_dharmashoppromotion_threshold.sys.ini</language>
         <language tag="en-GB">en-GB/plg_dharmashoppromotion_threshold.ini</language><language tag="en-GB">en-GB/plg_dharmashoppromotion_threshold.sys.ini</language>
     </languages>
-	<updateservers><server type="extension" priority="1" name="Dharma Shop: plg_dharmashoppromotion_threshold">https://shivayanamahom.github.io/dharma-shop-updates/updates/plg_dharmashoppromotion_threshold.xml</server></updateservers>
+	<updateservers><server type="collection" priority="1" name="Dharma Shop">https://shivayanamahom.github.io/dharma-shop-updates/updates/dharma-shop.xml</server></updateservers>
 </extension>

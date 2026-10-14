@@ -5,7 +5,7 @@
     <creationDate>2026-10</creationDate>
     <copyright>(C) 2026 Dharma</copyright>
     <license>GNU General Public License version 2 or later</license>
-    <version>0.1.1</version>
+    <version>0.1.4</version>
     <description>PLG_DHARMASHOP_STRUCTUREDDATA_DESCRIPTION</description>
     <namespace path="src">Dharma\Plugin\DharmaShop\Structureddata</namespace>
     <files>
@@ -18,5 +18,5 @@
         <language tag="en-GB">language/en-GB/plg_dharmashop_structureddata.ini</language>
         <language tag="en-GB">language/en-GB/plg_dharmashop_structureddata.sys.ini</language>
     </languages>
-	<updateservers><server type="extension" priority="1" name="Dharma Shop: plg_dharmashop_structureddata">https://shivayanamahom.github.io/dharma-shop-updates/updates/plg_dharmashop_structureddata.xml</server></updateservers>
+	<updateservers><server type="collection" priority="1" name="Dharma Shop">https://shivayanamahom.github.io/dharma-shop-updates/updates/dharma-shop.xml</server></updateservers>
 </extension>
