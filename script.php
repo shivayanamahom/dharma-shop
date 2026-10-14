@@ -197,16 +197,21 @@ return new class () implements ServiceProviderInterface {
                     // С версии 0.1.4 у всех расширений один общий источник обновлений «Dharma Shop» (коллекция); прежние отдельные
                     // источники «Dharma Shop: имя» (по одному на расширение) только замедляли проверку и удаляются.
                     try {
-                        $legacy = $this->db->setQuery($this->db->getQuery(true)->select('update_site_id')->from($this->db->quoteName('#__update_sites'))
-                            ->where($this->db->quoteName('name') . ' LIKE ' . $this->db->quote('Dharma Shop: %')))->loadColumn();
-                        if ($legacy) {
-                            $list = implode(',', array_map('intval', $legacy));
+                        $sites = $this->db->setQuery($this->db->getQuery(true)->select(['update_site_id', 'location'])->from($this->db->quoteName('#__update_sites'))
+                            ->where($this->db->quoteName('name') . ' LIKE ' . $this->db->quote('Dharma Shop: %')))->loadObjectList();
+                        foreach ($sites as $site) {
+                            $id = (int) $site->update_site_id;
+                            if (str_ends_with((string) $site->location, '/dharma-shop.xml')) {
+                                // Joomla сам переназначил прежний источник расширения на общий адрес: оставляем (со связями), меняем название.
+                                $this->db->setQuery('UPDATE ' . $this->db->quoteName('#__update_sites') . ' SET name = ' . $this->db->quote('Dharma Shop') . ' WHERE update_site_id = ' . $id)->execute();
+                                continue;
+                            }
                             foreach (['#__update_sites_extensions', '#__updates', '#__update_sites'] as $table) {
-                                $this->db->setQuery('DELETE FROM ' . $this->db->quoteName($table) . ' WHERE update_site_id IN (' . $list . ')')->execute();
+                                $this->db->setQuery('DELETE FROM ' . $this->db->quoteName($table) . ' WHERE update_site_id = ' . $id)->execute();
                             }
                         }
                     } catch (\Throwable) {
-                        // Не критично: источники удалит и вкладка «Расширения» при проверке обновлений.
+                        // Не критично: источники приведёт в порядок вкладка «Расширения» при проверке обновлений.
                     }
 
                     require_once JPATH_ADMINISTRATOR . '/components/com_dharmashop/src/Fields/FileStorage.php';

@@ -166,20 +166,39 @@ final class ExtensionUpdates
 		}
 	}
 
-	/** Удаляет источники обновлений прежнего вида (по одному на расширение). */
+	/**
+	 * Приводит источники в порядок: прежние отдельные источники расширений («Dharma Shop: имя») удаляются, а источник на общий адрес
+	 * переименовывается (если Joomla переназначила его сама); все расширения Dharma Shop связываются с общим источником.
+	 */
 	public function removeLegacySites(): void
 	{
 		$db = Factory::getDbo();
-		$ids = $db->setQuery($db->createQuery()->select('update_site_id')->from($db->quoteName('#__update_sites'))->where('name LIKE ' . $db->quote('Dharma Shop: %')))->loadColumn();
 
-		if (!$ids) {
+		foreach ($db->setQuery($db->createQuery()->select(['update_site_id', 'location'])->from($db->quoteName('#__update_sites'))->where('name LIKE ' . $db->quote('Dharma Shop: %')))->loadObjectList() as $site) {
+			$id = (int) $site->update_site_id;
+
+			if (str_ends_with((string) $site->location, '/dharma-shop.xml')) {
+				$db->setQuery('UPDATE ' . $db->quoteName('#__update_sites') . ' SET name = ' . $db->quote(self::SITE_NAME) . ' WHERE update_site_id = ' . $id)->execute();
+				continue;
+			}
+
+			foreach (['#__update_sites_extensions', '#__updates', '#__update_sites'] as $table) {
+				$db->setQuery('DELETE FROM ' . $db->quoteName($table) . ' WHERE update_site_id = ' . $id)->execute();
+			}
+		}
+
+		$site = (int) $db->setQuery($db->createQuery()->select('update_site_id')->from($db->quoteName('#__update_sites'))->where('name = ' . $db->quote(self::SITE_NAME)), 0, 1)->loadResult();
+
+		if ($site < 1) {
 			return;
 		}
 
-		$list = implode(',', array_map('intval', $ids));
-		$db->setQuery('DELETE FROM ' . $db->quoteName('#__update_sites_extensions') . ' WHERE update_site_id IN (' . $list . ')')->execute();
-		$db->setQuery('DELETE FROM ' . $db->quoteName('#__updates') . ' WHERE update_site_id IN (' . $list . ')')->execute();
-		$db->setQuery('DELETE FROM ' . $db->quoteName('#__update_sites') . ' WHERE update_site_id IN (' . $list . ')')->execute();
+		// Расширения Dharma Shop по именам: пакет, файлы, компоненты, модули и плагины групп dharmashop*.
+		$db->setQuery(
+			'INSERT IGNORE INTO ' . $db->quoteName('#__update_sites_extensions') . ' (update_site_id, extension_id) SELECT ' . $site . ', extension_id FROM ' . $db->quoteName('#__extensions')
+			. ' WHERE element = ' . $db->quote('pkg_dharmashop') . ' OR element = ' . $db->quote('files_dharmashop_layouts') . ' OR element LIKE ' . $db->quote('com\\_dharmashop%')
+			. ' OR element LIKE ' . $db->quote('mod\\_dharmashop%') . ' OR (type = ' . $db->quote('plugin') . ' AND (folder LIKE ' . $db->quote('dharmashop%') . ' OR element LIKE ' . $db->quote('dharmashop%') . '))'
+		)->execute();
 	}
 
 	/**
