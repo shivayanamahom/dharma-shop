@@ -22,6 +22,9 @@ $escape = static fn ($value): string => htmlspecialchars((string) $value, ENT_QU
 $id = (int) $module->id;
 $horizontal = $filter['orientation'] === 'horizontal';
 $sfx = $escape(trim((string) $params->get('moduleclass_sfx', '')));
+// Иконки только у системных разделов: набор полей товаров у каждого магазина свой, системные всегда одинаковы.
+$icon = static fn (array $section): string => in_array($section['kind'], ['price', 'brand', 'badge', 'cat', 'stock', 'sale'], true)
+    ? '<span class="dharmaFilterIcon dharmaFilterIcon-' . $section['kind'] . '" aria-hidden="true"></span>' : '';
 $number = static fn (int $n): string => number_format($n, 0, ',', "\u{00A0}");
 $totalText = $number((int) $filter['total']) . ($filter['totalCapped'] ? '+' : '');
 $applyText = trim((string) $params->get('apply_text', '')) !== '' ? (string) $params->get('apply_text') : Text::_('MOD_DHARMASHOP_FILTER_APPLY_DEFAULT');
@@ -71,6 +74,9 @@ $sticky = !$horizontal && $mode !== 'always' && (string)$params->get('sticky_mod
     <?php foreach ($filter['hidden'] as $name => $value) : ?>
         <input type="hidden" name="<?php echo $escape($name); ?>" value="<?php echo $escape($value); ?>">
     <?php endforeach; ?>
+    <?php if (($heading = trim((string) $params->get('heading', ''))) !== '') : ?>
+        <h2 class="dharmaFilterTitle"><?php echo $escape($heading); ?></h2>
+    <?php endif; ?>
     <?php if ($filter['chips']) : ?>
         <div class="d-flex flex-wrap gap-2 mb-3 dharmaFilterChips" aria-label="<?php echo $escape(Text::_('MOD_DHARMASHOP_FILTER_ACTIVE')); ?>">
             <?php foreach ($filter['chips'] as $chip) : ?>
@@ -103,7 +109,7 @@ $sticky = !$horizontal && $mode !== 'always' && (string)$params->get('sticky_mod
                     <div class="accordion accordion-flush">
                         <div class="accordion-item border-0 bg-transparent">
                             <h3 class="accordion-header fs-6 m-0">
-                                <button class="accordion-button px-0 py-1 fw-semibold bg-transparent shadow-none text-body<?php echo $section['expanded'] ? '' : ' collapsed'; ?>" type="button" data-bs-toggle="collapse" data-bs-target="#<?php echo $groupId; ?>" aria-expanded="<?php echo $section['expanded'] ? 'true' : 'false'; ?>" aria-controls="<?php echo $groupId; ?>"><?php echo $escape($section['title']); ?></button>
+                                <button class="accordion-button px-0 py-1 fw-semibold bg-transparent shadow-none text-body<?php echo $section['expanded'] ? '' : ' collapsed'; ?>" type="button" data-bs-toggle="collapse" data-bs-target="#<?php echo $groupId; ?>" aria-expanded="<?php echo $section['expanded'] ? 'true' : 'false'; ?>" aria-controls="<?php echo $groupId; ?>"><?php echo $icon($section) . $escape($section['title']); ?></button>
                             </h3>
                             <div id="<?php echo $groupId; ?>" class="accordion-collapse collapse<?php echo $section['expanded'] ? ' show' : ''; ?>">
                                 <div class="pt-2 pb-1"><?php echo $body; ?></div>
@@ -111,7 +117,7 @@ $sticky = !$horizontal && $mode !== 'always' && (string)$params->get('sticky_mod
                         </div>
                     </div>
                 <?php else : ?>
-                    <?php if (!in_array($section['kind'], ['stock','sale'], true)) : ?><div class="fw-semibold py-1"><?php echo $escape($section['title']); ?></div><?php endif; ?>
+                    <?php if (!in_array($section['kind'], ['stock','sale'], true)) : ?><div class="fw-semibold py-1 dharmaFilterHead"><?php echo $icon($section) . $escape($section['title']); ?></div><?php endif; ?>
                     <div class="pt-1 pb-1"><?php echo $body; ?></div>
                 <?php endif; ?>
             </div>

@@ -65,13 +65,20 @@ class Dispatcher extends AbstractModuleDispatcher
                 $scripts[] = 'bootstrap.offcanvas';
             }
 
-            if ($scripts) {
+            $styles = (int) $params->get('module_styles', 1) === 1;
+
+            if ($scripts || $styles) {
                 try {
                     $wa = $this->getApplication()->getDocument()->getWebAssetManager();
                     $wa->getRegistry()->addExtensionRegistryFile('mod_dharmashop_filter');
 
                     if (in_array('mod_dharmashop_filter.slider', $scripts, true)) {
                         $wa->useStyle('mod_dharmashop_filter.range');
+                    }
+
+                    // Оформление лежит в media модуля; его можно выключить и задать стили в шаблоне сайта. Подключается после стиля ползунка.
+                    if ($styles) {
+                        $wa->useStyle('mod_dharmashop_filter.styles');
                     }
 
                     foreach ($scripts as $script) {
