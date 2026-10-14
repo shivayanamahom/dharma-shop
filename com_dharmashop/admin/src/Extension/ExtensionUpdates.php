@@ -100,6 +100,8 @@ final class ExtensionUpdates
 			default => $row['element'],
 		};
 		$language->load($base . '.sys', JPATH_ADMINISTRATOR);
+		// Языковые файлы модулей сайта лежат в языковой папке сайта.
+		$language->load($base . '.sys', JPATH_SITE);
 		$language->load($base . '.sys', JPATH_ADMINISTRATOR . '/components/' . $row['element']);
 	}
 
