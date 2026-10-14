@@ -441,3 +441,74 @@
   .dharmaListingBar-withFilter .btn-group { height: 2.75rem; margin-bottom: 0; }
   .dharmaListingBar-withFilter .btn-group .btn { display: inline-flex; align-items: center; padding-top: 0; padding-bottom: 0; }
 }
+
+/* ---------- горизонтальный вид (выпадающие группы): кнопки-группы, открытая цена, нижняя строка с переключателями справа ---------- */
+.dharmaFilter-horizontal { padding: 0; }
+.dharmaFilter-horizontal .dharmaFilterGroups { align-items: flex-start; gap: .5rem .6rem !important; }
+.dharmaFilter-horizontal .dharmaFilterGroups > .dropdown > .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  min-height: 2.5rem;
+  padding: .35rem .8rem;
+  border: 1px solid var(--dharma-filter-line);
+  border-radius: var(--dharma-filter-radius);
+  background: var(--dharma-filter-bg);
+  color: var(--dharma-filter-text);
+  font-size: .85rem;
+  font-weight: 600;
+  transition: border-color .15s, color .15s, background-color .15s;
+}
+.dharmaFilter-horizontal .dharmaFilterGroups > .dropdown > .btn:hover,
+.dharmaFilter-horizontal .dharmaFilterGroups > .dropdown > .btn.show,
+.dharmaFilter-horizontal .dharmaFilterGroups > .dropdown > .btn:focus-visible {
+  border-color: var(--dharma-filter-accent);
+  background: var(--dharma-filter-bg);
+  color: var(--dharma-filter-accent);
+}
+.dharmaFilter-horizontal .dharmaFilterGroups > .dropdown > .btn::after {
+  width: .6rem;
+  height: .45rem;
+  margin: 0 0 0 .1rem;
+  border: 0;
+  background: currentColor;
+  -webkit-mask: var(--dharma-filter-chevron) center / contain no-repeat;
+  mask: var(--dharma-filter-chevron) center / contain no-repeat;
+  vertical-align: 0;
+}
+.dharmaFilter-horizontal .dropdown-toggle .badge {
+  min-width: 1.3rem;
+  padding: .22rem .4rem;
+  border-radius: 999px;
+  background: var(--dharma-filter-accent) !important;
+  font-size: .7rem;
+}
+.dharmaFilter-horizontal .dropdown-menu {
+  min-width: 17rem;
+  border: 1px solid var(--dharma-filter-line);
+  border-radius: var(--dharma-filter-radius);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, .12);
+  font-size: .875rem;
+}
+/* открытая цена: слева, ползунок и поля сразу */
+.dharmaFilter-horizontal .dharmaFilterOpen {
+  flex: 0 0 min(100%, 21rem);
+  order: -1;
+  padding: 0 1.25rem 0 0;
+}
+.dharmaFilter-horizontal .dharmaFilterOpen .dharmaFilterHead { padding-top: 0 !important; }
+/* нижняя строка: кнопки слева, переключатели справа */
+.dharmaFilter-horizontal .dharmaFilterActions { margin-top: .75rem !important; padding-top: .75rem; border-top: 1px solid var(--dharma-filter-line); }
+.dharmaFilter-horizontal .dharmaFilterActions .btn-primary { flex-grow: 0 !important; padding-left: 1.5rem; padding-right: 1.5rem; }
+.dharmaFilter-horizontal .dharmaFilterSwitches .dharmaFilterSection { padding: 0 !important; border: 0 !important; }
+.dharmaFilter-horizontal .dharmaFilterSwitches .form-switch {
+  display: flex;
+  align-items: center;
+  gap: .6rem;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+}
+.dharmaFilter-horizontal .dharmaFilterSwitches .form-switch .form-check-input { order: 3; margin: 0; float: none; }
+.dharmaFilter-horizontal .dharmaFilterSwitches .form-switch .form-check-label { order: 2; margin: 0; font-size: .85rem; }
+.dharmaFilter-horizontal .dharmaFilterSwitches .dharmaFilterIcon { order: 1; }

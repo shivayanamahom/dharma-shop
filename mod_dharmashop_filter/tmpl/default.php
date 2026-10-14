@@ -56,6 +56,9 @@ $showText = trim((string) $params->get('offcanvas_show_text', '')) !== '' ? (str
 $showText = str_replace('{count}', $totalText, $showText);
 $live = $instant || (int) $params->get('ajax', 0) === 1;
 $dropdown = $horizontal && (string) $params->get('horizontal_groups', 'dropdown') === 'dropdown';
+// Горизонтальный вид с выпадающими группами: цена может быть открытой, переключатели («в наличии», «по акции») уходят в нижнюю строку справа.
+$priceOpen = $dropdown && (int) $params->get('price_open', 1) === 1;
+$switchItems = [];
 $nofollow = (int) \Joomla\CMS\Component\ComponentHelper::getParams('com_dharmashop')->get('filter_nofollow',1) === 1 ? ' rel="nofollow"' : '';
 $sticky = !$horizontal && $mode !== 'always' && (string)$params->get('sticky_mode','off') !== 'off' ? ' data-filter-sticky="' . $escape($params->get('sticky_mode')) . '" data-sticky-offset="' . max(0,min(300,(int)$params->get('sticky_offset',16))) . '"' : '';
 ?>
@@ -87,7 +90,7 @@ $sticky = !$horizontal && $mode !== 'always' && (string)$params->get('sticky_mod
     <?php if ((int) $params->get('show_result_count', 1) === 1) : ?>
         <div class="small text-body-secondary mb-2 dharmaFilterTotal" role="status" aria-live="polite"><?php echo Text::sprintf('MOD_DHARMASHOP_FILTER_FOUND', $totalText); ?><?php echo $filter['approximate'] ? ' <span title="' . $escape(Text::_('MOD_DHARMASHOP_FILTER_APPROXIMATE')) . '">≈</span>' : ''; ?></div>
     <?php endif; ?>
-    <div class="<?php echo $dropdown ? 'd-flex flex-wrap gap-2' : ($horizontal ? 'row row-cols-1 row-cols-md-2 row-cols-xl-4 g-3' : 'd-flex flex-column'); ?>">
+    <div class="<?php echo $dropdown ? 'd-flex flex-wrap gap-2 dharmaFilterGroups' : ($horizontal ? 'row row-cols-1 row-cols-md-2 row-cols-xl-4 g-3' : 'd-flex flex-column'); ?>">
         <?php foreach ($filter['sections'] as $section) :
             $control = (string) $section['control'];
             $selectedCount = in_array($section['kind'], ['range', 'price'], true)
@@ -98,9 +101,17 @@ $sticky = !$horizontal && $mode !== 'always' && (string)$params->get('sticky_mod
                 'stock', 'sale' => $layout('switch', ['section' => $section, 'module' => $id]),
                 default => $layout($control, ['section' => $section, 'module' => $id]),
             };
+            if ($dropdown && in_array($section['kind'], ['stock', 'sale'], true)) {
+                $switchItems[] = '<div class="dharmaFilterSection dharmaFilterSection-' . $escape($section['kind']) . '">' . $body . '</div>';
+                continue;
+            }
+            $isOpen = $priceOpen && $section['kind'] === 'price';
             ?>
-            <div class="<?php echo $dropdown ? 'dropdown' : ($horizontal ? 'col' : 'border-bottom py-2'); ?> dharmaFilterSection dharmaFilterSection-<?php echo $escape($section['kind']); ?>">
-                <?php if ($dropdown && !in_array($section['kind'], ['stock','sale'], true)) : ?>
+            <div class="<?php echo $isOpen ? 'dharmaFilterOpen' : ($dropdown ? 'dropdown' : ($horizontal ? 'col' : 'border-bottom py-2')); ?> dharmaFilterSection dharmaFilterSection-<?php echo $escape($section['kind']); ?>">
+                <?php if ($isOpen) : ?>
+                    <div class="fw-semibold py-1 dharmaFilterHead"><?php echo $icon($section) . $escape($section['title']); ?></div>
+                    <div class="pt-1 pb-1"><?php echo $body; ?></div>
+                <?php elseif ($dropdown && !in_array($section['kind'], ['stock','sale'], true)) : ?>
                     <button class="btn btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false"><?php echo $escape($section['title']); ?> <span class="badge text-bg-primary<?php echo $selectedCount ? '' : ' d-none'; ?>" data-filter-selected-count title="<?php echo $escape(Text::_('MOD_DHARMASHOP_FILTER_SELECTED_VALUES')); ?>"><?php echo $selectedCount; ?></span></button>
                     <div class="dropdown-menu p-3"><?php echo $body; ?></div>
                 <?php elseif ($filter['collapsible'] && !in_array($section['kind'], ['stock','sale'], true)) : ?>
@@ -123,13 +134,16 @@ $sticky = !$horizontal && $mode !== 'always' && (string)$params->get('sticky_mod
             </div>
         <?php endforeach; ?>
     </div>
-    <?php if ((int) $params->get('show_apply_button', 1) === 1 || ((int) $params->get('show_reset_button', 1) === 1 && $filter['active'])) : ?>
-        <div class="d-flex flex-wrap gap-2 mt-3 dharmaFilterActions">
+    <?php if ((int) $params->get('show_apply_button', 1) === 1 || ((int) $params->get('show_reset_button', 1) === 1 && $filter['active']) || $switchItems) : ?>
+        <div class="d-flex flex-wrap gap-2 mt-3 dharmaFilterActions<?php echo $switchItems ? ' align-items-center' : ''; ?>">
             <?php if ((int) $params->get('show_apply_button', 1) === 1) : ?>
                 <button type="submit" class="btn btn-primary bg-primary text-white flex-grow-1"><?php echo $escape($applyText); ?></button>
             <?php endif; ?>
             <?php if ((int) $params->get('show_reset_button', 1) === 1 && $filter['active']) : ?>
                 <a class="btn btn-outline-secondary" href="<?php echo $escape($filter['resetUrl']); ?>"><?php echo Text::_('MOD_DHARMASHOP_FILTER_RESET'); ?></a>
+            <?php endif; ?>
+            <?php if ($switchItems) : ?>
+                <div class="ms-auto d-flex flex-wrap align-items-center gap-3 dharmaFilterSwitches"><?php echo implode('', $switchItems); ?></div>
             <?php endif; ?>
         </div>
     <?php endif; ?>
