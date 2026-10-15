@@ -5,7 +5,7 @@
     <creationDate>2026-10</creationDate>
     <copyright>(C) 2026 Dharma</copyright>
     <license>GNU General Public License version 2 or later</license>
-    <version>0.1.13</version>
+    <version>0.1.14</version>
     <description>FILES_DHARMASHOP_LAYOUTS_DESCRIPTION</description>
     <fileset>
         <files folder="layouts/media" target="layouts/components/dharmashop/media">

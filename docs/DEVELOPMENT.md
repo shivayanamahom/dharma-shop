@@ -64,10 +64,10 @@ Joomla загружает установленные переводы компо
 
 ```bash
 ./build.sh                                   # dist/pkg_dharmashop-<версия>.zip
-DHARMA_SITE=/Volumes/Work/Server/www/test php dev/install.php "$PWD/dist/pkg_dharmashop-0.1.0.zip"
+DHARMA_SITE=/Volumes/Work/Server/www/test php dev/install.php "$PWD/dist/pkg_dharmashop-0.1.14.zip"
 ```
 
-Версия остаётся `0.1.0` (решение B11). Новые расширения пакета добавляйте в `EXTENSIONS` в `build.sh` и в `<files>` манифеста `pkg_dharmashop.xml`.
+Версии манифестов меняются только при выпуске пакета через `python3 dev/release.py bump <версия> --since <последний-тег>`; во время разработки сохраняется версия последнего выпуска. Новые расширения добавляйте в `EXTENSIONS` в `build.sh` и в `<files>` манифеста `pkg_dharmashop.xml`.
 
 С C32 пакет содержит файловое расширение `files_dharmashop_layouts` (первым), компонент и два SEO-плагина. Оно устанавливает карточки из `files_dharmashop_layouts/layouts/` в общую библиотеку `layouts/components/dharmashop/`. Только файлы, перечисленные в манифесте, принадлежат расширению; дополнительные пользовательские файлы не перечисляются.
 
@@ -128,10 +128,10 @@ rm -rf "$tmp_dir"
 
 ```bash
 ./build.sh                                   # dist/pkg_dharmashop-<версия>.zip
-DHARMA_SITE=/Volumes/Work/Server/www/test php dev/install.php "$PWD/dist/pkg_dharmashop-0.1.0.zip"
+DHARMA_SITE=/Volumes/Work/Server/www/test php dev/install.php "$PWD/dist/pkg_dharmashop-0.1.14.zip"
 ```
 
-Версия остаётся `0.1.0` (решение B11). Новые расширения пакета добавляйте в `EXTENSIONS` в `build.sh` и в `<files>` манифеста `pkg_dharmashop.xml`.
+Версии манифестов меняются только при выпуске пакета через `python3 dev/release.py bump <версия> --since <последний-тег>`; во время разработки сохраняется версия последнего выпуска. Новые расширения добавляйте в `EXTENSIONS` в `build.sh` и в `<files>` манифеста `pkg_dharmashop.xml`.
 
 С C32 пакет содержит файловое расширение `files_dharmashop_layouts` (первым), компонент и два SEO-плагина. Оно устанавливает карточки из `files_dharmashop_layouts/layouts/` в общую библиотеку `layouts/components/dharmashop/`. Только файлы, перечисленные в манифесте, принадлежат расширению; дополнительные пользовательские файлы не перечисляются.
 
