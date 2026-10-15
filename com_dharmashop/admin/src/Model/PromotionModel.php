@@ -27,7 +27,7 @@ class PromotionModel extends AdminModel
     {
         $app=Factory::getApplication();
         $userData=$app->getUserState('com_dharmashop.edit.promotion.data',[]);
-        if(!$userData)return $this->getItem();
+        if(!$userData){$item=$this->getItem();if($item&&(int)$item->id<1&&!$item->plugin)$item->plugin='threshold';return $item;}
         $id=(int)($userData['id']??$app->getInput()->getInt('id'));
         if($id<1)return $userData;
         $item=$this->getItem($id);
