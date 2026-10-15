@@ -77,6 +77,22 @@ class ProductController extends FormController
         return $data;
     }
 
+    /**
+     * Joomla's form validation can coerce a pasted price before the model sees it.
+     * Restore only the raw price text here; ProductModel validates and normalizes it
+     * before any database write.
+     */
+    protected function preSaveHook(BaseDatabaseModel $model, array $validData = []): array
+    {
+        $submitted = $this->input->post->get('jform', [], 'RAW');
+
+        if (is_array($submitted) && array_key_exists('price', $submitted) && is_scalar($submitted['price'])) {
+            $validData['price'] = (string) $submitted['price'];
+        }
+
+        return parent::preSaveHook($model, $validData);
+    }
+
     /** Save the entire product through Joomla before opening a prefilled, unsaved group. */
     public function createGroup(): void
     {
