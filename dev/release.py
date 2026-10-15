@@ -69,7 +69,10 @@ def title(ext: dict) -> str:
             for line in open(f, encoding="utf-8"):
                 if line.startswith(ext["const"] + "="):
                     return line.split("=", 1)[1].strip().strip('"')
-    return ext["name"]
+    # Joomla's action log writes manifest <name> verbatim and does not translate it.
+    # Keep human-readable names from module manifests instead of falling back to folders.
+    manifest_name = ext["const"]
+    return manifest_name if not re.fullmatch(r"[A-Z][A-Z0-9_]*", manifest_name) else ext["name"]
 
 
 def changed(exts: list[dict], since: str | None) -> set[str]:

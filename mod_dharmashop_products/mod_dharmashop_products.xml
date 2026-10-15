@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <extension type="module" client="site" method="upgrade">
-    <name>MOD_DHARMASHOP_PRODUCTS</name>
+    <name>Dharma Shop — Товары</name>
     <author>Dharma</author>
     <creationDate>2026-10</creationDate>
     <copyright>(C) 2026 Dharma</copyright>

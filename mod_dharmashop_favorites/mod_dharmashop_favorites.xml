@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <extension type="module" client="site" method="upgrade">
-	<name>MOD_DHARMASHOP_FAVORITES</name>
+	<name>Dharma Shop — Избранное</name>
 	<author>Dharma</author>
 	<creationDate>2026-10</creationDate>
 	<copyright>(C) 2026 Dharma</copyright>
