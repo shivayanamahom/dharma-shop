@@ -236,7 +236,10 @@ class ProductModel extends AdminModel
         }
 
         $data = (array) $source;
-        $data['title'] = $this->copyTitle((string) ($sourceData['title'] ?? ''));
+        $data['title'] = $this->copyTitle(
+            (string) ($sourceData['title'] ?? ''),
+            (int) ($sourceData['catid'] ?? 0)
+        );
         $data['alias'] = '';
         $data['id'] = 0;
         $data['group_id'] = 0;
