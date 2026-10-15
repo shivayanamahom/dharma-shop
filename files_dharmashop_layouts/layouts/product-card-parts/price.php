@@ -20,13 +20,15 @@ $discountText = $discountDisplay === 'amount' ? '−' . $discountAmount : '−' 
 ?>
         <div class="dharmaCardPrice">
             <?php if ($price !== '') : ?>
-                <div class="fw-bold fs-5 lh-sm"><?php echo $escape($price); ?></div>
+                <div class="d-flex align-items-start justify-content-between gap-2">
+                    <div class="fw-bold fs-5 lh-sm text-nowrap"><?php echo $escape($price); ?></div>
                 <?php if ($oldPrice !== '' && $showDiscount) : ?>
-                    <div class="small text-body-secondary">
-                        <s><?php echo $escape($oldPrice); ?></s>
-                        <?php if ($discount > 0 && ($discountDisplay !== 'amount' || $discountAmount !== '')) : ?><span class="badge text-bg-danger ms-1"><?php echo $escape($discountText); ?></span><?php endif; ?>
+                    <div class="small text-body-secondary text-end">
+                        <s class="d-block text-nowrap"><?php echo $escape($oldPrice); ?></s>
+                        <?php if ($discount > 0 && ($discountDisplay !== 'amount' || $discountAmount !== '')) : ?><span class="badge text-bg-danger mt-1"><?php echo $escape($discountText); ?></span><?php endif; ?>
                     </div>
                 <?php endif; ?>
+                </div>
             <?php else : ?>
                 <div class="fw-semibold"><?php echo $escape(Text::_('COM_DHARMASHOP_PRODUCT_PRICE_REQUEST')); ?></div>
             <?php endif; ?>
