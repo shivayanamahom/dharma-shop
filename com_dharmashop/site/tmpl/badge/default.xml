@@ -19,7 +19,6 @@
                 <option value="list">COM_DHARMASHOP_DISPLAY_VIEW_LIST</option>
                 <option value="table">COM_DHARMASHOP_DISPLAY_VIEW_TABLE</option>
             </field>
-            <field name="table_show_fields" type="list" label="COM_DHARMASHOP_DISPLAY_TABLE_FIELDS" description="COM_DHARMASHOP_DISPLAY_TABLE_FIELDS_DESC" default="" validate="options"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option><option value="0">JNO</option><option value="1">JYES</option></field>
             <field name="category_breakpoints" label="COM_DHARMASHOP_DISPLAY_BREAKPOINTS" type="list" default="" validate="options" description="COM_DHARMASHOP_DISPLAY_BREAKPOINTS_DESC"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option><option value="0">JNO</option><option value="1">JYES</option></field>
             <field name="category_columns" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS" validate="options" description="COM_DHARMASHOP_DISPLAY_COLUMNS_DESC"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
             <field name="category_columns_xs" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS_XS" validate="options"><option value="">COM_DHARMASHOP_ORDER_INHERIT</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>

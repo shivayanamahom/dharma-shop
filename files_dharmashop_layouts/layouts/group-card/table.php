@@ -12,6 +12,5 @@ $part = static fn(string $name): string => (new FileLayout('components.dharmasho
             <div><a class="fw-semibold link-body-emphasis text-decoration-none" href="<?php echo $escape($displayData['url']); ?>"><?php echo $escape($displayData['title']); ?></a></div>
         </div>
     </td>
-    <?php foreach ($displayData['fieldColumns'] as $alias => $title) : ?><td class="d-none d-lg-table-cell" data-field="<?php echo $escape($alias); ?>"><span class="text-body-secondary">—</span></td><?php endforeach; ?>
     <td class="text-end dharmaGroupFooter"><?php echo $part('actions'); ?></td>
 </tr>

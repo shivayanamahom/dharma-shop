@@ -1,8 +1,7 @@
 <?php
 /** Копия стандартной карточки для страницы бейджа (используется, когда выключен переключатель «Карточки товаров как в категориях»), правится отдельно.
  *
- * Строка товара в таблице (Bootstrap): миниатюра, название с категорией и бейджами, колонки характеристик (набор колонок готовит вид
- * по товарам страницы), цена, действия. Общие части — product-card-parts. Заголовок таблицы выводит шаблон списка.
+ * Строка таблицы: товар и цена с действиями. Характеристики отдельно не выводятся.
  */
 \defined('_JEXEC') or die;
 
@@ -15,10 +14,7 @@ $escape = static fn ($value): string => htmlspecialchars((string) $value, ENT_QU
 $productUrl = (string) ($displayData['productUrl'] ?? '#');
 $categoryTitle = (string) ($displayData['categoryTitle'] ?? '');
 $images = (array) ($displayData['images'] ?? []);
-$columns = (array) ($displayData['fieldColumns'] ?? []);
-$fields = (array) ($displayData['fields'] ?? $item->fields ?? []);
 $part = static fn (string $name, array $extra = []): string => (new FileLayout('components.dharmashop.product-card-parts.' . $name, null, ['component' => 'none', 'client' => 0]))->render($extra + $displayData);
-$valueLayout = new FileLayout('components.dharmashop.fields.value', null, ['component' => 'none', 'client' => 0]);
 ?>
 <tr class="dharmaCard dharmaCardRow">
     <td class="dharmaCardTitle">
@@ -39,13 +35,6 @@ $valueLayout = new FileLayout('components.dharmashop.fields.value', null, ['comp
             <div class="small text-body-secondary dharmaCardCategory"><a class="link-secondary text-decoration-none" href="<?php echo $escape($displayData['categoryUrl'] ?? '#'); ?>"><?php echo $escape($categoryTitle); ?></a></div>
         <?php endif; ?>
         <a class="fw-semibold link-body-emphasis text-decoration-none" href="<?php echo $escape($productUrl); ?>"><?php echo $escape($item->title); ?></a>
-        <?php // Ниже lg колонок характеристик нет: значения — строками под названием. ?>
-        <?php foreach ($columns as $alias => $title) : ?>
-            <?php $field = $fields[$alias] ?? null; ?>
-            <?php if ($field && !empty($field->show) && !empty($field->values)) : ?>
-                <div class="d-lg-none small dharmaField" data-field="<?php echo $escape($alias); ?>"><span class="<?php echo empty($field->show_title ?? true) ? 'visually-hidden' : 'text-body-secondary'; ?>"><?php echo $escape($title); ?>:</span> <?php echo $valueLayout->render(['field' => $field]); ?></div>
-            <?php endif; ?>
-        <?php endforeach; ?>
         <?php if (!empty($displayData['badges'])) : ?>
             <div class="d-flex flex-wrap gap-1 mt-1 dharmaCardBadges">
                 <?php foreach ($displayData['badges'] as $badge) : ?>
@@ -56,12 +45,6 @@ $valueLayout = new FileLayout('components.dharmashop.fields.value', null, ['comp
         </div>
         </div>
     </td>
-    <?php foreach ($columns as $alias => $title) : ?>
-        <td class="d-none d-lg-table-cell dharmaField" data-field="<?php echo $escape($alias); ?>">
-            <?php $field = $fields[$alias] ?? null; ?>
-            <?php if ($field && !empty($field->show) && !empty($field->values)) : ?><?php echo $valueLayout->render(['field' => $field]); ?><?php else : ?><span class="text-body-secondary">—</span><?php endif; ?>
-        </td>
-    <?php endforeach; ?>
     <td class="text-end text-nowrap dharmaCardPriceCell">
         <?php echo $part('price'); ?>
         <div class="mt-2"><?php echo $part('actions', ['compactActions' => true]); ?></div>
