@@ -60,6 +60,7 @@
             <filename>actions.php</filename>
         </files>
         <files folder="layouts/product-card-parts" target="layouts/components/dharmashop/product-card-parts">
+            <filename>intro.php</filename>
             <filename>media.php</filename>
             <filename>favorite.php</filename>
             <filename>price.php</filename>

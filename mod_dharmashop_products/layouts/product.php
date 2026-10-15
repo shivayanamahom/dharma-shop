@@ -21,7 +21,7 @@ $placeholder = (new FileLayout('components.dharmashop.media.placeholder', null, 
         </div>
         <div class="<?php echo $list ? 'col' : ''; ?>">
             <a class="d-block text-decoration-none" href="<?php echo $escape($url); ?>"><div class="card-body"><h3 class="h5 card-title text-body mb-0"><?php echo $escape($item->title); ?></h3>
-                <?php if ($list && trim(strip_tags((string) ($item->introtext ?? ''))) !== '') : ?><p class="card-text text-body-secondary mt-2 mb-0"><?php echo $escape(trim(strip_tags((string) $item->introtext))); ?></p><?php endif; ?>
+                <?php if ($list) : ?><?php echo (new FileLayout('components.dharmashop.product-card-parts.intro', null, ['component' => 'none', 'client' => 0]))->render(['intro' => $item->introtext ?? '']); ?><?php endif; ?>
             </div></a>
             <div class="card-footer bg-transparent"><div class="fw-bold"><?php echo $escape($displayData['priceRange']); ?></div></div>
         </div>
