@@ -2,7 +2,7 @@
 <extension type="plugin" group="console" method="upgrade">
 	<name>PLG_CONSOLE_DHARMASHOPEXPORT</name>
 	<author>Dharma</author>
-	<version>0.1.14</version>
+	<version>0.1.15</version>
 	<description>PLG_CONSOLE_DHARMASHOPEXPORT_DESCRIPTION</description>
 	<namespace path="src">Dharma\Plugin\Console\DharmaShopExport</namespace>
 	<files>

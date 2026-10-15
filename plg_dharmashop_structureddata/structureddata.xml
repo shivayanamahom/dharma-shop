@@ -5,7 +5,7 @@
     <creationDate>2026-10</creationDate>
     <copyright>(C) 2026 Dharma</copyright>
     <license>GNU General Public License version 2 or later</license>
-    <version>0.1.14</version>
+    <version>0.1.15</version>
     <description>PLG_DHARMASHOP_STRUCTUREDDATA_DESCRIPTION</description>
     <namespace path="src">Dharma\Plugin\DharmaShop\Structureddata</namespace>
     <files>

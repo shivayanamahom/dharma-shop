@@ -2,7 +2,7 @@
 <extension type="plugin" group="dharmashoppromotion" method="upgrade">
     <name>PLG_DHARMASHOPPROMOTION_THRESHOLD</name>
     <author>Dharma</author><creationDate>2026-10</creationDate><copyright>(C) 2026 Dharma</copyright>
-    <license>GNU General Public License version 2 or later</license><version>0.1.14</version>
+    <license>GNU General Public License version 2 or later</license><version>0.1.15</version>
     <description>PLG_DHARMASHOPPROMOTION_THRESHOLD_DESC</description>
     <namespace path="src">Dharma\Plugin\DharmaShopPromotion\Threshold</namespace>
     <files><folder plugin="threshold">src</folder><folder>forms</folder><folder>services</folder></files>
