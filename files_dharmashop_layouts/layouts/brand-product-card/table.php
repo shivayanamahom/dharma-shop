@@ -21,7 +21,7 @@ $part = static fn (string $name, array $extra = []): string => (new FileLayout('
 $valueLayout = new FileLayout('components.dharmashop.fields.value', null, ['component' => 'none', 'client' => 0]);
 ?>
 <tr class="dharmaCard dharmaCardRow">
-    <td class="w-100 dharmaCardTitle">
+    <td class="dharmaCardTitle">
         <?php // Миниатюра внутри ячейки названия, а не отдельной колонкой: у img max-width 100% в шаблоне, колонка схлопывается. ?>
         <div class="d-flex gap-3">
         <div class="position-relative flex-shrink-0">

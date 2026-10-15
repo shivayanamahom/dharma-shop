@@ -6,10 +6,10 @@ $escape = static fn($value): string => htmlspecialchars((string) $value, ENT_QUO
 $part = static fn(string $name): string => (new FileLayout('components.dharmashop.group-card-parts.' . $name, null, ['component' => 'none', 'client' => 0]))->render($displayData);
 ?>
 <tr class="dharmaGroupCard dharmaGroupCardRow" <?php echo $part('attributes'); ?>>
-    <td class="w-100">
+    <td>
         <div class="d-flex gap-3">
             <?php echo $part('media'); ?>
-            <div><a class="fw-semibold link-body-emphasis text-decoration-none" href="<?php echo $escape($displayData['url']); ?>"><?php echo $escape($displayData['title']); ?></a><?php echo $part('details'); ?></div>
+            <div><a class="fw-semibold link-body-emphasis text-decoration-none" href="<?php echo $escape($displayData['url']); ?>"><?php echo $escape($displayData['title']); ?></a></div>
         </div>
     </td>
     <?php foreach ($displayData['fieldColumns'] as $alias => $title) : ?><td class="d-none d-lg-table-cell" data-field="<?php echo $escape($alias); ?>"><span class="text-body-secondary">—</span></td><?php endforeach; ?>
