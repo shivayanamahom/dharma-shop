@@ -17,7 +17,7 @@ $brandImage = $this->params->get('product_page_brand_display', 'text') === 'imag
     <div class="mb-3 dharmaProductBrand">
         <a href="<?php echo $this->escape($this->brandUrl); ?>" aria-label="<?php echo $this->escape($brandTitle); ?>">
             <?php if ($brandImage !== '') : ?>
-                <img class="img-fluid dharmaProductBrandImage" src="<?php echo $this->escape($brandImage); ?>"<?php echo ImageUrl::attrs((string) $this->item->brand_image, 'product.brand'); ?> alt="<?php echo $this->escape((string) ($this->item->brand_image_alt ?? $brandTitle)); ?>" decoding="async">
+                <img class="d-block mw-100 dharmaProductBrandImage" src="<?php echo $this->escape($brandImage); ?>" height="60" alt="<?php echo $this->escape((string) ($this->item->brand_image_alt ?? $brandTitle)); ?>" decoding="async">
             <?php else : ?>
                 <?php echo $this->escape($brandTitle); ?>
             <?php endif; ?>
