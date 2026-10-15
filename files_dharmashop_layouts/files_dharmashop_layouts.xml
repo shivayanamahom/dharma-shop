@@ -19,6 +19,8 @@
             <filename>files.php</filename>
             <filename>gallery.php</filename>
             <folder>gallery</folder>
+            <filename>video.php</filename>
+            <folder>video</folder>
         </files>
         <files folder="layouts/cart" target="layouts/components/dharmashop/cart">
             <filename>unavailable.php</filename>
