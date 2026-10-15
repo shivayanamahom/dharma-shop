@@ -25,7 +25,7 @@ $part = static fn (string $name): string => (new FileLayout('components.dharmash
         <?php endif; ?>
         <?php echo (new \Joomla\CMS\Layout\FileLayout('components.dharmashop.fields.default', null, ['component' => 'none', 'client' => 0]))->render(['fields' => $displayData['fields'] ?? $item->fields ?? [], 'context' => 'card']); ?>
     </div>
-    <div class="card-footer bg-transparent d-flex flex-wrap justify-content-between align-items-end gap-2 dharmaCardFooter">
+    <div class="card-footer bg-transparent d-flex flex-wrap justify-content-between align-items-end gap-2 row-gap-3 dharmaCardFooter">
         <?php echo $part('price'); ?>
         <?php // Справа: виджет количества и кнопка «В корзину»; в режиме каталога их нет. ?>
         <?php echo $part('actions'); ?>
