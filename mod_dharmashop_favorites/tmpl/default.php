@@ -9,7 +9,9 @@ if (empty($enabled)) {
     return;
 }
 ?>
-<a class="d-inline-flex align-items-center justify-content-center position-relative ps-2 dharmaFavoritesModule" href="<?php echo $escape($favoritesUrl); ?>" title="<?php echo $escape(Text::_('MOD_DHARMASHOP_FAVORITES_TITLE')); ?>" aria-label="<?php echo $escape(Text::_('MOD_DHARMASHOP_FAVORITES_TITLE')); ?>">
-    <?php echo $favoriteIcon; ?>
-    <span class="position-absolute top-0 start-100 translate-middle badge text-bg-primary rounded-pill<?php echo $hideEmpty && $count === 0 ? ' d-none' : ''; ?>" data-dharmashop-favorites-count<?php echo $hideEmpty ? ' data-hide-empty' : ''; ?>><?php echo (int) $count; ?></span>
+<a class="d-inline-flex align-items-center justify-content-center text-decoration-none dharmaFavoritesModule" href="<?php echo $escape($favoritesUrl); ?>" title="<?php echo $escape(Text::_('MOD_DHARMASHOP_FAVORITES_TITLE')); ?>" aria-label="<?php echo $escape(Text::_('MOD_DHARMASHOP_FAVORITES_TITLE')); ?>">
+    <span class="position-relative d-inline-flex">
+        <?php echo $favoriteIcon; ?>
+        <span class="position-absolute top-0 start-100 translate-middle badge text-bg-primary rounded-pill<?php echo $hideEmpty && $count === 0 ? ' d-none' : ''; ?>" data-dharmashop-favorites-count<?php echo $hideEmpty ? ' data-hide-empty' : ''; ?>><?php echo (int) $count; ?></span>
+    </span>
 </a>
