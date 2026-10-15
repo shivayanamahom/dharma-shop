@@ -33,9 +33,13 @@ class Dispatcher extends AbstractModuleDispatcher
         $services = $app->bootComponent('com_dharmashop')->getServices();
         $session = new CartSession($services->cart(), $app);
         $cart = $session->current();
-        $summary = $cart !== null ? $services->cart()->summary($cart) : ['count' => 0, 'qty' => 0.0, 'subtotal' => 0.0];
+        $cartService = $services->cart();
+        $summary = $cart !== null ? $cartService->summary($cart) : ['count' => 0, 'qty' => 0.0, 'subtotal' => 0.0];
         $data['count'] = (int) $summary['count'];
-        $data['total'] = $summary['count'] > 0 ? $services->money()->price((string) $summary['subtotal']) : $services->money()->format((string) $summary['subtotal']);
+        $displayTotal = $cart !== null
+            ? $cartService->totals($cart, $cartService->lines($cart))['total']
+            : (float) $summary['subtotal'];
+        $data['total'] = $summary['count'] > 0 ? $services->money()->price((string) $displayTotal) : $services->money()->format((string) $displayTotal);
         $data['cartUrl'] = Route::_('index.php?option=com_dharmashop&view=cart', false);
         // Чекаут выводит серверный снимок состава: менять корзину нужно на её странице.
         // Проверяем разрешённый Joomla маршрут, чтобы правило работало и с SEF/пунктами меню.

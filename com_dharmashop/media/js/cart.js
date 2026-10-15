@@ -37,7 +37,7 @@
       element.classList.toggle('d-none', cart.count === 0 && element.hasAttribute('data-hide-empty'));
     });
     document.querySelectorAll('[data-dharmashop-cart-total]').forEach((element) => {
-      element.textContent = cart.subtotalText;
+      element.textContent = cart.totalText || cart.subtotalText;
     });
   };
 

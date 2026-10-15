@@ -175,13 +175,16 @@ class CartController extends BaseController
             return;
         }
 
-        $summary = ['count' => 0, 'qty' => 0.0, 'subtotal' => 0.0];
+        $summary = ['count' => 0, 'qty' => 0.0, 'subtotal' => 0.0, 'total' => 0.0];
         $products = [];
         $cart = $session?->current();
 
         if ($cart !== null) {
-            $summary = $session->service()->summary($cart);
-            $products = $session->service()->productQuantities($cart);
+            $cartService = $session->service();
+            $summary = $cartService->summary($cart);
+            $cartTotals = $cartService->totals($cart, $cartService->lines($cart));
+            $summary['total'] = (float) $cartTotals['total'];
+            $products = $cartService->productQuantities($cart);
         }
 
         $settings = ComponentHelper::getParams('com_dharmashop');
@@ -209,7 +212,12 @@ class CartController extends BaseController
             'success' => $ok,
             'message' => $message,
             'notification' => $notification,
-            'cart' => $summary + ['subtotalText' => (int) $summary['count'] > 0 ? $money->price((string) $summary['subtotal']) : $money->format((string) $summary['subtotal']), 'url' => $cartUrl, 'products' => (object) $products],
+            'cart' => $summary + [
+                'subtotalText' => (int) $summary['count'] > 0 ? $money->price((string) $summary['subtotal']) : $money->format((string) $summary['subtotal']),
+                'totalText' => (int) $summary['count'] > 0 ? $money->price((string) $summary['total']) : $money->format((string) $summary['total']),
+                'url' => $cartUrl,
+                'products' => (object) $products,
+            ],
         ], JSON_UNESCAPED_UNICODE);
         $this->app->close();
     }
