@@ -14,6 +14,7 @@ final class ImageContexts
         'product.related.grid' => [600, 600],
         'product.related.list' => [320, 320],
         'product.main' => [1000, 1000],
+        'product.brand' => [240, 120],
         'product.thumb' => [160, 160],
         'product.lightbox' => [1800, 1800],
         'category.card' => [600, 400],

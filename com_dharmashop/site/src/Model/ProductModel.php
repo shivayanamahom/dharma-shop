@@ -57,12 +57,18 @@ class ProductModel extends BaseDatabaseModel
             throw new \RuntimeException(Text::_('COM_DHARMASHOP_PRODUCT_NOT_FOUND'), 404);
         }
 
-        $item->brand_title = (string) $db->setQuery($db->createQuery()->select('b.title')
+        $brand = $db->setQuery($db->createQuery()->select($db->quoteName(['b.id', 'b.title', 'b.alias', 'b.params']))
             ->from($db->quoteName('#__dharmashop_product_categories', 'pc'))
             ->join('INNER', $db->quoteName('#__categories', 'b') . ' ON b.id = pc.catid')
             ->where('pc.product_id = :brand')->bind(':brand', $id, ParameterType::INTEGER)
             ->where('pc.direct = 1')->where('b.extension = ' . $db->quote('com_dharmashop.brand'))
-            ->where('b.published = 1')->where('b.access IN (' . $levels . ')')->order('b.id'), 0, 1)->loadResult();
+            ->where('b.published = 1')->where('b.access IN (' . $levels . ')')->order('b.id'), 0, 1)->loadObject();
+        $brandParams = new Registry($brand->params ?? '');
+        $item->brand_id = (int) ($brand->id ?? 0);
+        $item->brand_title = (string) ($brand->title ?? '');
+        $item->brand_alias = (string) ($brand->alias ?? '');
+        $item->brand_image = (string) $brandParams->get('image', '');
+        $item->brand_image_alt = (string) ($brandParams->get('image_alt', '') ?: $item->brand_title);
         $groups = Factory::getApplication()->bootComponent('com_dharmashop')->getServices()->groups();
         $groups->inherit($item);
         $item->description = (string) ($item->fulltext ?? '');

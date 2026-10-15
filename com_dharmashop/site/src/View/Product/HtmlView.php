@@ -40,6 +40,7 @@ class HtmlView extends BaseHtmlView
     public string $price = '';
     public string $oldPrice = '';
     public string $discountLabel = '';
+    public string $brandUrl = '';
     public bool $showDiscount = false;
     public bool $showSaleCountdown = false;
     /** @var array<string, mixed> параметры макета галереи: type, thumbs, lightbox, loop, id */
@@ -66,11 +67,14 @@ class HtmlView extends BaseHtmlView
             && (int) ($active->query['id'] ?? 0) === (int) $this->item->id;
         $displayKeys = [
             'product_gallery_type', 'product_gallery_thumbs', 'product_gallery_loop', 'product_gallery_lightbox',
-            'product_page_show_discount', 'product_page_discount_display', 'product_page_sale_countdown',
+            'product_page_show_discount', 'product_page_discount_display', 'product_page_sale_countdown', 'product_page_brand_display',
         ];
         DisplaySettings::merge($this->params, $this->item->params, $displayKeys);
         if ($this->menuOwnsPage) {
             DisplaySettings::merge($this->params, $active->getParams(), $displayKeys);
+        }
+        if ((int) ($this->item->brand_id ?? 0) > 0 && trim((string) ($this->item->brand_title ?? '')) !== '') {
+            $this->brandUrl = Route::_('index.php?option=com_dharmashop&view=brand&id=' . (int) $this->item->brand_id . ':' . (string) $this->item->brand_alias);
         }
 
         $money = new MoneyFormatter($this->params);
