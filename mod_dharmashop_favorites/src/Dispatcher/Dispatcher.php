@@ -29,7 +29,7 @@ class Dispatcher extends AbstractModuleDispatcher
         $list = $session->current();
         $data['count'] = $list ? $session->service()->count((int) $list->id) : 0;
         $data['enabled'] = true;
-        $data['favoriteIcon'] = FavoritesSettings::renderIcon();
+        $data['favoriteIcon'] = FavoritesSettings::renderIcon(25);
         $data['favoritesUrl'] = Route::_('index.php?option=com_dharmashop&view=favorites', false);
         $wa = $app->getDocument()->getWebAssetManager();
         $wa->getRegistry()->addExtensionRegistryFile('com_dharmashop');
