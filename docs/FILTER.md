@@ -231,6 +231,8 @@ WHERE fv.field_id IN (:fields) GROUP BY fv.field_id, fv.option_id
 Движок и SEO — общие для всех модулей и страниц: `filter_enabled`; `counts_default` (`off`/`base`/`live`); `facet_live_limit`; `facet_time_budget_ms`; `cache_ttl`; `max_active_fields`, `max_values_per_field`; `seo_filtered_robots` (`noindex,follow` / `index,follow` / нет), `seo_canonical`; `url_nofollow_no_js`; `empty_result_hint`.
 
 ### 10.2 Поле (форма определения → «Отображение → Фильтр», расширение существующего блока)
+
+У нового товарного поля переключатель фильтра включён по умолчанию для типов `list`, `checkbox`, `color`, `number` и `range`. Типы `text`, `editor`, `files`, `gallery` и `video` не фильтруются. Категорийные поля и уже сохранённые определения не изменяются.
 `filterable` (есть); `filter_control` (авто / список / чекбоксы / радио / плитки-кнопки / образцы цвета / картинки / поле числа / ползунок / интервалы); `filter_logic` (ИЛИ / И, только для мультивыбора); `filter_sort` (по порядку / по алфавиту / по числу товаров / по убыванию); `filter_limit`; `filter_expanded`; `filter_counts` (наследовать / выкл / вкл); для чисел — шаг и единица (из `unit`).
 
 ### 10.3 Модуль `mod_dharmashop_filter`

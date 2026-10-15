@@ -90,6 +90,9 @@ class FieldModel extends AdminModel
                 $filters = (array) Factory::getApplication()->getUserState('com_dharmashop.fields.filter', []);
                 $data->target = in_array($filters['target'] ?? '', ['product','category'], true) ? $filters['target'] : 'product';
                 $data->type = 'text';
+                // Seed the supported filter switch as enabled for new product fields. Unsupported text is forced off when saved;
+                // if the administrator changes the type to list/checkbox/color/number/range, the switch is already enabled.
+                $data->filterable = $data->target === 'product' ? 1 : 0;
                 $data->ordering = $this->nextOrdering($data->target);
             }
         }
