@@ -212,6 +212,82 @@ class ProductModel extends AdminModel
         return $item;
     }
 
+    /** Create an independent copy of a product, including its default variant and custom field values. */
+    public function copyProduct(int $sourceId): int
+    {
+        $source = $this->getItem($sourceId);
+
+        if (!$source || (int) ($source->id ?? 0) !== $sourceId) {
+            throw new \RuntimeException('COM_DHARMASHOP_PRODUCT_NOT_FOUND');
+        }
+
+        $sourceData = (array) $source;
+        $customFields = (new FieldValues($this->getDatabase()))->values('product', $sourceData);
+        $sourceGroupId = (int) ($source->group_id ?? 0);
+
+        if ($sourceGroupId > 0) {
+            $this->shop()->groups()->inherit($source);
+
+            if (($sourceData['inherit_images'] ?? 'own') === 'group') {
+                $source->gallery = $this->shop()->groups()->media($sourceGroupId);
+            } elseif (($sourceData['inherit_images'] ?? 'own') === 'empty') {
+                $source->gallery = [];
+            }
+        }
+
+        $data = (array) $source;
+        $data['title'] = $this->copyTitle((string) ($sourceData['title'] ?? ''));
+        $data['alias'] = '';
+        $data['id'] = 0;
+        $data['group_id'] = 0;
+        $data['sku'] = '';
+        $data['inherit_intro'] = 'own';
+        $data['inherit_full'] = 'own';
+        $data['inherit_images'] = 'own';
+        $data['created'] = Factory::getDate()->toSql();
+        $data['created_by'] = (int) Factory::getApplication()->getIdentity()->id;
+        $data['modified'] = null;
+        $data['modified_by'] = 0;
+        $data['custom_fields'] = $customFields;
+        $data['custom_fields_present'] = array_fill_keys(array_keys($customFields), 1);
+        unset($data['asset_id'], $data['checked_out'], $data['checked_out_time']);
+
+        if (!$this->save($data)) {
+            throw new \RuntimeException((string) $this->getError() ?: 'COM_DHARMASHOP_PRODUCT_COPY_FAILED');
+        }
+
+        $copyId = (int) $this->getState($this->getName() . '.id');
+
+        if ($copyId < 1) {
+            throw new \RuntimeException('COM_DHARMASHOP_PRODUCT_COPY_FAILED');
+        }
+
+        return $copyId;
+    }
+
+    /** Return an unused localized copy title within the product category. */
+    public function copyTitle(string $sourceTitle, int $categoryId): string
+    {
+        $db = $this->getDatabase();
+        $baseTitle = Text::sprintf('COM_DHARMASHOP_COPY_TITLE', $sourceTitle);
+        $title = $baseTitle;
+        $copyNumber = 2;
+
+        do {
+            $candidate = mb_substr($title, 0, 255);
+            $query = $db->createQuery()->select('id')->from($db->quoteName('#__dharmashop_products'))
+                ->where('catid = ' . $categoryId)
+                ->where('title = ' . $db->quote($candidate));
+            $exists = (bool) $db->setQuery($query, 0, 1)->loadResult();
+
+            if ($exists) {
+                $title = Text::sprintf('COM_DHARMASHOP_COPY_TITLE_NUMBERED', $copyNumber++, $baseTitle);
+            }
+        } while ($exists);
+
+        return $candidate;
+    }
+
     /** Итог для поля «Цена со скидкой»: «1 500 ₽ (−500 ₽)»; если скидка не действует по срокам — пояснение. */
     private function priceResult(object $variant): string
     {

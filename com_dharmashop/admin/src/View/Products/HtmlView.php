@@ -115,6 +115,12 @@ class HtmlView extends BaseHtmlView
                 }
             }
 
+            if ($canDo->get('core.create') && $canDo->get('core.edit')) {
+                $childBar->standardButton('copy-products', 'COM_DHARMASHOP_CREATE_COPY', 'products.copy')
+                    ->icon('icon-copy')
+                    ->listCheck(true);
+            }
+
             // Пакетная обработка: окно с набором операций (состав — в tmpl/products/default_batch_body.php и ProductModel::$batch_commands).
             if ($canDo->get('core.create') && $canDo->get('core.edit')) {
                 $childBar->popupButton('batch', 'JTOOLBAR_BATCH')

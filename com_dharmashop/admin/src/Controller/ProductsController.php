@@ -14,6 +14,7 @@ namespace Dharma\Component\DharmaShop\Administrator\Controller;
 
 use Dharma\Component\DharmaShop\Administrator\Maintenance\MaintenanceService;
 use Joomla\CMS\Language\Text;
+use Joomla\CMS\Log\Log;
 use Joomla\CMS\Form\Form;
 use Joomla\CMS\Factory;
 use Joomla\CMS\MVC\Controller\AdminController;
@@ -36,6 +37,65 @@ class ProductsController extends AdminController
     public function getModel($name = 'Product', $prefix = 'Administrator', $config = ['ignore_request' => true])
     {
         return parent::getModel($name, $prefix, $config);
+    }
+
+    /** Create independent copies of the selected products. */
+    public function copy(): void
+    {
+        $this->checkToken();
+        $ids = array_values(array_unique(array_filter(ArrayHelper::toInteger((array) $this->input->get('cid', [], 'array')))));
+        $user = $this->app->getIdentity();
+
+        if (!$ids) {
+            $this->setRedirect($this->listUrl(), Text::_('JGLOBAL_NO_ITEM_SELECTED'), 'warning');
+            return;
+        }
+
+        if (!$user->authorise('core.create', 'com_dharmashop')) {
+            $this->setRedirect($this->listUrl(), Text::_('JLIB_APPLICATION_ERROR_SAVE_NOT_PERMITTED'), 'error');
+            return;
+        }
+
+        $model = $this->getModel();
+        $sources = [];
+
+        // Check every selected source before creating the first copy.
+        foreach ($ids as $id) {
+            $source = $model->getItem($id);
+
+            if (!$source || !$user->authorise('core.edit', 'com_dharmashop.product.' . $id)
+                || !$user->authorise('core.create', 'com_dharmashop.category.' . (int) ($source->catid ?? 0))) {
+                $this->setRedirect($this->listUrl(), Text::_('JLIB_APPLICATION_ERROR_SAVE_NOT_PERMITTED'), 'error');
+                return;
+            }
+
+            $sources[] = $id;
+        }
+
+        $copied = 0;
+        $failed = 0;
+
+        foreach ($sources as $id) {
+            try {
+                $model->copyProduct($id);
+                $copied++;
+            } catch (\Throwable $error) {
+                Log::add('Product copy failed for #' . $id . ': ' . $error->getMessage(), Log::ERROR, 'com_dharmashop');
+                $failed++;
+            }
+        }
+
+        if ($copied > 0) {
+            $this->app->enqueueMessage(Text::sprintf('COM_DHARMASHOP_PRODUCTS_COPIED', $copied));
+        }
+
+        if ($failed > 0) {
+            $this->app->enqueueMessage(Text::sprintf('COM_DHARMASHOP_PRODUCTS_COPY_FAILED', $failed), 'warning');
+        } elseif ($copied === 0) {
+            $this->app->enqueueMessage(Text::_('COM_DHARMASHOP_PRODUCT_COPY_FAILED'), 'error');
+        }
+
+        $this->setRedirect($this->listUrl());
     }
 
     /** Open native group form with selected existing products; no mutation before Save. */
