@@ -329,6 +329,19 @@ class ProductModel extends AdminModel
         $userId = (int) Factory::getApplication()->getIdentity()->id;
         $isNew = empty($data['id']);
 
+        if (array_key_exists('price', $data)) {
+            $price = trim((string) $data['price']);
+            $price = preg_replace('/[\\s\\p{Z}]+/u', '', $price) ?? '';
+
+            if ($price !== '' && !preg_match('/^\\d+(?:[.,]\\d{1,2})?$/D', $price)) {
+                $this->setError(Text::_('COM_DHARMASHOP_FIELD_PRICE_INVALID'));
+
+                return false;
+            }
+
+            $data['price'] = str_replace(',', '.', $price);
+        }
+
         // Скидка и цена проверяются до записи карточки, чтобы ошибка не оставила «полусохранённый» товар.
         try {
             $price = trim((string) ($data['price'] ?? ''));
