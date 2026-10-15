@@ -121,7 +121,9 @@
             <field name="category_columns_xxl" type="list" label="COM_DHARMASHOP_DISPLAY_COLUMNS_XXL" validate="options" default="3" showon="category_breakpoints:1"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option><option value="6">6</option></field>
             <field name="category_product_count" label="COM_DHARMASHOP_DISPLAY_SHOW_LIST_COUNT" type="radio" layout="joomla.form.field.radio.switcher" default="0" filter="integer"><option value="0">JNO</option><option value="1">JYES</option></field>
             <field name="category_price_range" label="COM_DHARMASHOP_DISPLAY_SHOW_LIST_PRICES" type="radio" layout="joomla.form.field.radio.switcher" default="0" filter="integer"><option value="0">JNO</option><option value="1">JYES</option></field>
-            <fieldset name="display_product_card" label="COM_DHARMASHOP_CONFIG_PRODUCT_CARD">
+        </fieldset>
+
+        <fieldset name="display_product_card" label="COM_DHARMASHOP_CONFIG_PRODUCT_CARD">
                 <field name="product_card_layout" type="layout" layoutgroup="product_card" label="COM_DHARMASHOP_LAYOUT_CARD_LABEL" default="grid" validate="options"></field>
                 <field name="product_card_intro" label="COM_DHARMASHOP_DISPLAY_SHOW_INTRO" type="radio" layout="joomla.form.field.radio.switcher" default="1" filter="integer"><option value="0">JNO</option><option value="1">JYES</option></field>
                 <field name="product_card_images" label="COM_DHARMASHOP_DISPLAY_CARD_IMAGES" description="COM_DHARMASHOP_DISPLAY_CARD_IMAGES_DESC" type="list" default="1" validate="options"><option value="1">COM_DHARMASHOP_CARD_IMAGES_1</option><option value="2">COM_DHARMASHOP_CARD_IMAGES_2</option><option value="3">COM_DHARMASHOP_CARD_IMAGES_3</option><option value="4">COM_DHARMASHOP_CARD_IMAGES_4</option><option value="5">COM_DHARMASHOP_CARD_IMAGES_5</option><option value="0">COM_DHARMASHOP_CARD_IMAGES_ALL</option></field>
@@ -129,7 +131,6 @@
                 <field name="product_card_discount_display" type="list" default="percent" filter="string" label="COM_DHARMASHOP_CONFIG_DISCOUNT_CARD_DISPLAY" description="COM_DHARMASHOP_CONFIG_DISCOUNT_DISPLAY_DESC" validate="options" showon="product_card_show_discount:1"><option value="amount">COM_DHARMASHOP_CONFIG_DISCOUNT_AMOUNT</option><option value="percent">COM_DHARMASHOP_CONFIG_DISCOUNT_PERCENT</option></field>
                 <field name="product_card_sale_countdown" type="radio" layout="joomla.form.field.radio.switcher" default="1" filter="integer" label="COM_DHARMASHOP_CONFIG_SALE_COUNTDOWN_CARD" description="COM_DHARMASHOP_CONFIG_SALE_COUNTDOWN_CARD_DESC"><option value="0">JNO</option><option value="1">JYES</option></field>
                 <field name="product_card_cart_mode" type="list" default="stepper" validate="options" label="COM_DHARMASHOP_CONFIG_CART_MODE_CARD" description="COM_DHARMASHOP_CONFIG_CART_MODE_CARD_DESC"><option value="button">COM_DHARMASHOP_CART_MODE_BUTTON</option><option value="qty">COM_DHARMASHOP_CART_MODE_QTY</option><option value="stepper">COM_DHARMASHOP_CART_MODE_STEPPER</option></field>
-            </fieldset>
         </fieldset>
 
         <fieldset name="display_groups" label="COM_DHARMASHOP_DISPLAY_GROUPS">
@@ -179,7 +180,7 @@
             <field name="badge_card_prices" label="COM_DHARMASHOP_DISPLAY_SHOW_PRICES" type="radio" layout="joomla.form.field.radio.switcher" default="0" filter="integer" description="COM_DHARMASHOP_DISPLAY_SHOW_PRICES_DESC"><option value="0">JNO</option><option value="1">JYES</option></field>
         </fieldset>
 
-        <fieldset name="display_product" label="COM_DHARMASHOP_DISPLAY_PRODUCT" addfieldprefix="Dharma\Component\DharmaShop\Administrator\Field">
+        <fieldset name="display_product" label="COM_DHARMASHOP_CONFIG_PRODUCT_PAGE" addfieldprefix="Dharma\Component\DharmaShop\Administrator\Field">
             <field name="product_choice_mode" type="list" label="COM_DHARMASHOP_PRODUCT_CHOICE_MODE" description="COM_DHARMASHOP_PRODUCT_CHOICE_MODE_DESC" default="navigate" filter="cmd" validate="options">
                 <option value="navigate">COM_DHARMASHOP_PRODUCT_CHOICE_NAVIGATE</option>
                 <option value="ajax">COM_DHARMASHOP_PRODUCT_CHOICE_AJAX</option>
@@ -198,13 +199,11 @@
                 <option value="none">COM_DHARMASHOP_GALLERY_LIGHTBOX_NONE</option>
                 <option value="fancybox">COM_DHARMASHOP_GALLERY_LIGHTBOX_FANCYBOX</option>
             </field>
-            <fieldset name="display_product_page" label="COM_DHARMASHOP_CONFIG_PRODUCT_PAGE">
                 <field name="product_page_brand_display" type="list" default="text" filter="string" validate="options" label="COM_DHARMASHOP_PRODUCT_BRAND_DISPLAY" description="COM_DHARMASHOP_PRODUCT_BRAND_DISPLAY_DESC"><option value="text">COM_DHARMASHOP_PRODUCT_BRAND_TEXT</option><option value="image">COM_DHARMASHOP_PRODUCT_BRAND_IMAGE</option></field>
                 <field name="product_page_show_discount" type="radio" layout="joomla.form.field.radio.switcher" default="1" filter="integer" label="COM_DHARMASHOP_CONFIG_DISCOUNT_PAGE_SHOW" description="COM_DHARMASHOP_CONFIG_DISCOUNT_PAGE_SHOW_DESC"><option value="0">JNO</option><option value="1">JYES</option></field>
                 <field name="product_page_discount_display" type="list" default="percent" filter="string" label="COM_DHARMASHOP_CONFIG_DISCOUNT_PAGE_DISPLAY" description="COM_DHARMASHOP_CONFIG_DISCOUNT_DISPLAY_DESC" validate="options" showon="product_page_show_discount:1"><option value="amount">COM_DHARMASHOP_CONFIG_DISCOUNT_AMOUNT</option><option value="percent">COM_DHARMASHOP_CONFIG_DISCOUNT_PERCENT</option></field>
                 <field name="product_page_sale_countdown" type="radio" layout="joomla.form.field.radio.switcher" default="1" filter="integer" label="COM_DHARMASHOP_CONFIG_SALE_COUNTDOWN_PAGE" description="COM_DHARMASHOP_CONFIG_SALE_COUNTDOWN_PAGE_DESC"><option value="0">JNO</option><option value="1">JYES</option></field>
-            </fieldset>
-        </fieldset>
+		</fieldset>
 	</fieldset>
 
 	<fieldset name="favorites" label="COM_DHARMASHOP_CONFIG_FAVORITES" description="COM_DHARMASHOP_CONFIG_FAVORITES_DESC">
@@ -230,9 +229,11 @@
 	</fieldset>
 
 	<fieldset name="cart" label="COM_DHARMASHOP_CONFIG_CART" description="COM_DHARMASHOP_CONFIG_CART_DESC">
+		<fieldset name="cart_general" label="COM_DHARMASHOP_CONFIG_CART_GENERAL">
 		<field name="cart_button_text" type="text" label="COM_DHARMASHOP_CONFIG_CART_BUTTON_TEXT" description="COM_DHARMASHOP_CONFIG_CART_BUTTON_TEXT_DESC" hint="COM_DHARMASHOP_CONFIG_CART_BUTTON_TEXT_HINT" filter="string" />
 		<field name="cart_guest_days" type="number" default="30" min="1" max="3650" filter="integer" label="COM_DHARMASHOP_CONFIG_CART_GUEST_DAYS" description="COM_DHARMASHOP_CONFIG_CART_GUEST_DAYS_DESC" />
 		<field name="cart_user_days" type="number" default="365" min="0" max="3650" filter="integer" label="COM_DHARMASHOP_CONFIG_CART_USER_DAYS" description="COM_DHARMASHOP_CONFIG_CART_USER_DAYS_DESC" />
+		</fieldset>
 		<fieldset name="cart_notification" label="COM_DHARMASHOP_CONFIG_CART_NOTIFICATION_GROUP">
             <field name="cart_notification_type" type="list" default="toast" validate="options" label="COM_DHARMASHOP_CONFIG_CART_NOTIFICATION_TYPE" description="COM_DHARMASHOP_CONFIG_CART_NOTIFICATION_TYPE_DESC">
                 <option value="toast">COM_DHARMASHOP_CONFIG_CART_NOTIFICATION_TOAST</option>
