@@ -14,8 +14,10 @@ namespace Dharma\Component\DharmaShop\Administrator\Controller;
 
 use Joomla\CMS\MVC\Controller\FormController;
 use Joomla\CMS\MVC\Model\BaseDatabaseModel;
+use Joomla\CMS\Factory;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
+use Joomla\Database\DatabaseInterface;
 use Dharma\Component\DharmaShop\Administrator\Support\BatchProgressResponse;
 
 \defined('_JEXEC') or die;
@@ -62,7 +64,7 @@ class ProductController extends FormController
         // A copied variant becomes an independent product; it must not be attached to
         // the original group as a duplicate combination.
         if ($this->getTask() === 'save2copy') {
-            $db = $this->getModel()->getDatabase();
+            $db = Factory::getContainer()->get(DatabaseInterface::class);
             $baseTitle = Text::sprintf('COM_DHARMASHOP_COPY_TITLE', (string) ($data['title'] ?? ''));
             $title = $baseTitle;
             $copyNumber = 2;
