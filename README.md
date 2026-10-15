@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="com_dharmashop/media/images/logo-large.png" alt="Dharma Shop" width="420">
+</p>
+
 # 🛒 Dharma Shop
 
 <div align="center">
