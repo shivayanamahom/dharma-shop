@@ -43,7 +43,7 @@ class Dispatcher extends AbstractModuleDispatcher
         $isCheckout = $input->getCmd('option') === 'com_dharmashop' && $input->getCmd('view') === 'checkout';
         $data['cartDisabled'] = $isCheckout;
         $data['offcanvas'] = !$isCheckout && $data['params']->get('click_action', 'link') === 'offcanvas';
-        $data['openOnAdd'] = !$isCheckout && (int) $data['params']->get('open_on_add', 1) === 1;
+        $data['openOnAdd'] = !$isCheckout && (int) $data['params']->get('open_on_add', 0) === 1;
 
         if ($data['offcanvas']) {
             // Боковая панель: скрипт Bootstrap offcanvas и мини-корзина; подключается только в этом режиме.
