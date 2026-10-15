@@ -84,9 +84,9 @@ class ProductController extends FormController
             $data['alias'] = '';
             $data['group_id'] = 0;
             $data['sku'] = '';
-            $data['inherit_intro'] = 0;
-            $data['inherit_full'] = 0;
-            $data['inherit_images'] = 0;
+            $data['inherit_intro'] = 'own';
+            $data['inherit_full'] = 'own';
+            $data['inherit_images'] = 'own';
         }
 
         return $data;
