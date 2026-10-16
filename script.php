@@ -260,7 +260,11 @@ return new class () implements ServiceProviderInterface {
                     $this->db->setQuery($ddl)->execute();
 
                     $this->ensureAclVersion();
-                    $this->inheritGlobalRobots();
+                    try {
+                        $this->inheritGlobalRobots();
+                    } catch (\Throwable) {
+                        // Не критично: значение «Robots» можно выбрать в настройках магазина вручную; установка не должна из-за этого прерываться.
+                    }
 
                     if ($type === 'install') {
                         $this->ensureDefaultBadges();

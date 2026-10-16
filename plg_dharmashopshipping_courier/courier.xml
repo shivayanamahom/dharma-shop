@@ -5,7 +5,7 @@
     <creationDate>2026-10</creationDate>
     <copyright>(C) 2026 Dharma</copyright>
     <license>GNU General Public License version 2 or later</license>
-    <version>0.1.15</version>
+    <version>0.1.16</version>
     <description>PLG_DHARMASHOPSHIPPING_COURIER_DESC</description>
     <namespace path="src">Dharma\Plugin\DharmaShopShipping\Courier</namespace>
     <files>

@@ -2,7 +2,7 @@
 <extension type="plugin" group="dharmashop" method="upgrade">
     <name>PLG_DHARMASHOP_IMAGERESIZE</name><author>Dharma</author><creationDate>2026-10</creationDate>
     <copyright>(C) 2026 Dharma</copyright><license>GNU General Public License version 2 or later</license>
-    <version>0.1.15</version><description>PLG_DHARMASHOP_IMAGERESIZE_DESCRIPTION</description>
+    <version>0.1.16</version><description>PLG_DHARMASHOP_IMAGERESIZE_DESCRIPTION</description>
     <namespace path="src">Dharma\Plugin\DharmaShop\ImageResize</namespace>
     <files><folder plugin="imageresize">services</folder><folder>src</folder><filename>README.md</filename></files>
     <languages>

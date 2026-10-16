@@ -6,7 +6,7 @@
 
 <div align="center">
 
-[![Package Version](https://img.shields.io/badge/version-0.1.15-brightgreen.svg?style=flat-square)](CHANGELOG.md)
+[![Package Version](https://img.shields.io/badge/version-0.1.16-brightgreen.svg?style=flat-square)](CHANGELOG.md)
 [![Joomla Support](https://img.shields.io/badge/Joomla-5.x%20%7C%206.x-F48024.svg?style=flat-square&logo=joomla&logoColor=white)](https://www.joomla.org/)
 [![PHP Version](https://img.shields.io/badge/PHP-%E2%89%A5%208.3-777BB4.svg?style=flat-square&logo=php&logoColor=white)](https://www.php.net/)
 [![Database](https://img.shields.io/badge/Database-MySQL%208.0%2B%20%7C%20MariaDB%2010.6%2B-4479A1.svg?style=flat-square&logo=mysql&logoColor=white)](https://www.mysql.com/)
@@ -165,7 +165,7 @@ Dharma Shop спроектирован с упором на предельную
 1. Откройте панель управления Joomla: **Система** → **Установка** → **Расширения** → вкладка **«Установить по URL-адресу»**.
 2. Вставьте прямую ссылку на актуальный архив пакета:
    ```text
-   https://github.com/shivayanamahom/dharma-shop-updates/releases/download/v0.1.15/pkg_dharmashop-0.1.15.zip
+   https://github.com/shivayanamahom/dharma-shop-updates/releases/download/v0.1.16/pkg_dharmashop-0.1.16.zip
    ```
 3. Нажмите кнопку **«Проверить и установить»**.
 
