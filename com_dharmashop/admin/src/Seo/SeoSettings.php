@@ -8,6 +8,7 @@
 
 namespace Dharma\Component\DharmaShop\Administrator\Seo;
 
+use Joomla\CMS\Factory;
 use Joomla\Registry\Registry;
 
 \defined('_JEXEC') or die;
@@ -57,10 +58,22 @@ final class SeoSettings
         };
     }
 
-    /** Значение robots по умолчанию для страниц магазина. */
+    /**
+     * Значение robots по умолчанию для страниц магазина: настройка магазина, а если выбрано «как в Joomla» (пусто) — общая настройка
+     * Joomla («Система → Общие настройки → Метаданные → Роботы»); если и она не задана, `index, follow`. Так закрытие сайта
+     * в общих настройках закрывает и магазин.
+     */
     public function robots(): string
     {
-        return (string) ($this->params->get('seo_robots') ?: 'index, follow');
+        $own = trim((string) $this->params->get('seo_robots', ''));
+
+        if ($own !== '') {
+            return $own;
+        }
+
+        $global = trim((string) Factory::getApplication()->get('robots', ''));
+
+        return $global !== '' ? $global : 'index, follow';
     }
 
     /** Выводить ли разметку Open Graph. */

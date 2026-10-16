@@ -73,7 +73,7 @@ class HtmlView extends BaseHtmlView
         $values = ['landing.title' => $heading, 'landing.category' => '', 'landing.count' => static fn (): string => (string) $total, 'landing.introtext' => ''];
         $base = Route::_('index.php?option=com_dharmashop_landing&view=landings', false, Route::TLS_IGNORE, true);
         $url = $base . ($page > 1 ? (str_contains($base, '?') ? '&' : '?') . 'start=' . (($page - 1) * $this->limit) : '');
-        $meta = $seo->resolve('landing', $item, $values, $menu, $url, trim((string) $menu->get('robots', '')) ?: 'index, follow', $page, false);
+        $meta = $seo->resolve('landing', $item, $values, $menu, $url, trim((string) $menu->get('robots', '')) ?: null, $page, false);
         $entries = [];
 
         foreach ($this->items as $row) {

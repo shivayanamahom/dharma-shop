@@ -260,6 +260,7 @@ return new class () implements ServiceProviderInterface {
                     $this->db->setQuery($ddl)->execute();
 
                     $this->ensureAclVersion();
+                    $this->inheritGlobalRobots();
 
                     if ($type === 'install') {
                         $this->ensureDefaultBadges();
@@ -288,6 +289,30 @@ return new class () implements ServiceProviderInterface {
                     }
 
                     $params['acl_version'] = 1;
+                    $this->db->setQuery($this->db->getQuery(true)->update($this->db->quoteName('#__extensions'))
+                        ->set($this->db->quoteName('params') . ' = ' . $this->db->quote(json_encode($params, JSON_UNESCAPED_UNICODE)))->where($where))->execute();
+                }
+
+                /**
+                 * C97: настройка «Robots» магазина по умолчанию берёт общую настройку Joomla. Прежнее значение по умолчанию
+                 * `index, follow` у сайтов, где оно не менялось, сохранено в параметрах и перекрывало бы общую настройку, поэтому один раз
+                 * (признак `robots_inherit_migrated`) оно заменяется на «как в Joomla». Осознанно выбранные другие значения не трогаются.
+                 */
+                private function inheritGlobalRobots(): void
+                {
+                    $where = [$this->db->quoteName('type') . ' = ' . $this->db->quote('component'), $this->db->quoteName('element') . ' = ' . $this->db->quote('com_dharmashop')];
+                    $params = json_decode((string) $this->db->setQuery($this->db->getQuery(true)->select($this->db->quoteName('params'))->from($this->db->quoteName('#__extensions'))->where($where))->loadResult(), true);
+                    $params = is_array($params) ? $params : [];
+
+                    if (!empty($params['robots_inherit_migrated'])) {
+                        return;
+                    }
+
+                    if (in_array(trim((string) ($params['seo_robots'] ?? '')), ['', 'index, follow'], true)) {
+                        $params['seo_robots'] = '';
+                    }
+
+                    $params['robots_inherit_migrated'] = 1;
                     $this->db->setQuery($this->db->getQuery(true)->update($this->db->quoteName('#__extensions'))
                         ->set($this->db->quoteName('params') . ' = ' . $this->db->quote(json_encode($params, JSON_UNESCAPED_UNICODE)))->where($where))->execute();
                 }
