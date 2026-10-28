@@ -5,7 +5,7 @@
     <creationDate>2026-10</creationDate>
     <copyright>(C) 2026 Dharma</copyright>
     <license>GNU General Public License version 2 or later</license>
-    <version>0.1.16</version>
+    <version>0.1.17</version>
     <description>MOD_DHARMASHOP_PRODUCTS_XML_DESCRIPTION</description>
     <namespace path="src">Dharma\Module\DharmaShopProducts</namespace>
     <files>

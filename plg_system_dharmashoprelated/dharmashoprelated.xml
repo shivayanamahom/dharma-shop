@@ -3,7 +3,7 @@
     <name>PLG_SYSTEM_DHARMASHOPRELATED</name>
     <author>Dharma</author><creationDate>2026-10</creationDate>
     <copyright>(C) 2026 Dharma</copyright><license>GNU General Public License version 2 or later</license>
-    <version>0.1.16</version><description>PLG_SYSTEM_DHARMASHOPRELATED_DESCRIPTION</description>
+    <version>0.1.17</version><description>PLG_SYSTEM_DHARMASHOPRELATED_DESCRIPTION</description>
     <scriptfile>script.php</scriptfile>
     <namespace path="src">Dharma\Plugin\System\DharmaShopRelated</namespace>
     <files><folder plugin="dharmashoprelated">services</folder><folder>src</folder><folder>forms</folder><folder>tmpl</folder><folder>layouts</folder><folder>sql</folder><filename>script.php</filename></files>

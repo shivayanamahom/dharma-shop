@@ -5,7 +5,7 @@
 	<creationDate>October 2026</creationDate>
 	<copyright>(C) 2026 Dharma</copyright>
 	<license>GNU General Public License version 2 or later</license>
-	<version>0.1.16</version>
+	<version>0.1.17</version>
 	<description>PLG_RADICALSITEMAP_DHARMASHOP_DESCRIPTION</description>
 	<namespace path="src">Dharma\Plugin\RadicalSitemap\DharmaShop</namespace>
 	<languages folder="language">

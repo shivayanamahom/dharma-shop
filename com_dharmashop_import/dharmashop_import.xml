@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <extension type="component" version="6.0" method="upgrade">
- <name>COM_DHARMASHOP_IMPORT</name><creationDate>2026-10</creationDate><author>Dharma</author><copyright>(C) 2026 Dharma</copyright><license>GNU GPL v2 or later</license><version>0.1.16</version>
+ <name>COM_DHARMASHOP_IMPORT</name><creationDate>2026-10</creationDate><author>Dharma</author><copyright>(C) 2026 Dharma</copyright><license>GNU GPL v2 or later</license><version>0.1.17</version>
  <description>COM_DHARMASHOP_IMPORT_DESCRIPTION</description><namespace path="src">Dharma\Component\DharmaShopImport</namespace>
  <install><sql><file driver="mysql" charset="utf8">sql/install.mysql.utf8.sql</file></sql></install>
  <update><schemas><schemapath type="mysql">sql/updates/mysql</schemapath></schemas></update>
