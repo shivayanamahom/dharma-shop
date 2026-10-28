@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace Dharma\Component\DharmaShop\Site\View\Product;
 
 use Dharma\Component\DharmaShop\Administrator\Pricing\MoneyFormatter;
+use Dharma\Component\DharmaShop\Site\Analytics\Ecommerce;
 use Dharma\Component\DharmaShop\Site\Placeholder\GlobalValues;
 use Dharma\Component\DharmaShop\Site\Placeholder\ProductValues;
 use Dharma\Component\DharmaShop\Site\Placeholder\Renderer;
@@ -166,6 +167,13 @@ class HtmlView extends BaseHtmlView
             );
         }
         $seo->apply($this->seo, $this->getDocument(), $content);
+        // Электронная коммерция (C98): просмотр товара; при выключенной настройке — ни работы, ни запросов.
+        // Цена «по запросу» (ноль без признака «бесплатно») ценой не передаётся.
+        Ecommerce::emit('detail', $this->getDocument(), $this->params, [Ecommerce::product(
+            (int) $this->item->id, (string) $this->item->title,
+            $this->item->price_min !== null && $this->item->price_min !== '' && (float) $this->item->price_min >= 0
+                && !($money->replacesZero() && (float) $this->item->price_min === 0.0 && empty($this->item->price_free)) ? (float) $this->item->price_min : null, 0.0,
+            (string) ($this->item->category_title ?? ''), (string) ($this->item->brand_title ?? ''))]);
 
         $layout = trim((string) $this->item->params->get('product_layout', ''));
         if ($layout === '') {

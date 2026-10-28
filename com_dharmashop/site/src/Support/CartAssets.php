@@ -31,6 +31,8 @@ final class CartAssets
             'cartUrl' => Route::_('index.php?option=com_dharmashop&view=cart', false),
         ]);
 
+        \Dharma\Component\DharmaShop\Site\Analytics\Ecommerce::assets($document, ComponentHelper::getParams('com_dharmashop'));
+
         foreach (['COM_DHARMASHOP_CART_ADDED_SHORT', 'COM_DHARMASHOP_CART_ERROR_GENERIC', 'COM_DHARMASHOP_CART_GO'] as $key) {
             Text::script($key);
         }

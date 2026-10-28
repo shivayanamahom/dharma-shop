@@ -116,6 +116,7 @@ class HtmlView extends BaseHtmlView
             $document = $this->getDocument();
             $wa = $document->getWebAssetManager();
             $wa->getRegistry()->addExtensionRegistryFile('com_dharmashop');
+            \Dharma\Component\DharmaShop\Site\Analytics\Ecommerce::assets($document, ComponentHelper::getParams('com_dharmashop'));
             if (!$this->readOnly) {
                 $wa->useScript('com_dharmashop.cart-page');
             }

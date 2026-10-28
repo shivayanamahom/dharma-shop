@@ -158,11 +158,15 @@ class CartController extends BaseController
         }
 
         $session = new CartSession($this->app->bootComponent('com_dharmashop')->getServices()->cart(), $this->app);
+        // Электронная коммерция (C98): по разнице состава корзины до и после действия; выключена — без лишних запросов.
+        $track = \Dharma\Component\DharmaShop\Site\Analytics\Ecommerce::enabled($settings) && $ajax;
+        $before = $track ? \Dharma\Component\DharmaShop\Site\Analytics\Ecommerce::cartSnapshot($session->current()) : [];
         $result = $action($session);
-        $this->finish($ajax, $result, $cartUrl, $session);
+        $ecommerce = $track && !empty($result['ok']) ? \Dharma\Component\DharmaShop\Site\Analytics\Ecommerce::cartChanges($before, \Dharma\Component\DharmaShop\Site\Analytics\Ecommerce::cartSnapshot($session->current()), $settings) : null;
+        $this->finish($ajax, $result, $cartUrl, $session, $ecommerce);
     }
 
-    private function finish(bool $ajax, array $result, string $cartUrl, ?CartSession $session): void
+    private function finish(bool $ajax, array $result, string $cartUrl, ?CartSession $session, ?array $ecommerce = null): void
     {
         $ok = !empty($result['ok']);
         $message = Text::_($ok ? (string) ($result['message'] ?? 'COM_DHARMASHOP_CART_UPDATED') : (string) ($result['error'] ?? 'COM_DHARMASHOP_CART_ERROR_LINE'));
@@ -217,7 +221,7 @@ class CartController extends BaseController
                 'totalText' => (int) $summary['count'] > 0 ? $money->price((string) $summary['total']) : $money->format((string) $summary['total']),
                 'url' => $cartUrl,
                 'products' => (object) $products,
-            ],
+            ] + ($ecommerce !== null ? ['ecommerce' => $ecommerce] : []),
         ], JSON_UNESCAPED_UNICODE);
         $this->app->close();
     }

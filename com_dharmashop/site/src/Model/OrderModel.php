@@ -54,7 +54,7 @@ class OrderModel extends BaseDatabaseModel
         $order->payment = json_decode((string) $order->payment_data, true) ?: [];
         unset($order->payment_data);
         foreach ([
-            'items' => ['#__dharmashop_order_items', ['title', 'sku', 'unit', 'qty', 'price', 'total', 'params']],
+            'items' => ['#__dharmashop_order_items', ['product_id', 'title', 'sku', 'unit', 'qty', 'price', 'total', 'params']],
             'adjustments' => ['#__dharmashop_order_adjustments', ['type', 'title', 'amount']],
         ] as $key => [$table, $columns]) {
             $query = $db->createQuery()->select($db->quoteName($columns))->from($db->quoteName($table))

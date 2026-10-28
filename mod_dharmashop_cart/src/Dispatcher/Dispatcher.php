@@ -55,6 +55,7 @@ class Dispatcher extends AbstractModuleDispatcher
             $wa = $document->getWebAssetManager();
             $wa->getRegistry()->addExtensionRegistryFile('com_dharmashop');
             $wa->useScript('bootstrap.offcanvas')->useScript('com_dharmashop.mini-cart');
+            \Dharma\Component\DharmaShop\Site\Analytics\Ecommerce::assets($document, ComponentHelper::getParams('com_dharmashop'));
 
             // Оформление панели лежит в media модуля; его можно выключить и задать стили в шаблоне сайта.
             if ((int) $data['params']->get('panel_styles', 1) === 1) {

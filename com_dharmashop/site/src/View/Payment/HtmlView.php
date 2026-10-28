@@ -72,6 +72,7 @@ class HtmlView extends BaseHtmlView
         if ($document instanceof HtmlDocument) {
             $document->setTitle($title);
             $document->setMetaData('robots', 'noindex, nofollow');
+            \Dharma\Component\DharmaShop\Site\Analytics\Ecommerce::purchase($this->item, $document, ComponentHelper::getParams($this->option));
         }
 
         parent::display($tpl);

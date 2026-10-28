@@ -180,6 +180,18 @@
 			}
 		},
 		{
+			"name": "com_dharmashop.ecommerce",
+			"version": "e2f854ef85e5",
+			"dependencies": [
+				"core"
+			],
+			"type": "script",
+			"uri": "com_dharmashop/ecommerce.js",
+			"attributes": {
+				"defer": true
+			}
+		},
+		{
 			"name": "com_dharmashop.cart-toast",
 			"version": "4650f42713b9",
 			"type": "script",

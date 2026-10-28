@@ -53,6 +53,9 @@ class HtmlView extends BaseHtmlView
             $title = trim((string) $app->getParams()->get('page_title',''));
             $document->setTitle($title !== '' ? $title : Text::_('COM_DHARMASHOP_CHECKOUT_COMPLETE_TITLE'));
             $document->setMetaData('robots','noindex, nofollow');
+            if ($this->order !== null) {
+                \Dharma\Component\DharmaShop\Site\Analytics\Ecommerce::purchase($this->order, $document, ComponentHelper::getParams($this->option));
+            }
         }
         parent::display($tpl);
     }

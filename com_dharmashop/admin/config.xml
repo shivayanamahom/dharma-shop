@@ -23,6 +23,13 @@
 			<field name="shop_phone" type="text" label="COM_DHARMASHOP_SHOP_PHONE" filter="string" maxlength="100" />
 			<field name="shop_address" type="textarea" label="COM_DHARMASHOP_SHOP_ADDRESS" filter="string" rows="3" maxlength="1000" />
 		</fieldset>
+		<fieldset name="shop_analytics" label="COM_DHARMASHOP_SHOP_ANALYTICS" description="COM_DHARMASHOP_SHOP_ANALYTICS_DESC">
+			<field name="analytics_ecommerce" type="radio" layout="joomla.form.field.radio.switcher" default="0" filter="integer" label="COM_DHARMASHOP_ANALYTICS_ECOMMERCE" description="COM_DHARMASHOP_ANALYTICS_ECOMMERCE_DESC">
+				<option value="0">JNO</option>
+				<option value="1">JYES</option>
+			</field>
+			<field name="analytics_container" type="text" default="dataLayer" filter="string" maxlength="64" pattern="[A-Za-z_$][A-Za-z0-9_$]*" showon="analytics_ecommerce:1" label="COM_DHARMASHOP_ANALYTICS_CONTAINER" description="COM_DHARMASHOP_ANALYTICS_CONTAINER_DESC" />
+		</fieldset>
 	</fieldset>
 
 	<fieldset name="catalog" label="COM_DHARMASHOP_CONFIG_CATALOG" description="COM_DHARMASHOP_CONFIG_CATALOG_DESC">
