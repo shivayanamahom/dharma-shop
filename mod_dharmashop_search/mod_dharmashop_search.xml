@@ -5,7 +5,7 @@
 	<creationDate>2026-10</creationDate>
 	<copyright>(C) 2026 Dharma</copyright>
 	<license>GNU General Public License version 2 or later</license>
-	<version>0.1.17</version>
+	<version>0.1.18</version>
 	<description>MOD_DHARMASHOP_SEARCH_XML_DESCRIPTION</description>
 	<namespace path="src">Dharma\Module\DharmaShopSearch</namespace>
 	<files>
