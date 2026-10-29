@@ -2,13 +2,19 @@ name: Выпуск версии
 
 # Релиз выпускается пушем тега vX.Y.Z (версия в теге должна совпадать с <version> в pkg_dharmashop.xml):
 #   git tag v0.1.18 && git push origin v0.1.18
-# Ручной запуск (workflow_dispatch) — сухой прогон: собирает пакет, ленту и текст релиза, ничего не публикует
-# (результат — артефакт «dry-run» у запуска).
+# Ручной запуск (workflow_dispatch) и pull request, меняющий выпуск, — сухой прогон: собирает пакет, ленту и текст релиза,
+# ничего не публикует (результат — артефакт «dry-run» у запуска).
 
 on:
   push:
     tags: ['v*']
   workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/release.yml'
+      - 'dev/release.py'
+      - 'dev/release-notes.py'
+      - 'build.sh'
 
 permissions:
   contents: write
