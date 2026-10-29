@@ -4,6 +4,14 @@
 
 # 🛒 Dharma Shop
 
+<!-- ai-notice -->
+> [!NOTE]
+> **О проекте.** Этот проект написан при помощи ИИ для моего собственного использования и опубликован «как есть» (*as is*). Он может содержать ошибки и подходить не для всех сайтов и версий Joomla. Гарантий, поддержки и сроков исправления я не обещаю. Перед использованием изучите код и проверьте его на тестовой копии сайта, всё на ваш риск. Идеи и замечания приветствуются (Issues, Pull Request), но отвечу и приму их не обязательно.
+>
+> *AI-assisted and built for my own use. Provided **as is**, without warranty or support. Review the code and test on a staging copy first; use at your own risk. Issues and PRs are welcome, but no response is guaranteed.*
+
+<!-- /ai-notice -->
+
 <div align="center">
 
 [![Package Version](https://img.shields.io/badge/version-0.1.17-brightgreen.svg?style=flat-square)](CHANGELOG.md)
