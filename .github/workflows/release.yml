@@ -1,0 +1,109 @@
+name: Выпуск версии
+
+# Релиз выпускается пушем тега vX.Y.Z (версия в теге должна совпадать с <version> в pkg_dharmashop.xml):
+#   git tag v0.1.18 && git push origin v0.1.18
+# Ручной запуск (workflow_dispatch) и pull request, меняющий выпуск, — сухой прогон: собирает пакет, ленту и текст релиза,
+# ничего не публикует (результат — артефакт «dry-run» у запуска).
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - '.github/workflows/release.yml'
+      - 'dev/release.py'
+      - 'dev/release-notes.py'
+      - 'build.sh'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: dharma-shop-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Исходники (тег или выбранная ветка)
+        uses: actions/checkout@v4
+        with:
+          path: src
+          fetch-depth: 0
+
+      - name: Ветка main (сюда пишется лента обновлений)
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: main
+
+      - name: Проверка версии
+        id: ver
+        working-directory: src
+        run: |
+          set -euo pipefail
+          version="$(sed -n 's:.*<version>\(.*\)</version>.*:\1:p' pkg_dharmashop.xml | head -n1)"
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][0-9A-Za-z.-]+)?$ ]] || { echo "Неверная версия пакета: $version" >&2; exit 1; }
+          if [[ "$GITHUB_REF_TYPE" == "tag" && "$GITHUB_REF_NAME" != "v$version" ]]; then
+            echo "Тег $GITHUB_REF_NAME не совпадает с версией пакета $version" >&2
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Сборка пакета и ленты
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          set -euo pipefail
+          python3 src/dev/release.py feed "$VERSION" --out main \
+            --download-base "https://github.com/$GITHUB_REPOSITORY/releases/download" --channel stable --tag "v$VERSION"
+          cd "main/assets/v$VERSION"
+          test -f "pkg_dharmashop-$VERSION.zip"
+          cp "pkg_dharmashop-$VERSION.zip" pkg_dharmashop.zip
+          sha256sum "pkg_dharmashop-$VERSION.zip" > "pkg_dharmashop-$VERSION.zip.sha256"
+          ls -la
+
+      - name: Текст релиза
+        working-directory: src
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: python3 dev/release-notes.py "$VERSION" --repo "$GITHUB_REPOSITORY" > "$RUNNER_TEMP/notes.md"
+
+      - name: Публикация релиза
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          set -euo pipefail
+          dir="main/assets/v$VERSION"
+          gh release create "v$VERSION" \
+            "$dir/pkg_dharmashop-$VERSION.zip" "$dir/pkg_dharmashop-$VERSION.zip.sha256" "$dir/pkg_dharmashop.zip" \
+            --title "Dharma Shop $VERSION" --notes-file "$RUNNER_TEMP/notes.md" --verify-tag
+
+      - name: Лента обновлений в main
+        if: github.ref_type == 'tag'
+        working-directory: main
+        env:
+          VERSION: ${{ steps.ver.outputs.version }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add updates
+          if ! git diff --cached --quiet; then
+            git commit -m "Ленты $VERSION"
+            git push origin HEAD:main
+          fi
+
+      - name: Результат сухого прогона
+        if: github.ref_type != 'tag'
+        uses: actions/upload-artifact@v4
+        with:
+          name: dry-run
+          path: |
+            main/assets
+            main/updates
+          retention-days: 7

@@ -3,3 +3,4 @@ dist/
 dev/.env
 dev-test-site.txt
 *.zip
+/assets/

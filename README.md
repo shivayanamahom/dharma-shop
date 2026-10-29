@@ -36,7 +36,7 @@
 > Перед началом любых работ обязательно ознакомьтесь с [AGENTS.md](AGENTS.md) и [docs/ROADMAP.md](docs/ROADMAP.md). В репозитории действуют строгие архитектурные правила: нативный UI Joomla без кастомных административных стилей, индексируемые столбцы БД без JSON-поиска, обязательные контексты изображений и регламент параллельной разработки.
 
 > [!NOTE]
-> Исходный репозиторий `dharma-shop` является закрытым. Публичные релизы, архивы установочных пакетов и XML-ленты автоматических обновлений публикуются в репозитории [shivayanamahom/dharma-shop-updates](https://github.com/shivayanamahom/dharma-shop-updates).
+> Установочные пакеты публикуются в разделе [Releases](https://github.com/shivayanamahom/dharma-shop/releases) этого репозитория, XML-ленты автоматических обновлений лежат в каталоге [`updates/`](updates).
 
 ---
 
@@ -173,15 +173,15 @@ Dharma Shop спроектирован с упором на предельную
 ### Вариант 1: Прямая установка по URL в Joomla (Рекомендуется)
 
 1. Откройте панель управления Joomla: **Система** → **Установка** → **Расширения** → вкладка **«Установить по URL-адресу»**.
-2. Вставьте прямую ссылку на актуальный архив пакета:
+2. Вставьте прямую ссылку на последний выпуск (она всегда ведёт на актуальный архив пакета):
    ```text
-   https://github.com/shivayanamahom/dharma-shop-updates/releases/download/v0.1.17/pkg_dharmashop-0.1.17.zip
+   https://github.com/shivayanamahom/dharma-shop/releases/latest/download/pkg_dharmashop.zip
    ```
 3. Нажмите кнопку **«Проверить и установить»**.
 
 ### Вариант 2: Загрузка архива
 
-1. Скачайте zip-архив пакета `pkg_dharmashop-<версия>.zip` со страницы [Releases](https://github.com/shivayanamahom/dharma-shop-updates/releases).
+1. Скачайте zip-архив пакета `pkg_dharmashop-<версия>.zip` со страницы [Releases](https://github.com/shivayanamahom/dharma-shop/releases).
 2. В админке Joomla перейдите в **«Система → Установка → Расширения»** → вкладка **«Загрузить файл пакета»**.
 3. Перетащите скачанный zip-архив в окно загрузки.
 
@@ -203,7 +203,7 @@ Joomla автоматически скачивает проверенный ар
 Коллекция обновлений прописана в манифесте `pkg_dharmashop.xml`:
 ```xml
 <updateservers>
-    <server type="collection" priority="1" name="Dharma Shop">https://shivayanamahom.github.io/dharma-shop-updates/updates/dharma-shop.xml</server>
+    <server type="collection" priority="1" name="Dharma Shop">https://raw.githubusercontent.com/shivayanamahom/dharma-shop/main/updates/dharma-shop.xml</server>
 </updateservers>
 ```
 
