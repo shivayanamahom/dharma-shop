@@ -5,7 +5,10 @@
   python3 dev/release.py bump ВЕРСИЯ [--since ТЕГ]                   версия ВЕРСИЯ у пакета и у всех расширений; <updateservers> только в манифесте пакета
   python3 dev/release.py feed ВЕРСИЯ --out ПАПКА --download-base URL [--channel dev|alpha|beta|rc|stable] [--tag ТЕГ]
                                                                     собирает пакет, пишет ленту ПАПКА/updates/pkg_dharmashop.xml, коллекцию dharma-shop.xml
-                                                                    и архив пакета ПАПКА/assets/<тег>/
+                                                                    и архив пакета ПАПКА/assets/<тег>/ (обычно ПАПКА — рабочая копия ветки main:
+                                                                    ленты лежат в updates/ этого репозитория и отдаются с raw.githubusercontent.com)
+
+Выпуск делает .github/workflows/release.yml по тегу vВЕРСИЯ; вручную `feed` нужен только для проверки.
 
 Правило версий: обновляется только пакет, поэтому все расширения получают версию выпуска (в списке расширений Joomla один номер).
 Лента одна — у пакета; коллекция dharma-shop.xml (адрес, зарегистрированный у уже установленных сайтов) содержит одну запись — пакет.
@@ -25,8 +28,8 @@ import xml.etree.ElementTree as ET
 from xml.sax.saxutils import escape
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-FEED_BASE = "https://shivayanamahom.github.io/dharma-shop-updates/updates/"
-SITE = "https://github.com/shivayanamahom/dharma-shop-updates"
+FEED_BASE = "https://raw.githubusercontent.com/shivayanamahom/dharma-shop/main/updates/"
+SITE = "https://github.com/shivayanamahom/dharma-shop"
 KEEP_VERSIONS = 5
 
 

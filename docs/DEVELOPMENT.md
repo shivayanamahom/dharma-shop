@@ -126,7 +126,7 @@ rm -rf "$tmp_dir"
 
 Обновляется только пакет: `<updateservers>` есть **только** в `pkg_dharmashop.xml` и ведёт на коллекцию `updates/dharma-shop.xml` (её генерирует `dev/release.py feed`; адрес сохранён, потому что он зарегистрирован у уже установленных сайтов). В коллекции одна запись — пакет, со ссылкой на ленту `updates/pkg_dharmashop.xml`. У остальных расширений источника обновлений нет.
 
-Версия у всех расширений и пакета одна — **версия выпуска** (`bump` ставит её везде). Ленты обновлений Joomla и архив пакета раздаются из публичного репозитория `shivayanamahom/dharma-shop-updates` (GitHub Pages для `updates/*.xml`, Releases для zip пакета). Исходный репозиторий может оставаться закрытым.
+Версия у всех расширений и пакета одна — **версия выпуска** (`bump` ставит её везде). Ленты обновлений Joomla лежат в каталоге `updates/` этого репозитория (отдаются с `raw.githubusercontent.com`), архив пакета — в Releases этого же репозитория. Репозиторий `dharma-shop-updates` больше не используется.
 
 ```bash
 ./build.sh                                   # dist/pkg_dharmashop-<версия>.zip
@@ -190,7 +190,7 @@ rm -rf "$tmp_dir"
 
 Все манифесты указывают на один источник — коллекцию `updates/dharma-shop.xml` (её генерирует `dev/release.py feed`); подробные ленты `updates/<расширение>.xml` лежат рядом и нужны только при установке.
 
-Версия расширения — версия **выпуска, в котором оно менялось в последний раз**; у пакета версия выпуска всегда. Ленты обновлений Joomla и архивы раздаются из публичного репозитория `shivayanamahom/dharma-shop-updates` (GitHub Pages для `updates/*.xml`, Releases для zip). Исходный репозиторий может оставаться закрытым.
+Версия расширения — версия **выпуска, в котором оно менялось в последний раз**; у пакета версия выпуска всегда. Ленты обновлений Joomla лежат в `updates/` этого репозитория, архивы — в его Releases.
 
 ```bash
 # 1. что изменилось с прошлого выпуска (справочно; тег основного репозитория)
@@ -198,11 +198,13 @@ python3 dev/release.py status --since v0.1.1
 # 2. версия пакета и всех расширений := новая версия (<updateservers> остаётся только у пакета)
 python3 dev/release.py bump 0.1.2 --since v0.1.1
 # 3. миграции БД: любое изменение схемы — файл com_…/admin/sql/updates/mysql/<версия>.sql (идемпотентный) и <update><schemas> в манифесте компонента
-# 4. коммит, затем сборка ленты и архива пакета в рабочую копию репозитория обновлений
-python3 dev/release.py feed 0.1.2 --out ../dharma-shop-updates --download-base https://github.com/shivayanamahom/dharma-shop-updates/releases/download --channel dev
-# 5. публикация: коммит и push ленты, затем релиз с архивом пакета
-cd ../dharma-shop-updates && git add updates && git commit -m "Ленты 0.1.2" && git push
-gh release create v0.1.2 --prerelease --title "Dharma Shop 0.1.2" assets/v0.1.2/*
+# 4. коммит и push в main
+# 5. выпуск: тег vВЕРСИЯ (версия в теге обязана совпасть с <version> в pkg_dharmashop.xml); дальше всё делает
+#    .github/workflows/release.yml: собирает пакет, создаёт релиз (pkg_dharmashop-<версия>.zip, .sha256 и pkg_dharmashop.zip
+#    для постоянной ссылки releases/latest/download/pkg_dharmashop.zip), пишет текст релиза (dev/release-notes.py: блоки
+#    «Новая установка» и «Обновление», список изменившихся расширений, раздел из CHANGELOG.md) и коммитит ленты в updates/
+git tag v0.1.2 && git push origin v0.1.2
+# сухой прогон без публикации: Actions → «Выпуск версии» → Run workflow (результат — артефакт dry-run)
 ```
 
 Проверка перед публикацией (стенд `dharmashoptest`): поставить прошлый пакет, выложить новые ленты на локальный сервер (`php -S 127.0.0.1:8099 -t <папка>` и сменить `location` в `#__update_sites`), убедиться, что Joomla находит только изменившиеся расширения, обновляется нужный плагин и пакет, а испорченная контрольная сумма блокирует установку.
