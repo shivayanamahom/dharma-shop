@@ -10,6 +10,7 @@
 
 use Dharma\Component\DharmaShop\Administrator\Image\ImageUrl;
 use Joomla\CMS\Language\Text;
+use Joomla\CMS\Layout\FileLayout;
 
 $lines = (array) $displayData['lines'];
 $money = $displayData['money'];
@@ -28,6 +29,9 @@ $qtyText = static fn (float $qty): string => rtrim(rtrim(number_format($qty, 3, 
         <div class="card-body d-flex gap-3">
             <?php if ($line->image !== '') : ?>
                 <a class="flex-shrink-0 align-self-start" href="<?php echo $escape($line->url); ?>" tabindex="-1" aria-hidden="true"><img class="rounded border object-fit-contain bg-white" src="<?php echo $escape(ImageUrl::resolve($line->image, 'cart.page')); ?>" width="96" height="96" alt="" loading="lazy" decoding="async"></a>
+            <?php else : ?>
+                <?php // Нет фото — заглушка, как в карточках каталога. ?>
+                <span class="flex-shrink-0 align-self-start" aria-hidden="true"><?php echo (new FileLayout('components.dharmashop.media.placeholder', null, ['component' => 'none', 'client' => 0]))->render(['size' => 96]); ?></span>
             <?php endif; ?>
             <div class="flex-grow-1 min-w-0 pe-5">
                 <?php if ((string) $line->category_title !== '') : ?><div class="small text-body-secondary"><?php echo $escape($line->category_title); ?></div><?php endif; ?>

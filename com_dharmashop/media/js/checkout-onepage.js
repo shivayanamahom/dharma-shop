@@ -87,6 +87,41 @@
       .finally(() => busy(false));
   };
 
+  // Липкий итог: карточка с итогом и кнопкой стоит под деталями панели, а при прокрутке залипает сверху под шапкой сайта. Отступ равен
+  // нижней границе липкой шапки (числовое значение задаёт скрипт, как у липкого фильтра); без него карточка ушла бы под шапку.
+  const desktop = window.matchMedia('(min-width: 992px)');
+  let fitTimer = 0;
+
+  const headerBottom = (card) => {
+    let bottom = 0;
+    [0.25, 0.5, 0.75].forEach((share) => {
+      document.elementsFromPoint(Math.round(window.innerWidth * share), 1).forEach((node) => {
+        if (card.contains(node) || node.contains(card) || node === document.documentElement || node === document.body) return;
+        const position = window.getComputedStyle(node).position;
+        if (position === 'fixed' || position === 'sticky') bottom = Math.max(bottom, node.getBoundingClientRect().bottom);
+      });
+    });
+
+    return Math.max(0, Math.min(300, Math.round(bottom)));
+  };
+
+  const fit = () => {
+    fitTimer = 0;
+    const card = aside.querySelector('.dharmaCheckoutTotal');
+    if (card) card.style.top = desktop.matches ? headerBottom(card) + 8 + 'px' : '';
+  };
+
+  // Таймер, а не requestAnimationFrame: в неактивной вкладке кадры не идут, а отступ нужен сразу.
+  const schedule = () => {
+    if (!fitTimer) fitTimer = window.setTimeout(fit, 16);
+  };
+
+  window.addEventListener('scroll', schedule, { passive: true });
+  window.addEventListener('resize', schedule);
+  desktop.addEventListener('change', schedule);
+  document.addEventListener('dharmashop:checkout-replaced', schedule);
+  schedule();
+
   document.addEventListener('dharmashop:cart-updated', () => {
     window.clearTimeout(timer);
     timer = window.setTimeout(refresh, DELAY);

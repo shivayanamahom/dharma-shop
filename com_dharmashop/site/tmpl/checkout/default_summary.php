@@ -9,7 +9,7 @@ $discount = $this->discountTotals();
 $formAttr = $this->onepage ? ' form="dharma-checkout-form"' : '';
 $qtyText = static fn (float $qty): string => rtrim(rtrim(number_format($qty, 3, '.', ''), '0'), '.');
 ?>
-<aside class="card shadow-sm dharmaCheckoutSummary<?php echo $this->onepage ? ' sticky-lg-top' : ''; ?>" aria-labelledby="dharma-checkout-summary-title">
+<aside class="card shadow-sm dharmaCheckoutSummary" aria-labelledby="dharma-checkout-summary-title">
     <div class="card-header bg-body-tertiary p-3">
         <h2 id="dharma-checkout-summary-title" class="fs-6 fw-semibold mb-0"><?php echo Text::_('COM_DHARMASHOP_CHECKOUT_SUMMARY'); ?></h2>
     </div>
@@ -101,6 +101,8 @@ $qtyText = static fn (float $qty): string => rtrim(rtrim(number_format($qty, 3, 
             <?php endif; ?>
         <?php endif; ?>
     </div>
+    <?php // В оформлении «в один шаг» итог и кнопка — отдельная карточка под деталями: детали едут вместе со страницей, а итог при прокрутке залипает сверху под шапкой сайта (отступ задаёт checkout-onepage.js). ?>
+    <?php if ($this->onepage) : ?></aside><div class="card shadow-sm sticky-top mt-3 dharmaCheckoutTotal"><?php endif; ?>
     <div class="card-footer bg-body p-3">
         <?php if ($this->lines) : ?>
             <div class="d-flex flex-wrap justify-content-between align-items-baseline gap-2 mb-3">
@@ -115,4 +117,4 @@ $qtyText = static fn (float $qty): string => rtrim(rtrim(number_format($qty, 3, 
             <a class="btn btn-sm btn-outline-secondary w-100" href="<?php echo $this->escape($this->cartUrl); ?>"><?php echo Text::_('COM_DHARMASHOP_CHECKOUT_BACK_TO_CART'); ?></a>
         <?php endif; ?>
     </div>
-</aside>
+<?php echo $this->onepage ? '</div>' : '</aside>'; ?>

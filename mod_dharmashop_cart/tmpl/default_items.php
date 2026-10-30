@@ -40,6 +40,9 @@ $qtyText = static fn (float $qty): string => rtrim(rtrim(number_format($qty, 3, 
             <li class="dharmaMiniCartLine<?php echo $line->error !== '' ? ' dharmaMiniCartLineError' : ''; ?>" data-line="<?php echo (int) $line->id; ?>">
                 <?php if ($showImage) : ?>
                     <a class="dharmaMiniCartImage" href="<?php echo $this->escape($line->url); ?>" tabindex="-1" aria-hidden="true"><img src="<?php echo $this->escape(ImageUrl::resolve($line->image, 'cart.module')); ?>" width="72" height="72" alt="" loading="lazy" decoding="async"></a>
+                <?php elseif ($this->mini['image']) : ?>
+                    <?php // Нет фото — заглушка, как в карточках каталога. ?>
+                    <span class="dharmaMiniCartImage" aria-hidden="true"><?php echo (new \Joomla\CMS\Layout\FileLayout('components.dharmashop.media.placeholder', null, ['component' => 'none', 'client' => 0]))->render(['size' => 72]); ?></span>
                 <?php endif; ?>
                 <div class="dharmaMiniCartInfo">
                     <?php if ($this->mini['category'] && (string) $line->category_title !== '') : ?>

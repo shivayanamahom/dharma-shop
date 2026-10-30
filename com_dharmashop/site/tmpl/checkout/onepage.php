@@ -17,12 +17,14 @@ use Joomla\CMS\Language\Text;
         <?php if ($this->receipt) : ?>
             <?php echo $this->loadTemplate('success'); ?>
         <?php else : ?>
-            <div class="row g-4 align-items-start" data-dharmashop-checkout-scope>
+            <?php // Колонки одной высоты (без align-items-start): липкой панели справа есть куда «ехать» вдоль корзины и формы. ?>
+            <div class="row g-4" data-dharmashop-checkout-scope>
                 <div class="col-lg-8 d-flex flex-column gap-4 dharmaCheckoutMain">
                     <div data-dharmashop-cart-messages aria-live="polite"></div>
                     <div data-dharmashop-cart-page><?php echo $this->loadTemplate('cart'); ?></div>
                     <div data-dharmashop-onepage-form><?php echo $this->loadTemplate('main'); ?></div>
                 </div>
+                <?php // Колонка итогов: детали едут со страницей, карточка итога и кнопки идёт под ними и при прокрутке залипает сверху под шапкой сайта. ?>
                 <div class="col-lg-4" data-dharmashop-onepage-aside><?php echo $this->loadTemplate('aside'); ?></div>
             </div>
         <?php endif; ?>
