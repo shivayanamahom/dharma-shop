@@ -326,6 +326,22 @@ trait ListingTrait
         }
     }
 
+    /**
+     * Ссылка на категорию товара в его карточке. На страницах категорий — маршрут раздела (с пунктом меню), на страницах бренда,
+     * бейджа и поиска — обычная категория каталога: `categoryRoute()` берёт вид текущего раздела, и номер категории товара
+     * превращался в номер бренда или бейджа (адрес «/badge» без номера и предупреждение в правиле NomenuRules).
+     */
+    private function cardCategoryRoute(int $id): string
+    {
+        static $routes = [];
+
+        if ($this->taxonomy()->pageView === 'category') {
+            return $this->categoryRoute($id);
+        }
+
+        return $routes[$id] ??= Route::_('index.php?option=com_dharmashop&view=category&id=' . $id, false);
+    }
+
     public function categoryRoute(int $id): string
     {
         if ($this->menuId && (int) $this->item->id === $id) {
@@ -461,7 +477,7 @@ trait ListingTrait
             'saleBadgeId' => (int) $settings->get('sale_badge_id', 0),
             'badges' => array_map(fn (object $badge): object => (object) ((array) $badge + ['url' => $this->badgeRoute($badge->id)]), $item->badges),
             'categoryTitle' => (string) ($item->category_title ?? ''),
-            'categoryUrl' => $this->categoryRoute((int) $item->catid),
+            'categoryUrl' => $this->cardCategoryRoute((int) $item->catid),
             'images' => $this->cardImages($item),
             'sliderType' => $this->sliderType(),
             'catalogMode' => $this->catalogMode,

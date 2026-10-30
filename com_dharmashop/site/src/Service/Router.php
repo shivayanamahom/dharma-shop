@@ -186,7 +186,9 @@ class Router extends RouterView
 
     public function getBadgeSegment($id, $query): array
     {
-        return $this->chain((int) $id, null, self::BADGE);
+        // Вид не вложенный: правило Joomla берёт один элемент, поэтому пустой список (закрытый или чужой номер) недопустим.
+        // Номер вместо алиаса при разборе даёт 404, как у закрытого товара.
+        return $this->chain((int) $id, null, self::BADGE) ?: [(int) $id => (string) (int) $id];
     }
 
     public function getBadgeId($segment, $query): int|false
