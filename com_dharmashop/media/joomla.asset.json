@@ -123,7 +123,7 @@
 		},
 		{
 			"name": "com_dharmashop.checkout",
-			"version": "4244f8044b7d",
+			"version": "ca314af0a952",
 			"type": "script",
 			"uri": "com_dharmashop/checkout.js",
 			"attributes": {
@@ -136,7 +136,7 @@
 		},
 		{
 			"name": "com_dharmashop.checkout-onepage",
-			"version": "ac64e18096c7",
+			"version": "3602fbb93381",
 			"type": "script",
 			"uri": "com_dharmashop/checkout-onepage.js",
 			"attributes": {

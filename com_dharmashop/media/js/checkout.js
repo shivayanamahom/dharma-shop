@@ -12,9 +12,11 @@
     };
 
     const bind = (form) => {
+        // Боковая панель в оформлении «в один шаг» стоит вне формы (рядом с составом корзины): ищем в общем контейнере.
+        const scope = form.closest('[data-dharmashop-checkout-scope]') || form;
         const processing = document.querySelector('[data-checkout-processing]');
         const slowNotice = processing?.querySelector('[data-checkout-processing-slow]');
-        const buttons = Array.from(form.querySelectorAll('[data-checkout-submit]'), (button) => ({
+        const buttons = Array.from(scope.querySelectorAll('[data-checkout-submit]'), (button) => ({
             button, contents: button.innerHTML, disabled: button.disabled,
         }));
         let sending = false;
@@ -65,10 +67,10 @@
 
         // Доставка: выбранный вариант обновляет строку «Доставка», итог и сведения в боковой панели (тексты готовит сервер).
         // Поля покупателя внутри варианта (data-summary-label) дублируются в боковой панели; значения выводятся как текст.
-        const shippingRadios = form.querySelectorAll('[data-shipping-radio]');
-        const inputRows = form.querySelector('[data-checkout-shipping-input]');
+        const shippingRadios = scope.querySelectorAll('[data-shipping-radio]');
+        const inputRows = scope.querySelector('[data-checkout-shipping-input]');
         // Панель способа (макет плагина типа) лежит отдельно от плитки с радиокнопкой и связана с ней номером способа.
-        const optionOf = (radio) => form.querySelector('[data-shipping-option][data-method-id="' + radio.value + '"]');
+        const optionOf = (radio) => scope.querySelector('[data-shipping-option][data-method-id="' + radio.value + '"]');
         const syncShipping = () => {
             const chosen = Array.from(shippingRadios).find((radio) => radio.checked);
             shippingRadios.forEach((radio) => {
@@ -80,10 +82,10 @@
                     const forPoint = node.dataset.shippingPointDetail;
                     node.classList.toggle('d-none', !radio.checked || (forPoint !== undefined && forPoint !== point));
                 });
-                form.querySelector('[data-shipping-details="' + radio.value + '"]')?.classList.toggle('d-none', !radio.checked);
+                scope.querySelector('[data-shipping-details="' + radio.value + '"]')?.classList.toggle('d-none', !radio.checked);
             });
             // Карточки пунктов (data-shipping-point-card): рамка выбранной выделяется.
-            form.querySelectorAll('[data-shipping-point]').forEach((radio) => {
+            scope.querySelectorAll('[data-shipping-point]').forEach((radio) => {
                 const card = radio.closest('[data-shipping-point-card]');
                 card?.classList.toggle('border-primary', radio.checked);
                 card?.classList.toggle('shadow-sm', radio.checked);
@@ -101,8 +103,8 @@
             });
             inputRows?.replaceChildren();
             if (!chosen) return;
-            form.querySelectorAll('[data-checkout-shipping-price]').forEach((node) => { node.textContent = chosen.dataset.priceText || ''; });
-            form.querySelectorAll('[data-checkout-total]').forEach((node) => { node.textContent = chosen.dataset.totalText || ''; });
+            scope.querySelectorAll('[data-checkout-shipping-price]').forEach((node) => { node.textContent = chosen.dataset.priceText || ''; });
+            scope.querySelectorAll('[data-checkout-total]').forEach((node) => { node.textContent = chosen.dataset.totalText || ''; });
             const addRow = (label, value) => {
                 if (!value || !inputRows) return;
                 const line = document.createElement('div');
@@ -137,11 +139,11 @@
 
         // Оплата: плитки-вкладки; доступность по выбранной доставке (карта id доставки → разрешённые способы оплаты, пусто — любые),
         // панель выбранного способа и его сведения в боковой панели. Отключённая радиокнопка в запрос не попадает: сервер всё равно проверяет выбор.
-        const paymentRadios = form.querySelectorAll('[data-payment-radio]');
+        const paymentRadios = scope.querySelectorAll('[data-payment-radio]');
         let paymentMap = {};
-        try { paymentMap = JSON.parse(form.querySelector('[data-payment-map]')?.dataset.paymentMap || '{}') || {}; } catch (error) { paymentMap = {}; }
-        const paymentInputRows = form.querySelector('[data-checkout-payment-input]');
-        const paymentOptionOf = (radio) => form.querySelector('[data-payment-option][data-method-id="' + radio.value + '"]');
+        try { paymentMap = JSON.parse(scope.querySelector('[data-payment-map]')?.dataset.paymentMap || '{}') || {}; } catch (error) { paymentMap = {}; }
+        const paymentInputRows = scope.querySelector('[data-checkout-payment-input]');
+        const paymentOptionOf = (radio) => scope.querySelector('[data-payment-option][data-method-id="' + radio.value + '"]');
         const syncPayment = () => {
             if (!paymentRadios.length) return;
             const shipping = Array.from(shippingRadios).find((radio) => radio.checked)?.value;
@@ -158,11 +160,11 @@
                 const first = Array.from(paymentRadios).find((radio) => !radio.disabled);
                 if (first) first.checked = true;
             }
-            form.querySelector('[data-payment-none]')?.classList.toggle('d-none', visible > 0);
+            scope.querySelector('[data-payment-none]')?.classList.toggle('d-none', visible > 0);
             const chosen = Array.from(paymentRadios).find((radio) => radio.checked && !radio.disabled);
             paymentRadios.forEach((radio) => {
                 paymentOptionOf(radio)?.classList.toggle('d-none', radio !== chosen);
-                form.querySelector('[data-payment-details="' + radio.value + '"]')?.classList.toggle('d-none', radio !== chosen);
+                scope.querySelector('[data-payment-details="' + radio.value + '"]')?.classList.toggle('d-none', radio !== chosen);
             });
             paymentInputRows?.replaceChildren();
             if (!chosen) return;
@@ -183,7 +185,7 @@
         form.addEventListener('input', (event) => { if (event.target.closest?.('[data-payment-option]')) syncPayment(); });
         syncPayment();
 
-        form.querySelectorAll('[data-dharmashop-phone-mask]').forEach((input) => {
+        scope.querySelectorAll('[data-dharmashop-phone-mask]').forEach((input) => {
             const mask = input.dataset.dharmashopPhoneMask;
             const capacity = (mask.match(/#/g) || []).length;
             if (!capacity) return;

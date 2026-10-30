@@ -1,6 +1,6 @@
 /**
  * Dharma Shop: оформление «в один шаг» (C100). Состав корзины вверху страницы меняет cart-page.js; после каждого изменения
- * (событие `dharmashop:cart-updated`) нижняя часть — форма заказа с боковой панелью — подгружается с сервера заново: цена и
+ * (событие `dharmashop:cart-updated`) форма заказа и общая боковая панель итогов подгружаются с сервера заново: цена и
  * доступность доставки и оплаты, итоги и прогресс скидки зависят от состава корзины. Введённые покупателем значения возвращаются
  * в новую форму по именам полей; затем шлётся событие `dharmashop:checkout-replaced` (detail.form — новая форма): на него заново
  * привязываются checkout.js и скрипты способов доставки. Сервер при отправке всё равно проверяет выбранные способы и суммы.
@@ -9,8 +9,10 @@
   'use strict';
 
   const options = (window.Joomla && Joomla.getOptions && Joomla.getOptions('com_dharmashop.onepage')) || {};
+  const scope = document.querySelector('[data-dharmashop-checkout-scope]');
   const holder = document.querySelector('[data-dharmashop-onepage-form]');
-  if (!holder || !options.formUrl) return;
+  const aside = document.querySelector('[data-dharmashop-onepage-aside]');
+  if (!scope || !holder || !aside || !options.formUrl) return;
 
   const DELAY = 350;
   let timer = null;
@@ -20,7 +22,7 @@
   const skipped = (name) => !name || /^(task|checkout_key|website|promotion_action)$/.test(name) || /^[a-f0-9]{32}$/.test(name);
 
   const snapshot = (root) => Array.from(root.querySelectorAll('input, select, textarea'))
-    .filter((field) => !skipped(field.name) && !['submit', 'button', 'file'].includes(field.type)
+    .filter((field) => !field.closest('[data-dharmashop-cart-page]') && !skipped(field.name) && !['submit', 'button', 'file'].includes(field.type)
       // Скрытые поля сервер выдаёт сам; возвращаем только принадлежащие способам доставки и оплаты (расчёт по адресу и т. п.).
       && (field.type !== 'hidden' || /^(shipping|payment)\[/.test(field.name)))
     .map((field) => ({
@@ -48,8 +50,10 @@
   };
 
   const busy = (state) => {
-    holder.setAttribute('aria-busy', state ? 'true' : 'false');
-    holder.classList.toggle('opacity-75', state);
+    [holder, aside].forEach((block) => {
+      block.setAttribute('aria-busy', state ? 'true' : 'false');
+      block.classList.toggle('opacity-75', state);
+    });
   };
 
   const refresh = () => {
@@ -68,9 +72,12 @@
         return response.text();
       })
       .then((html) => {
-        const saved = form ? snapshot(form) : [];
-        holder.innerHTML = html;
-        restore(holder, saved);
+        const parts = document.createElement('div');
+        parts.innerHTML = html;
+        const saved = snapshot(scope);
+        holder.innerHTML = parts.querySelector('[data-onepage-part="main"]')?.innerHTML || '';
+        aside.innerHTML = parts.querySelector('[data-onepage-part="aside"]')?.innerHTML || '';
+        restore(scope, saved);
         document.dispatchEvent(new CustomEvent('dharmashop:checkout-replaced', { detail: { form: holder.querySelector('[data-dharmashop-checkout-form]') } }));
       })
       .catch((error) => {

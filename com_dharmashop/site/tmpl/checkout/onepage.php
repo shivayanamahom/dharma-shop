@@ -1,8 +1,9 @@
 <?php
 /**
- * Оформление «в один шаг» (C100): вверху состав корзины (количество и удаление меняются без перезагрузки, `onepage_cart.php`),
- * ниже форма заказа с общей боковой панелью итогов (`onepage_content.php`). Нижняя часть подгружается заново после каждого
- * изменения корзины (checkout-onepage.js). Создание заказа то же, что на странице оформления «в два шага».
+ * Оформление «в один шаг» (C100): слева состав корзины (количество и удаление меняются без перезагрузки, `onepage_cart.php`) и форма
+ * заказа (`onepage_main.php`), справа общая боковая панель итогов (`onepage_aside.php`) рядом с обоими блоками. Форма и панель
+ * подгружаются заново после каждого изменения корзины (checkout-onepage.js); поля и кнопки панели привязаны к форме атрибутом
+ * `form`. Создание заказа то же, что на странице оформления «в два шага».
  */
 \defined('_JEXEC') or die;
 
@@ -16,9 +17,14 @@ use Joomla\CMS\Language\Text;
         <?php if ($this->receipt) : ?>
             <?php echo $this->loadTemplate('success'); ?>
         <?php else : ?>
-            <div data-dharmashop-cart-messages aria-live="polite"></div>
-            <div class="mb-4" data-dharmashop-cart-page><?php echo $this->loadTemplate('cart'); ?></div>
-            <div data-dharmashop-onepage-form><?php echo $this->loadTemplate('content'); ?></div>
+            <div class="row g-4 align-items-start" data-dharmashop-checkout-scope>
+                <div class="col-lg-8 d-flex flex-column gap-4 dharmaCheckoutMain">
+                    <div data-dharmashop-cart-messages aria-live="polite"></div>
+                    <div data-dharmashop-cart-page><?php echo $this->loadTemplate('cart'); ?></div>
+                    <div data-dharmashop-onepage-form><?php echo $this->loadTemplate('main'); ?></div>
+                </div>
+                <div class="col-lg-4" data-dharmashop-onepage-aside><?php echo $this->loadTemplate('aside'); ?></div>
+            </div>
         <?php endif; ?>
     </section>
 </div>

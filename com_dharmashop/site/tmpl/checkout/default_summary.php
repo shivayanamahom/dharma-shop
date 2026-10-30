@@ -5,6 +5,8 @@
 use Joomla\CMS\Language\Text;
 
 $discount = $this->discountTotals();
+// В оформлении «в один шаг» панель стоит вне <form> (рядом с составом корзины и формой): поля и кнопки привязываются к ней атрибутом form.
+$formAttr = $this->onepage ? ' form="dharma-checkout-form"' : '';
 $qtyText = static fn (float $qty): string => rtrim(rtrim(number_format($qty, 3, '.', ''), '0'), '.');
 ?>
 <aside class="card shadow-sm dharmaCheckoutSummary<?php echo $this->onepage ? ' sticky-lg-top' : ''; ?>" aria-labelledby="dharma-checkout-summary-title">
@@ -22,14 +24,14 @@ $qtyText = static fn (float $qty): string => rtrim(rtrim(number_format($qty, 3, 
             <div class="border-top mt-3 pt-3 mb-3">
                 <label class="form-label" for="dharma-checkout-promotion-code"><?php echo Text::_('COM_DHARMASHOP_PROMOTION_CODE'); ?></label>
                 <div class="input-group">
-                    <input type="text" id="dharma-checkout-promotion-code" class="form-control" name="promotion_code" value="<?php echo $this->escape($this->totals['applied_code'] ?? ''); ?>" maxlength="64" autocomplete="off">
-                    <button type="submit" class="btn btn-outline-primary" name="promotion_action" value="apply" formnovalidate><?php echo Text::_('COM_DHARMASHOP_PROMOTION_APPLY'); ?></button>
+                    <input type="text" id="dharma-checkout-promotion-code" class="form-control" name="promotion_code"<?php echo $formAttr; ?> value="<?php echo $this->escape($this->totals['applied_code'] ?? ''); ?>" maxlength="64" autocomplete="off">
+                    <button type="submit" class="btn btn-outline-primary" name="promotion_action"<?php echo $formAttr; ?> value="apply" formnovalidate><?php echo Text::_('COM_DHARMASHOP_PROMOTION_APPLY'); ?></button>
                 </div>
                 <?php if (!empty($this->totals['promotion_error'])) : ?><div class="alert alert-warning small mt-2 mb-2" role="alert"><?php echo $this->escape(Text::_($this->totals['promotion_error'])); ?></div><?php endif; ?>
                 <?php if (!empty($this->totals['promotion_inactive']) && empty($this->totals['promotion_error'])) : ?><div class="form-text"><?php echo Text::_('COM_DHARMASHOP_PROMOTION_INACTIVE_NOTE'); ?></div><?php endif; ?>
                 <?php if (!empty($this->totals['promotion_pending_identity'])) : ?><div class="form-text"><?php echo Text::_('COM_DHARMASHOP_PROMOTION_IDENTITY_PENDING'); ?></div><?php endif; ?>
                 <?php if (!empty($this->totals['applied_description'])) : ?><div class="form-text"><?php echo $this->escape($this->totals['applied_description']); ?></div><?php endif; ?>
-                <?php if (!empty($this->totals['applied_code'])) : ?><button type="submit" class="btn btn-sm btn-link px-0" name="promotion_action" value="remove" formnovalidate><?php echo Text::_('COM_DHARMASHOP_PROMOTION_REMOVE'); ?></button><?php endif; ?>
+                <?php if (!empty($this->totals['applied_code'])) : ?><button type="submit" class="btn btn-sm btn-link px-0" name="promotion_action"<?php echo $formAttr; ?> value="remove" formnovalidate><?php echo Text::_('COM_DHARMASHOP_PROMOTION_REMOVE'); ?></button><?php endif; ?>
                 <div class="form-text"><?php echo Text::_('COM_DHARMASHOP_PROMOTION_CHECKOUT_HELP'); ?></div>
             </div>
             <?php endif; ?>
@@ -107,7 +109,7 @@ $qtyText = static fn (float $qty): string => rtrim(rtrim(number_format($qty, 3, 
             </div>
         <?php endif; ?>
         <?php if ($this->lines && !$this->shippingBlocked && !$this->paymentBlocked && !array_filter($this->lines, static fn (object $line): bool => $line->error !== '')) : ?>
-            <button type="submit" class="btn btn-primary bg-primary text-white w-100 mb-2" data-checkout-submit><?php echo Text::_('COM_DHARMASHOP_CHECKOUT_SUBMIT'); ?></button>
+            <button type="submit" class="btn btn-primary bg-primary text-white w-100 mb-2" data-checkout-submit<?php echo $formAttr; ?>><?php echo Text::_('COM_DHARMASHOP_CHECKOUT_SUBMIT'); ?></button>
         <?php endif; ?>
         <?php if (!$this->onepage) : ?>
             <a class="btn btn-sm btn-outline-secondary w-100" href="<?php echo $this->escape($this->cartUrl); ?>"><?php echo Text::_('COM_DHARMASHOP_CHECKOUT_BACK_TO_CART'); ?></a>
