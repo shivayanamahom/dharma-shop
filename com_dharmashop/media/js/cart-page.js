@@ -68,7 +68,15 @@
         return response.text();
       })
       .then((html) => {
-        page.innerHTML = html;
+        // Те же картинки переносятся из старых узлов в новые, чтобы фото позиций не мигали при каждом изменении.
+        const fresh = document.createElement('div');
+        fresh.innerHTML = html;
+        const pool = Array.from(page.querySelectorAll('img'));
+        fresh.querySelectorAll('img').forEach((img) => {
+          const index = pool.findIndex((old) => old.getAttribute('src') === img.getAttribute('src') && old.className === img.className);
+          if (index >= 0) img.replaceWith(pool.splice(index, 1)[0]);
+        });
+        page.replaceChildren(...fresh.childNodes);
         if (focusId) {
           const input = page.querySelector('[data-dharmashop-cartpage-qty="' + focusId + '"]');
           if (input) input.focus();

@@ -49,6 +49,17 @@
     });
   };
 
+  // Картинки (логотипы способов доставки, фото) переносятся из старых узлов в новую разметку с тем же адресом: иначе браузер
+  // создаёт их заново и они мигают при каждом изменении корзины.
+  const keepImages = (fresh, current) => {
+    const pool = Array.from(current.querySelectorAll('img'));
+    fresh.querySelectorAll('img').forEach((img) => {
+      const index = pool.findIndex((old) => old.getAttribute('src') === img.getAttribute('src') && old.className === img.className);
+      if (index < 0) return;
+      img.replaceWith(pool.splice(index, 1)[0]);
+    });
+  };
+
   const busy = (state) => {
     [holder, aside].forEach((block) => {
       block.setAttribute('aria-busy', state ? 'true' : 'false');
@@ -77,8 +88,12 @@
         const saved = snapshot(scope);
         // Липкая карточка итога: прежний отступ сразу переходит к новой, иначе она на кадр прыгает под шапку.
         const stickyTop = aside.querySelector('.dharmaCheckoutTotal')?.style.top || '';
-        holder.innerHTML = parts.querySelector('[data-onepage-part="main"]')?.innerHTML || '';
-        aside.innerHTML = parts.querySelector('[data-onepage-part="aside"]')?.innerHTML || '';
+        const main = parts.querySelector('[data-onepage-part="main"]');
+        const side = parts.querySelector('[data-onepage-part="aside"]');
+        if (main) keepImages(main, holder);
+        if (side) keepImages(side, aside);
+        holder.replaceChildren(...(main ? main.childNodes : []));
+        aside.replaceChildren(...(side ? side.childNodes : []));
         const card = aside.querySelector('.dharmaCheckoutTotal');
         if (card && stickyTop) card.style.top = stickyTop;
         restore(scope, saved);
