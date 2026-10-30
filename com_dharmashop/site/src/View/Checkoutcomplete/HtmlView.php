@@ -46,7 +46,7 @@ class HtmlView extends BaseHtmlView
                 if ($error->getCode() !== 404) throw $error;
             }
         }
-        $this->cartUrl = Route::_('index.php?option=com_dharmashop&view=cart',false);
+        $this->cartUrl = \Dharma\Component\DharmaShop\Site\Support\CheckoutMode::cartUrl();
         $this->catalogUrl = Route::_('index.php?option=com_dharmashop&view=categories', false);
         $document = $this->getDocument();
         if ($document instanceof HtmlDocument) {

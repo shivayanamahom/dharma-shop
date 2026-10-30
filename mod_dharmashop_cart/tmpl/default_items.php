@@ -15,7 +15,7 @@ use Dharma\Component\DharmaShop\Administrator\Image\ImageUrl;
 use Joomla\CMS\Language\Text;
 use Joomla\CMS\Router\Route;
 
-$cartUrl = Route::_('index.php?option=com_dharmashop&view=cart', false);
+$cartUrl = \Dharma\Component\DharmaShop\Site\Support\CheckoutMode::cartUrl();
 $checkoutUrl = Route::_('index.php?option=com_dharmashop&view=checkout', false);
 $qtyText = static fn (float $qty): string => rtrim(rtrim(number_format($qty, 3, '.', ''), '0'), '.');
 ?>

@@ -97,6 +97,13 @@ class HtmlView extends BaseHtmlView
             }
         }
 
+        // Оформление «в один шаг» (C100): страница корзины ведёт на оформление (фрагменты и мини-корзина — не HTML-страницы).
+        if (!$this->readOnly && $this->getDocument() instanceof HtmlDocument && \Dharma\Component\DharmaShop\Site\Support\CheckoutMode::oneStep()) {
+            $app->redirect(Route::_('index.php?option=com_dharmashop&view=checkout', false), 302);
+
+            return;
+        }
+
         if ($cart !== null) {
             $service = $session->service();
             $this->lines = $service->lines($cart);

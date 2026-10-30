@@ -28,7 +28,7 @@ final class CartAssets
             'url' => Route::_('index.php?option=com_dharmashop&task=cart.add&format=json', false),
             'updateUrl' => Route::_('index.php?option=com_dharmashop&task=cart.update&format=json', false),
             'removeUrl' => Route::_('index.php?option=com_dharmashop&task=cart.remove&format=json', false),
-            'cartUrl' => Route::_('index.php?option=com_dharmashop&view=cart', false),
+            'cartUrl' => CheckoutMode::cartUrl(),
         ]);
 
         \Dharma\Component\DharmaShop\Site\Analytics\Ecommerce::assets($document, ComponentHelper::getParams('com_dharmashop'));

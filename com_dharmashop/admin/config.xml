@@ -365,6 +365,12 @@
 	</fieldset>
 
 	<fieldset name="order" label="COM_DHARMASHOP_CONFIG_ORDER" description="COM_DHARMASHOP_CONFIG_CHECKOUT_DESC" addfieldprefix="Dharma\Component\DharmaShop\Administrator\Field">
+		<fieldset name="checkout_mode" label="COM_DHARMASHOP_CONFIG_CHECKOUT_MODE_GROUP" description="COM_DHARMASHOP_CONFIG_CHECKOUT_MODE_GROUP_DESC">
+			<field name="checkout_mode" type="list" label="COM_DHARMASHOP_CHECKOUT_MODE" description="COM_DHARMASHOP_CHECKOUT_MODE_DESC" default="two_steps" validate="options" filter="cmd">
+				<option value="two_steps">COM_DHARMASHOP_CHECKOUT_MODE_TWO</option>
+				<option value="one_step">COM_DHARMASHOP_CHECKOUT_MODE_ONE</option>
+			</field>
+		</fieldset>
 		<fieldset name="checkout_access" label="COM_DHARMASHOP_CONFIG_CHECKOUT_ACCESS">
 			<field name="checkout_rate_ip" type="number" label="COM_DHARMASHOP_CHECKOUT_RATE_IP" description="COM_DHARMASHOP_CHECKOUT_RATE_DESC" default="10" min="0" max="1000" filter="integer" />
 			<field name="checkout_rate_email" type="number" label="COM_DHARMASHOP_CHECKOUT_RATE_EMAIL" description="COM_DHARMASHOP_CHECKOUT_RATE_DESC" default="3" min="0" max="1000" filter="integer" />

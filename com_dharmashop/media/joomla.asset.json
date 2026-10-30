@@ -123,7 +123,7 @@
 		},
 		{
 			"name": "com_dharmashop.checkout",
-			"version": "315235613e9d",
+			"version": "4244f8044b7d",
 			"type": "script",
 			"uri": "com_dharmashop/checkout.js",
 			"attributes": {
@@ -132,6 +132,20 @@
 			"dependencies": [
 				"core",
 				"bootstrap.modal"
+			]
+		},
+		{
+			"name": "com_dharmashop.checkout-onepage",
+			"version": "ac64e18096c7",
+			"type": "script",
+			"uri": "com_dharmashop/checkout-onepage.js",
+			"attributes": {
+				"defer": true
+			},
+			"dependencies": [
+				"core",
+				"com_dharmashop.checkout",
+				"com_dharmashop.cart-page"
 			]
 		},
 		{
@@ -246,8 +260,12 @@
 			"type": "script",
 			"uri": "com_dharmashop/favorites.js",
 			"version": "20261012g",
-			"attributes": { "defer": true },
-			"dependencies": ["core"]
+			"attributes": {
+				"defer": true
+			},
+			"dependencies": [
+				"core"
+			]
 		},
 		{
 			"name": "com_dharmashop.mini-cart",
@@ -284,7 +302,9 @@
 			"attributes": {
 				"defer": true
 			},
-			"dependencies": ["core"]
+			"dependencies": [
+				"core"
+			]
 		},
 		{
 			"name": "com_dharmashop.uploader",

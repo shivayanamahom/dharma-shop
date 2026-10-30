@@ -143,7 +143,7 @@ class CartController extends BaseController
     {
         $settings = ComponentHelper::getParams('com_dharmashop');
         $ajax = $this->input->getCmd('format') === 'json' || strtolower((string) $this->input->server->getString('HTTP_X_REQUESTED_WITH', '')) === 'xmlhttprequest';
-        $cartUrl = Route::_('index.php?option=com_dharmashop&view=cart', false);
+        $cartUrl = \Dharma\Component\DharmaShop\Site\Support\CheckoutMode::cartUrl();
 
         if ((int) $settings->get('catalog_mode', 0) === 1) {
             $this->finish($ajax, ['ok' => false, 'error' => 'COM_DHARMASHOP_CART_ERROR_CATALOG'], $cartUrl, null);

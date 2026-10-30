@@ -57,6 +57,10 @@ class HtmlView extends BaseHtmlView
     /** @var array<string, mixed> данные плитки способа оплаты для default_payment_tile.php */
     public array $paymentTile = [];
 
+    /** Оформление «в один шаг» (C100): общая настройка `checkout_mode` или макет `onepage` пункта меню. */
+    public bool $onepage = false;
+    public string $catalogUrl = '';
+
     public function totalText(float $amount): string
     {
         $zero = $this->money->replacesZero()
@@ -217,6 +221,12 @@ class HtmlView extends BaseHtmlView
         }
 
         $app->allowCache(false);
+        $this->onepage = $this->onepage || \Dharma\Component\DharmaShop\Site\Support\CheckoutMode::oneStep() || $app->getInput()->getCmd('layout') === 'onepage';
+
+        if ($this->onepage && $this->getLayout() === 'default') {
+            $this->setLayout('onepage');
+        }
+
         // Сохраняем старые ссылки результата, но адрес/модули берём из отдельного пункта меню.
         if ($app->getInput()->getInt('completed') === 1) {
             $app->redirect(Route::_('index.php?option=com_dharmashop&view=checkoutcomplete',false));
@@ -225,7 +235,8 @@ class HtmlView extends BaseHtmlView
         $this->contacts = CheckoutFields::contacts($settings);
         $this->agreements = CheckoutFields::definitions($settings->get('checkout_consents', []));
         $this->money = new MoneyFormatter($settings);
-        $this->cartUrl = Route::_('index.php?option=com_dharmashop&view=cart', false);
+        $this->cartUrl = \Dharma\Component\DharmaShop\Site\Support\CheckoutMode::cartUrl();
+        $this->catalogUrl = Route::_('index.php?option=com_dharmashop&view=categories', false);
         $session = new CartSession($app->bootComponent('com_dharmashop')->getServices()->cart(), $app);
         $cart = $session->current();
         $identity = $app->getIdentity();
@@ -260,6 +271,11 @@ class HtmlView extends BaseHtmlView
 
             foreach ($this->lines as $line) {
                 $line->url = Route::_('index.php?option=com_dharmashop&view=product&id=' . (int) $line->product_id, false);
+
+                if ($this->onepage) {
+                    // Фото для карточек состава корзины (макет cart/lines), как на странице корзины.
+                    $line->image = \Dharma\Component\DharmaShop\Site\Support\MediaUrl::absolute((string) $line->cover);
+                }
             }
         }
 
@@ -281,6 +297,21 @@ class HtmlView extends BaseHtmlView
                 'phoneInvalid' => Text::_('COM_DHARMASHOP_CHECKOUT_PHONE_INVALID'),
                 'processing' => Text::_('COM_DHARMASHOP_CHECKOUT_PROCESSING'),
             ]);
+
+            if ($this->onepage) {
+                // Состав корзины меняется без перезагрузки (cart-page.js), нижняя часть подгружается заново (checkout-onepage.js).
+                $wa->useScript('com_dharmashop.cart-page')->useScript('com_dharmashop.checkout-onepage');
+                \Dharma\Component\DharmaShop\Site\Analytics\Ecommerce::assets($document, $settings);
+                $fragment = static fn (string $part): string => Route::_('index.php?option=com_dharmashop&view=checkout&layout=onepage&part=' . $part . '&format=raw', false);
+                $document->addScriptOptions('com_dharmashop.cartpage', [
+                    'fragmentUrl' => $fragment('cart'),
+                    'updateUrl' => Route::_('index.php?option=com_dharmashop&task=cart.update&format=json', false),
+                    'removeUrl' => Route::_('index.php?option=com_dharmashop&task=cart.remove&format=json', false),
+                    'clearUrl' => Route::_('index.php?option=com_dharmashop&task=cart.clear&format=json', false),
+                    'error' => Text::_('COM_DHARMASHOP_CART_ERROR_GENERIC'),
+                ]);
+                $document->addScriptOptions('com_dharmashop.onepage', ['formUrl' => $fragment('form')]);
+            }
         }
 
         parent::display($tpl);

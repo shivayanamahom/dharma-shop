@@ -395,4 +395,6 @@
     };
 
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+    // Оформление «в один шаг» (C100) подгружает форму заново: способ привязывается к новым узлам.
+    document.addEventListener('dharmashop:checkout-replaced', boot);
 })();

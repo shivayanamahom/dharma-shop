@@ -40,7 +40,7 @@ class Dispatcher extends AbstractModuleDispatcher
             ? $cartService->totals($cart, $cartService->lines($cart))['total']
             : (float) $summary['subtotal'];
         $data['total'] = $summary['count'] > 0 ? $services->money()->price((string) $displayTotal) : $services->money()->format((string) $displayTotal);
-        $data['cartUrl'] = Route::_('index.php?option=com_dharmashop&view=cart', false);
+        $data['cartUrl'] = \Dharma\Component\DharmaShop\Site\Support\CheckoutMode::cartUrl();
         // Чекаут выводит серверный снимок состава: менять корзину нужно на её странице.
         // Проверяем разрешённый Joomla маршрут, чтобы правило работало и с SEF/пунктами меню.
         $input = $app->getInput();

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<metadata>
+    <layout title="COM_DHARMASHOP_CHECKOUT_VIEW_ONEPAGE_TITLE" option="COM_DHARMASHOP_CHECKOUT_VIEW_ONEPAGE_OPTION">
+        <message><![CDATA[COM_DHARMASHOP_CHECKOUT_VIEW_ONEPAGE_DESC]]></message>
+    </layout>
+</metadata>

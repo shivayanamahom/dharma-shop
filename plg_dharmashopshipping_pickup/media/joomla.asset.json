@@ -7,17 +7,21 @@
 	"assets": [
 		{
 			"name": "plg_dharmashopshipping_pickup.map",
-			"version": "1556c84f29c2",
+			"version": "95c2f95d9da5",
 			"type": "script",
 			"uri": "plg_dharmashopshipping_pickup/pickup-map.js",
-			"attributes": { "defer": true }
+			"attributes": {
+				"defer": true
+			}
 		},
 		{
 			"name": "plg_dharmashopshipping_pickup.cards",
-			"version": "93511a95212b",
+			"version": "2ab60ddba3af",
 			"type": "script",
 			"uri": "plg_dharmashopshipping_pickup/pickup-cards.js",
-			"attributes": { "defer": true }
+			"attributes": {
+				"defer": true
+			}
 		}
 	]
 }

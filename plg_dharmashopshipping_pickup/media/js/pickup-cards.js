@@ -36,5 +36,8 @@
         });
     });
 
-    document.querySelectorAll('[data-pickup-slider]').forEach((element) => observer.observe(element));
+    const boot = () => document.querySelectorAll('[data-pickup-slider]').forEach((element) => observer.observe(element));
+    boot();
+    // Оформление «в один шаг» (C100) подгружает форму заново: слайдеры создаются на новых узлах.
+    document.addEventListener('dharmashop:checkout-replaced', boot);
 })();

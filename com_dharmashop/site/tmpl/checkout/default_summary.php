@@ -7,7 +7,7 @@ use Joomla\CMS\Language\Text;
 $discount = $this->discountTotals();
 $qtyText = static fn (float $qty): string => rtrim(rtrim(number_format($qty, 3, '.', ''), '0'), '.');
 ?>
-<aside class="card shadow-sm dharmaCheckoutSummary" aria-labelledby="dharma-checkout-summary-title">
+<aside class="card shadow-sm dharmaCheckoutSummary<?php echo $this->onepage ? ' sticky-lg-top' : ''; ?>" aria-labelledby="dharma-checkout-summary-title">
     <div class="card-header bg-body-tertiary p-3">
         <h2 id="dharma-checkout-summary-title" class="fs-6 fw-semibold mb-0"><?php echo Text::_('COM_DHARMASHOP_CHECKOUT_SUMMARY'); ?></h2>
     </div>
@@ -33,6 +33,8 @@ $qtyText = static fn (float $qty): string => rtrim(rtrim(number_format($qty, 3, 
                 <div class="form-text"><?php echo Text::_('COM_DHARMASHOP_PROMOTION_CHECKOUT_HELP'); ?></div>
             </div>
             <?php endif; ?>
+            <?php // В оформлении «в один шаг» позиции видны и меняются вверху страницы. ?>
+            <?php if (!$this->onepage) : ?>
             <ul class="list-unstyled mb-0 d-flex flex-column gap-3">
                 <?php foreach ($this->lines as $line) : ?>
                     <li>
@@ -49,6 +51,7 @@ $qtyText = static fn (float $qty): string => rtrim(rtrim(number_format($qty, 3, 
                     </li>
                 <?php endforeach; ?>
             </ul>
+            <?php endif; ?>
             <?php if ($discount['saved'] > 0 || $this->totals['adjustments'] || $this->shippingOptions) : ?>
                 <div class="border-top mt-3 pt-3 d-flex flex-column gap-2">
                     <?php if ($discount['saved'] > 0) : ?>
@@ -106,6 +109,8 @@ $qtyText = static fn (float $qty): string => rtrim(rtrim(number_format($qty, 3, 
         <?php if ($this->lines && !$this->shippingBlocked && !$this->paymentBlocked && !array_filter($this->lines, static fn (object $line): bool => $line->error !== '')) : ?>
             <button type="submit" class="btn btn-primary bg-primary text-white w-100 mb-2" data-checkout-submit><?php echo Text::_('COM_DHARMASHOP_CHECKOUT_SUBMIT'); ?></button>
         <?php endif; ?>
-        <a class="btn btn-sm btn-outline-secondary w-100" href="<?php echo $this->escape($this->cartUrl); ?>"><?php echo Text::_('COM_DHARMASHOP_CHECKOUT_BACK_TO_CART'); ?></a>
+        <?php if (!$this->onepage) : ?>
+            <a class="btn btn-sm btn-outline-secondary w-100" href="<?php echo $this->escape($this->cartUrl); ?>"><?php echo Text::_('COM_DHARMASHOP_CHECKOUT_BACK_TO_CART'); ?></a>
+        <?php endif; ?>
     </div>
 </aside>
