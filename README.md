@@ -14,7 +14,7 @@
 
 <div align="center">
 
-[![Package Version](https://img.shields.io/badge/version-0.1.18-brightgreen.svg?style=flat-square)](CHANGELOG.md)
+[![Package Version](https://img.shields.io/badge/version-0.1.19-brightgreen.svg?style=flat-square)](CHANGELOG.md)
 [![Joomla Support](https://img.shields.io/badge/Joomla-5.x%20%7C%206.x-F48024.svg?style=flat-square&logo=joomla&logoColor=white)](https://www.joomla.org/)
 [![PHP Version](https://img.shields.io/badge/PHP-%E2%89%A5%208.3-777BB4.svg?style=flat-square&logo=php&logoColor=white)](https://www.php.net/)
 [![Database](https://img.shields.io/badge/Database-MySQL%208.0%2B%20%7C%20MariaDB%2010.6%2B-4479A1.svg?style=flat-square&logo=mysql&logoColor=white)](https://www.mysql.com/)
