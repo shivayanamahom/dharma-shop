@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <extensionset name="Dharma Shop" description="Dharma Shop: магазин, плагины и модули">
-  <extension name="Dharma Shop (пакет)" element="pkg_dharmashop" type="package" client="site" version="0.1.19" targetplatformversion="6." detailsurl="https://raw.githubusercontent.com/shivayanamahom/dharma-shop/main/updates/pkg_dharmashop.xml"/>
+  <extension name="Dharma Shop (пакет)" element="pkg_dharmashop" type="package" client="site" version="0.1.20" targetplatformversion="6." detailsurl="https://raw.githubusercontent.com/shivayanamahom/dharma-shop/main/updates/pkg_dharmashop.xml"/>
 </extensionset>
