@@ -32,6 +32,8 @@ final class DuplicateGuard
         'listing' => ['start', 'limitstart', 'sort', 'product_view', 'filter', 'filter_module', 'q'],
         'list' => ['start', 'limitstart'],
         'product' => [],
+        // Страницы без своих параметров (список посадочных страниц): допустимы только `Itemid` и метки из настройки.
+        'page' => [],
     ];
 
     /**
@@ -39,7 +41,7 @@ final class DuplicateGuard
      * при ЧПУ; адреса вида `?option=…&view=…` обрабатываются прежним перенаправлением на ЧПУ.
      *
      * @param string $kind `listing` — списки товаров (категория, бренд, бейдж, поиск, посадочная); `list` — списки категорий, брендов,
-     *                     бейджей; `product` — страница товара.
+     *                     бейджей; `product` — страница товара; `page` — страница без своих параметров (список посадочных).
      */
     public static function enforce(string $kind): void
     {

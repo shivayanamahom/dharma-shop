@@ -41,6 +41,7 @@ class HtmlView extends BaseHtmlView
 
     public function display($tpl = null): void
     {
+        \Dharma\Component\DharmaShop\Site\Seo\DuplicateGuard::enforce('page');
         $app = Factory::getApplication();
         $active = $app->getMenu()->getActive();
         $own = $active && $active->component === 'com_dharmashop_landing' && ($active->query['view'] ?? '') === 'landings';
