@@ -75,8 +75,12 @@
         const parts = document.createElement('div');
         parts.innerHTML = html;
         const saved = snapshot(scope);
+        // Липкая карточка итога: прежний отступ сразу переходит к новой, иначе она на кадр прыгает под шапку.
+        const stickyTop = aside.querySelector('.dharmaCheckoutTotal')?.style.top || '';
         holder.innerHTML = parts.querySelector('[data-onepage-part="main"]')?.innerHTML || '';
         aside.innerHTML = parts.querySelector('[data-onepage-part="aside"]')?.innerHTML || '';
+        const card = aside.querySelector('.dharmaCheckoutTotal');
+        if (card && stickyTop) card.style.top = stickyTop;
         restore(scope, saved);
         document.dispatchEvent(new CustomEvent('dharmashop:checkout-replaced', { detail: { form: holder.querySelector('[data-dharmashop-checkout-form]') } }));
       })

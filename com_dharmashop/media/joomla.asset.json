@@ -136,7 +136,7 @@
 		},
 		{
 			"name": "com_dharmashop.checkout-onepage",
-			"version": "822955a983a8",
+			"version": "0b631bce0522",
 			"type": "script",
 			"uri": "com_dharmashop/checkout-onepage.js",
 			"attributes": {
