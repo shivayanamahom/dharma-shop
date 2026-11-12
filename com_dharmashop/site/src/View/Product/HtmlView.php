@@ -308,6 +308,7 @@ class HtmlView extends BaseHtmlView
             'inCartQty' => (float) $inCart['qty'],
             'inCartItem' => (int) $inCart['item'],
             'cartText' => trim((string) $this->params->get('cart_button_text', '')),
+            'quickOrder' => \Dharma\Component\DharmaShop\Administrator\Support\QuickOrder::forPlace('page'),
             'justify' => 'start',
         ];
     }

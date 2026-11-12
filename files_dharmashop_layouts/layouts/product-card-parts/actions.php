@@ -7,6 +7,8 @@
  *            (`inCartQty` > 0), сразу выводится виджет. Состоянием управляет cart.js.
  * Остальные параметры: priceRange, cartText, compactActions (таблица), stackActions (вертикально, страница товара),
  * justify (start|end), item (id, in_stock, qty_min, qty_step).
+ * «Быстрый заказ» (`quickOrder`, готовит `QuickOrder::forPlace()`; пусто — кнопки нет): отдельная кнопка под действиями корзины, которая открывает
+ * всплывающую форму Dharma Form с этим товаром. Выводится и в режиме каталога, и у товара без цены; у товара не в наличии — по настройке.
  */
 \defined('_JEXEC') or die;
 
@@ -26,6 +28,9 @@ $inCart = (float) ($displayData['inCartQty'] ?? 0);
 $justify = ($displayData['justify'] ?? 'end') === 'start' ? 'start' : 'end';
 $cartText = (string) ($displayData['cartText'] ?? '') !== '' ? (string) $displayData['cartText'] : Text::_('COM_DHARMASHOP_ADD_TO_CART');
 $wide = $stack || ($mode === 'qty' && !$compact) || $mode === 'stepper';
+$quick = (array) ($displayData['quickOrder'] ?? []);
+$quickShow = $quick !== [] && ((int) $item->in_stock !== 0 || !empty($quick['outOfStock']));
+$quickText = (string) ($quick['text'] ?? '') !== '' ? (string) $quick['text'] : Text::_('COM_DHARMASHOP_QUICK_ORDER');
 ?>
 <?php echo (string) ($displayData['favoriteActions'] ?? ''); ?>
         <?php if (empty($displayData['catalogMode']) && $price !== '' && (int) $item->in_stock !== 0) : ?>
@@ -46,3 +51,8 @@ $wide = $stack || ($mode === 'qty' && !$compact) || $mode === 'stepper';
                 <?php endif; ?>
             </div>
         <?php endif; ?>
+<?php if ($quickShow) : ?>
+    <div class="<?php echo $compact ? 'mt-1' : 'w-100 mt-2'; ?> dharmaCardQuickOrder">
+        <button class="btn <?php echo $escape($quick['class']); ?> <?php echo $stack ? 'w-100 py-2' : ($compact ? 'btn-sm' : 'btn-sm w-100'); ?> dharmaQuickOrder" type="button" data-dharmaform="<?php echo $escape($quick['code']); ?>" data-dharmaform-ctx="dharmashop.product:<?php echo (int) $item->id; ?>" title="<?php echo $escape($quickText); ?>"><?php echo $escape($quickText); ?></button>
+    </div>
+<?php endif; ?>

@@ -111,6 +111,7 @@ final class ProductCardRenderer
             'badges' => array_map(static fn (object $badge): object => (object) ((array) $badge + ['url' => Route::_('index.php?option=com_dharmashop&view=badge&id=' . (int) $badge->id, false)]), $item->badges ?? []),
             'images' => $images, 'sliderType' => $slider, 'catalogMode' => $catalog,
             'cartMode' => $cartMode, 'cartText' => trim((string) $settings->get('cart_button_text', '')),
+            'quickOrder' => \Dharma\Component\DharmaShop\Administrator\Support\QuickOrder::forPlace('card'),
             'inCartQty' => (float) ($this->cart[(int) $item->id]['qty'] ?? 0),
             'inCartItem' => (int) ($this->cart[(int) $item->id]['item'] ?? 0),
             'favoritesEnabled' => $this->favoritesEnabled,
