@@ -118,10 +118,15 @@ final class OrderService
             }
             // Остаток под заказ: списываем по вариантам с включённым учётом остатков (атомарно, в этой же транзакции; возврат — статусом с эффектом «возвращает остатки»).
             $stock = new StockService($this->db);
+            $stockChangedProducts = [];
             foreach ($quantities as $variantId=>$qty) {
                 $tracked = array_values(array_filter($lines, static fn (object $l): bool => (int) $l->variant_id === (int) $variantId))[0];
-                if ((int) $tracked->stock_tracked === 1) $stock->consume((int) $variantId,(float) $qty,$id,$userId ?: null,(int) $tracked->backorder === 1);
+                if ((int) $tracked->stock_tracked === 1) {
+                    $changed = $stock->consume((int) $variantId,(float) $qty,$id,$userId ?: null,(int) $tracked->backorder === 1, false);
+                    if ($changed !== null) { $stockChangedProducts[] = $changed; }
+                }
             }
+            if ($stockChangedProducts) { $stock->propagateProducts($stockChangedProducts, false); }
             foreach ($totals['adjustments'] as $index=>$row) {
                 $amount = (float) $row['amount'];
                 if (!is_finite($amount)) throw new \DomainException(Text::_('COM_DHARMASHOP_ORDER_INVALID'));
@@ -138,8 +143,8 @@ final class OrderService
             $this->carts->clear($cart);
             $this->db->transactionCommit();
         } catch (\Throwable $error) { $this->db->transactionRollback(); throw $error; }
-        // Остаток изменился: кэш списка и фильтра, заполненный до коммита, устарел.
-        \Dharma\Component\DharmaShop\Administrator\Filter\FilterCache::forget();
+        // Наличие изменилось: кэш списка и фильтра, заполненный до коммита, устарел.
+        if ($stockChangedProducts) { \Dharma\Component\DharmaShop\Administrator\Filter\FilterCache::forget(); }
         $this->notifications->notify($historyId);
         $this->notifications->lifecycle('onDharmaShopOrderAfterCreate', ['order_id'=>$id,'history_id'=>$historyId]);
         return ['id'=>$id,'number'=>$number];

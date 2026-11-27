@@ -57,7 +57,7 @@ final class ProductRebuilder
     }
 
     /** Rebuilds only an explicit selection, avoiding a potentially wide sparse ID range. @param int[] $productIds */
-    public function rebuildProducts(array $productIds): void
+    public function rebuildProducts(array $productIds, bool $forgetCache = true): void
     {
         $ids = implode(',', array_values(array_unique(array_filter(array_map('intval', $productIds)))));
         if ($ids === '') { return; }
@@ -70,7 +70,7 @@ final class ProductRebuilder
             . 'WHERE p.id IN (' . $ids . ')';
         Sql::exec($this->db, $sql, [':pl' => [$priceList, ParameterType::INTEGER]]);
         $groups = $this->db->setQuery('SELECT DISTINCT group_id FROM #__dharmashop_products WHERE id IN (' . $ids . ') AND group_id IS NOT NULL')->loadColumn();
-        (new GroupService($this->db))->rebuildMany(array_map('intval', $groups));
+        (new GroupService($this->db))->rebuildMany(array_map('intval', $groups), $forgetCache);
     }
 
     /** Пересчитывает производные поля товаров, основная категория которых входит в список. @param int[] $catids */

@@ -44,7 +44,7 @@ final class GroupIndex
      *
      * @param   int[]|null  $groupIds
      */
-    public function rebuild(?array $groupIds = null): void
+    public function rebuild(?array $groupIds = null, bool $forgetCache = true): void
     {
         if ($groupIds === null) {
             $groupIds = array_map('intval', $this->db->setQuery('SELECT id FROM #__dharmashop_product_groups ORDER BY id')->loadColumn());
@@ -60,7 +60,9 @@ final class GroupIndex
             $this->rebuildChunk(implode(',', $chunk));
         }
 
-        FilterCache::forget();
+        if ($forgetCache) {
+            FilterCache::forget();
+        }
     }
 
     /** Группы перечисленных товаров. @param int[] $productIds */

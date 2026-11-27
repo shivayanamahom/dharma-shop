@@ -17,6 +17,7 @@ final class OrderStatusService
 
     public function change(int $orderId, int $statusId, int $expected, int $actor): bool
     {
+        $stockChanged = false;
         $this->db->transactionStart();
         try {
             $order = $this->db->setQuery(Sql::query($this->db, 'SELECT id,status_id FROM #__dharmashop_orders WHERE id=:id FOR UPDATE', [':id'=>[$orderId,ParameterType::INTEGER]]))->loadObject();
@@ -33,10 +34,10 @@ final class OrderStatusService
             $this->db->insertObject('#__dharmashop_order_history', $history);
             $historyId = (int) $this->db->insertid();
             // Эффект статуса на остатки: «возвращает остатки» (отмена) возвращает списанное на склад, обратный переход списывает снова.
-            if ((int) $status->stock_effect !== $oldEffect) (new StockService($this->db))->applyOrderEffect($orderId,(int) $status->stock_effect,$actor ?: null);
+            if ((int) $status->stock_effect !== $oldEffect) $stockChanged = (new StockService($this->db))->applyOrderEffect($orderId,(int) $status->stock_effect,$actor ?: null, false);
             $this->db->transactionCommit();
         } catch (\Throwable $error) { $this->db->transactionRollback(); throw $error; }
-        if ((int) $status->stock_effect !== $oldEffect) { \Dharma\Component\DharmaShop\Administrator\Filter\FilterCache::forget(); }
+        if ($stockChanged) { \Dharma\Component\DharmaShop\Administrator\Filter\FilterCache::forget(); }
         $this->notifications->lifecycle('onDharmaShopOrderStatusChanged', ['order_id'=>$orderId,'history_id'=>$historyId,'previous_status_id'=>$expected,'status_id'=>$statusId]);
         $this->notifications->notify($historyId);
         return true;

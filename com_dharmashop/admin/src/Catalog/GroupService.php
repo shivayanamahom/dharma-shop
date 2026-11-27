@@ -221,12 +221,14 @@ final class GroupService
      *
      * @param   int[]  $groupIds
      */
-    public function rebuildMany(array $groupIds): void
+    public function rebuildMany(array $groupIds, bool $forgetCache = true): void
     {
         $groupIds = array_values(array_unique(array_filter(array_map('intval', $groupIds))));
         if (!$groupIds) { return; }
-        \Dharma\Component\DharmaShop\Administrator\Filter\FilterCache::forget();
-        (new GroupIndex($this->db))->rebuild($groupIds);
+        if ($forgetCache) {
+            \Dharma\Component\DharmaShop\Administrator\Filter\FilterCache::forget();
+        }
+        (new GroupIndex($this->db))->rebuild($groupIds, $forgetCache);
         foreach (array_chunk($groupIds, 1000) as $chunk) {
             $in = implode(',', $chunk);
             $this->db->setQuery('UPDATE #__dharmashop_product_groups g LEFT JOIN (SELECT group_id,MIN(CASE WHEN state=1 THEN price_min END) mn,MAX(CASE WHEN state=1 THEN price_max END) mx,MAX(CASE WHEN state=1 THEN in_stock ELSE 0 END) ins,COUNT(*) cnt FROM #__dharmashop_products WHERE group_id IN (' . $in . ') GROUP BY group_id) p ON p.group_id=g.id SET g.price_min=p.mn,g.price_max=p.mx,g.in_stock=COALESCE(p.ins,0),g.members_count=COALESCE(p.cnt,0) WHERE g.id IN (' . $in . ')')->execute();

@@ -95,42 +95,72 @@ final class StockService
      */
     public function recalcVariant(int $variantId, bool $propagate = true): void
     {
+        $changedProductId = $this->recalcVariantState($variantId);
+
+        if ($propagate && $changedProductId !== null) {
+            $this->propagateProducts([$changedProductId], true);
+        }
+    }
+
+    /**
+     * Обновляет stock_total и in_stock варианта; возвращает product_id, если in_stock реально изменился, иначе null.
+     */
+    private function recalcVariantState(int $variantId): ?int
+    {
         $sql = 'UPDATE #__dharmashop_variants v SET v.stock_total = COALESCE((SELECT SUM(l.qty - l.reserved) FROM #__dharmashop_stock_levels l WHERE l.variant_id = v.id), 0)'
             . ' WHERE v.id = :v';
         Sql::exec($this->db, $sql, [':v' => [$variantId, ParameterType::INTEGER]]);
 
-        $sql = 'UPDATE #__dharmashop_variants SET in_stock = IF(stock_tracked = 0 OR stock_total > 0 OR backorder = 1, 1, 0) WHERE id = :v';
-        Sql::exec($this->db, $sql, [':v' => [$variantId, ParameterType::INTEGER]]);
+        $row = $this->db->setQuery(Sql::query(
+            $this->db,
+            'SELECT product_id, stock_tracked, stock_total, backorder, in_stock FROM #__dharmashop_variants WHERE id = :v',
+            [':v' => [$variantId, ParameterType::INTEGER]]
+        ))->loadObject();
 
-        if ($propagate) {
-            $this->propagate($variantId);
+        if (!$row) {
+            return null;
         }
+
+        $newInStock = ((int) $row->stock_tracked === 0 || (float) $row->stock_total > 0 || (int) $row->backorder === 1) ? 1 : 0;
+
+        if ($newInStock === (int) $row->in_stock) {
+            return null;
+        }
+
+        Sql::exec(
+            $this->db,
+            'UPDATE #__dharmashop_variants SET in_stock = :ins WHERE id = :v',
+            [':ins' => [$newInStock, ParameterType::INTEGER], ':v' => [$variantId, ParameterType::INTEGER]]
+        );
+
+        return (int) $row->product_id > 0 ? (int) $row->product_id : null;
     }
 
-    /** Наличие варианта → товар (`products.in_stock`), копия в витрине (`product_categories.in_stock`), группа и кэш фильтра. */
-    private function propagate(int $variantId): void
+    /** Пакетный перенос наличия товаров в products, product_categories и group_listing. @param int[] $productIds */
+    public function propagateProducts(array $productIds, bool $forgetCache = true): void
     {
-        $productId = (int) $this->db->setQuery(Sql::query(
-            $this->db,
-            'SELECT product_id FROM #__dharmashop_variants WHERE id = :v',
-            [':v' => [$variantId, ParameterType::INTEGER]]
-        ))->loadResult();
+        $productIds = array_values(array_unique(array_filter(array_map('intval', $productIds))));
 
-        if ($productId > 0) {
-            (new ProductRebuilder($this->db))->rebuildProducts([$productId]);
-            (new Indexer($this->db))->refreshProducts([$productId]);
+        if (!$productIds) {
+            return;
         }
 
-        FilterCache::forget();
+        (new ProductRebuilder($this->db))->rebuildProducts($productIds, $forgetCache);
+        (new Indexer($this->db))->refreshProducts($productIds);
+
+        if ($forgetCache) {
+            FilterCache::forget();
+        }
     }
 
     /**
      * Списывает остаток под заказ: атомарно (условие в самом UPDATE, поэтому два одновременных заказа не уведут остаток в минус)
      * и с записью в журнал движений (причина «order»). Вызывается внутри транзакции создания заказа.
      *
+     * @return  int|null  product_id, если признак наличия изменился, иначе null
      * @throws  \DomainException  если доступного остатка не хватает (и «продавать без остатка» выключено)
      */
-    public function consume(int $variantId, float $qty, int $orderId, ?int $userId, bool $allowNegative = false): void
+    public function consume(int $variantId, float $qty, int $orderId, ?int $userId, bool $allowNegative = false, bool $propagate = true): ?int
     {
         $location = $this->defaultLocationId();
         $variant = [':v' => [$variantId, ParameterType::INTEGER], ':l' => [$location, ParameterType::INTEGER]];
@@ -146,11 +176,17 @@ final class StockService
         }
 
         $this->movement($variantId, $location, -$qty, 'order', $orderId, $userId);
-        $this->recalcVariant($variantId);
+        $changed = $this->recalcVariantState($variantId);
+
+        if ($propagate && $changed !== null) {
+            $this->propagateProducts([$changed], true);
+        }
+
+        return $changed;
     }
 
-    /** Возвращает остаток на склад (отмена заказа): движение «order_return». */
-    public function restore(int $variantId, float $qty, int $orderId, ?int $userId): void
+    /** Возвращает остаток на склад (отмена заказа): движение «order_return». @return int|null product_id при смене наличия */
+    public function restore(int $variantId, float $qty, int $orderId, ?int $userId, bool $propagate = true): ?int
     {
         $location = $this->defaultLocationId();
         Sql::exec(
@@ -159,7 +195,13 @@ final class StockService
             [':v' => [$variantId, ParameterType::INTEGER], ':l' => [$location, ParameterType::INTEGER], ':q' => [$qty]]
         );
         $this->movement($variantId, $location, $qty, 'order_return', $orderId, $userId);
-        $this->recalcVariant($variantId);
+        $changed = $this->recalcVariantState($variantId);
+
+        if ($propagate && $changed !== null) {
+            $this->propagateProducts([$changed], true);
+        }
+
+        return $changed;
     }
 
     /**
@@ -167,9 +209,10 @@ final class StockService
      * было списано под заказ; эффект 0 снова списывает возвращённое (если заказ перевели обратно). Работает по журналу движений, поэтому повторный
      * вызов ничего не меняет, а заказы, оформленные до появления списания, остатки не трогают.
      *
+     * @return  bool  изменилось ли наличие хотя бы у одного товара
      * @throws  \DomainException  если при возврате заказа в работу остатка не хватает
      */
-    public function applyOrderEffect(int $orderId, int $effect, ?int $userId): void
+    public function applyOrderEffect(int $orderId, int $effect, ?int $userId, bool $forgetCache = true): bool
     {
         $rows = $this->db->setQuery(Sql::query(
             $this->db,
@@ -180,16 +223,27 @@ final class StockService
             [':o' => [$orderId, ParameterType::INTEGER]]
         ))->loadObjectList();
 
+        $changedProducts = [];
+
         foreach ($rows as $row) {
             $net = (float) $row->consumed - (float) $row->returned;
 
             if ($effect === 1 && $net > 0.0000001) {
-                $this->restore((int) $row->variant_id, $net, $orderId, $userId);
+                $changed = $this->restore((int) $row->variant_id, $net, $orderId, $userId, false);
+                if ($changed !== null) { $changedProducts[] = $changed; }
             } elseif ($effect === 0 && (float) $row->returned > 0.0000001 && $net < 0.0000001) {
                 // Заказ вернули в работу: списываем то, что возвращали, если на складе хватает.
-                $this->consume((int) $row->variant_id, (float) $row->returned, $orderId, $userId, (int) $row->backorder === 1);
+                $changed = $this->consume((int) $row->variant_id, (float) $row->returned, $orderId, $userId, (int) $row->backorder === 1, false);
+                if ($changed !== null) { $changedProducts[] = $changed; }
             }
         }
+
+        if ($changedProducts) {
+            $this->propagateProducts($changedProducts, $forgetCache);
+            return true;
+        }
+
+        return false;
     }
 
     private function movement(int $variantId, int $location, float $delta, string $reason, int $orderId, ?int $userId): void
