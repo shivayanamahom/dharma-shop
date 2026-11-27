@@ -39,6 +39,10 @@ class CategoryModel extends CategoriesModel
     /** Мягкий режим поиска включён (null — ещё не определено) */
     private ?bool $searchFuzzy = null;
 
+    /** Явно заданный поисковый запрос без чтения GET filter (подсказки автодополнения). */
+    private ?string $forcedSearch = null;
+    private bool $ignoreRequestFilter = false;
+
     private ?FilterDefinition $filterDefinition = null;
     private ?FilterState $filterState = null;
 
@@ -51,11 +55,79 @@ class CategoryModel extends CategoriesModel
 
     private ?Registry $filterModule = null;
 
+    /** @var array<string, self> */
+    private static array $activeModels = [];
+
+    private ?int $cachedTotal = null;
+    private bool $cachedTotalCapped = false;
+    private ?bool $baseAccessible = null;
+    /** @var array<string, array> */
+    private array $facetsMemo = [];
+
+    public static function rememberActive(string $key, self $model): void
+    {
+        self::$activeModels[$key] = $model;
+    }
+
+    public static function active(string $key): ?self
+    {
+        return self::$activeModels[$key] ?? null;
+    }
+
+    public function forCategory(int $id): static
+    {
+        parent::forCategory($id);
+        $this->resetListingMemo();
+        $this->searchFuzzy = null;
+
+        return $this;
+    }
+
     public function setFilterModule(Registry $params): void
     {
+        $this->applyFilterModule($params);
+    }
+
+    protected function applyFilterModule(Registry $params): bool
+    {
+        $samePolicy = self::filterPolicySignature($params) === self::filterPolicySignature($this->filterModule());
         $this->filterModule = clone $params;
+
+        if ($samePolicy) {
+            return false;
+        }
+
+        $this->resetListingMemo();
+
+        return true;
+    }
+
+    private static function filterPolicySignature(Registry $params): string
+    {
+        $logic = [];
+
+        foreach ((array) $params->get('fields_config', []) as $row) {
+            $row = (array) $row;
+            $field = (string) ($row['field'] ?? '');
+            $mode = (string) ($row['logic'] ?? 'inherit');
+
+            if ($field !== '' && in_array($mode, ['or', 'and'], true)) {
+                $logic[$field] = $mode;
+            }
+        }
+
+        ksort($logic);
+
+        return json_encode([(string) $params->get('filtered_listing', 'inherit'), $logic]) ?: '';
+    }
+
+    protected function resetListingMemo(): void
+    {
         $this->filterDefinition = $this->filterState = null;
         $this->indexed = false;
+        $this->cachedTotal = null;
+        $this->cachedTotalCapped = false;
+        $this->facetsMemo = [];
     }
 
     private function filterModule(): Registry
@@ -65,8 +137,15 @@ class CategoryModel extends CategoriesModel
 
     public function setListingMode(string $mode): void
     {
-        $this->listingMode = in_array($mode, ['products', 'groups_products'], true) ? $mode : null;
+        $normalized = in_array($mode, ['products', 'groups_products'], true) ? $mode : null;
+        if ($this->listingMode === $normalized) {
+            return;
+        }
+        $this->listingMode = $normalized;
         $this->indexed = false;
+        $this->cachedTotal = null;
+        $this->cachedTotalCapped = false;
+        $this->facetsMemo = [];
     }
 
     /** null — индекс выдачи групп не подходит; false — ещё не проверялся. */
@@ -151,7 +230,7 @@ class CategoryModel extends CategoriesModel
             $probe = $this->productsQuery(forListing: $this->groupsEnabled())->select('1');
             $bindings = array_map(static fn(object $bound): mixed => $bound->value, $probe->getBounded());
             $this->searchFuzzy = FilterCache::remember('fuzzy:v1:' . md5($db->replacePrefix((string) $probe) . json_encode($bindings)),
-                static fn(): bool => !$db->setQuery(QueryBudget::hard($probe), 0, 1)->loadResult(), $this->cacheableRequest());
+                static fn(): bool => !QueryBudget::run($db, $probe, static fn(QueryInterface $q): mixed => $db->setQuery($q, 0, 1)->loadResult(), hard: true), $this->cacheableRequest());
         }
 
         return $this->searchFuzzy;
@@ -172,6 +251,9 @@ class CategoryModel extends CategoriesModel
     public function getFilterState(): FilterState
     {
         if ($this->filterState === null) {
+            if ($this->ignoreRequestFilter) {
+                return $this->filterState = new FilterState();
+            }
             $input = Factory::getApplication()->getInput()->get('filter', [], 'array');
             $enabled = (int) ComponentHelper::getParams('com_dharmashop')->get('filter_enabled', 1) === 1;
             $services = (new \Dharma\Component\DharmaShop\Administrator\Filter\FilterService($this->getDatabase()));
@@ -198,6 +280,10 @@ class CategoryModel extends CategoriesModel
      */
     public function getFacets(string $mode = 'base'): array
     {
+        if (isset($this->facetsMemo[$mode])) {
+            return $this->facetsMemo[$mode];
+        }
+
         $db = $this->getDatabase();
         $grouped = $this->groupsEnabled();
         $definition = $this->getFilterDefinition();
@@ -216,14 +302,18 @@ class CategoryModel extends CategoriesModel
             $stored = static fn(): array => $scope->facets($definition);
         }
 
-        return (new ScopedFacets($db))->build($source, $definition, $this->getFilterState(), $mode, $cacheKey, $stored, $this->cacheableRequest());
+        return $this->facetsMemo[$mode] = (new ScopedFacets($db))->build($source, $definition, $this->getFilterState(), $mode, $cacheKey, $stored, $this->cacheableRequest());
     }
 
     private function baseFacetsAccessible(): bool
     {
+        if ($this->baseAccessible !== null) {
+            return $this->baseAccessible;
+        }
+
         $db = $this->getDatabase();
         $levels = implode(',', array_map('intval', $this->getCurrentUser()->getAuthorisedViewLevels()) ?: [0]);
-        return FilterCache::remember('base-access:' . $db->getPrefix() . ':' . $levels, function () use ($db, $levels): bool {
+        return $this->baseAccessible = (bool) FilterCache::remember('base-access:' . $db->getPrefix() . ':' . $levels, function () use ($db, $levels): bool {
             $query = $db->createQuery()->select('id')->from('#__categories')
                 ->where("extension='com_dharmashop'")->where('(published<>1 OR access NOT IN (' . $levels . '))');
             return !$db->setQuery($query, 0, 1)->loadResult();
@@ -243,9 +333,21 @@ class CategoryModel extends CategoriesModel
     /** Больше условий фильтра в одном запросе — считаем без кэша. */
     private const CACHE_MAX_CONDITIONS = 3;
 
+    /** Изолирует модель поиска конкретным текстом запроса без чтения `filter[...]` из HTTP-запроса. */
+    public function forSearch(string $text): static
+    {
+        $this->forcedSearch = ProductSearch::clean($text);
+        $this->ignoreRequestFilter = true;
+        $this->searchFuzzy = null;
+        $this->resetListingMemo();
+        $this->filterState = new FilterState();
+
+        return $this;
+    }
+
     public function getQueryText(): string
     {
-        return ProductSearch::fromInput(Factory::getApplication()->getInput());
+        return $this->forcedSearch ?? ProductSearch::fromInput(Factory::getApplication()->getInput());
     }
 
     /**
@@ -259,12 +361,26 @@ class CategoryModel extends CategoriesModel
         $query = $this->productsQuery()->select([$db->quoteName('p.catid'), $db->quoteName('c.title'), 'COUNT(*) AS n'])
             ->group([$db->quoteName('p.catid'), $db->quoteName('c.title')])->order('n DESC')->order($db->quoteName('p.catid'));
 
-        return $db->setQuery($query, 0, max(1, $limit))->loadObjectList();
+        try {
+            return QueryBudget::run($db, $query, fn(QueryInterface $q): array => $db->setQuery($q, 0, max(1, $limit))->loadObjectList());
+        } catch (\Throwable $error) {
+            if (QueryBudget::isTimeout($error)) {
+                return [];
+            }
+
+            throw $error;
+        }
     }
 
     /** Число видимых товаров списка (для постраничной навигации). */
     public function getTotal(): int
     {
+        if ($this->cachedTotal !== null) {
+            $this->totalCapped = $this->cachedTotalCapped;
+
+            return $this->cachedTotal;
+        }
+
         $db = $this->getDatabase();
 
         $grouped = $this->groupsEnabled();
@@ -278,36 +394,39 @@ class CategoryModel extends CategoriesModel
             $bindings = array_map(static fn(object $bound): mixed => $bound->value, $query->getBounded());
             $key = 'total:v2:' . md5($db->replacePrefix((string) $query) . json_encode([$bindings, $cap]));
             try {
-                $found = FilterCache::remember($key, fn(): int => count($db->setQuery(QueryBudget::apply($query), 0, $cap + 1)->loadColumn()), $this->cacheableRequest());
+                $found = FilterCache::remember($key, fn(): int => count(QueryBudget::run($db, $query, fn(QueryInterface $q): array => $db->setQuery($q, 0, $cap + 1)->loadColumn())), $this->cacheableRequest());
             } catch (\Throwable $error) {
                 // Подсчёт не уложился в бюджет: страница показывается с «N+», а не ошибкой (результат не кэшируется).
                 if (!QueryBudget::isTimeout($error)) { throw $error; }
                 $found = $cap + 1;
             }
             $this->totalCapped = $found > $cap;
+            $this->cachedTotalCapped = $this->totalCapped;
 
-            return min($found, $cap);
+            return $this->cachedTotal = min($found, $cap);
         }
+
+        $this->cachedTotalCapped = $this->totalCapped = false;
 
         if ($grouped && ($indexed = $this->indexedListing()) !== null) {
             // Единицы выдачи считаются по индексам: одиночные товары категории + строки групп (кэш до записи каталога).
             $levels = implode(',', array_map('intval', $this->getCurrentUser()->getAuthorisedViewLevels()));
 
-            return (int) FilterCache::remember('total:v4:idx:' . md5($db->getPrefix() . ':' . (int) $this->getParent()->id . ':' . $levels . ':' . (int) !$this->baseFacetsAccessible()),
+            return $this->cachedTotal = (int) FilterCache::remember('total:v4:idx:' . md5($db->getPrefix() . ':' . (int) $this->getParent()->id . ':' . $levels . ':' . (int) !$this->baseFacetsAccessible()),
                 static fn(): int => $indexed->total());
         }
 
         $query->select($grouped ? 'COUNT(DISTINCT ' . $unit . ')' : 'COUNT(*)');
-        $count = fn(): int => (int) $db->setQuery(QueryBudget::hard($query))->loadResult();
+        $count = fn(): int => (int) QueryBudget::run($db, $query, fn(QueryInterface $q): mixed => $db->setQuery($q)->loadResult(), hard: true);
 
         // Без фильтра подсчёт всей области на каждой странице стоил 65–90 мс (групп — секунды) при 100 тыс.: кэшируем, запись каталога сбрасывает.
         if ($this->getQueryText() !== '') {
-            return $count();
+            return $this->cachedTotal = $count();
         }
 
         $bindings = array_map(static fn(object $bound): mixed => $bound->value, $query->getBounded());
 
-        return (int) FilterCache::remember('total:v3:' . md5($db->replacePrefix((string) $query) . json_encode($bindings)), $count, $this->cacheableRequest());
+        return $this->cachedTotal = (int) FilterCache::remember('total:v3:' . md5($db->replacePrefix((string) $query) . json_encode($bindings)), $count, $this->cacheableRequest());
     }
 
     /**
@@ -354,7 +473,7 @@ class CategoryModel extends CategoriesModel
                 $selectColumns[0] = 'STRAIGHT_JOIN ' . $selectColumns[0];
                 $query->clear('select')->select($selectColumns);
             }
-            $items = $db->setQuery(QueryBudget::hard($query), max(0, $start), $limit)->loadObjectList();
+            $items = QueryBudget::run($db, $query, fn(QueryInterface $q): array => $db->setQuery($q, max(0, $start), $limit)->loadObjectList(), hard: true);
         }
         $this->indexHint = null;
 
@@ -410,7 +529,7 @@ class CategoryModel extends CategoriesModel
             $query = $this->groupListing()->representatives($this->productsQuery(forListing: true, knownGroups: $groupIds), $sort, $direction, (int) $this->getParent()->id)
                 ->select('p.id')->select($db->quoteName('p.group_id', 'rep_group'));
 
-            foreach ($db->setQuery(QueryBudget::hard($query))->loadObjectList() as $row) {
+            foreach (QueryBudget::run($db, $query, fn(QueryInterface $q): array => $db->setQuery($q)->loadObjectList(), hard: true) as $row) {
                 $representative[(int) $row->rep_group] = (int) $row->id;
             }
         }
@@ -458,7 +577,7 @@ class CategoryModel extends CategoriesModel
         $idQuery = (clone $ranked)->select('p.id')->order($order[0])->order($order[1]);
         $bindings = array_map(static fn(object $bound): mixed => $bound->value, $idQuery->getBounded());
         $ids = FilterCache::remember('rank:v1:' . md5($db->replacePrefix((string) $idQuery) . json_encode($bindings)),
-            static fn(): array => array_map('intval', $db->setQuery(QueryBudget::hard($idQuery), 0, self::$rankCap)->loadColumn()), $this->cacheableRequest());
+            static fn(): array => array_map('intval', QueryBudget::run($db, $idQuery, fn(QueryInterface $q): array => $db->setQuery($q, 0, self::$rankCap)->loadColumn(), hard: true)), $this->cacheableRequest());
         $page = array_slice($ids, $start, $limit);
 
         if (!$page) {
@@ -487,6 +606,7 @@ class CategoryModel extends CategoriesModel
      */
     public function attachCardData(array $items, int $imagesLimit = 1): void
     {
+        \Dharma\Component\DharmaShop\Site\Service\Router::prime($items);
         $ajaxGroups = ComponentHelper::getParams('com_dharmashop')->get('group_card_mode', 'simple') === 'ajax';
         $groupItems = array_values(array_filter($items, static fn(object $item): bool => GroupCardRenderer::isGroup($item)));
         $items = array_values(array_filter($items, static fn(object $item): bool => $ajaxGroups || !GroupCardRenderer::isGroup($item)));
@@ -528,9 +648,10 @@ class CategoryModel extends CategoriesModel
         $levels = implode(',', array_map('intval', $this->getCurrentUser()->getAuthorisedViewLevels()) ?: [0]);
         $badges = [];
         $brands = [];
+        $badgeRoutes = [];
 
         foreach ($db->setQuery(
-            'SELECT pc.product_id, c.id, c.title, c.params, c.extension FROM ' . $db->quoteName('#__dharmashop_product_categories', 'pc')
+            'SELECT pc.product_id, c.id, c.parent_id, c.alias, c.title, c.params, c.extension FROM ' . $db->quoteName('#__dharmashop_product_categories', 'pc')
             . ' JOIN ' . $db->quoteName('#__categories', 'c') . ' ON c.id = pc.catid'
             . ' WHERE pc.product_id IN (' . $list . ') AND pc.direct = 1 AND c.extension IN (' . $db->quote('com_dharmashop.badge') . ',' . $db->quote('com_dharmashop.brand') . ')'
             . ' AND c.published = 1 AND c.access IN (' . $levels . ') ORDER BY c.lft'
@@ -547,12 +668,16 @@ class CategoryModel extends CategoriesModel
                 continue;
             }
 
+            $badgeRoutes[(int) $row->id] = (object) ['id' => (int) $row->id, 'parent_id' => (int) $row->parent_id, 'alias' => (string) $row->alias, 'published' => 1];
             $color = (string) $params->get('badge_color', 'primary');
             $badges[(int) $row->product_id][] = (object) [
                 'id' => (int) $row->id,
                 'title' => (string) $row->title,
                 'color' => in_array($color, ['primary', 'secondary', 'success', 'danger', 'warning', 'info', 'light', 'dark'], true) ? $color : 'primary',
             ];
+        }
+        if ($badgeRoutes) {
+            \Dharma\Component\DharmaShop\Site\Service\Router::prime([], array_values($badgeRoutes), 'com_dharmashop.badge');
         }
 
         foreach ($items as $item) {
@@ -578,13 +703,13 @@ class CategoryModel extends CategoriesModel
     }
 
     /** AJAX picks one member of the same public candidate set by visible choices; hidden axes are preferences. */
-    public function selectGroupCardProduct(int $sourceId, array $changes, int $imagesLimit): object
+    public function selectGroupCardProduct(int $sourceId, array $changes, int $imagesLimit, ?QueryInterface $customCandidates = null): object
     {
-        if (!$this->groupsEnabled() || ComponentHelper::getParams('com_dharmashop')->get('group_card_mode', 'simple') !== 'ajax' || count($changes) > 6) {
+        if (($customCandidates === null && !$this->groupsEnabled()) || ComponentHelper::getParams('com_dharmashop')->get('group_card_mode', 'simple') !== 'ajax' || count($changes) > 6) {
             throw new \RuntimeException('COM_DHARMASHOP_GROUP_UNAVAILABLE', 404);
         }
         $db = $this->getDatabase();
-        $candidates = $this->productsQuery(forListing: true);
+        $candidates = $customCandidates ?? $this->productsQuery(forListing: true);
         $load = function (int $id) use ($db, $candidates): ?object {
             $query = clone $candidates;
             $query->select('p.id,p.catid,p.title,p.alias,p.cover,p.cover_alt,p.introtext,p.group_id,p.inherit_images,p.price_min,p.price_max,p.price_zero_free,p.in_stock,p.unit,p.qty_min,p.qty_step,p.params,c.title AS category_title')

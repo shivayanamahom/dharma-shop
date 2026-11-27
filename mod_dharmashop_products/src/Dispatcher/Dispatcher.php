@@ -68,6 +68,11 @@ final class Dispatcher extends AbstractModuleDispatcher
         $groupLayout = new FileLayout('group', $ownPath, ['component' => 'none', 'client' => 0]);
         $groupLayout->addIncludePath($override);
         $moduleId = (int) $data['moduleId'];
+        foreach ($items as $item) {
+            if (GroupCardRenderer::isGroup($item)) {
+                $item->listing_scope = ['view' => 'module', 'module_id' => $moduleId] + (array) ($item->module_card_scope ?? []);
+            }
+        }
         $data['renderCard'] = static function (object $item) use ($products, $groups, $componentParams, $useComponentLayouts, $cardMode, $context, $productLayout, $groupLayout, $money, $moduleId): string {
             if (GroupCardRenderer::isGroup($item)) {
                 if ($useComponentLayouts) { return $groups->render($item, $componentParams, $cardMode, [], null, '', $context); }

@@ -76,6 +76,12 @@ trait ListingTrait
     private MoneyFormatter $money;
     private ?\Dharma\Component\DharmaShop\Site\Support\GroupCardRenderer $groupCards = null;
     private ?ProductCardRenderer $productCards = null;
+    private ?FileLayout $productCardLayout = null;
+    private ?Registry $shopSettings = null;
+    private ?array $globalValues = null;
+    private ?Renderer $placeholderRenderer = null;
+    private ?string $cartButtonText = null;
+    private ?string $cachedSliderType = null;
 
     /** Тип записей страницы; бренды и бейджи переопределяют. */
     protected function taxonomy(): Taxonomy
@@ -128,6 +134,10 @@ trait ListingTrait
         $this->menuId = $ownView ? (int) $active->id : 0;
         $this->mergeDisplay($menu, $keys);
         $model->setListingMode((string) $this->params->get('category_listing_mode', 'products'));
+        if ($app->getInput()->getCmd('format', 'html') === 'html') {
+            CategoryModel::rememberActive($app->getInput()->getCmd('option') . ':' . $app->getInput()->getCmd('view'), $model);
+        }
+        $this->shopSettings = $settings;
         $this->money = new MoneyFormatter($settings);
         $this->catalogMode = (int) $settings->get('catalog_mode', 0) === 1;
 
@@ -362,9 +372,14 @@ trait ListingTrait
      */
     protected function sliderType(): string
     {
-        $registry = Factory::getApplication()->getDocument()->getWebAssetManager()->getRegistry();
+        if ($this->cachedSliderType !== null) {
+            return $this->cachedSliderType;
+        }
 
-        return ComponentHelper::getParams('com_dharmashop')->get('product_gallery_type', 'swiper') !== 'bootstrap'
+        $registry = Factory::getApplication()->getDocument()->getWebAssetManager()->getRegistry();
+        $settings = $this->shopSettings ??= ComponentHelper::getParams('com_dharmashop');
+
+        return $this->cachedSliderType = $settings->get('product_gallery_type', 'swiper') !== 'bootstrap'
             && $registry->exists('preset', 'dharmashop.swiper') ? 'swiper' : 'bootstrap';
     }
 
@@ -450,21 +465,23 @@ trait ListingTrait
             return $this->groupCards->render($item, $this->params, $this->productView, $this->fieldColumns, $this->cartProducts);
         }
         // Единая точка сборки карточки: в default.php позже подключаются отдельные части (слайдер, цена, действия и т. п.).
-        $layout = new FileLayout('components.dharmashop.product-card.default', null, ['component' => 'none', 'client' => 0]);
+        $layout = $this->productCardLayout ??= new FileLayout('components.dharmashop.product-card.default', null, ['component' => 'none', 'client' => 0]);
         $intro = (string) $item->introtext;
-        $settings = ComponentHelper::getParams('com_dharmashop');
+        $settings = $this->shopSettings ??= ComponentHelper::getParams('com_dharmashop');
+        $showIntro = (int) $this->params->get('product_card_intro', 1) === 1;
 
-        if ((int) $this->params->get('product_card_intro', 1) === 1) {
-            $values = ProductValues::build($item, $this->money) + GlobalValues::build($settings);
-            $intro = (new Renderer())->render($intro, $values);
+        if ($showIntro) {
+            $values = ProductValues::build($item, $this->money) + ($this->globalValues ??= GlobalValues::build($settings));
+            $intro = ($this->placeholderRenderer ??= new Renderer())->render($intro, $values);
         }
 
+        $productUrl = Route::_('index.php?option=com_dharmashop&view=product&id=' . (int) $item->id . '&catid=' . (int) $item->catid, false);
         $displayData = ['item' => $item, 'params' => clone $this->params, 'mode' => $this->productView,
             'cardFolder' => $this->cardFolder, 'cardLayout' => $this->cardLayout,
             'fields' => $item->fields ?? [],
             'fieldColumns' => $this->fieldColumns,
-            'productUrl' => Route::_('index.php?option=com_dharmashop&view=product&id=' . (int) $item->id . '&catid=' . (int) $item->catid, false),
-            'showIntro' => (int) $this->params->get('product_card_intro', 1) === 1,
+            'productUrl' => $productUrl,
+            'showIntro' => $showIntro,
             'intro' => $intro,
             'priceRange' => $this->formatRange($item->price_min, $item->price_max, !empty($item->price_free)),
             'oldPrice' => $item->base_price !== null ? $this->money->format($item->base_price) : '',
@@ -481,18 +498,15 @@ trait ListingTrait
             'images' => $this->cardImages($item),
             'sliderType' => $this->sliderType(),
             'catalogMode' => $this->catalogMode,
-            'cartText' => trim((string) ComponentHelper::getParams('com_dharmashop')->get('cart_button_text', '')),
+            'cartText' => $this->cartButtonText ??= trim((string) $settings->get('cart_button_text', '')),
             'cartMode' => $this->cartMode(),
             'inCartQty' => (float) ($this->cartProducts[(int) $item->id]['qty'] ?? 0),
             'inCartItem' => (int) ($this->cartProducts[(int) $item->id]['item'] ?? 0)];
 
         $taxonomy = $this->taxonomy();
         $context = $taxonomy->pageView === 'search' ? 'search' : 'product.' . $taxonomy->area;
-        $favoriteData = ($this->productCards ??= new ProductCardRenderer($this->params, $this->cartProducts))
-            ->data($item, $this->productView, $context, 'listing-' . $taxonomy->pageView, true);
-        foreach (['favoritesEnabled', 'favoriteIcon', 'favorite', 'favoritesTokenName', 'favoriteMediaActions', 'favoriteActions'] as $key) {
-            $displayData[$key] = $favoriteData[$key] ?? null;
-        }
+        $displayData += ($this->productCards ??= new ProductCardRenderer($this->params, $this->cartProducts))
+            ->favoriteData($item, $context, $productUrl, true);
         $displayData['imageContext'] = $context . '.' . $this->productView;
 
         return $layout->render($displayData);

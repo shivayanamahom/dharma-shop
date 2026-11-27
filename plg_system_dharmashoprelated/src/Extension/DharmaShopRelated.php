@@ -178,11 +178,14 @@ final class DharmaShopRelated extends CMSPlugin implements SubscriberInterface
                     $this->prepared[$id][$block['alias']][] = (int) $item->id;
                 }
             }
-            $limit = (int) $settings->get('product_card_images', 1);
-            $model = $app->bootComponent('com_dharmashop')->getMVCFactory()->createModel('Category', 'Site', ['ignore_request' => true]);
-            $model->attachCardData(array_values($union), in_array($limit, [0,1,2,3,4,5], true) ? $limit : 1);
+            if ($union) {
+                $limit = (int) $settings->get('product_card_images', 1);
+                $model = $app->bootComponent('com_dharmashop')->getMVCFactory()->createModel('Category', 'Site', ['ignore_request' => true]);
+                $model->attachCardData(array_values($union), in_array($limit, [0, 1, 2, 3, 4, 5], true) ? $limit : 1);
+            }
             $this->prepared[$id]['items'] = $union;
         }
+        $customLayouts = [];
         foreach ($matching as $block) {
             $key = $id . ':' . $block['alias'];
             if (isset($this->rendered[$key])) { continue; }
@@ -190,13 +193,16 @@ final class DharmaShopRelated extends CMSPlugin implements SubscriberInterface
             if (!$items) { continue; }
             $this->rendered[$key] = true;
             $this->cards ??= new ProductCardRenderer($settings);
-            $renderCard = function (object $item) use ($block): string {
+            $renderCard = function (object $item) use ($block, &$customLayouts): string {
                 $cardLayout = $block['layout'] === 'list' ? 'list' : 'grid';
                 $data = $this->cards->data($item, $cardLayout, 'product.related', $block['alias']);
                 if ($block['component_layouts']) { return $this->cards->render($data); }
-                $layout = new FileLayout($cardLayout, $this->root() . '/layouts', ['component' => 'none','client' => 0]);
-                $layout->addIncludePath(JPATH_THEMES . '/' . $this->getApplication()->getTemplate() . '/html/layouts/plugins/system/dharmashoprelated');
-                return $layout->render($data);
+                if (!isset($customLayouts[$cardLayout])) {
+                    $layout = new FileLayout($cardLayout, $this->root() . '/layouts', ['component' => 'none', 'client' => 0]);
+                    $layout->addIncludePath(JPATH_THEMES . '/' . $this->getApplication()->getTemplate() . '/html/layouts/plugins/system/dharmashoprelated');
+                    $customLayouts[$cardLayout] = $layout;
+                }
+                return $customLayouts[$cardLayout]->render($data);
             };
             $stepper = '';
             if (!$this->stepperPrinted && (int) $settings->get('catalog_mode', 0) !== 1) {

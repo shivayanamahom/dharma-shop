@@ -76,6 +76,10 @@ final class LayoutHooks
             return '';
         }
         PluginHelper::importPlugin('dharmashop');
+        $dispatcher = $app->getDispatcher();
+        if (method_exists($dispatcher, 'getListeners') && !$dispatcher->getListeners($name)) {
+            return '';
+        }
         $event = new LayoutRenderEvent($name, [
             'entity' => $this->entity,
             'view' => $this->view,
@@ -86,7 +90,7 @@ final class LayoutHooks
             'page' => $this->page,
             'data' => $data,
         ]);
-        $app->getDispatcher()->dispatch($name, $event);
+        $dispatcher->dispatch($name, $event);
 
         return implode('', $event->getArgument('result', []));
     }

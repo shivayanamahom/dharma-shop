@@ -29,7 +29,7 @@ final class GroupCardContext
             throw new \RuntimeException('Invalid group card context', 400);
         }
         $data = json_decode((string) base64_decode(strtr($parts[1], '-_', '+/'), true), true, 32, JSON_THROW_ON_ERROR);
-        if (!is_array($data) || !in_array($data['scope']['view'] ?? '', ['category', 'brand', 'badge', 'search'], true)
+        if (!is_array($data) || !in_array($data['scope']['view'] ?? '', ['category', 'brand', 'badge', 'search', 'module'], true)
             || !in_array($data['mode'] ?? '', ['grid', 'list', 'table'], true)) {
             throw new \RuntimeException('Invalid group card context', 400);
         }

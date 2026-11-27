@@ -16,9 +16,22 @@ final class GroupListing
 {
     private array $bindings = [];
     private int $sequence = 0;
-    private array $access = [0];
+    private ?array $access = null;
 
     public function __construct(private readonly DatabaseInterface $db) {}
+
+    private function accessLevels(): array
+    {
+        if ($this->access !== null) {
+            return $this->access;
+        }
+        try {
+            $identity = \Joomla\CMS\Factory::getApplication()->getIdentity();
+            return $this->access = ($identity ? array_map('intval', $identity->getAuthorisedViewLevels()) : [1]) ?: [0];
+        } catch (\Throwable) {
+            return [0];
+        }
+    }
 
     /** Positive product ID / negative group ID: two disjoint namespaces for COUNT DISTINCT. */
     public static function unit(): string
@@ -155,7 +168,7 @@ final class GroupListing
             ->join('INNER', '#__dharmashop_group_axes ga ON ga.group_id=eligible.group_id')
             ->join('INNER', '#__dharmashop_fields f ON f.id=ga.field_id AND f.state=1')
             ->join('LEFT', '#__dharmashop_fieldgroups fg ON fg.id=f.group_id')
-            ->where('f.access IN (' . implode(',', $this->access) . ')')->where('(f.group_id=0 OR (fg.state=1 AND fg.target=f.target))')
+            ->where('f.access IN (' . implode(',', $this->accessLevels()) . ')')->where('(f.group_id=0 OR (fg.state=1 AND fg.target=f.target))')
             ->join('INNER', '#__dharmashop_field_values fv ON fv.product_id=eligible.id AND fv.field_id=f.id AND fv.variant_id IS NULL')
             ->join('INNER', '#__dharmashop_field_options o ON o.id=fv.option_id AND o.field_id=f.id')
             ->order('eligible.group_id,ga.ordering,f.id,o.ordering,o.id');

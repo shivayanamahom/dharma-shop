@@ -98,7 +98,7 @@ final class ScopedFacets
             $query = $this->outer($source, ['fd.catid', 'COUNT(DISTINCT fc.unit) AS n'])
                 ->join('INNER', '#__dharmashop_product_categories fd ON fd.product_id=fc.id')
                 ->where('fd.catid IN (' . implode(',', array_map('intval', $ids)) . ')')->where('fd.state=1')->where($definition->subcategories ? '(fd.direct=1 OR fd.catid IN (' . implode(',', array_map('intval', array_keys($definition->subcategories))) . '))' : 'fd.direct=1')->group('fd.catid');
-            foreach ($this->db->setQuery($query)->loadObjectList() as $row) {
+            foreach ($this->runBudgeted($query, fn (QueryInterface $q): array => $this->db->setQuery($q)->loadObjectList()) as $row) {
                 $id = (int) $row->catid;
                 if (isset($definition->brands[$id])) { $directories['brand'][$id] = (int) $row->n; }
                 if (isset($definition->badges[$id])) { $directories['badge'][$id] = (int) $row->n; }
@@ -115,9 +115,21 @@ final class ScopedFacets
             $this->bindings[$name] = $bound->value;
             $query->bind($name, $this->bindings[$name], $bound->dataType);
         }
+        return QueryBudget::apply($query, $this->remainingMs());
+    }
+
+    private function remainingMs(): int
+    {
         $remaining = (int) (($this->deadline - microtime(true)) * 1000);
         if ($remaining <= 0) { throw new \RuntimeException('Facet request time budget', 3024); }
-        return QueryBudget::apply($query, $remaining);
+
+        return $remaining;
+    }
+
+    /** @template T @param callable(QueryInterface): T $reader @return T */
+    private function runBudgeted(QueryInterface $query, callable $reader): mixed
+    {
+        return QueryBudget::run($this->db, $query, $reader, $this->remainingMs());
     }
 
     /** @var array<string, bool> результат проверки по состоянию (ключ `FilterState::key()`): справочники без своего выбора считаются по тому же набору, что и поля */
@@ -132,7 +144,7 @@ final class ScopedFacets
         $limit = max(100, min(100000, (int) ComponentHelper::getParams('com_dharmashop')->get('filter_live_limit', 20000)));
         $bounded = clone $source;
         $bounded->setLimit($limit + 1);
-        try { $ok = (int) $this->db->setQuery($this->outer($bounded, ['COUNT(*)']))->loadResult() <= $limit; }
+        try { $ok = (int) $this->runBudgeted($this->outer($bounded, ['COUNT(*)']), fn (QueryInterface $q): mixed => $this->db->setQuery($q)->loadResult()) <= $limit; }
         catch (\Throwable $error) { if (!self::timeout($error)) { throw $error; } $ok = false; }
 
         if ($stateKey !== null) { $this->within[$stateKey] = $ok; }
@@ -148,7 +160,7 @@ final class ScopedFacets
         $query = $this->outer($source, ['fv.field_id', 'fv.option_id', 'COUNT(DISTINCT fc.unit) AS n', 'MIN(fv.num) AS mn', 'MAX(COALESCE(fv.num_end,fv.num)) AS mx'])
             ->join('INNER', '#__dharmashop_field_values fv FORCE INDEX (idx_product) ON fv.product_id=fc.id')
             ->where('fv.field_id IN (' . $ids . ')')->group('fv.field_id,fv.option_id');
-        foreach ($this->db->setQuery($query)->loadObjectList() as $row) {
+        foreach ($this->runBudgeted($query, fn (QueryInterface $q): array => $this->db->setQuery($q)->loadObjectList()) as $row) {
             $field = (int) $row->field_id;
             if ($definition->fields[$field]->kind === FilterField::OPTION && $row->option_id !== null) { $result['options'][$field][(int) $row->option_id] = (int) $row->n; }
             elseif ($definition->fields[$field]->kind !== FilterField::OPTION && $row->mn !== null) { $result['ranges'][$field] = ['min' => (float) $row->mn, 'max' => (float) $row->mx]; }
@@ -164,19 +176,19 @@ final class ScopedFacets
             ->where('fd.catid IN (' . implode(',', array_map('intval', $ids)) . ')')->where('fd.state=1')->group('fd.catid');
         if ($direct) { $query->where('fd.direct=1'); }
         $result = [];
-        foreach ($this->db->setQuery($query)->loadObjectList() as $row) { $result[(int) $row->catid] = (int) $row->n; }
+        foreach ($this->runBudgeted($query, fn (QueryInterface $q): array => $this->db->setQuery($q)->loadObjectList()) as $row) { $result[(int) $row->catid] = (int) $row->n; }
         return $result;
     }
 
     private function price(QueryInterface $source): ?array
     {
         $query = $this->outer($source, ['MIN(fc.price_min) AS mn', 'MAX(fc.price_max) AS mx'])->where('fc.price_min>0');
-        $row = $this->db->setQuery($query)->loadObject();
+        $row = $this->runBudgeted($query, fn (QueryInterface $q): mixed => $this->db->setQuery($q)->loadObject());
         return $row && $row->mn !== null ? ['min' => (float) $row->mn, 'max' => (float) $row->mx] : null;
     }
 
     private static function timeout(\Throwable $error): bool
     {
-        return in_array((int) $error->getCode(), [3024, 1969], true) || str_contains($error->getMessage(), 'maximum statement execution time');
+        return QueryBudget::isTimeout($error);
     }
 }

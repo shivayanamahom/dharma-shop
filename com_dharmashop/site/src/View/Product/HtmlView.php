@@ -61,6 +61,7 @@ class HtmlView extends BaseHtmlView
     public function display($tpl = null): void
     {
         $this->item = $this->getModel()->getItem();
+        \Dharma\Component\DharmaShop\Site\Service\Router::prime([$this->item]);
         $this->params = ComponentHelper::getParams('com_dharmashop');
         $app = Factory::getApplication();
         $active = $app->getMenu()->getActive();
@@ -96,7 +97,7 @@ class HtmlView extends BaseHtmlView
                 : '−' . $percent . '%';
         }
 
-        $route = Route::_('index.php?option=com_dharmashop&view=product&id=' . (int) $this->item->id, false);
+        $route = Route::_('index.php?option=com_dharmashop&view=product&id=' . (int) $this->item->id . '&catid=' . (int) $this->item->catid, false);
         $url = preg_match('~^https?://~i', $route) ? $route : rtrim(Uri::root(), '/') . '/' . ltrim($route, '/');
         // Несемантические адреса (`/component/dharmashop/product/205`, `?option=com_dharmashop&view=product&id=205`) — 301 на ЧПУ.
         // Адрес через другой пункт меню (штатное поведение Joomla: ветка меню сохраняется) остаётся рабочим, его склеивает canonical.

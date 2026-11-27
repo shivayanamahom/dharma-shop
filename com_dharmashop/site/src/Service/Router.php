@@ -29,16 +29,90 @@ class Router extends RouterView
     private array $productCache = [];
 
     /** Prime category routes in one batch before rendering a module or another category collection. */
-    public function primeCategories(array $items): void
+    public function primeCategories(array $items, string $extension = self::CATEGORY): void
     {
         foreach ($items as $item) {
             if ((int) ($item->id ?? 0) > 1 && isset($item->parent_id, $item->alias)) {
-                $this->categoryCache[self::CATEGORY . '/' . (int) $item->id] = (object) [
+                $this->categoryCache[$extension . '/' . (int) $item->id] = (object) [
                     'id' => (int) $item->id, 'parent_id' => (int) $item->parent_id, 'alias' => (string) $item->alias,
                     // Модули подгружают только опубликованные категории; если признак есть в строке — берём его.
                     'published' => (int) ($item->published ?? 1),
                 ];
             }
+        }
+    }
+
+    /** Batch-load missing category records and their ancestors for route building. */
+    public function primeCategoryIds(array $ids, string $extension = self::CATEGORY): void
+    {
+        $missing = [];
+        foreach ($ids as $id) {
+            $id = (int) $id;
+            if ($id > 1 && !array_key_exists($extension . '/' . $id, $this->categoryCache)) {
+                $missing[$id] = $id;
+            }
+        }
+        if (!$missing) {
+            return;
+        }
+        foreach ($missing as $id) {
+            $this->categoryCache[$extension . '/' . $id] = null;
+        }
+        $db = $this->db;
+        $query = $db->createQuery()->select('DISTINCT a.id, a.parent_id, a.alias, a.published')
+            ->from($db->quoteName('#__categories', 'a'))
+            ->join('INNER', $db->quoteName('#__categories', 'c') . ' ON a.lft <= c.lft AND a.rgt >= c.rgt')
+            ->where('c.id IN (' . implode(',', $missing) . ')')
+            ->where($db->quoteName('a.extension') . ' = ' . $db->quote($extension))
+            ->where($db->quoteName('c.extension') . ' = ' . $db->quote($extension))
+            ->where('a.id > 1');
+        foreach ($db->setQuery($query)->loadObjectList() as $row) {
+            $this->categoryCache[$extension . '/' . (int) $row->id] = $row;
+        }
+    }
+
+    /** Batch-prime product records (and their primary category chains) before rendering product cards/links. */
+    public function primeProducts(array $items): void
+    {
+        $catids = [];
+        foreach ($items as $item) {
+            $id = (int) ($item->id ?? 0);
+            if ($id < 1 || !isset($item->catid, $item->alias)) {
+                continue;
+            }
+            $catid = (int) $item->catid;
+            $this->productCache['id/' . $id] = (object) [
+                'id' => $id,
+                'catid' => $catid,
+                'alias' => (string) $item->alias,
+                'state' => (int) ($item->state ?? 1),
+            ];
+            if ($catid > 1) {
+                $catids[$catid] = $catid;
+            }
+        }
+        if ($catids) {
+            $this->primeCategoryIds(array_values($catids), self::CATEGORY);
+        }
+    }
+
+    /** Convenience helper for site views/modules to prime the active component router without duplicating boilerplate. */
+    public static function prime(array $products = [], array $categories = [], string $extension = self::CATEGORY): void
+    {
+        try {
+            $app = \Joomla\CMS\Factory::getApplication();
+            if (!$app->isClient('site') || !method_exists($app, 'getRouter')) {
+                return;
+            }
+            $router = $app->getRouter()->getComponentRouter('com_dharmashop');
+            if ($categories && method_exists($router, 'primeCategories')) {
+                $router->primeCategories($categories, $extension);
+            }
+            if ($products && method_exists($router, 'primeProducts')) {
+                $router->primeProducts($products);
+            }
+        } catch (\Throwable) {
+            // Priming is an optimization only.
         }
     }
 

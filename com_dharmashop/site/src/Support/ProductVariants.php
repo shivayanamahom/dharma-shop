@@ -38,7 +38,7 @@ final class ProductVariants
         }
 
         $rows = $db->setQuery(
-            'SELECT p.id, p.catid, p.title, p.cover, p.price_min, p.price_max, p.price_zero_free, p.in_stock, '
+            'SELECT p.id, p.catid, p.alias, p.title, p.cover, p.price_min, p.price_max, p.price_zero_free, p.in_stock, '
             . '(SELECT v.sku FROM ' . $db->quoteName('#__dharmashop_variants', 'v') . ' WHERE v.product_id = p.id AND v.is_default = 1 AND v.state = 1 LIMIT 1) AS sku '
             . 'FROM ' . $db->quoteName('#__dharmashop_products', 'p') . ' JOIN ' . $db->quoteName('#__categories', 'c') . ' ON c.id = p.catid '
             . 'WHERE p.group_id = ' . $groupId . ' AND p.state = 1 AND c.extension = ' . $db->quote('com_dharmashop') . ' AND c.published = 1 AND c.access IN (' . $levels . ') '
@@ -51,6 +51,8 @@ final class ProductVariants
         if (count($rows) < 2) {
             return null;
         }
+
+        \Dharma\Component\DharmaShop\Site\Service\Router::prime($rows);
 
         $axes = $db->setQuery(
             'SELECT f.id, f.title, f.type FROM ' . $db->quoteName('#__dharmashop_group_axes', 'a') . ' JOIN ' . $db->quoteName('#__dharmashop_fields', 'f') . ' ON f.id = a.field_id '
@@ -80,7 +82,7 @@ final class ProductVariants
         $variants = [];
 
         foreach ($rows as $row) {
-            $route = Route::_('index.php?option=com_dharmashop&view=product&id=' . (int) $row->id, false);
+            $route = Route::_('index.php?option=com_dharmashop&view=product&id=' . (int) $row->id . '&catid=' . (int) $row->catid, false);
             $options = [];
 
             foreach ($axisTitle as $fieldId => $title) {

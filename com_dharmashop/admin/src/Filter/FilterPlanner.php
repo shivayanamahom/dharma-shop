@@ -148,6 +148,8 @@ final class FilterPlanner
     private function directCount(array $catids): int
     {
         sort($catids);
+        // Небольшие наборы кэшируем; произвольные длинные переборы категорий в URL не должны раздувать дисковый кэш.
+        $cacheable = count($catids) <= 5;
 
         return (int) FilterCache::remember($this->db->getPrefix() . ':' . 'direct:' . implode(',', $catids), function () use ($catids): int {
             $db = $this->db;
@@ -155,6 +157,6 @@ final class FilterPlanner
                 ->where('catid IN (' . implode(',', array_map('intval', $catids)) . ')')->where('state = 1');
 
             return (int) $db->setQuery($query)->loadResult();
-        });
+        }, $cacheable);
     }
 }

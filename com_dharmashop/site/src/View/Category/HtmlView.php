@@ -53,6 +53,7 @@ class HtmlView extends BaseHtmlView
         $this->loadProducts($model);
         // Поиск показывает товары: плитки подкатегорий при запросе не выводятся.
         $this->subcategories = $model->getQueryText() !== '' ? [] : $model->getItems();
+        \Dharma\Component\DharmaShop\Site\Service\Router::prime([], array_merge($ancestors, [$this->item], $this->subcategories), $this->taxonomy()->extension);
         $settings = ComponentHelper::getParams('com_dharmashop');
         $active = $app->getMenu()->getActive();
         $this->showHeading = (int) $menu->get('show_page_heading', 1) === 1;

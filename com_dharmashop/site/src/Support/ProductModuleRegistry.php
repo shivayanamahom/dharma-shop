@@ -10,12 +10,15 @@ final class ProductModuleRegistry
 {
     private static array $products = [];
     private static array $groups = [];
+    private static bool $personalized = false;
 
     public static function products(): array { return array_map('intval', array_keys(self::$products)); }
     public static function groups(): array { return array_map('intval', array_keys(self::$groups)); }
+    public static function hasPersonalized(): bool { return self::$personalized; }
 
-    public static function claim(array $items): void
+    public static function claim(array $items, bool $personalized = false): void
     {
+        if ($personalized && $items) { self::$personalized = true; }
         foreach ($items as $item) {
             $id = (int) ($item->id ?? 0);
             $groupId = (int) ($item->group_id ?? 0);

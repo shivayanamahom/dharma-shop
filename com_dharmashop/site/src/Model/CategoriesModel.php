@@ -2,6 +2,7 @@
 declare(strict_types=1);
 namespace Dharma\Component\DharmaShop\Site\Model;
 
+use Dharma\Component\DharmaShop\Administrator\Filter\FilterCache;
 use Dharma\Component\DharmaShop\Site\Support\Taxonomy;
 use Dharma\Component\DharmaShop\Site\Support\EntityFields;
 use Joomla\CMS\Component\ComponentHelper;
@@ -129,11 +130,54 @@ class CategoriesModel extends BaseDatabaseModel
      */
     public function getCardStats(array $items, bool $withPrices): array
     {
+        $ids = array_values(array_unique(array_filter(
+            array_map(static fn (object $item): int => (int) $item->id, $items),
+            static fn (int $id): bool => $id >= 0
+        )));
+
+        if (!$ids) {
+            return [];
+        }
+
+        $db = $this->getDatabase();
+        $sorted = $ids;
+        sort($sorted);
+        $key = 'catstats:v1:' . md5($db->getPrefix() . ':' . self::COUNT_CAP . ':' . (int) $withPrices . ':' . implode(',', $sorted));
+
+        $rows = FilterCache::remember($key, function () use ($db, $sorted, $withPrices): array {
+            $limit = self::COUNT_CAP + 1;
+            $data = [];
+
+            foreach (array_chunk($sorted, 50) as $chunk) {
+                $parts = [];
+
+                foreach ($chunk as $id) {
+                    $countSql = $id > 0
+                        ? '(SELECT COUNT(*) FROM (SELECT 1 FROM #__dharmashop_product_categories WHERE catid = ' . $id . ' AND state = 1 LIMIT ' . $limit . ') AS capped)'
+                        : '(SELECT COUNT(*) FROM (SELECT 1 FROM #__dharmashop_products WHERE state = 1 LIMIT ' . $limit . ') AS capped)';
+                    $wherePrice = ' FROM #__dharmashop_product_categories FORCE INDEX (idx_l_price) WHERE catid = ' . $id . ' AND state = 1';
+                    $minSql = $withPrices && $id > 0 ? '(SELECT MIN(price_sort)' . $wherePrice . ')' : 'NULL';
+                    $maxSql = $withPrices && $id > 0 ? '(SELECT MAX(price_sort)' . $wherePrice . ')' : 'NULL';
+                    $parts[] = 'SELECT ' . $id . ' AS id, ' . $countSql . ' AS total, ' . $minSql . ' AS pmin, ' . $maxSql . ' AS pmax';
+                }
+
+                foreach ($db->setQuery(implode(' UNION ALL ', $parts))->loadObjectList() as $row) {
+                    $total = (int) $row->total;
+                    $data[(int) $row->id] = [
+                        'product_count' => $total > self::COUNT_CAP ? self::COUNT_CAP . '+' : (string) $total,
+                        'price_min' => isset($row->pmin) ? (string) $row->pmin : null,
+                        'price_max' => isset($row->pmax) ? (string) $row->pmax : null,
+                    ];
+                }
+            }
+
+            return $data;
+        });
+
         $stats = [];
 
-        foreach (array_unique(array_map(static fn (object $item): int => (int) $item->id, $items)) as $id) {
-            $range = $withPrices ? $this->getPriceRange($id) : ['min' => null, 'max' => null];
-            $stats[$id] = (object) ['product_count' => $this->getCountLabel($id), 'price_min' => $range['min'], 'price_max' => $range['max']];
+        foreach ($ids as $id) {
+            $stats[$id] = (object) ($rows[$id] ?? ['product_count' => '0', 'price_min' => null, 'price_max' => null]);
         }
 
         return $stats;

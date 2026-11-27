@@ -13,6 +13,10 @@ use Joomla\CMS\Factory;
 final class FavoritesService
 {
     private bool $schemaReady = false;
+    private array $userCache = [];
+    private array $tokenCache = [];
+    private array $idsCache = [];
+    private array $countCache = [];
 
     public function __construct(private readonly DatabaseInterface $db)
     {
@@ -25,18 +29,25 @@ final class FavoritesService
 
     public function find(string $token, int $userId): ?object
     {
-        $this->ensureSchema();
+        $validToken = preg_match('/^[a-f0-9]{64}$/', $token) === 1;
+        if ($userId <= 0 && !$validToken) {
+            return null;
+        }
+
         $userList = $userId > 0 ? $this->byUser($userId) : null;
-        $guestList = $this->byToken($token);
+        $guestList = $validToken ? $this->byToken($token) : null;
 
         if ($userList && $guestList && (int) $userList->id !== (int) $guestList->id) {
             $this->merge((int) $guestList->id, (int) $userList->id);
+            unset($this->tokenCache[$token]);
             return $userList;
         }
 
         if ($userList) {
             if ($guestList && (int) $userList->id === (int) $guestList->id) {
                 $this->db->setQuery('UPDATE #__dharmashop_favorites SET token = NULL WHERE id = ' . (int) $userList->id)->execute();
+                $userList->token = null;
+                unset($this->tokenCache[$token]);
             }
             return $userList;
         }
@@ -45,6 +56,8 @@ final class FavoritesService
             $this->db->setQuery('UPDATE #__dharmashop_favorites SET user_id = ' . $userId . ', token = NULL, modified = NOW() WHERE id = ' . (int) $guestList->id)->execute();
             $guestList->user_id = $userId;
             $guestList->token = null;
+            unset($this->tokenCache[$token]);
+            $this->userCache[$userId] = $guestList;
         }
 
         return $guestList;
@@ -52,6 +65,7 @@ final class FavoritesService
 
     public function ensure(string $token, int $userId): object
     {
+        $this->ensureSchema();
         if ($list = $this->find($token, $userId)) {
             return $list;
         }
@@ -72,6 +86,8 @@ final class FavoritesService
             $this->db->setQuery($insert)->execute();
         } catch (\Throwable $exception) {
             // Another request may have created this unique owner row after find().
+            if ($userId > 0) { unset($this->userCache[$userId]); }
+            if ($token !== '') { unset($this->tokenCache[$token]); }
             $list = $userId > 0 ? $this->byUser($userId) : $this->byToken($token);
             if (!$list) {
                 throw $exception;
@@ -79,6 +95,8 @@ final class FavoritesService
             return $list;
         }
 
+        if ($userId > 0) { unset($this->userCache[$userId]); }
+        if ($token !== '') { unset($this->tokenCache[$token]); }
         $list = $userId > 0 ? $this->byUser($userId) : $this->byToken($token);
         if (!$list) {
             throw new \RuntimeException('Could not create favorites list');
@@ -111,6 +129,7 @@ final class FavoritesService
             $added = true;
         }
         $this->touch((int) $list->id);
+        $this->clearListCache($listId);
         return ['ok' => true, 'added' => $added, 'count' => $this->count((int) $list->id)];
     }
 
@@ -120,19 +139,36 @@ final class FavoritesService
         $this->db->setQuery($this->db->createQuery()->delete($this->db->quoteName('#__dharmashop_favorite_items'))
             ->where('favorites_id = :list')->where('product_id = :product')
             ->bind(':list', $listId, ParameterType::INTEGER)->bind(':product', $productId, ParameterType::INTEGER))->execute();
+        $this->clearListCache($listId);
         $this->touch($listId);
     }
 
     public function clear(object $list): void
     {
-        $this->db->setQuery('DELETE FROM #__dharmashop_favorite_items WHERE favorites_id = ' . (int) $list->id)->execute();
-        $this->touch((int) $list->id);
+        $listId = (int) $list->id;
+        $this->db->setQuery('DELETE FROM #__dharmashop_favorite_items WHERE favorites_id = ' . $listId)->execute();
+        $this->clearListCache($listId);
+        $this->touch($listId);
+    }
+
+    private function clearListCache(int $listId): void
+    {
+        $prefix = $listId . ':';
+        foreach (array_keys($this->idsCache) as $key) {
+            if (str_starts_with($key, $prefix)) { unset($this->idsCache[$key]); }
+        }
+        foreach (array_keys($this->countCache) as $key) {
+            if (str_starts_with($key, $prefix)) { unset($this->countCache[$key]); }
+        }
     }
 
     public function count(int $listId): int
     {
         $levels = $this->viewLevels();
-        return (int) $this->db->setQuery($this->db->createQuery()->select('COUNT(*)')->from($this->db->quoteName('#__dharmashop_favorite_items', 'fi'))
+        $key = $listId . ':' . $levels;
+        if (isset($this->countCache[$key])) { return $this->countCache[$key]; }
+        if (isset($this->idsCache[$key])) { return $this->countCache[$key] = count($this->idsCache[$key]); }
+        return $this->countCache[$key] = (int) $this->db->setQuery($this->db->createQuery()->select('COUNT(*)')->from($this->db->quoteName('#__dharmashop_favorite_items', 'fi'))
             ->join('INNER', $this->db->quoteName('#__dharmashop_products', 'p') . ' ON p.id = fi.product_id AND p.state = 1')
             ->join('INNER', $this->db->quoteName('#__categories', 'c') . ' ON c.id = p.catid AND c.published = 1 AND c.access IN (' . $levels . ')')
             ->where('fi.favorites_id = :id')->bind(':id', $listId, ParameterType::INTEGER))->loadResult();
@@ -142,10 +178,14 @@ final class FavoritesService
     public function productIds(int $listId): array
     {
         $levels = $this->viewLevels();
-        return array_map('intval', $this->db->setQuery($this->db->createQuery()->select('fi.product_id')->from($this->db->quoteName('#__dharmashop_favorite_items', 'fi'))
+        $key = $listId . ':' . $levels;
+        if (isset($this->idsCache[$key])) { return $this->idsCache[$key]; }
+        $ids = array_map('intval', $this->db->setQuery($this->db->createQuery()->select('fi.product_id')->from($this->db->quoteName('#__dharmashop_favorite_items', 'fi'))
             ->join('INNER', $this->db->quoteName('#__dharmashop_products', 'p') . ' ON p.id = fi.product_id AND p.state = 1')
             ->join('INNER', $this->db->quoteName('#__categories', 'c') . ' ON c.id = p.catid AND c.published = 1 AND c.access IN (' . $levels . ')')
             ->where('fi.favorites_id = :id')->bind(':id', $listId, ParameterType::INTEGER))->loadColumn());
+        $this->countCache[$key] = count($ids);
+        return $this->idsCache[$key] = $ids;
     }
 
     /** @return object[] */
@@ -161,14 +201,16 @@ final class FavoritesService
 
     private function byUser(int $userId): ?object
     {
-        return $this->db->setQuery($this->db->createQuery()->select('*')->from($this->db->quoteName('#__dharmashop_favorites'))
+        if (array_key_exists($userId, $this->userCache)) { return $this->userCache[$userId]; }
+        return $this->userCache[$userId] = $this->db->setQuery($this->db->createQuery()->select('*')->from($this->db->quoteName('#__dharmashop_favorites'))
             ->where('user_id = :id')->bind(':id', $userId, ParameterType::INTEGER))->loadObject() ?: null;
     }
 
     private function byToken(string $token): ?object
     {
         if (!preg_match('/^[a-f0-9]{64}$/', $token)) { return null; }
-        return $this->db->setQuery($this->db->createQuery()->select('*')->from($this->db->quoteName('#__dharmashop_favorites'))
+        if (array_key_exists($token, $this->tokenCache)) { return $this->tokenCache[$token]; }
+        return $this->tokenCache[$token] = $this->db->setQuery($this->db->createQuery()->select('*')->from($this->db->quoteName('#__dharmashop_favorites'))
             ->where('token = :token')->bind(':token', $token))->loadObject() ?: null;
     }
 
@@ -178,6 +220,8 @@ final class FavoritesService
             . 'SELECT ' . $to . ', product_id, created FROM #__dharmashop_favorite_items WHERE favorites_id = ' . $from)->execute();
         $this->db->setQuery('DELETE FROM #__dharmashop_favorite_items WHERE favorites_id = ' . $from)->execute();
         $this->db->setQuery('DELETE FROM #__dharmashop_favorites WHERE id = ' . $from)->execute();
+        $this->idsCache = [];
+        $this->countCache = [];
         $this->touch($to);
     }
 

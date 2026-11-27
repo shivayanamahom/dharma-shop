@@ -39,20 +39,21 @@ final class Products
         $recent = array_values(array_filter($recent, static fn(int $id): bool => $id !== $currentProduct));
         if ($mode === 'recent' && !$recent) { return []; }
 
-        $query = $this->candidates($params, $levels, $mode, $recent);
+        $exclusions = (int) $params->get('exclude_duplicates', 0) === 1
+            ? ['products' => ProductModuleRegistry::products(), 'groups' => ProductModuleRegistry::groups()]
+            : ['products' => [], 'groups' => []];
+        $query = $this->candidates($params, $levels, $mode, $recent, $exclusions);
         $direction = $mode === 'recent' ? 'ASC' : ((string) $params->get('sort_direction', 'DESC') === 'ASC' ? 'ASC' : 'DESC');
         $sort = match ((string) $params->get('sort', 'created')) {
             'price' => 'p.price_min', 'title' => 'p.title', default => 'p.created',
         };
         if ($mode === 'recent') { $sort = 'FIELD(p.id,' . implode(',', array_map('intval', $recent)) . ')'; }
 
+        $cacheable = $mode !== 'recent' && !((int) $params->get('exclude_duplicates', 0) === 1 && ProductModuleRegistry::hasPersonalized());
+
         if ($grouped) {
             $listing = new GroupListing($this->db);
-            // Без выборочных условий кандидатов почти весь каталог: видимость групп считается один раз (иначе — проверка на каждый товар).
-            $selective = $mode === 'recent' || (array) $params->get('categories', []) || (array) $params->get('brands', [])
-                || (array) $params->get('badges', []) || (array) $params->get('field_values', []) || (array) $params->get('field_ranges', []);
-            $index = new \Dharma\Component\DharmaShop\Administrator\Catalog\GroupIndex($this->db);
-            $listing->applyContext($query, 0, 'com_dharmashop', $levels, !$selective, $index->ready() && $index->accessible(array_map('intval', $levels)));
+            $this->applyGroupContext($listing, $query, $params, $levels, $mode === 'recent');
             $result = $listing->representatives($query, $sort, $direction);
 
             if ($mode === 'recent') {
@@ -60,43 +61,95 @@ final class Products
                 $result->order('listing_ranked.listing_sort ' . $direction)->order('p.id ASC');
                 $items = $this->db->setQuery($result, 0, $limit)->loadObjectList();
             } else {
-                // Порядок единиц одинаков для всех посетителей и меняется только записью каталога: считается раз на сортировку и условия
-                // модуля (оконная функция по всему каталогу стоит сотни миллисекунд на каждом показе страницы), карточки читаются по ключу.
                 $idQuery = (clone $result)->select('p.id')->order('listing_ranked.listing_sort ' . $direction)->order('p.id ASC');
-                $bindings = array_map(static fn(object $bound): mixed => $bound->value, $idQuery->getBounded());
-                $db = $this->db;
-                $ids = FilterCache::remember('modrank:v1:' . md5($db->replacePrefix((string) $idQuery) . json_encode($bindings)),
-                    static fn(): array => array_map('intval', $db->setQuery($idQuery, 0, $limit)->loadColumn()));
-                $items = [];
-
-                if ($ids) {
-                    $rows = $this->db->createQuery()->from($this->db->quoteName('#__dharmashop_products', 'p'))
-                        ->join('INNER', $this->db->quoteName('#__categories', 'c') . ' ON c.id=p.catid')->whereIn('p.id', $ids);
-                    $this->selectProducts($rows);
-                    $byId = $this->db->setQuery($rows)->loadObjectList('id');
-
-                    foreach ($ids as $id) {
-                        if (isset($byId[$id])) { $items[] = $byId[$id]; }
-                    }
-                }
+                $items = $this->loadCachedPage($idQuery, $limit, 'modrank:v1:', $cacheable);
             }
             $this->prepareItems($items);
             $component = $this->app->bootComponent('com_dharmashop');
             $listing->attach($items, $query, $component->getServices()->orderRules());
             $listing->inheritImages($items, 1);
+
+            $scopeContext = [];
+            if ($mode === 'recent') { $scopeContext['recent'] = $recent; }
+            if ($exclusions['products']) { $scopeContext['exclude_products'] = $exclusions['products']; }
+            if ($exclusions['groups']) { $scopeContext['exclude_groups'] = $exclusions['groups']; }
+            if ($scopeContext) {
+                foreach ($items as $item) { $item->module_card_scope = $scopeContext; }
+            }
         } else {
-            $this->selectProducts($query);
-            $query->order($sort . ' ' . $direction)->order('p.id DESC');
-            $items = $this->db->setQuery($query, 0, $limit)->loadObjectList();
+            if ($mode === 'recent') {
+                $this->selectProducts($query);
+                $query->order($sort . ' ' . $direction)->order('p.id DESC');
+                $items = $this->db->setQuery($query, 0, $limit)->loadObjectList();
+            } else {
+                $idQuery = (clone $query)->select('p.id')->order($sort . ' ' . $direction)->order('p.id DESC');
+                $items = $this->loadCachedPage($idQuery, $limit, 'modlist:v1:', $cacheable);
+            }
             $this->prepareItems($items);
             $this->attachCardData($items, $levels);
         }
 
-        if ((int) $params->get('exclude_duplicates', 0) === 1) { ProductModuleRegistry::claim($items); }
+        if ((int) $params->get('exclude_duplicates', 0) === 1) { ProductModuleRegistry::claim($items, $mode === 'recent'); }
+        \Dharma\Component\DharmaShop\Site\Service\Router::prime($items);
         return $items;
     }
 
-    private function candidates(Registry $params, array $levels, string $mode, array $recent): QueryInterface
+    /** Candidate query for AJAX group card variant switching inside this module. */
+    public function groupCardCandidates(Registry $params, array $scope = []): QueryInterface
+    {
+        $mode = in_array((string) $params->get('source', 'new'), ['new', 'recent'], true) ? (string) $params->get('source', 'new') : 'new';
+        $levels = FilterDefinitionLoader::currentLevels();
+        $recent = $mode === 'recent'
+            ? (array_key_exists('recent', $scope)
+                ? array_values(array_filter(array_map('intval', (array) $scope['recent']), static fn (int $id): bool => $id > 0))
+                : RecentProducts::read($this->app))
+            : [];
+        $exclusions = [
+            'products' => array_values(array_filter(array_map('intval', (array) ($scope['exclude_products'] ?? [])), static fn (int $id): bool => $id > 0)),
+            'groups' => array_values(array_filter(array_map('intval', (array) ($scope['exclude_groups'] ?? [])), static fn (int $id): bool => $id > 0)),
+        ];
+        $query = $this->candidates($params, $levels, $mode, $recent, $exclusions);
+        $this->applyGroupContext(new GroupListing($this->db), $query, $params, $levels, $mode === 'recent');
+
+        return $query;
+    }
+
+    private function applyGroupContext(GroupListing $listing, QueryInterface $query, Registry $params, array $levels, bool $isRecent): void
+    {
+        // Без выборочных условий кандидатов почти весь каталог: видимость групп считается один раз (иначе — проверка на каждый товар).
+        $selective = $isRecent || (array) $params->get('categories', []) || (array) $params->get('brands', [])
+            || (array) $params->get('badges', []) || (array) $params->get('field_values', []) || (array) $params->get('field_ranges', []);
+        $index = new \Dharma\Component\DharmaShop\Administrator\Catalog\GroupIndex($this->db);
+        $listing->applyContext($query, 0, 'com_dharmashop', $levels, !$selective, $index->ready() && $index->accessible(array_map('intval', $levels)));
+    }
+
+    /** @return array<int, object> */
+    private function loadCachedPage(QueryInterface $idQuery, int $limit, string $prefix, bool $cacheable): array
+    {
+        $bindings = array_map(static fn(object $bound): mixed => $bound->value, $idQuery->getBounded());
+        $db = $this->db;
+        $ids = FilterCache::remember(
+            $prefix . md5($db->replacePrefix((string) $idQuery) . json_encode([$bindings, $limit])),
+            static fn(): array => array_map('intval', $db->setQuery($idQuery, 0, $limit)->loadColumn()),
+            $cacheable
+        );
+        if (!$ids) {
+            return [];
+        }
+        $rows = $this->db->createQuery()->from($this->db->quoteName('#__dharmashop_products', 'p'))
+            ->join('INNER', $this->db->quoteName('#__categories', 'c') . ' ON c.id=p.catid')->whereIn('p.id', $ids);
+        $this->selectProducts($rows);
+        $byId = $this->db->setQuery($rows)->loadObjectList('id');
+        $items = [];
+        foreach ($ids as $id) {
+            if (isset($byId[$id])) {
+                $items[] = $byId[$id];
+            }
+        }
+        return $items;
+    }
+
+    private function candidates(Registry $params, array $levels, string $mode, array $recent, array $exclusions = []): QueryInterface
     {
         $levelsSql = implode(',', array_map('intval', $levels) ?: [1]);
         $query = $this->db->createQuery()->from($this->db->quoteName('#__dharmashop_products', 'p'))
@@ -109,7 +162,12 @@ final class Products
         $query->where('NOT EXISTS (' . $blocked . ')');
 
         if ($mode === 'recent') {
-            $query->whereIn('p.id', array_map('intval', $recent));
+            $recentIds = array_values(array_filter(array_map('intval', $recent), static fn (int $id): bool => $id > 0));
+            if (!$recentIds) {
+                $query->where('1 = 0');
+                return $query;
+            }
+            $query->whereIn('p.id', $recentIds);
         }
         $definition = (new FilterDefinitionLoader($this->db))->forCategory(0, $levels);
         $state = $this->filterState($params, $definition, $levelsSql);
@@ -121,8 +179,8 @@ final class Products
             }
         }
 
-        $excludeProducts = (int) $params->get('exclude_duplicates', 0) === 1 ? ProductModuleRegistry::products() : [];
-        $excludeGroups = (int) $params->get('exclude_duplicates', 0) === 1 ? ProductModuleRegistry::groups() : [];
+        $excludeProducts = array_values(array_filter(array_map('intval', (array) ($exclusions['products'] ?? [])), static fn (int $id): bool => $id > 0));
+        $excludeGroups = array_values(array_filter(array_map('intval', (array) ($exclusions['groups'] ?? [])), static fn (int $id): bool => $id > 0));
         if ($excludeProducts) { $query->where('p.id NOT IN (' . implode(',', $excludeProducts) . ')'); }
         if ($excludeGroups) { $query->where('(p.group_id IS NULL OR p.group_id=0 OR p.group_id NOT IN (' . implode(',', $excludeGroups) . '))'); }
         return $query;
@@ -245,9 +303,13 @@ final class Products
             $prices[(int) $row->product_id] = $row;
         }
         $badges = [];
-        foreach ($this->db->setQuery('SELECT pc.product_id,c.id,c.title,c.params FROM ' . $this->db->quoteName('#__dharmashop_product_categories', 'pc')
+        $badgeRows = $this->db->setQuery('SELECT pc.product_id,c.id,c.parent_id,c.alias,c.title,c.params FROM ' . $this->db->quoteName('#__dharmashop_product_categories', 'pc')
             . ' JOIN ' . $this->db->quoteName('#__categories', 'c') . ' ON c.id=pc.catid WHERE pc.product_id IN (' . $ids . ') AND pc.direct=1'
-            . ' AND c.extension=' . $this->db->quote('com_dharmashop.badge') . ' AND c.published=1 AND c.access IN (' . implode(',', array_map('intval', $levels) ?: [1]) . ') ORDER BY c.lft')->loadObjectList() as $row) {
+            . ' AND c.extension=' . $this->db->quote('com_dharmashop.badge') . ' AND c.published=1 AND c.access IN (' . implode(',', array_map('intval', $levels) ?: [1]) . ') ORDER BY c.lft')->loadObjectList();
+        if ($badgeRows) {
+            \Dharma\Component\DharmaShop\Site\Service\Router::prime([], $badgeRows, 'com_dharmashop.badge');
+        }
+        foreach ($badgeRows as $row) {
             $settings = new Registry($row->params);
             if ((int) $settings->get('badge_show_list', 1) !== 1) { continue; }
             $color = (string) $settings->get('badge_color', 'primary');

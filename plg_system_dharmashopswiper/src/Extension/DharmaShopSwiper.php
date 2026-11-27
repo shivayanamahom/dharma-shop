@@ -3,6 +3,9 @@ declare(strict_types=1);
 
 namespace Dharma\Plugin\System\DharmaShopSwiper\Extension;
 
+use Joomla\CMS\Document\HtmlDocument;
+use Joomla\CMS\Document\JsonDocument;
+use Joomla\CMS\Document\RawDocument;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Plugin\CMSPlugin;
 use Joomla\Event\SubscriberInterface;
@@ -25,11 +28,22 @@ final class DharmaShopSwiper extends CMSPlugin implements SubscriberInterface
     public function registerAssets(): void
     {
         $app = $this->getApplication();
+        $input = $app->getInput();
+        $format = $input->getCmd('format', 'html');
+        $groupCard = $format === 'json' && $input->getCmd('option') === 'com_dharmashop'
+            && $input->getCmd('task') === 'groupcard.select';
 
-        if (!$app->isClient('site')) {
+        // Реестр нужен и на HTML-страницах, и в HTML-фрагментах каталога и в HTML карточки внутри JSON.
+        if (!$app->isClient('site') || (!$groupCard && !in_array($format, ['html', 'raw'], true))) {
             return;
         }
 
-        Factory::getDocument()->getWebAssetManager()->getRegistry()->addRegistryFile('media/plg_system_dharmashopswiper/joomla.asset.json');
+        $doc = Factory::getDocument();
+
+        if (!$doc instanceof HtmlDocument && !$doc instanceof RawDocument && !($groupCard && $doc instanceof JsonDocument)) {
+            return;
+        }
+
+        $doc->getWebAssetManager()->getRegistry()->addRegistryFile('media/plg_system_dharmashopswiper/joomla.asset.json');
     }
 }

@@ -41,13 +41,16 @@ class LandingModel extends CategoryModel
     {
         $this->landingId = max(0, $id);
         $this->page = $this->virtual = $this->landingState = $this->visitorState = null;
+        $this->resetListingMemo();
 
         return $this;
     }
 
     public function setFilterModule(Registry $params): void
     {
-        parent::setFilterModule($params);
+        if (!$this->applyFilterModule($params)) {
+            return;
+        }
         $this->landingState = $this->visitorState = null;
     }
 

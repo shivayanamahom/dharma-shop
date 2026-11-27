@@ -53,21 +53,29 @@ final class FilterHelper
             return null;
         }
 
-        /** @var CategoryModel $model */
-        $model = $landing
-            ? $this->app->bootComponent('com_dharmashop_landing')->getMVCFactory()->createModel('Landing', 'Site', ['ignore_request' => true])
-            : $this->app->bootComponent('com_dharmashop')->getMVCFactory()->createModel(self::MODELS[$input->getCmd('view')], 'Site', ['ignore_request' => true]);
-        $fixed = $landing ? $model->getFixedFilterState() : null;
-
         // Страница категории: текущая, весь каталог или выбранная в настройках модуля.
+        $view = $input->getCmd('view');
         $mode = (string) $this->params->get('category_mode', 'current');
+        $activeKey = ($landing ? 'com_dharmashop_landing' : 'com_dharmashop') . ':' . $view;
+        $canReuse = $landing || $view !== 'category' || $mode === 'current';
+        $model = $canReuse ? CategoryModel::active($activeKey) : null;
 
-        if ($input->getCmd('view') === 'category') {
-            if ($mode === 'root') {
-                $model->forCategory(0);
-            } elseif ($mode === 'fixed' && (int) $this->params->get('category', 0) > 0) {
-                $model->forCategory((int) $this->params->get('category', 0));
+        if ($model === null) {
+            /** @var CategoryModel $model */
+            $model = $landing
+                ? $this->app->bootComponent('com_dharmashop_landing')->getMVCFactory()->createModel('Landing', 'Site', ['ignore_request' => true])
+                : $this->app->bootComponent('com_dharmashop')->getMVCFactory()->createModel(self::MODELS[$view], 'Site', ['ignore_request' => true]);
+            $fixed = $landing ? $model->getFixedFilterState() : null;
+
+            if ($view === 'category') {
+                if ($mode === 'root') {
+                    $model->forCategory(0);
+                } elseif ($mode === 'fixed' && (int) $this->params->get('category', 0) > 0) {
+                    $model->forCategory((int) $this->params->get('category', 0));
+                }
             }
+        } else {
+            $fixed = $landing ? $model->getFixedFilterState() : null;
         }
 
         $initiator = \Dharma\Component\DharmaShop\Site\Support\FilterRequest::params();

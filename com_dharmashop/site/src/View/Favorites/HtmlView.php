@@ -67,6 +67,7 @@ class HtmlView extends BaseHtmlView
         if ($list = $session->current()) {
             $this->count = $session->service()->count((int) $list->id);
             $this->items = $session->service()->products((int) $list->id);
+            \Dharma\Component\DharmaShop\Site\Service\Router::prime($this->items);
             foreach ($this->items as $item) {
                 $item->params = new Registry($item->params ?? '');
                 $item->price_free = $app->bootComponent('com_dharmashop')->getServices()->orderRules()->priceIsFree($item);

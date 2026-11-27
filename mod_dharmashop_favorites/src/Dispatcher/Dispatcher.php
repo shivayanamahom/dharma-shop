@@ -17,7 +17,6 @@ class Dispatcher extends AbstractModuleDispatcher
     {
         $data = parent::getLayoutData();
         $app = $this->getApplication();
-        $app->allowCache(false);
 
         if (!FavoritesSettings::enabled()) {
             $data['enabled'] = false;
@@ -25,6 +24,7 @@ class Dispatcher extends AbstractModuleDispatcher
             return $data;
         }
 
+        $app->allowCache(false);
         $session = new FavoritesSession($app->bootComponent('com_dharmashop')->getServices()->favorites(), $app);
         $list = $session->current();
         $data['count'] = $list ? $session->service()->count((int) $list->id) : 0;

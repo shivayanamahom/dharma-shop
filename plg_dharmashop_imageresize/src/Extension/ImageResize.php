@@ -11,16 +11,28 @@ use Joomla\Event\SubscriberInterface;
 final class ImageResize extends CMSPlugin implements SubscriberInterface
 {
     private ?array $presets = null;
+    private ?Resizer $resizer = null;
+
     public static function getSubscribedEvents(): array { return ['onDharmaShopImagePrepare'=>'prepare']; }
+
     public function prepare(EventInterface $event): void
     {
-        $request = $event->getArgument('request'); $settings = $event->getArgument('settings');
-        if (!$request instanceof ImageRequest || !(int)$settings->get('image_resize_enabled',1)) return;
+        $request = $event->getArgument('request');
+        $settings = $event->getArgument('settings');
+        if (!$request instanceof ImageRequest || !(int) $settings->get('image_resize_enabled', 1)) {
+            return;
+        }
+
         $this->presets ??= ImageContexts::presets($settings);
         $preset = $this->presets[$request->context] ?? null;
-        $resizer = new Resizer();
-        if ($preset === null) { [$request->width, $request->height] = $resizer->dimensions($request->url); return; }
-        $request->url = $resizer->resolve($request->source, $request->context, $preset, (string)$settings->get('image_resize_cache','images/dharmashop/cache/resized'));
-        [$request->width, $request->height] = $resizer->dimensions($request->url);
+        $resizer = $this->resizer ??= new Resizer();
+
+        if ($preset === null) {
+            [$request->width, $request->height] = $resizer->dimensions($request->url);
+            return;
+        }
+
+        $cache = (string) $settings->get('image_resize_cache', 'images/dharmashop/cache/resized');
+        [$request->url, $request->width, $request->height] = $resizer->resolveWithDimensions($request->source, $request->context, $preset, $cache);
     }
 }
