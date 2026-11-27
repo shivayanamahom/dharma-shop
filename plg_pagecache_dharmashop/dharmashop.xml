@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="plugin" group="pagecache" method="upgrade">
+    <name>PLG_PAGECACHE_DHARMASHOP</name>
+    <author>Dharma</author>
+    <version>0.1.0</version>
+    <description>PLG_PAGECACHE_DHARMASHOP_DESC</description>
+    <namespace path="src">Dharma\Plugin\PageCache\DharmaShop</namespace>
+    <files>
+        <folder plugin="dharmashop">services</folder>
+        <folder>src</folder>
+    </files>
+    <languages>
+        <language tag="en-GB">language/en-GB/plg_pagecache_dharmashop.ini</language>
+        <language tag="en-GB">language/en-GB/plg_pagecache_dharmashop.sys.ini</language>
+        <language tag="ru-RU">language/ru-RU/plg_pagecache_dharmashop.ini</language>
+        <language tag="ru-RU">language/ru-RU/plg_pagecache_dharmashop.sys.ini</language>
+    </languages>
+</extension>
